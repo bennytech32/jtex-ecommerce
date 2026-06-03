@@ -1,0 +1,8 @@
+@import "tailwindcss";
+
+@theme {
+  --color-jtex-yellow: #F2A900;
+  --color-jtex-blue: #1a5b74;
+  --color-jtex-dark: #0F172A;
+  --color-jtex-gray: #F3F4F6;
+}

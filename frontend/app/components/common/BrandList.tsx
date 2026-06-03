@@ -1,0 +1,1 @@
+import React from "react"; export default function BrandList() { return <div className="container mx-auto p-6 bg-[#0F172A] text-white mt-6 rounded-lg flex justify-around items-center text-sm font-bold"><span>SAMSUNG</span><span>APPLE</span><span>HP</span><span>SONY</span><span>DELL</span></div>; }
