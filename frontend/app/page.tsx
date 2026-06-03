@@ -78,6 +78,7 @@ export default function HomePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
   const [lang, setLang] = useState<'en' | 'sw'>('en'); 
+  const [isClient, setIsClient] = useState(false); // Kuzuia Cart Hydration Mismatch
   
   const [searchQuery, setSearchQuery] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -119,6 +120,7 @@ export default function HomePage() {
   const t = translations[lang];
 
   useEffect(() => {
+    setIsClient(true);
     const savedUser = localStorage.getItem('jtex_user');
     if (savedUser) setUser(JSON.parse(savedUser));
 
@@ -176,7 +178,7 @@ export default function HomePage() {
 
   const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault(); setCheckoutLoading(true);
-    const checkoutItems = cart.map(item => ({ productId: item.id, quantity: item.quantity, unitPrice: item.price, subTotal: item.price * item.quantity }));
+    const checkoutItems = cart.map((item: any) => ({ productId: item.id, quantity: item.quantity, unitPrice: item.price, subTotal: item.price * item.quantity }));
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
       const res = await fetch(`${apiUrl}/api/orders`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: user.id, deliveryRegion: region, address, paymentMethod: 'COD', shippingFee, upfrontPayment, items: checkoutItems }) });
@@ -186,9 +188,6 @@ export default function HomePage() {
 
   const handleBuyNow = (product: any) => { setSelectedProduct(null); addToCart(product); setWorkflowStep(1); setIsWorkflowOpen(true); };
 
-  // ==========================================
-  // MOBILE RESPONSIVE COMPONENTS
-  // ==========================================
   const SkeletonCard = () => (
     <div className="min-w-[140px] sm:min-w-[200px] bg-white rounded-xl p-3 border border-gray-100 shadow-sm animate-pulse snap-start flex flex-col h-full">
       <div className="aspect-square bg-gray-200 rounded-lg mb-2 w-full"></div>
@@ -244,10 +243,8 @@ export default function HomePage() {
     );
   };
 
-  // LOGIC YA KUTENGENEZA FLASH DEALS IKIWA HAZIPO
-  const flashDeals = products.filter(p => p.oldPrice).length > 0 
-    ? products.filter(p => p.oldPrice) 
-    : products.slice(0, 6).map(p => ({ ...p, oldPrice: Math.floor(p.price * 1.3) })); // Inatengeneza punguzo la uongo (30%) kuweka duka hai
+  // FLASH DEALS: ZINAONYESHA PRODUCT ZOTE KAMA ZILIVYO (Hatutengenezi tena bei ya uongo)
+  const flashDeals = products.slice(0, 8); 
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#F8FAFC] to-[#F1F5F9] text-gray-900 font-sans antialiased pb-20 md:pb-0">
@@ -296,7 +293,11 @@ export default function HomePage() {
             <button onClick={openCartWorkflow} className="relative text-gray-700 hover:text-[#F2A900] transition flex flex-col items-center group">
               <div className="relative">
                 <FiShoppingCart className="text-xl sm:text-2xl group-hover:scale-110 transition" />
-                {cart.length > 0 && <span className="absolute -top-1.5 -right-2 bg-red-500 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center shadow-sm">{cart.length}</span>}
+                {isClient && cart && cart.length > 0 && (
+                  <span className="absolute -top-1.5 -right-2 bg-red-500 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center shadow-sm">
+                    {cart.length}
+                  </span>
+                )}
               </div>
             </button>
             {user ? (
@@ -315,7 +316,7 @@ export default function HomePage() {
         {/* MOBILE SEARCH BAR */}
         <div className="md:hidden px-4 pb-3">
           <div className="relative w-full flex border border-gray-300 rounded-full overflow-hidden bg-gray-50">
-             <input type="text" placeholder={t.searchPlaceholder} className="flex-1 px-4 py-2 text-xs outline-none bg-transparent" />
+             <input type="text" placeholder={t.searchPlaceholder} value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="flex-1 px-4 py-2 text-xs outline-none bg-transparent" />
              <button className="bg-[#F2A900] px-4 flex items-center justify-center text-[#0F172A]"><FiSearch className="text-sm" /></button>
           </div>
         </div>
@@ -408,7 +409,7 @@ export default function HomePage() {
       <FloatingWhatsApp />
       <MobileBottomNav />
 
-      {/* POPUPS ZA PRODUCT, LOGIN NA CART ZIMEBAKI KAMA ZILIVYO */}
+      {/* PRODUCT MODAL */}
       {selectedProduct && !isWorkflowOpen && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-2 md:p-4 backdrop-blur-sm">
           <div className="bg-white w-full max-w-5xl rounded-2xl max-h-[95vh] overflow-y-auto shadow-2xl relative animate-fade-in pb-20 sm:pb-0">
@@ -447,17 +448,47 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* LOGIN & WORKFLOW POPUPS... */}
+      {/* LOGIN POPUP (SASA IMEKURUDISHWA FULLY!) */}
+      {isLoginOpen && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+          <div className="bg-white w-full max-w-4xl rounded-2xl shadow-2xl relative flex overflow-hidden min-h-[500px] animate-fade-in">
+            <button onClick={() => setIsLoginOpen(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-900 bg-gray-100 p-2 rounded-full z-20 transition"><FiX size={20} /></button>
+            <div className="hidden md:flex md:w-1/2 bg-[#0F172A] text-white flex-col justify-center p-12">
+               <h2 className="text-5xl font-black mb-4">J<span className="text-[#F2A900]">tex</span></h2>
+               <p className="text-lg font-medium text-gray-300 mb-8">{t.signIn} and Checkout seamlessly.</p>
+            </div>
+            <div className="w-full md:w-1/2 p-8 md:p-12 flex flex-col justify-center bg-white">
+              <div className="flex bg-gray-100 p-1 rounded-xl mb-6">
+                <button onClick={() => setAuthMode('login')} className={`flex-1 py-2 text-sm font-bold rounded-lg transition ${authMode === 'login' ? 'bg-white shadow text-gray-900' : 'text-gray-500'}`}>{t.signIn}</button>
+                <button onClick={() => setAuthMode('register')} className={`flex-1 py-2 text-sm font-bold rounded-lg transition ${authMode === 'register' ? 'bg-white shadow text-gray-900' : 'text-gray-500'}`}>{t.register}</button>
+              </div>
+              {loginError && <div className="p-3 bg-red-50 text-red-600 text-xs rounded-lg font-bold mb-4">{loginError}</div>}
+              <form onSubmit={authMode === 'login' ? handleInlineLogin : handleInlineRegister} className="space-y-4">
+                {authMode === 'register' && (
+                  <>
+                    <input type="text" required value={registerName} onChange={e => setRegisterName(e.target.value)} className="w-full bg-gray-50 border rounded-xl px-4 py-3 outline-none text-sm" placeholder="Full Name" />
+                    <input type="tel" required value={registerPhone} onChange={e => setRegisterPhone(e.target.value)} className="w-full bg-gray-50 border rounded-xl px-4 py-3 outline-none text-sm" placeholder="Phone Number" />
+                  </>
+                )}
+                <input type="email" required value={loginEmail} onChange={e => setLoginEmail(e.target.value)} className="w-full bg-gray-50 border rounded-xl px-4 py-3 outline-none text-sm" placeholder="Email Address" />
+                <input type="password" required value={loginPassword} onChange={e => setLoginPassword(e.target.value)} className="w-full bg-gray-50 border rounded-xl px-4 py-3 outline-none text-sm" placeholder="Password" />
+                <button type="submit" className="w-full bg-[#0F172A] text-white font-bold py-3.5 rounded-xl text-sm mt-2">{authMode === 'login' ? 'Login to Continue' : 'Register to Continue'}</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* CHECKOUT WORKFLOW POPUP */}
       {isWorkflowOpen && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-2 sm:p-4 backdrop-blur-sm pb-16">
-          {/* ... (Workflow inabaki kama ilivyo, tayari iko responsive) */}
           <div className="bg-white w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden relative max-h-[90vh] flex flex-col animate-fade-in">
             <button onClick={() => setIsWorkflowOpen(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-900 z-10"><FiX size={20} /></button>
             <div className="p-4 sm:p-6 overflow-y-auto flex-1 bg-white">
                {workflowStep === 1 && (
                   <div>
                     <h3 className="text-lg sm:text-xl font-black text-gray-900 mb-4">{t.cart}</h3>
-                    {cart.map(item => (
+                    {cart.map((item: any) => (
                       <div key={item.id} className="flex justify-between items-center mb-3 sm:mb-4 border-b pb-3 sm:pb-4">
                         <span className="font-bold text-xs sm:text-sm">{item.name} <span className="text-[#F2A900]">(x{item.quantity})</span></span>
                         <span className="font-black text-[#0F172A] text-sm sm:text-base">TZS {(item.price * item.quantity).toLocaleString()}</span>
