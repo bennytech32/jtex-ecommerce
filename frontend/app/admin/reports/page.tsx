@@ -50,7 +50,7 @@ export default function AdminReports() {
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip formatter={(value: number) => `TZS ${value.toLocaleString()}`} />
+                <Tooltip formatter={(value: any) => `TZS ${Number(value).toLocaleString()}`} />
                 <Legend />
               </PieChart>
             </ResponsiveContainer>
