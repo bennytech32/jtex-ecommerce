@@ -84,18 +84,13 @@ export default function HomePage() {
   const [user, setUser] = useState<any>(null);
   const [lang, setLang] = useState<'en' | 'sw'>('en'); 
   
-  // =====================================
-  // FEATURES MPYA ZA UI/UX
-  // =====================================
   const [searchQuery, setSearchQuery] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [wishlist, setWishlist] = useState<string[]>([]);
   
-  // Refs za Carousel
   const flashDealsRef = useRef<HTMLDivElement>(null);
   const newArrivalsRef = useRef<HTMLDivElement>(null);
 
-  // HAPA NDIPO KOSA LA TYPESCRIPT LILIPOREKEBISHWA (Kuweka | null)
   const scrollCarousel = (ref: React.RefObject<HTMLDivElement | null>, direction: 'left' | 'right') => {
     if (ref.current) {
       const scrollAmount = direction === 'left' ? -300 : 300;
@@ -109,8 +104,6 @@ export default function HomePage() {
   };
 
   const filteredSuggestions = products.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase())).slice(0, 5);
-  
-  // =====================================
   
   const [selectedProduct, setSelectedProduct] = useState<any | null>(null);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
@@ -151,7 +144,6 @@ export default function HomePage() {
 
   const toggleLanguage = () => setLang(prev => prev === 'en' ? 'sw' : 'en');
 
-  // AUTH & WORKFLOW LOGIC
   const handleAuthSuccess = (data: any) => {
     localStorage.setItem('jtex_token', data.token);
     localStorage.setItem('jtex_user', JSON.stringify(data.user));
@@ -199,9 +191,6 @@ export default function HomePage() {
 
   const handleBuyNow = (product: any) => { setSelectedProduct(null); addToCart(product); setWorkflowStep(1); setIsWorkflowOpen(true); };
 
-  // =====================================
-  // COMPONENTS NDOGO (SKELETON & PRODUCT CARD)
-  // =====================================
   const SkeletonCard = () => (
     <div className="min-w-[200px] sm:min-w-[220px] bg-white rounded-xl p-4 border border-gray-100 shadow-sm animate-pulse snap-start flex flex-col h-full">
       <div className="aspect-square bg-gray-200 rounded-lg mb-3 w-full"></div>
@@ -385,9 +374,8 @@ export default function HomePage() {
               ) : products.length === 0 ? (
                 <div className="text-center py-10 text-gray-500 text-sm w-full">{t.noProducts}</div>
               ) : (
-                products.filter(p => p.oldPrice).length > 0 
-                  ? products.filter(p => p.oldPrice).map(product => <ProductCard key={product.id} product={product} />)
-                  : products.slice(0, 5).map(product => <ProductCard key={product.id} product={product} />)
+                /* HAPA NDIPO MABADILIKO YAMEFANYIKA: TUNAONYESHA BIDHAA ZOTE BILA KUJALI KAMA INA PUNGUZO (oldPrice) */
+                products.map(product => <ProductCard key={`flash-${product.id}`} product={product} />)
               )}
             </div>
           </div>
@@ -408,7 +396,8 @@ export default function HomePage() {
               {isLoading ? (
                 Array(5).fill(0).map((_, i) => <SkeletonCard key={i} />)
               ) : (
-                [...products].reverse().map(product => <ProductCard key={product.id} product={product} />)
+                /* HAPA PIA TUNAONYESHA BIDHAA ZOTE */
+                products.map(product => <ProductCard key={`new-${product.id}`} product={product} />)
               )}
             </div>
           </div>
