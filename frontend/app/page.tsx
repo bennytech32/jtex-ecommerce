@@ -113,10 +113,20 @@ export default function HomePage() {
 
     const fetchRealProducts = async () => {
       try {
-        const url = `${getApiUrl()}/api/products`;
+        // HAPA NDIPO UCHAWI ULIPO: Tumeongeza "?t=muda_wa_sasa" ili kudanganya mtandao usikate data
+        const timestamp = new Date().getTime();
+        const url = `${getApiUrl()}/api/products?t=${timestamp}`;
+        
         const res = await fetch(url, {
+          method: 'GET',
+          mode: 'cors',
           cache: 'no-store',
-          headers: { 'Accept': 'application/json' }
+          headers: { 
+            'Accept': 'application/json',
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0'
+          }
         });
         
         if (!res.ok) throw new Error(`Kosa la Server (Code ${res.status})`);
@@ -340,18 +350,17 @@ export default function HomePage() {
                 <h2 className="text-xl sm:text-2xl font-black text-gray-900">{t.allProducts}</h2>
               </div>
               
-              {/* MAANDISHI YA SIRI YA KUCHEKI LINK INAYOSOMWA (DEBUG) */}
               <p className="text-[10px] text-gray-400 mt-2 font-mono bg-gray-50 p-1 rounded border inline-block w-max">
-                System Connected to API: <span className="text-blue-600 font-bold">{getApiUrl()}</span>
+                Connection Check: <span className="text-green-600 font-bold">Live Link</span>
               </p>
             </div>
             
             {fetchError ? (
                <div className="bg-red-50 border border-red-200 text-red-600 p-6 rounded-xl flex flex-col items-center justify-center text-center">
                  <FiAlertCircle className="text-4xl mb-3" />
-                 <p className="font-bold mb-1">Imeshindwa kuwasiliana na Backend</p>
+                 <p className="font-bold mb-1">Imeshindwa kuwasiliana na Server</p>
                  <p className="text-xs">{fetchError}</p>
-                 <button onClick={() => window.location.reload()} className="mt-4 bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-bold">Jaribu Tena</button>
+                 <button onClick={() => window.location.reload()} className="mt-4 bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-bold">Refresh Page</button>
                </div>
             ) : isLoading ? (
                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
