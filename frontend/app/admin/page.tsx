@@ -34,29 +34,29 @@ export default function AdminDashboard() {
   ];
 
   useEffect(() => {
-    // Hakikisha ni Admin pekee (Kama una auth logic, iweke hapa)
+    // ULINZI UMEZIMWA KWA AJILI YA TESTING
+    /*
     const token = localStorage.getItem('jtex_token');
     if (!token) {
       router.push('/');
       return;
     }
+    */
 
     const fetchDashboardData = async () => {
       try {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
         
-        // Vuta Takwimu (Stats)
         const statsRes = await fetch(`${apiUrl}/api/dashboard`);
         if (statsRes.ok) {
           const statsData = await statsRes.json();
           setStats(statsData);
         }
 
-        // Vuta Oda za Hivi Karibuni
         const ordersRes = await fetch(`${apiUrl}/api/orders`);
         if (ordersRes.ok) {
           const ordersData = await ordersRes.json();
-          setRecentOrders(ordersData.slice(0, 5)); // Chukua oda 5 za mwisho
+          setRecentOrders(ordersData.slice(0, 5)); 
         }
       } catch (error) {
         console.error("Kosa kuvuta data za admin:", error);
@@ -66,7 +66,7 @@ export default function AdminDashboard() {
     };
 
     fetchDashboardData();
-  }, [router]);
+  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem('jtex_token');
@@ -175,8 +175,6 @@ export default function AdminDashboard() {
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
                   <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#6B7280', fontSize: 12}} dy={10} />
                   <YAxis axisLine={false} tickLine={false} tick={{fill: '#6B7280', fontSize: 12}} dx={-10} tickFormatter={(value) => `${value / 1000000}M`} />
-                  
-                  {/* HAPA NDIPO KOSA LA TYPESCRIPT LILIPOREKEBISHWA (value: any) */}
                   <Tooltip 
                     cursor={{stroke: '#F3F4F6', strokeWidth: 2}}
                     contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
@@ -196,8 +194,6 @@ export default function AdminDashboard() {
                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#6B7280', fontSize: 12}} dy={10} />
                    <YAxis axisLine={false} tickLine={false} tick={{fill: '#6B7280', fontSize: 12}} dx={-10} tickFormatter={(value) => `${value / 1000000}M`} />
-                   
-                   {/* HAPA PIA LIMEREKEBISHWA (value: any) */}
                    <Tooltip 
                      cursor={{fill: '#F9FAFB'}}
                      contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}

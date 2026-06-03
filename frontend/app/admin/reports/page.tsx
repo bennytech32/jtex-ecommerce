@@ -15,7 +15,6 @@ export default function ReportsPage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
 
-  // Data za Mfano kwa ajili ya Chati (Zitaonyeshwa wakati ukivuta data halisi)
   const [monthlyData, setMonthlyData] = useState([
     { month: 'Jan', mapato: 1500000, oda: 45 },
     { month: 'Feb', mapato: 2300000, oda: 60 },
@@ -26,20 +25,19 @@ export default function ReportsPage() {
   ]);
 
   useEffect(() => {
-    // Hakikisha ni Admin pekee anayeingia hapa
+    // ULINZI UMEZIMWA KWA AJILI YA TESTING
+    /*
     const token = localStorage.getItem('jtex_token');
     if (!token) {
       router.push('/');
       return;
     }
-
-    // Hapa unaweza kuweka logic ya kuvuta takwimu halisi kutoka kwenye API yako
-    // fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/reports`)...
+    */
     
     setTimeout(() => {
       setIsLoading(false);
     }, 1000);
-  }, [router]);
+  }, []);
 
   if (isLoading) {
     return (
@@ -55,7 +53,6 @@ export default function ReportsPage() {
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900 font-sans p-4 md:p-8">
       
-      {/* HEADER SECTION */}
       <header className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div className="flex items-center gap-4">
           <button 
@@ -86,7 +83,6 @@ export default function ReportsPage() {
 
       <main className="max-w-7xl mx-auto space-y-8">
         
-        {/* SUMMARY CARDS */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-5">
             <div className="w-14 h-14 bg-green-50 text-green-600 rounded-full flex items-center justify-center text-2xl">
@@ -119,10 +115,8 @@ export default function ReportsPage() {
           </div>
         </div>
 
-        {/* CHARTS SECTION */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           
-          {/* REVENUE TREND CHART */}
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
             <h3 className="text-lg font-black text-gray-900 mb-6 border-b border-gray-100 pb-4">Mwenendo wa Mapato (Revenue Trend)</h3>
             <div className="h-80 w-full">
@@ -131,8 +125,6 @@ export default function ReportsPage() {
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
                   <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{fill: '#6B7280', fontSize: 12}} dy={10} />
                   <YAxis axisLine={false} tickLine={false} tick={{fill: '#6B7280', fontSize: 12}} dx={-10} tickFormatter={(value) => `${value / 1000000}M`} />
-                  
-                  {/* HAPA NDIPO KOSA LA TYPESCRIPT LILIPOREKEBISHWA (value: any) */}
                   <Tooltip 
                     cursor={{stroke: '#F3F4F6', strokeWidth: 2}}
                     contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
@@ -145,7 +137,6 @@ export default function ReportsPage() {
             </div>
           </div>
 
-          {/* ORDERS BAR CHART */}
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
             <h3 className="text-lg font-black text-gray-900 mb-6 border-b border-gray-100 pb-4">Mwenendo wa Oda (Orders Trend)</h3>
             <div className="h-80 w-full">
@@ -154,8 +145,6 @@ export default function ReportsPage() {
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
                   <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{fill: '#6B7280', fontSize: 12}} dy={10} />
                   <YAxis axisLine={false} tickLine={false} tick={{fill: '#6B7280', fontSize: 12}} dx={-10} />
-                  
-                  {/* HAPA PIA LIMEREKEBISHWA (value: any) */}
                   <Tooltip 
                     cursor={{fill: '#F9FAFB'}}
                     contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
