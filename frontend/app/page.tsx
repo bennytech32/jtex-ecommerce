@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useCart } from './context/CartContext'; 
 import { 
   FiShoppingCart, FiGlobe, FiX, FiCheckCircle, FiMapPin, FiTruck, FiShield, 
-  FiLock, FiMail, FiUser, FiPhone, FiTrash2, FiChevronRight, FiSearch, FiHeart, FiBox 
+  FiLock, FiMail, FiUser, FiPhone, FiTrash2, FiChevronRight, FiSearch, FiHeart, FiBox, FiAlertCircle 
 } from 'react-icons/fi';
 
 import TopTicker from './components/navigation/TopTicker';
@@ -67,6 +67,7 @@ export default function HomePage() {
   const router = useRouter();
   const [products, setProducts] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null); // Mlinzi wa API
   const [user, setUser] = useState<any>(null);
   const [lang, setLang] = useState<'en' | 'sw'>('en'); 
   const [isClient, setIsClient] = useState(false); 
@@ -100,10 +101,10 @@ export default function HomePage() {
   const { cart, addToCart, removeFromCart, clearCart, cartTotal } = useCart();
   const t = translations[lang];
 
-  // Kurekebisha URL ya API ili isilete shida
+  // FORMULA YA UHAKIKA YA URL
   const getApiUrl = () => {
     const url = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
-    return url.replace(/\/$/, ''); // Inaondoa mkwaju (/) wa mwisho kama upo
+    return url.replace(/\/$/, ''); 
   };
 
   useEffect(() => {
@@ -113,11 +114,26 @@ export default function HomePage() {
 
     const fetchRealProducts = async () => {
       try {
-        const res = await fetch(`${getApiUrl()}/api/products`);
+        const url = `${getApiUrl()}/api/products`;
+        console.log("Inavuta kutoka:", url); // Kuonyesha URL inayotumika
+        
+        const res = await fetch(url, {
+          headers: { 'Accept': 'application/json' }
+        });
+        
+        if (!res.ok) {
+          throw new Error(`Tatizo la Server: (Code ${res.status})`);
+        }
+        
         const data = await res.json();
-        setProducts(data.filter((p: any) => p.stockQuantity > 0));
-      } catch (error) {
+        if (Array.isArray(data)) {
+          setProducts(data.filter((p: any) => p.stockQuantity > 0));
+        } else {
+          throw new Error('Data zilizorudi sio sahihi (Sio Array).');
+        }
+      } catch (error: any) {
         console.error("Kosa kuvuta bidhaa:", error);
+        setFetchError(error.message); // Hifadhi error ionekane kwenye screen
       } finally {
         setIsLoading(false);
       }
@@ -140,13 +156,13 @@ export default function HomePage() {
     try {
       const res = await fetch(`${getApiUrl()}/api/login`, { 
         method: 'POST', 
-        headers: { 'Content-Type': 'application/json' }, 
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' }, 
         body: JSON.stringify({ email: loginEmail, password: loginPassword }) 
       });
       const data = await res.json();
       if (res.ok) handleAuthSuccess(data); else setLoginError(data.error || 'Kosa la kuingia.');
     } catch (err: any) { 
-      setLoginError(`Kosa la kimtandao: Backend haipatikani. (${err.message})`); 
+      setLoginError(`Kosa: Server haipatikani. Hakikisha Link ya Backend ni sahihi.`); 
     }
   };
 
@@ -155,13 +171,13 @@ export default function HomePage() {
     try {
       const res = await fetch(`${getApiUrl()}/api/register`, { 
         method: 'POST', 
-        headers: { 'Content-Type': 'application/json' }, 
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' }, 
         body: JSON.stringify({ name: registerName, phone: registerPhone, email: loginEmail, password: loginPassword }) 
       });
       const data = await res.json();
       if (res.ok) handleAuthSuccess(data); else setLoginError(data.error || 'Kosa la kusajili.');
     } catch (err: any) { 
-      setLoginError(`Kosa la kimtandao: Backend haipatikani. (${err.message})`); 
+      setLoginError(`Kosa: Server haipatikani. Hakikisha Link ya Backend ni sahihi.`); 
     }
   };
 
@@ -323,14 +339,21 @@ export default function HomePage() {
           <HeroSlider />
           <TrustBadges />
 
-          {/* ALL PRODUCTS GRID (Flash Deals & New Arrivals Zimetolewa) */}
+          {/* ALL PRODUCTS GRID ONLY */}
           <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100 mt-2">
             <div className="flex items-center gap-3 mb-6 border-b border-gray-100 pb-4">
               <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center"><FiBox className="text-xl" /></div>
               <h2 className="text-xl sm:text-2xl font-black text-gray-900">{t.allProducts}</h2>
             </div>
             
-            {isLoading ? (
+            {fetchError ? (
+               <div className="bg-red-50 border border-red-200 text-red-600 p-6 rounded-xl flex flex-col items-center justify-center text-center">
+                 <FiAlertCircle className="text-4xl mb-3" />
+                 <p className="font-bold mb-1">Imeshindwa kuwasiliana na Backend</p>
+                 <p className="text-xs">{fetchError}</p>
+                 <p className="text-[10px] mt-4 text-gray-500">Tafadhali hakikisha NEXT_PUBLIC_API_URL iko sahihi kwenye Railway.</p>
+               </div>
+            ) : isLoading ? (
                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
                  {Array(10).fill(0).map((_, i) => <SkeletonCard key={i} />)}
                </div>
