@@ -67,7 +67,7 @@ export default function HomePage() {
   const router = useRouter();
   const [products, setProducts] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [fetchError, setFetchError] = useState<string | null>(null); // Mlinzi wa API
+  const [fetchError, setFetchError] = useState<string | null>(null); 
   const [user, setUser] = useState<any>(null);
   const [lang, setLang] = useState<'en' | 'sw'>('en'); 
   const [isClient, setIsClient] = useState(false); 
@@ -101,7 +101,7 @@ export default function HomePage() {
   const { cart, addToCart, removeFromCart, clearCart, cartTotal } = useCart();
   const t = translations[lang];
 
-  // FORMULA YA UHAKIKA YA URL
+  // FORMULA YA URL (Inaondoa / mwishoni isisumbue)
   const getApiUrl = () => {
     const url = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
     return url.replace(/\/$/, ''); 
@@ -115,25 +115,26 @@ export default function HomePage() {
     const fetchRealProducts = async () => {
       try {
         const url = `${getApiUrl()}/api/products`;
-        console.log("Inavuta kutoka:", url); // Kuonyesha URL inayotumika
         
+        // TUMEONGEZA cache: 'no-store' KUTATUA KOSA LA CONTENT-LENGTH
         const res = await fetch(url, {
+          cache: 'no-store',
           headers: { 'Accept': 'application/json' }
         });
         
         if (!res.ok) {
-          throw new Error(`Tatizo la Server: (Code ${res.status})`);
+          throw new Error(`Kosa la Server (Code ${res.status})`);
         }
         
         const data = await res.json();
         if (Array.isArray(data)) {
           setProducts(data.filter((p: any) => p.stockQuantity > 0));
         } else {
-          throw new Error('Data zilizorudi sio sahihi (Sio Array).');
+          setProducts([]);
         }
       } catch (error: any) {
         console.error("Kosa kuvuta bidhaa:", error);
-        setFetchError(error.message); // Hifadhi error ionekane kwenye screen
+        setFetchError(error.message); 
       } finally {
         setIsLoading(false);
       }
@@ -156,13 +157,14 @@ export default function HomePage() {
     try {
       const res = await fetch(`${getApiUrl()}/api/login`, { 
         method: 'POST', 
-        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' }, 
+        cache: 'no-store',
+        headers: { 'Content-Type': 'application/json' }, 
         body: JSON.stringify({ email: loginEmail, password: loginPassword }) 
       });
       const data = await res.json();
       if (res.ok) handleAuthSuccess(data); else setLoginError(data.error || 'Kosa la kuingia.');
     } catch (err: any) { 
-      setLoginError(`Kosa: Server haipatikani. Hakikisha Link ya Backend ni sahihi.`); 
+      setLoginError(`Mtandao unasumbua, tafadhali jaribu tena.`); 
     }
   };
 
@@ -171,13 +173,14 @@ export default function HomePage() {
     try {
       const res = await fetch(`${getApiUrl()}/api/register`, { 
         method: 'POST', 
-        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' }, 
+        cache: 'no-store',
+        headers: { 'Content-Type': 'application/json' }, 
         body: JSON.stringify({ name: registerName, phone: registerPhone, email: loginEmail, password: loginPassword }) 
       });
       const data = await res.json();
       if (res.ok) handleAuthSuccess(data); else setLoginError(data.error || 'Kosa la kusajili.');
     } catch (err: any) { 
-      setLoginError(`Kosa: Server haipatikani. Hakikisha Link ya Backend ni sahihi.`); 
+      setLoginError(`Mtandao unasumbua, tafadhali jaribu tena.`); 
     }
   };
 
@@ -192,7 +195,12 @@ export default function HomePage() {
     e.preventDefault(); setCheckoutLoading(true);
     const checkoutItems = cart.map((item: any) => ({ productId: item.id, quantity: item.quantity, unitPrice: item.price, subTotal: item.price * item.quantity }));
     try {
-      const res = await fetch(`${getApiUrl()}/api/orders`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: user.id, deliveryRegion: region, address, paymentMethod: 'COD', shippingFee, upfrontPayment, items: checkoutItems }) });
+      const res = await fetch(`${getApiUrl()}/api/orders`, { 
+        method: 'POST', 
+        cache: 'no-store',
+        headers: { 'Content-Type': 'application/json' }, 
+        body: JSON.stringify({ userId: user.id, deliveryRegion: region, address, paymentMethod: 'COD', shippingFee, upfrontPayment, items: checkoutItems }) 
+      });
       if (res.ok) { setWorkflowStep(4); clearCart(); }
     } catch (err) { console.error(err); } finally { setCheckoutLoading(false); }
   };
@@ -212,17 +220,14 @@ export default function HomePage() {
     
     return (
       <div className="w-full bg-white rounded-xl p-2.5 sm:p-4 border border-gray-100 shadow-sm hover:shadow-lg transition-all duration-300 relative group flex flex-col cursor-pointer" onClick={() => setSelectedProduct(product)}>
-        
         <button onClick={(e) => toggleWishlist(e, product.id)} className="absolute top-2 right-2 z-20 w-7 h-7 bg-white/90 backdrop-blur rounded-full flex items-center justify-center text-gray-400 hover:text-red-500 shadow-sm transition">
           <FiHeart className={`text-sm ${isWishlisted ? "fill-red-500 text-red-500" : ""}`} />
         </button>
-
         {product.oldPrice && (
           <span className="absolute top-2 left-2 bg-red-500 text-white text-[9px] sm:text-[10px] font-black px-1.5 py-0.5 rounded shadow-sm z-10">
             -{Math.round(((product.oldPrice - product.price) / product.oldPrice) * 100)}%
           </span>
         )}
-
         <div className="aspect-square bg-white border border-gray-50 rounded-lg mb-2 sm:mb-3 flex items-center justify-center p-1 sm:p-2 relative overflow-hidden group-hover:bg-gray-50 transition">
           {product.imageUrl ? (
             <img src={`${getApiUrl()}${product.imageUrl}`} alt={product.name} className="object-contain w-full h-full mix-blend-multiply group-hover:scale-105 transition duration-500" />
@@ -230,22 +235,16 @@ export default function HomePage() {
             <span className="text-4xl group-hover:scale-105 transition duration-500">{product.imageEmoji}</span>
           )}
         </div>
-        
         <h3 className="text-[11px] sm:text-sm font-bold text-gray-800 leading-tight mb-1 line-clamp-2 group-hover:text-[#F2A900] transition h-8">{product.name}</h3>
-        
         <div className="flex flex-col mb-2 mt-auto">
           <span className="text-sm sm:text-lg font-black text-[#0F172A] leading-none">TZS {product.price.toLocaleString()}</span>
           {product.oldPrice && <span className="text-[10px] sm:text-xs text-gray-400 line-through mt-0.5">TZS {product.oldPrice.toLocaleString()}</span>}
         </div>
-
         <div className="flex items-center justify-between border-t border-gray-50 pt-2">
             <div className="flex items-center text-[#F2A900] text-[8px] sm:text-[10px]">
               ★★★★★ <span className="text-gray-400 ml-1 font-medium hidden sm:block">(24)</span>
             </div>
-            <button 
-              onClick={(e) => { e.stopPropagation(); addToCart(product); }}
-              className="w-7 h-7 sm:w-9 sm:h-9 rounded-full bg-gray-50 border border-gray-200 flex items-center justify-center text-[#0F172A] hover:bg-[#F2A900] transition-all shadow-sm"
-            >
+            <button onClick={(e) => { e.stopPropagation(); addToCart(product); }} className="w-7 h-7 sm:w-9 sm:h-9 rounded-full bg-gray-50 border border-gray-200 flex items-center justify-center text-[#0F172A] hover:bg-[#F2A900] transition-all shadow-sm">
               <FiShoppingCart className="text-xs sm:text-sm" />
             </button>
         </div>
@@ -339,7 +338,6 @@ export default function HomePage() {
           <HeroSlider />
           <TrustBadges />
 
-          {/* ALL PRODUCTS GRID ONLY */}
           <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100 mt-2">
             <div className="flex items-center gap-3 mb-6 border-b border-gray-100 pb-4">
               <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center"><FiBox className="text-xl" /></div>
@@ -351,7 +349,7 @@ export default function HomePage() {
                  <FiAlertCircle className="text-4xl mb-3" />
                  <p className="font-bold mb-1">Imeshindwa kuwasiliana na Backend</p>
                  <p className="text-xs">{fetchError}</p>
-                 <p className="text-[10px] mt-4 text-gray-500">Tafadhali hakikisha NEXT_PUBLIC_API_URL iko sahihi kwenye Railway.</p>
+                 <button onClick={() => window.location.reload()} className="mt-4 bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-bold">Jaribu Tena</button>
                </div>
             ) : isLoading ? (
                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
