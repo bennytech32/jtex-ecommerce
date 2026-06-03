@@ -33,12 +33,7 @@ const translations = {
     proceedLocation: "Proceed to Location",
     proceedPayment: "Proceed to Payment",
     confirmOrder: "Confirm & Place Order",
-    successMsg: "Order placed successfully! SMS/Email sent.",
-    deliveryFee: "Shipping Fee",
-    grandTotal: "Grand Total",
-    upfront: "Required Upfront",
-    signIn: "Sign In",
-    register: "Register"
+    successMsg: "Order placed successfully! SMS/Email sent."
   },
   sw: {
     allProducts: "Bidhaa Zote",
@@ -54,12 +49,7 @@ const translations = {
     proceedLocation: "Endelea na Mahali",
     proceedPayment: "Endelea na Malipo",
     confirmOrder: "Thibitisha na Lipia",
-    successMsg: "Oda imekamilika! Tumekutumia SMS na Barua Pepe (Email) yenye Risiti na Invoice.",
-    deliveryFee: "Gharama ya Usafiri",
-    grandTotal: "Jumla Kuu",
-    upfront: "Kianzio",
-    signIn: "Ingia",
-    register: "Jisajili"
+    successMsg: "Oda imekamilika! Tumekutumia SMS na Barua Pepe."
   }
 };
 
@@ -98,12 +88,12 @@ export default function HomePage() {
   const [address, setAddress] = useState('');
   const [checkoutLoading, setCheckoutLoading] = useState(false);
 
-  const { cart, addToCart, removeFromCart, clearCart, cartTotal } = useCart();
+  const { cart, addToCart, clearCart, cartTotal } = useCart();
   const t = translations[lang];
 
+  // HAPA TUNAWEKA LINK KWA NGUVU (HARDCODED) BADALA YA KUTEGEMEA VARIABLES
   const getApiUrl = () => {
-    const url = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
-    return url.replace(/\/$/, ''); 
+    return 'https://jtex-ecommerce-production.up.railway.app';
   };
 
   useEffect(() => {
@@ -115,7 +105,6 @@ export default function HomePage() {
       try {
         const url = `${getApiUrl()}/api/products`;
         
-        // NIMETO ULE UCHAWI WOTE WA CACHE ULIOKUWA UNASUMBUA
         const res = await fetch(url);
         
         if (!res.ok) throw new Error(`Kosa la Server (Code ${res.status})`);
@@ -330,15 +319,18 @@ export default function HomePage() {
           <TrustBadges />
 
           <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100 mt-2">
-            <div className="flex items-center gap-3 mb-6 border-b border-gray-100 pb-4">
-              <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center"><FiBox className="text-xl" /></div>
-              <h2 className="text-xl sm:text-2xl font-black text-gray-900">{t.allProducts}</h2>
+            <div className="flex flex-col mb-6 border-b border-gray-100 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center"><FiBox className="text-xl" /></div>
+                <h2 className="text-xl sm:text-2xl font-black text-gray-900">{t.allProducts}</h2>
+              </div>
             </div>
             
             {fetchError ? (
                <div className="bg-red-50 border border-red-200 text-red-600 p-6 rounded-xl flex flex-col items-center justify-center text-center">
                  <FiAlertCircle className="text-4xl mb-3" />
                  <p className="font-bold mb-1">Imeshindwa kuwasiliana na Server</p>
+                 <p className="text-xs">{fetchError}</p>
                  <button onClick={() => window.location.reload()} className="mt-4 bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-bold">Refresh Page</button>
                </div>
             ) : isLoading ? (
