@@ -11,7 +11,11 @@ import fs from 'fs';
 
 const prisma = new PrismaClient();
 const app = express();
-const PORT = 5001; 
+
+// ==========================================
+// MAREKEBISHO KWA AJILI YA RAILWAY
+// ==========================================
+const PORT = Number(process.env.PORT) || 5001; 
 const JWT_SECRET = process.env.JWT_SECRET || 'siri_nzito_ya_jtex_2026';
 
 // ==========================================
@@ -309,10 +313,10 @@ app.post('/api/finance', async (req: Request, res: Response): Promise<void> => {
 });
 
 // ==========================================
-// WASHA SERVER YETU
+// WASHA SERVER YETU (MAREKEBISHO YA RAILWAY)
 // ==========================================
-app.listen(PORT, () => {
-  console.log(`🚀 Jtex Backend inakimbia kwenye http://localhost:${PORT}`);
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`🚀 Jtex Backend inakimbia mtandaoni kwenye Port: ${PORT}`);
 }).on('error', (err) => {
   console.error("❌ Kosa limetokea wakati wa kuwasha:", err);
 });
