@@ -95,7 +95,7 @@ export default function HomePage() {
   const flashDealsRef = useRef<HTMLDivElement>(null);
   const newArrivalsRef = useRef<HTMLDivElement>(null);
 
-  const scrollCarousel = (ref: React.RefObject<HTMLDivElement>, direction: 'left' | 'right') => {
+  const scrollCarousel = (ref: React.RefObject<HTMLDivElement | null>, direction: 'left' | 'right') => {
     if (ref.current) {
       const scrollAmount = direction === 'left' ? -300 : 300;
       ref.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
