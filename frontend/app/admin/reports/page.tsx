@@ -1,116 +1,176 @@
 'use client';
 
-import React from 'react';
-import { FiDownload, FiBarChart2, FiPieChart, FiTrendingUp } from 'react-icons/fi';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
+import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { 
+  FiArrowLeft, FiDownload, FiCalendar, 
+  FiTrendingUp, FiDollarSign, FiShoppingBag 
+} from 'react-icons/fi';
+import { 
+  BarChart, Bar, LineChart, Line, XAxis, YAxis, 
+  CartesianGrid, Tooltip, ResponsiveContainer, Legend 
+} from 'recharts';
 
-export default function AdminReports() {
-  // Mock Data za Ripoti
-  const categorySales = [
-    { name: 'Nguo', value: 4500000 },
-    { name: 'Elektroniki', value: 8500000 },
-    { name: 'Viatu', value: 3200000 },
-    { name: 'Urembo', value: 1500000 },
-  ];
-  const COLORS = ['#F2A900', '#0F172A', '#3B82F6', '#10B981'];
+export default function ReportsPage() {
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(true);
 
-  const monthlyRevenue = [
-    { month: 'Jan', mauzo: 4000, faida: 2400 },
-    { month: 'Feb', mauzo: 3000, faida: 1398 },
-    { month: 'Mac', mauzo: 9800, faida: 5800 },
-    { month: 'Apr', mauzo: 3908, faida: 2908 },
-    { month: 'Mei', mauzo: 4800, faida: 3800 },
-    { month: 'Jun', mauzo: 3800, faida: 2500 },
-  ];
+  // Data za Mfano kwa ajili ya Chati (Zitaonyeshwa wakati ukivuta data halisi)
+  const [monthlyData, setMonthlyData] = useState([
+    { month: 'Jan', mapato: 1500000, oda: 45 },
+    { month: 'Feb', mapato: 2300000, oda: 60 },
+    { month: 'Mac', mapato: 3400000, oda: 85 },
+    { month: 'Apr', mapato: 2800000, oda: 70 },
+    { month: 'Mei', mapato: 4500000, oda: 110 },
+    { month: 'Jun', mapato: 5200000, oda: 130 },
+  ]);
+
+  useEffect(() => {
+    // Hakikisha ni Admin pekee anayeingia hapa
+    const token = localStorage.getItem('jtex_token');
+    if (!token) {
+      router.push('/');
+      return;
+    }
+
+    // Hapa unaweza kuweka logic ya kuvuta takwimu halisi kutoka kwenye API yako
+    // fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/reports`)...
+    
+    setTimeout(() => {
+      setIsLoading(false);
+    }, 1000);
+  }, [router]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="w-12 h-12 border-4 border-[#F2A900] border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  const totalRevenue = monthlyData.reduce((sum, item) => sum + item.mapato, 0);
+  const totalOrders = monthlyData.reduce((sum, item) => sum + item.oda, 0);
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-2xl font-black text-gray-900">Ripoti & Uchambuzi</h1>
-          <p className="text-sm text-gray-500">Changanua mwenendo wa biashara na upakue ripoti.</p>
+    <div className="min-h-screen bg-gray-50 text-gray-900 font-sans p-4 md:p-8">
+      
+      {/* HEADER SECTION */}
+      <header className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+        <div className="flex items-center gap-4">
+          <button 
+            onClick={() => router.push('/admin')} 
+            className="w-10 h-10 bg-white border border-gray-200 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition shadow-sm"
+          >
+            <FiArrowLeft className="text-xl" />
+          </button>
+          <div>
+            <h1 className="text-2xl font-black text-[#0F172A]">Ripoti & Takwimu</h1>
+            <p className="text-sm text-gray-500 font-medium mt-1">Tathmini mwenendo wa biashara yako</p>
+          </div>
         </div>
-        <button className="bg-[#0F172A] hover:bg-gray-800 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition">
-          <FiDownload /> Pakua PDF (Export)
-        </button>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         
-        {/* Mauzo kwa Kategoria */}
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-          <h2 className="font-bold text-gray-800 flex items-center gap-2 mb-6">
-            <FiPieChart className="text-[#F2A900]" /> Mauzo Kulingana na Kategoria
-          </h2>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie data={categorySales} cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value">
-                  {categorySales.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip formatter={(value: number) => `TZS ${value.toLocaleString()}`} />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
+        <div className="flex items-center gap-3">
+          <div className="bg-white border border-gray-200 px-4 py-2 rounded-xl flex items-center gap-2 text-sm font-bold text-gray-700 shadow-sm">
+            <FiCalendar className="text-[#F2A900]" />
+            Miezi 6 Iliyopita
+          </div>
+          <button 
+            onClick={() => window.print()}
+            className="bg-[#0F172A] text-white px-4 py-2 rounded-xl flex items-center gap-2 text-sm font-bold hover:bg-gray-800 transition shadow-sm"
+          >
+            <FiDownload /> Pakua PDF
+          </button>
+        </div>
+      </header>
+
+      <main className="max-w-7xl mx-auto space-y-8">
+        
+        {/* SUMMARY CARDS */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-5">
+            <div className="w-14 h-14 bg-green-50 text-green-600 rounded-full flex items-center justify-center text-2xl">
+              <FiDollarSign />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-1">Jumla ya Mapato</p>
+              <h3 className="text-2xl font-black text-[#0F172A]">TZS {totalRevenue.toLocaleString()}</h3>
+            </div>
+          </div>
+          
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-5">
+            <div className="w-14 h-14 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center text-2xl">
+              <FiShoppingBag />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-1">Jumla ya Oda</p>
+              <h3 className="text-2xl font-black text-[#0F172A]">{totalOrders.toLocaleString()}</h3>
+            </div>
+          </div>
+
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-5">
+            <div className="w-14 h-14 bg-purple-50 text-purple-600 rounded-full flex items-center justify-center text-2xl">
+              <FiTrendingUp />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-1">Wastani kwa Oda</p>
+              <h3 className="text-2xl font-black text-[#0F172A]">TZS {Math.round(totalRevenue / totalOrders).toLocaleString()}</h3>
+            </div>
           </div>
         </div>
 
-        {/* Mauzo vs Faida (Mwezi) */}
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-          <h2 className="font-bold text-gray-800 flex items-center gap-2 mb-6">
-            <FiBarChart2 className="text-blue-500" /> Mwenendo wa Mauzo na Faida
-          </h2>
-          <div className="h-64 text-xs">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={monthlyRevenue}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
-                <XAxis dataKey="month" axisLine={false} tickLine={false} />
-                <YAxis axisLine={false} tickLine={false} />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="mauzo" name="Mauzo Ghafi" fill="#F2A900" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="faida" name="Faida Halisi" fill="#0F172A" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+        {/* CHARTS SECTION */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          
+          {/* REVENUE TREND CHART */}
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+            <h3 className="text-lg font-black text-gray-900 mb-6 border-b border-gray-100 pb-4">Mwenendo wa Mapato (Revenue Trend)</h3>
+            <div className="h-80 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={monthlyData} margin={{ top: 5, right: 20, left: 20, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
+                  <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{fill: '#6B7280', fontSize: 12}} dy={10} />
+                  <YAxis axisLine={false} tickLine={false} tick={{fill: '#6B7280', fontSize: 12}} dx={-10} tickFormatter={(value) => `${value / 1000000}M`} />
+                  
+                  {/* HAPA NDIPO KOSA LA TYPESCRIPT LILIPOREKEBISHWA (value: any) */}
+                  <Tooltip 
+                    cursor={{stroke: '#F3F4F6', strokeWidth: 2}}
+                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                    formatter={(value: any) => [`TZS ${value.toLocaleString()}`, 'Mapato']}
+                  />
+                  <Legend verticalAlign="top" height={36} iconType="circle" />
+                  <Line type="monotone" dataKey="mapato" name="Mapato (TZS)" stroke="#10B981" strokeWidth={4} dot={{r: 4, fill: '#10B981', strokeWidth: 2}} activeDot={{r: 6, fill: '#047857'}} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
           </div>
+
+          {/* ORDERS BAR CHART */}
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+            <h3 className="text-lg font-black text-gray-900 mb-6 border-b border-gray-100 pb-4">Mwenendo wa Oda (Orders Trend)</h3>
+            <div className="h-80 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={monthlyData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
+                  <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{fill: '#6B7280', fontSize: 12}} dy={10} />
+                  <YAxis axisLine={false} tickLine={false} tick={{fill: '#6B7280', fontSize: 12}} dx={-10} />
+                  
+                  {/* HAPA PIA LIMEREKEBISHWA (value: any) */}
+                  <Tooltip 
+                    cursor={{fill: '#F9FAFB'}}
+                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                    formatter={(value: any) => [`${value} Oda`, 'Idadi']}
+                  />
+                  <Legend verticalAlign="top" height={36} iconType="circle" />
+                  <Bar dataKey="oda" name="Idadi ya Oda" fill="#3B82F6" radius={[6, 6, 0, 0]} barSize={40} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
         </div>
 
-        {/* Bidhaa Zinazofanya Vizuri Zaidi */}
-        <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="p-5 border-b border-gray-100 flex items-center gap-2">
-            <h2 className="font-bold text-gray-800 flex items-center gap-2"><FiTrendingUp className="text-green-500" /> Bidhaa Zinazouza Sana (Top Sellers)</h2>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead className="bg-gray-50 text-[10px] uppercase text-gray-500 font-bold">
-                <tr>
-                  <th className="px-6 py-3">Jina la Bidhaa</th>
-                  <th className="px-6 py-3">Kategoria</th>
-                  <th className="px-6 py-3">Idadi Iliyouzwa</th>
-                  <th className="px-6 py-3">Pato Liloingia</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr className="border-b">
-                  <td className="px-6 py-4 font-bold">iPhone 15 Pro Max</td>
-                  <td className="px-6 py-4 text-gray-500">Elektroniki</td>
-                  <td className="px-6 py-4 font-bold text-blue-600">142 Pcs</td>
-                  <td className="px-6 py-4 font-black text-green-600">TZS 355,000,000</td>
-                </tr>
-                <tr className="border-b">
-                  <td className="px-6 py-4 font-bold">T-Shirt za Nike</td>
-                  <td className="px-6 py-4 text-gray-500">Nguo</td>
-                  <td className="px-6 py-4 font-bold text-blue-600">89 Pcs</td>
-                  <td className="px-6 py-4 font-black text-green-600">TZS 1,335,000</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-      </div>
+      </main>
     </div>
   );
 }
