@@ -1,0 +1,197 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ==========================================
+// 1. USERS, ROLES & VENDORS (CRM & MARKETPLACE)
+// ==========================================
+model User {
+  id            String          @id @default(cuid())
+  name          String
+  email         String          @unique
+  phone         String
+  password      String
+  role          String          @default("CUSTOMER") // Roles: CUSTOMER, VENDOR, ADMIN, SUPER_ADMIN
+  
+  // Mfumo wa CRM
+  loyaltyPoints Int             @default(0)
+  debtAmount    Float           @default(0) // Kufuatilia madeni ya wateja
+  
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  vendorProfile VendorProfile?
+  orders        Order[]
+  reviews       Review[]
+}
+
+// Taarifa maalum za Wauzaji (Multi-Vendor)
+model VendorProfile {
+  id             String    @id @default(cuid())
+  userId         String    @unique
+  user           User      @relation(fields: [userId], references: [id])
+  storeName      String
+  commissionRate Float     @default(10.0) // Asilimia ya makato ya Jtex
+  isApproved     Boolean   @default(false) // Admin akubali kwanza
+  
+  products       Product[]
+  
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+}
+
+// ==========================================
+// 2. PRODUCTS & INVENTORY
+// ==========================================
+model Product {
+  id              String   @id @default(cuid())
+  sku             String   @unique
+  name            String
+  description     String?
+  category        String
+  brand           String?
+
+  // Bei na Fedha
+  buyingPrice     Float    @default(0) // Bei uliyonunulia (Admin)
+  price           Float                // Bei ya kuuzia
+  oldPrice        Float?
+  discount        String?
+
+  // Picha na Media
+  imageUrl        String?  // Picha kuu
+  imageEmoji      String   @default("📦") // Backup ya muda
+  gallery         String?  // String ya JSON kuhifadhi picha zaidi
+  specifications  String?  // String ya JSON kuhifadhi sifa (RAM, Storage nk)
+
+  // Usimamizi wa Ghala
+  stockQuantity   Int      @default(0)
+  lowStockAlert   Int      @default(5)
+  inStock         Boolean  @default(true)
+
+  // Uhusiano
+  vendorId        String?
+  vendor          VendorProfile? @relation(fields: [vendorId], references: [id])
+  
+  orderItems      OrderItem[]
+  reviews         Review[]
+  stockMovements  StockMovement[]
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+// ==========================================
+// 3. ORDERS, PAYMENTS & LOGISTICS
+// ==========================================
+model Order {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id])
+
+  // Malipo
+  totalAmount     Float
+  shippingFee     Float    @default(0)
+  upfrontPayment  Float    @default(0) // Kianzio kwa wanaolipa Pay On Delivery (COD)
+
+  // Hali ya Oda na Malipo
+  status          String   @default("PENDING") // PENDING, PROCESSING, SHIPPED, DELIVERED, CANCELLED
+  paymentMethod   String   @default("COD") // COD, MOBILE_MONEY, CARD
+  paymentStatus   String   @default("UNPAID") // UNPAID, PARTIAL, PAID
+
+  // Taarifa za Usafirishaji
+  deliveryRegion  String
+  address         String
+
+  items           OrderItem[]
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model OrderItem {
+  id          String   @id @default(cuid())
+  orderId     String
+  order       Order    @relation(fields: [orderId], references: [id])
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id])
+  
+  quantity    Int
+  unitPrice   Float
+  subTotal    Float
+}
+
+// Sheria za Usafirishaji Mikoani
+model DeliveryRegion {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  fee         Float    @default(0) // Bei ya kusafirisha mzigo
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// ==========================================
+// 4. ERP: INVENTORY MANAGEMENT (MAGHALA)
+// ==========================================
+model Warehouse {
+  id          String   @id @default(cuid())
+  name        String
+  location    String
+  
+  movements   StockMovement[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model StockMovement {
+  id          String   @id @default(cuid())
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id])
+  warehouseId String
+  warehouse   Warehouse @relation(fields: [warehouseId], references: [id])
+  
+  type        String   // IN (Stock inaingia), OUT (Stock inatoka)
+  quantity    Int
+  reason      String?  // Mfano: "Mzigo mpya umewasili", "Imeuzwa", "Imeharibika"
+  
+  createdAt   DateTime @default(now())
+}
+
+// ==========================================
+// 5. ERP: FINANCE & FOREX
+// ==========================================
+model FinanceTransaction {
+  id           String   @id @default(cuid())
+  type         String   // INCOME (Mapato), EXPENSE (Matumizi)
+  category     String   // Mfano: "Mauzo", "Mshahara", "Kodi", "Matangazo"
+  amount       Float
+  currency     String   @default("TZS") // USD, TZS (Forex Management)
+  exchangeRate Float    @default(1.0)
+  description  String?
+  
+  date         DateTime @default(now())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+// ==========================================
+// 6. CUSTOMER ENGAGEMENT
+// ==========================================
+model Review {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id])
+  
+  rating      Int
+  comment     String?
+  
+  createdAt   DateTime @default(now())
+}
