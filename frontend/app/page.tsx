@@ -91,11 +91,12 @@ export default function HomePage() {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [wishlist, setWishlist] = useState<string[]>([]);
   
-  // Refs za Carousel (Kusogeza bidhaa)
+  // Refs za Carousel
   const flashDealsRef = useRef<HTMLDivElement>(null);
   const newArrivalsRef = useRef<HTMLDivElement>(null);
 
-  const scrollCarousel = (ref: React.RefObject<HTMLDivElement>, direction: 'left' | 'right') => {
+  // HAPA NDIPO KOSA LA TYPESCRIPT LILIPOREKEBISHWA (Kuweka | null)
+  const scrollCarousel = (ref: React.RefObject<HTMLDivElement | null>, direction: 'left' | 'right') => {
     if (ref.current) {
       const scrollAmount = direction === 'left' ? -300 : 300;
       ref.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
@@ -135,7 +136,8 @@ export default function HomePage() {
 
     const fetchRealProducts = async () => {
       try {
-        const res = await fetch('http://localhost:5001/api/products');
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
+        const res = await fetch(`${apiUrl}/api/products`);
         const data = await res.json();
         setProducts(data.filter((p: any) => p.stockQuantity > 0));
       } catch (error) {
@@ -161,7 +163,8 @@ export default function HomePage() {
   const handleInlineLogin = async (e: React.FormEvent) => {
     e.preventDefault(); setLoginError('');
     try {
-      const res = await fetch('http://localhost:5001/api/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: loginEmail, password: loginPassword }) });
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
+      const res = await fetch(`${apiUrl}/api/login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: loginEmail, password: loginPassword }) });
       const data = await res.json();
       if (res.ok) handleAuthSuccess(data); else setLoginError(data.error);
     } catch (err) { setLoginError('Kosa la kimtandao.'); }
@@ -170,7 +173,8 @@ export default function HomePage() {
   const handleInlineRegister = async (e: React.FormEvent) => {
     e.preventDefault(); setLoginError('');
     try {
-      const res = await fetch('http://localhost:5001/api/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: registerName, phone: registerPhone, email: loginEmail, password: loginPassword }) });
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
+      const res = await fetch(`${apiUrl}/api/register`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: registerName, phone: registerPhone, email: loginEmail, password: loginPassword }) });
       const data = await res.json();
       if (res.ok) handleAuthSuccess(data); else setLoginError(data.error);
     } catch (err) { setLoginError('Kosa la kimtandao.'); }
@@ -187,7 +191,8 @@ export default function HomePage() {
     e.preventDefault(); setCheckoutLoading(true);
     const checkoutItems = cart.map(item => ({ productId: item.id, quantity: item.quantity, unitPrice: item.price, subTotal: item.price * item.quantity }));
     try {
-      const res = await fetch('http://localhost:5001/api/orders', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: user.id, deliveryRegion: region, address, paymentMethod: 'COD', shippingFee, upfrontPayment, items: checkoutItems }) });
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
+      const res = await fetch(`${apiUrl}/api/orders`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: user.id, deliveryRegion: region, address, paymentMethod: 'COD', shippingFee, upfrontPayment, items: checkoutItems }) });
       if (res.ok) { setWorkflowStep(4); clearCart(); }
     } catch (err) { console.error(err); } finally { setCheckoutLoading(false); }
   };
@@ -211,10 +216,11 @@ export default function HomePage() {
 
   const ProductCard = ({ product }: { product: any }) => {
     const isWishlisted = wishlist.includes(product.id);
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
+    
     return (
       <div className="min-w-[200px] sm:min-w-[220px] max-w-[220px] bg-white rounded-xl p-4 border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 relative group flex flex-col snap-start cursor-pointer" onClick={() => setSelectedProduct(product)}>
         
-        {/* Wishlist Button */}
         <button onClick={(e) => toggleWishlist(e, product.id)} className="absolute top-3 right-3 z-20 w-8 h-8 bg-white/80 backdrop-blur rounded-full flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-white shadow-sm transition">
           <FiHeart className={isWishlisted ? "fill-red-500 text-red-500" : ""} />
         </button>
@@ -227,7 +233,7 @@ export default function HomePage() {
 
         <div className="aspect-square bg-white border border-gray-50 rounded-lg mb-3 flex items-center justify-center p-2 relative overflow-hidden group-hover:bg-gray-50 transition">
           {product.imageUrl ? (
-            <img src={`http://localhost:5001${product.imageUrl}`} alt={product.name} className="object-contain w-full h-full mix-blend-multiply group-hover:scale-110 transition duration-500" />
+            <img src={`${apiUrl}${product.imageUrl}`} alt={product.name} className="object-contain w-full h-full mix-blend-multiply group-hover:scale-110 transition duration-500" />
           ) : (
             <span className="text-5xl group-hover:scale-110 transition duration-500">{product.imageEmoji}</span>
           )}
@@ -256,18 +262,15 @@ export default function HomePage() {
   };
 
   return (
-    // GRADIENT BACKGROUND YA KIPROFESHENI
     <div className="min-h-screen bg-gradient-to-br from-white via-[#F8FAFC] to-[#F1F5F9] text-gray-900 font-sans antialiased pb-16 md:pb-0">
       <TopTicker />
       
-      {/* HEADER */}
       <header className="bg-white/80 backdrop-blur-md border-b border-gray-200 sticky top-0 z-40 shadow-sm">
         <div className="w-full max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 h-16 flex items-center justify-between">
           <span onClick={() => router.push('/')} className="text-2xl font-black text-[#0F172A] tracking-tight cursor-pointer">
             J<span className="text-[#F2A900]">tex</span>
           </span>
           
-          {/* LIVE SEARCH (AUTOCOMPLETE) */}
           <div className="hidden md:flex flex-1 max-w-2xl mx-8 relative">
             <div className={`relative w-full flex border-2 ${showSuggestions ? 'border-[#F2A900] rounded-t-xl' : 'border-[#F2A900] rounded-full'} overflow-hidden transition-all bg-white`}>
               <select className="bg-gray-50 border-r border-gray-200 px-3 py-2 text-xs outline-none hidden lg:block font-medium"><option>All Categories</option></select>
@@ -283,14 +286,13 @@ export default function HomePage() {
               <button className="bg-[#F2A900] px-6 flex items-center justify-center text-[#0F172A] hover:bg-yellow-500 transition"><FiSearch className="text-lg" /></button>
             </div>
             
-            {/* Dropdown ya Live Search */}
             {showSuggestions && searchQuery && (
               <div className="absolute top-full left-0 w-full bg-white border border-gray-200 rounded-b-xl shadow-xl z-50 max-h-80 overflow-y-auto">
                 {filteredSuggestions.length > 0 ? (
                   filteredSuggestions.map(item => (
                     <div key={item.id} onClick={() => { setSelectedProduct(item); setShowSuggestions(false); setSearchQuery(''); }} className="flex items-center gap-3 p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-50 last:border-0 transition">
                       <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center p-1">
-                        {item.imageUrl ? <img src={`http://localhost:5001${item.imageUrl}`} className="w-full h-full object-contain" /> : item.imageEmoji}
+                        {item.imageUrl ? <img src={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001'}${item.imageUrl}`} className="w-full h-full object-contain" /> : item.imageEmoji}
                       </div>
                       <div className="flex-1">
                         <h4 className="text-sm font-bold text-gray-800 line-clamp-1">{item.name}</h4>
@@ -336,7 +338,6 @@ export default function HomePage() {
 
       <main className="w-full max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 py-6 flex flex-col lg:flex-row gap-6">
         
-        {/* KUSHOTO: Menyu na Bango Dogo */}
         <div className="w-full lg:w-[260px] xl:w-[280px] flex-shrink-0 flex flex-col gap-6">
           <SidebarCategories />
           <div className="hidden lg:block bg-gradient-to-br from-[#0F172A] to-[#1E293B] rounded-2xl p-6 text-white relative overflow-hidden shadow-2xl border border-gray-800 hover:scale-[1.02] transition-transform duration-500">
@@ -349,15 +350,11 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* KULIA: Hero Slider, Badges, na Kanda za Bidhaa (Rows) */}
         <div className="flex-1 flex flex-col gap-8 min-w-0">
           
           <HeroSlider />
           <TrustBadges />
 
-          {/* ======================================================== */}
-          {/* ROW 1: FLASH DEALS (Yenye Mishale ya Kusogeza Desktop)   */}
-          {/* ======================================================== */}
           <div className="relative bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100">
             <div className="flex justify-between items-center mb-4 border-b border-gray-100 pb-3">
               <div className="flex items-center gap-3">
@@ -375,7 +372,6 @@ export default function HomePage() {
                     <span className="bg-white text-red-600 font-black rounded px-1.5 py-0.5 shadow-sm">45</span>
                   </div>
                 </div>
-                {/* Desktop Carousel Controls */}
                 <div className="hidden md:flex gap-2">
                   <button onClick={() => scrollCarousel(flashDealsRef, 'left')} className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition text-gray-600"><FiChevronLeft /></button>
                   <button onClick={() => scrollCarousel(flashDealsRef, 'right')} className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition text-gray-600"><FiChevronRight /></button>
@@ -389,7 +385,6 @@ export default function HomePage() {
               ) : products.length === 0 ? (
                 <div className="text-center py-10 text-gray-500 text-sm w-full">{t.noProducts}</div>
               ) : (
-                // Tunaweka bidhaa zenye oldPrice kama flash deals kwa mfano huu
                 products.filter(p => p.oldPrice).length > 0 
                   ? products.filter(p => p.oldPrice).map(product => <ProductCard key={product.id} product={product} />)
                   : products.slice(0, 5).map(product => <ProductCard key={product.id} product={product} />)
@@ -397,9 +392,6 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* ======================================================== */}
-          {/* ROW 2: NEW ARRIVALS (Kanda ya Pili)                      */}
-          {/* ======================================================== */}
           <div className="relative mt-2">
             <div className="flex justify-between items-center mb-4">
               <div>
@@ -416,15 +408,11 @@ export default function HomePage() {
               {isLoading ? (
                 Array(5).fill(0).map((_, i) => <SkeletonCard key={i} />)
               ) : (
-                // Tunazigeuza kinyume ili zionekane mpya
                 [...products].reverse().map(product => <ProductCard key={product.id} product={product} />)
               )}
             </div>
           </div>
 
-          {/* ======================================================== */}
-          {/* ROW 3: JUST FOR YOU (Grid ya Chini)                      */}
-          {/* ======================================================== */}
           <div className="mt-4 border-t border-gray-200 pt-8">
             <h2 className="text-2xl font-black text-gray-900 mb-6 text-center">{t.justForYou}</h2>
             {isLoading ? (
@@ -452,9 +440,6 @@ export default function HomePage() {
       <FloatingWhatsApp />
       <MobileBottomNav />
 
-      {/* ======================================================== */}
-      {/* MODALS ZOTE ZINABAKI HAPA (PRODUCT VIEW, LOGIN, CHECKOUT)  */}
-      {/* ======================================================== */}
       {selectedProduct && !isWorkflowOpen && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-2 md:p-4 backdrop-blur-sm">
           <div className="bg-white w-full max-w-5xl rounded-2xl max-h-[95vh] overflow-y-auto shadow-2xl relative animate-fade-in">
@@ -462,7 +447,7 @@ export default function HomePage() {
             <div className="flex flex-col lg:flex-row gap-8 p-6 lg:p-8">
               <div className="w-full lg:w-1/3 flex flex-col gap-4">
                 <div className="bg-gray-50 aspect-square rounded-xl border border-gray-200 flex items-center justify-center overflow-hidden p-8">
-                  {selectedProduct.imageUrl ? ( <img src={`http://localhost:5001${selectedProduct.imageUrl}`} alt={selectedProduct.name} className="object-contain w-full h-full" /> ) : ( <span className="text-8xl">{selectedProduct.imageEmoji}</span> )}
+                  {selectedProduct.imageUrl ? ( <img src={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001'}${selectedProduct.imageUrl}`} alt={selectedProduct.name} className="object-contain w-full h-full" /> ) : ( <span className="text-8xl">{selectedProduct.imageEmoji}</span> )}
                 </div>
               </div>
               <div className="w-full lg:w-1/3 flex flex-col">
@@ -499,7 +484,6 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* LOGIN & CHECKOUT MODALS (ZIMEBAKI KAMA ZILIVYO) */}
       {isLoginOpen && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
           <div className="bg-white w-full max-w-4xl rounded-2xl shadow-2xl relative flex overflow-hidden min-h-[500px] animate-fade-in">
