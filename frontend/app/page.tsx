@@ -115,8 +115,7 @@ export default function HomePage() {
       try {
         const url = `${getApiUrl()}/api/products`;
         const res = await fetch(url, {
-          cache: 'no-store',
-          headers: { 'Accept': 'application/json' }
+          cache: 'no-store'
         });
         
         if (!res.ok) throw new Error(`Kosa la Server (Code ${res.status})`);
@@ -152,7 +151,6 @@ export default function HomePage() {
     try {
       const res = await fetch(`${getApiUrl()}/api/login`, { 
         method: 'POST', 
-        cache: 'no-store',
         headers: { 'Content-Type': 'application/json' }, 
         body: JSON.stringify({ email: loginEmail, password: loginPassword }) 
       });
@@ -168,7 +166,6 @@ export default function HomePage() {
     try {
       const res = await fetch(`${getApiUrl()}/api/register`, { 
         method: 'POST', 
-        cache: 'no-store',
         headers: { 'Content-Type': 'application/json' }, 
         body: JSON.stringify({ name: registerName, phone: registerPhone, email: loginEmail, password: loginPassword }) 
       });
@@ -192,7 +189,6 @@ export default function HomePage() {
     try {
       const res = await fetch(`${getApiUrl()}/api/orders`, { 
         method: 'POST', 
-        cache: 'no-store',
         headers: { 'Content-Type': 'application/json' }, 
         body: JSON.stringify({ userId: user.id, deliveryRegion: region, address, paymentMethod: 'COD', shippingFee, upfrontPayment, items: checkoutItems }) 
       });
@@ -339,19 +335,14 @@ export default function HomePage() {
                 <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center"><FiBox className="text-xl" /></div>
                 <h2 className="text-xl sm:text-2xl font-black text-gray-900">{t.allProducts}</h2>
               </div>
-              
-              {/* MAANDISHI YA SIRI YA KUCHEKI LINK INAYOSOMWA (DEBUG) */}
-              <p className="text-[10px] text-gray-400 mt-2 font-mono bg-gray-50 p-1 rounded border inline-block w-max">
-                System Connected to API: <span className="text-blue-600 font-bold">{getApiUrl()}</span>
-              </p>
             </div>
             
             {fetchError ? (
                <div className="bg-red-50 border border-red-200 text-red-600 p-6 rounded-xl flex flex-col items-center justify-center text-center">
                  <FiAlertCircle className="text-4xl mb-3" />
-                 <p className="font-bold mb-1">Imeshindwa kuwasiliana na Backend</p>
+                 <p className="font-bold mb-1">Imeshindwa kuwasiliana na Server</p>
                  <p className="text-xs">{fetchError}</p>
-                 <button onClick={() => window.location.reload()} className="mt-4 bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-bold">Jaribu Tena</button>
+                 <button onClick={() => window.location.reload()} className="mt-4 bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-bold">Refresh Page</button>
                </div>
             ) : isLoading ? (
                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
