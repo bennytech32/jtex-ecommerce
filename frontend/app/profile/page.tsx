@@ -9,7 +9,6 @@ import {
   FiShoppingCart, FiSearch, FiGlobe, FiTrash2, FiChevronRight, FiMapPin, FiShield, FiTruck, FiSmartphone
 } from 'react-icons/fi';
 
-// IMPORTS
 import TopTicker from '../components/navigation/TopTicker';
 import NavbarLinks from '../components/navigation/NavbarLinks';
 import Footer from '../components/common/Footer';
@@ -34,10 +33,10 @@ const translations = {
     download: "Download PDF",
     subtotal: "Subtotal",
     shipping: "Shipping",
+    deliveryFee: "Shipping Fee", // KOSA LILILOREKEBISHWA HAPA
     grandTotal: "Grand Total",
     upfrontPaid: "Upfront Paid",
     items: "Items Purchased",
-    // Cart Translations
     cart: "Cart Review",
     location: "Location",
     payment: "Payment",
@@ -66,10 +65,10 @@ const translations = {
     download: "Pakua PDF",
     subtotal: "Jumla Ndogo",
     shipping: "Usafiri",
+    deliveryFee: "Gharama ya Usafiri", // KOSA LILILOREKEBISHWA HAPA
     grandTotal: "Jumla Kuu",
     upfrontPaid: "Kianzio Kimelipwa",
     items: "Bidhaa Ulizonunua",
-    // Cart Translations
     cart: "Kikapu Chako",
     location: "Mahali",
     payment: "Malipo",
@@ -92,16 +91,13 @@ export default function ProfilePage() {
   const { cart, removeFromCart, clearCart, cartTotal } = useCart();
   const t = translations[lang];
 
-  // Invoice Modal State
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
 
-  // Cart Workflow States
   const [isWorkflowOpen, setIsWorkflowOpen] = useState(false);
   const [workflowStep, setWorkflowStep] = useState(1); 
   const [region, setRegion] = useState('Dar es Salaam');
   const [address, setAddress] = useState('');
   const [checkoutLoading, setCheckoutLoading] = useState(false);
-  const [checkoutSuccess, setCheckoutSuccess] = useState(false);
 
   useEffect(() => {
     const savedUser = localStorage.getItem('jtex_user');
@@ -114,12 +110,14 @@ export default function ProfilePage() {
 
     const fetchProfileData = async () => {
       try {
-        const ordersRes = await fetch('http://localhost:5001/api/orders');
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
+        
+        const ordersRes = await fetch(`${apiUrl}/api/orders`);
         const allOrders = await ordersRes.json();
         const myOrders = allOrders.filter((o: any) => o.userId === parsedUser.id);
         setOrders(myOrders);
 
-        const usersRes = await fetch('http://localhost:5001/api/users');
+        const usersRes = await fetch(`${apiUrl}/api/users`);
         const allUsers = await usersRes.json();
         const myFullInfo = allUsers.find((u: any) => u.id === parsedUser.id);
         setFullUserInfo(myFullInfo);
@@ -151,7 +149,8 @@ export default function ProfilePage() {
     e.preventDefault(); setCheckoutLoading(true);
     const checkoutItems = cart.map(item => ({ productId: item.id, quantity: item.quantity, unitPrice: item.price, subTotal: item.price * item.quantity }));
     try {
-      const res = await fetch('http://localhost:5001/api/orders', {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
+      const res = await fetch(`${apiUrl}/api/orders`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: user.id, deliveryRegion: region, address, paymentMethod: 'COD', shippingFee, upfrontPayment, items: checkoutItems })
       });
@@ -172,7 +171,6 @@ export default function ProfilePage() {
     <div className="min-h-screen bg-[#F3F4F6] text-gray-900 font-sans antialiased flex flex-col">
       <TopTicker />
       
-      {/* HEADER SAHIHI YENYE REAL CART */}
       <header className="bg-white border-b border-gray-200 sticky top-0 z-40 shadow-sm">
         <div className="w-full max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 h-16 flex items-center justify-between">
           <span onClick={() => router.push('/')} className="text-2xl font-black text-gray-900 tracking-tight cursor-pointer">
@@ -210,7 +208,6 @@ export default function ProfilePage() {
 
       <main className="w-full max-w-[1920px] mx-auto p-4 sm:px-6 lg:px-8 xl:px-12 flex flex-col md:flex-row gap-8 flex-1 mt-4">
         
-        {/* KUSHOTO: TAARIFA ZA MTUMIAJI & CRM */}
         <div className="w-full md:w-[320px] flex-shrink-0 space-y-6">
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 text-center relative overflow-hidden">
             <div className="absolute top-0 left-0 w-full h-24 bg-[#0F172A]"></div>
@@ -253,7 +250,6 @@ export default function ProfilePage() {
           )}
         </div>
 
-        {/* KULIA: HISTORIA YA ODA (ORDER HISTORY) */}
         <div className="flex-1 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
           <div className="p-6 md:p-8 border-b border-gray-100 flex items-center gap-3">
             <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center"><FiPackage className="text-xl" /></div>
@@ -316,17 +312,12 @@ export default function ProfilePage() {
 
       <Footer />
 
-      {/* ======================================================== */}
-      {/* PROFESSIONAL INVOICE MODAL (MASHARTI NA VIGEZO)          */}
-      {/* ======================================================== */}
       {selectedOrder && (
         <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 backdrop-blur-md">
           <div className="bg-white w-full max-w-3xl rounded-xl shadow-2xl relative flex flex-col max-h-[95vh] overflow-hidden animate-fade-in border-t-8 border-[#0F172A]">
             <button onClick={() => setSelectedOrder(null)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-900 bg-gray-100 p-2 rounded-full transition"><FiX size={20} /></button>
             
             <div className="p-8 md:p-12 overflow-y-auto print-section bg-white">
-              
-              {/* Kichwa cha Risiti & Kampuni */}
               <div className="flex flex-col md:flex-row justify-between items-start mb-8 border-b-2 border-gray-100 pb-6">
                 <div>
                   <h2 className="text-4xl font-black text-gray-900">J<span className="text-[#F2A900]">tex</span></h2>
@@ -351,7 +342,6 @@ export default function ProfilePage() {
                 </div>
               </div>
 
-              {/* Taarifa za Mteja */}
               <div className="flex flex-col md:flex-row gap-8 mb-8 text-sm">
                 <div className="flex-1">
                   <p className="text-[10px] uppercase font-bold text-gray-400 mb-2 border-b border-gray-100 pb-1">Billed To (Mteja)</p>
@@ -367,7 +357,6 @@ export default function ProfilePage() {
                 </div>
               </div>
 
-              {/* Orodha ya Bidhaa */}
               <div className="mb-8">
                 <table className="w-full text-left text-sm border-collapse">
                   <thead>
@@ -389,7 +378,6 @@ export default function ProfilePage() {
                 </table>
               </div>
 
-              {/* Jumla ya Mahesabu */}
               <div className="flex justify-end mb-10">
                 <div className="w-full md:w-1/2 space-y-3 text-sm bg-gray-50 p-6 rounded-xl border border-gray-200">
                   <div className="flex justify-between text-gray-600"><span>{t.subtotal}</span><span className="font-bold">TZS {(selectedOrder.totalAmount - selectedOrder.shippingFee).toLocaleString()}</span></div>
@@ -411,19 +399,17 @@ export default function ProfilePage() {
                 </div>
               </div>
 
-              {/* Terms and Conditions (Masharti Professional) */}
               <div className="border-t-2 border-dashed border-gray-200 pt-8 flex flex-col md:flex-row justify-between gap-8">
                 <div className="flex-1">
                   <h5 className="font-black text-gray-900 text-xs uppercase mb-3">Terms & Conditions (Vigezo & Masharti)</h5>
                   <ul className="text-[10px] text-gray-500 list-disc pl-4 space-y-1.5 font-medium leading-relaxed">
-                    <li>Bidhaa zilizofunguliwa, kutumika, au kuharibiwa kimakosa haziwezi kurudishwa (No returns on physically damaged items).</li>
-                    <li>Mteja ana siku 7 za kurudisha bidhaa endapo ina matatizo ya kiwandani (7-day return policy for factory defects only).</li>
-                    <li>Kianzio (Upfront payment) hakirudishwi iwapo mteja atakataa kupokea mzigo uliotumwa mikoani.</li>
-                    <li>Tafadhali hifadhi risiti hii kama uthibitisho wa malipo na kwa ajili ya madai ya udhamini (Keep for Warranty claims).</li>
+                    <li>Bidhaa zilizofunguliwa, kutumika, au kuharibiwa kimakosa haziwezi kurudishwa.</li>
+                    <li>Mteja ana siku 7 za kurudisha bidhaa endapo ina matatizo ya kiwandani.</li>
+                    <li>Kianzio (Upfront payment) hakirudishwi iwapo mteja atakataa kupokea mzigo.</li>
+                    <li>Tafadhali hifadhi risiti hii kama uthibitisho wa malipo.</li>
                   </ul>
                 </div>
                 
-                {/* Stamp na Saini */}
                 <div className="w-48 text-center flex flex-col items-center justify-end">
                   <div className="w-32 h-32 border-4 border-red-500/20 rounded-full flex items-center justify-center transform -rotate-12 mb-2">
                     <span className="text-red-500/40 font-black text-xl tracking-widest uppercase">Approved</span>
@@ -433,7 +419,6 @@ export default function ProfilePage() {
                 </div>
               </div>
 
-              {/* Kitufe cha Kudownload (Haitokei Kwenye Print) */}
               <div className="mt-8 flex justify-end print:hidden">
                 <button onClick={() => window.print()} className="bg-[#0F172A] text-white font-bold py-3 px-8 rounded-xl text-sm flex items-center justify-center gap-2 hover:bg-gray-800 shadow-md transition">
                   <FiDownload /> {t.download}
@@ -445,9 +430,6 @@ export default function ProfilePage() {
         </div>
       )}
 
-      {/* ======================================================== */}
-      {/* 3. MULTI-STEP WORKFLOW MODAL (Cart -> Location -> Pay)   */}
-      {/* ======================================================== */}
       {isWorkflowOpen && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
           <div className="bg-white w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden relative max-h-[95vh] flex flex-col animate-fade-in">
@@ -481,7 +463,7 @@ export default function ProfilePage() {
                       {cart.map(item => (
                         <div key={item.id} className="flex items-center gap-4 p-3 border border-gray-100 rounded-xl hover:bg-gray-50">
                           <div className="w-16 h-16 bg-gray-50 border border-gray-100 rounded-lg flex items-center justify-center">
-                            {item.imageUrl ? <img src={`http://localhost:5001${item.imageUrl}`} className="object-contain w-full h-full p-1" /> : <span className="text-2xl">{item.imageEmoji}</span>}
+                            {item.imageUrl ? <img src={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001'}${item.imageUrl}`} className="object-contain w-full h-full p-1" /> : <span className="text-2xl">{item.imageEmoji}</span>}
                           </div>
                           <div className="flex-1">
                             <h4 className="text-sm font-bold text-gray-800">{item.name}</h4>
