@@ -54,7 +54,7 @@ const translations = {
     proceedLocation: "Endelea na Mahali",
     proceedPayment: "Endelea na Malipo",
     confirmOrder: "Thibitisha na Lipia",
-    successMsg: "Oda imekamilika! SMS/Email imetumwa.",
+    successMsg: "Oda imekamilika! Tumekutumia SMS na Barua Pepe (Email) yenye Risiti na Invoice.",
     deliveryFee: "Gharama ya Usafiri",
     grandTotal: "Jumla Kuu",
     upfront: "Kianzio",
@@ -101,7 +101,6 @@ export default function HomePage() {
   const { cart, addToCart, removeFromCart, clearCart, cartTotal } = useCart();
   const t = translations[lang];
 
-  // FORMULA YA URL 
   const getApiUrl = () => {
     const url = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
     return url.replace(/\/$/, ''); 
@@ -124,7 +123,6 @@ export default function HomePage() {
         
         const data = await res.json();
         if (Array.isArray(data)) {
-          // KIZUIZI CHA STOCK KIMEONDOLEWA ILI ZOTE ZIONEKANE!
           setProducts(data);
         } else {
           setProducts([]);
@@ -336,9 +334,16 @@ export default function HomePage() {
           <TrustBadges />
 
           <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100 mt-2">
-            <div className="flex items-center gap-3 mb-6 border-b border-gray-100 pb-4">
-              <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center"><FiBox className="text-xl" /></div>
-              <h2 className="text-xl sm:text-2xl font-black text-gray-900">{t.allProducts}</h2>
+            <div className="flex flex-col mb-6 border-b border-gray-100 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center"><FiBox className="text-xl" /></div>
+                <h2 className="text-xl sm:text-2xl font-black text-gray-900">{t.allProducts}</h2>
+              </div>
+              
+              {/* MAANDISHI YA SIRI YA KUCHEKI LINK INAYOSOMWA (DEBUG) */}
+              <p className="text-[10px] text-gray-400 mt-2 font-mono bg-gray-50 p-1 rounded border inline-block w-max">
+                System Connected to API: <span className="text-blue-600 font-bold">{getApiUrl()}</span>
+              </p>
             </div>
             
             {fetchError ? (
