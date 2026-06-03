@@ -33,7 +33,7 @@ const translations = {
     download: "Download PDF",
     subtotal: "Subtotal",
     shipping: "Shipping",
-    deliveryFee: "Shipping Fee", // KOSA LILILOREKEBISHWA HAPA
+    deliveryFee: "Shipping Fee",
     grandTotal: "Grand Total",
     upfrontPaid: "Upfront Paid",
     items: "Items Purchased",
@@ -65,7 +65,7 @@ const translations = {
     download: "Pakua PDF",
     subtotal: "Jumla Ndogo",
     shipping: "Usafiri",
-    deliveryFee: "Gharama ya Usafiri", // KOSA LILILOREKEBISHWA HAPA
+    deliveryFee: "Gharama ya Usafiri",
     grandTotal: "Jumla Kuu",
     upfrontPaid: "Kianzio Kimelipwa",
     items: "Bidhaa Ulizonunua",
@@ -92,12 +92,16 @@ export default function ProfilePage() {
   const t = translations[lang];
 
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
-
   const [isWorkflowOpen, setIsWorkflowOpen] = useState(false);
   const [workflowStep, setWorkflowStep] = useState(1); 
   const [region, setRegion] = useState('Dar es Salaam');
   const [address, setAddress] = useState('');
   const [checkoutLoading, setCheckoutLoading] = useState(false);
+
+  const getApiUrl = () => {
+    const url = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
+    return url.replace(/\/$/, ''); 
+  };
 
   useEffect(() => {
     const savedUser = localStorage.getItem('jtex_user');
@@ -110,19 +114,24 @@ export default function ProfilePage() {
 
     const fetchProfileData = async () => {
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
+        const url = getApiUrl();
         
-        const ordersRes = await fetch(`${apiUrl}/api/orders`);
-        const allOrders = await ordersRes.json();
-        const myOrders = allOrders.filter((o: any) => o.userId === parsedUser.id);
-        setOrders(myOrders);
+        // TUMELAZIMISHA KUVUTA BILA KUTUMIA CACHE YA ZAMANI (cache: 'no-store')
+        const ordersRes = await fetch(`${url}/api/orders`, { cache: 'no-store' });
+        if (ordersRes.ok) {
+          const allOrders = await ordersRes.json();
+          const myOrders = allOrders.filter((o: any) => o.userId === parsedUser.id);
+          setOrders(myOrders);
+        }
 
-        const usersRes = await fetch(`${apiUrl}/api/users`);
-        const allUsers = await usersRes.json();
-        const myFullInfo = allUsers.find((u: any) => u.id === parsedUser.id);
-        setFullUserInfo(myFullInfo);
+        const usersRes = await fetch(`${url}/api/users`, { cache: 'no-store' });
+        if (usersRes.ok) {
+          const allUsers = await usersRes.json();
+          const myFullInfo = allUsers.find((u: any) => u.id === parsedUser.id);
+          setFullUserInfo(myFullInfo);
+        }
       } catch (error) {
-        console.error("Kosa kuvuta data:", error);
+        console.error("Kosa kuvuta data za profile:", error);
       } finally {
         setIsLoading(false);
       }
@@ -138,7 +147,6 @@ export default function ProfilePage() {
   };
 
   const toggleLanguage = () => setLang(prev => prev === 'en' ? 'sw' : 'en');
-  
   const openCartWorkflow = () => { setWorkflowStep(1); setIsWorkflowOpen(true); };
 
   const shippingFee = region === 'Dar es Salaam' ? 0 : 10000;
@@ -149,8 +157,7 @@ export default function ProfilePage() {
     e.preventDefault(); setCheckoutLoading(true);
     const checkoutItems = cart.map(item => ({ productId: item.id, quantity: item.quantity, unitPrice: item.price, subTotal: item.price * item.quantity }));
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
-      const res = await fetch(`${apiUrl}/api/orders`, {
+      const res = await fetch(`${getApiUrl()}/api/orders`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: user.id, deliveryRegion: region, address, paymentMethod: 'COD', shippingFee, upfrontPayment, items: checkoutItems })
       });
@@ -429,128 +436,6 @@ export default function ProfilePage() {
           </div>
         </div>
       )}
-
-      {isWorkflowOpen && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-          <div className="bg-white w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden relative max-h-[95vh] flex flex-col animate-fade-in">
-            <button onClick={() => setIsWorkflowOpen(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-900 z-10"><FiX size={24} /></button>
-            
-            <div className="bg-gray-50 border-b border-gray-200 p-6 pt-8 flex items-center justify-between">
-               <div className={`flex flex-col items-center flex-1 ${workflowStep >= 1 ? 'text-[#0F172A]' : 'text-gray-300'}`}>
-                 <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold mb-1 ${workflowStep >= 1 ? 'bg-[#F2A900] text-black' : 'bg-gray-200'}`}>1</div>
-                 <span className="text-[10px] font-bold uppercase">{t.cart}</span>
-               </div>
-               <FiChevronRight className="text-gray-300" />
-               <div className={`flex flex-col items-center flex-1 ${workflowStep >= 2 ? 'text-[#0F172A]' : 'text-gray-300'}`}>
-                 <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold mb-1 ${workflowStep >= 2 ? 'bg-[#F2A900] text-black' : 'bg-gray-200'}`}>2</div>
-                 <span className="text-[10px] font-bold uppercase">{t.location}</span>
-               </div>
-               <FiChevronRight className="text-gray-300" />
-               <div className={`flex flex-col items-center flex-1 ${workflowStep >= 3 ? 'text-[#0F172A]' : 'text-gray-300'}`}>
-                 <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold mb-1 ${workflowStep >= 3 ? 'bg-[#F2A900] text-black' : 'bg-gray-200'}`}>3</div>
-                 <span className="text-[10px] font-bold uppercase">{t.payment}</span>
-               </div>
-            </div>
-
-            <div className="p-6 overflow-y-auto flex-1 bg-white">
-              {workflowStep === 1 && (
-                <div>
-                  <h3 className="text-xl font-black text-gray-900 mb-4">{t.cart}</h3>
-                  {cart.length === 0 ? (
-                    <div className="text-center py-10 text-gray-400 font-bold">{t.emptyCart}</div>
-                  ) : (
-                    <div className="space-y-4">
-                      {cart.map(item => (
-                        <div key={item.id} className="flex items-center gap-4 p-3 border border-gray-100 rounded-xl hover:bg-gray-50">
-                          <div className="w-16 h-16 bg-gray-50 border border-gray-100 rounded-lg flex items-center justify-center">
-                            {item.imageUrl ? <img src={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001'}${item.imageUrl}`} className="object-contain w-full h-full p-1" /> : <span className="text-2xl">{item.imageEmoji}</span>}
-                          </div>
-                          <div className="flex-1">
-                            <h4 className="text-sm font-bold text-gray-800">{item.name}</h4>
-                            <p className="text-xs text-gray-500">Qty: {item.quantity}</p>
-                            <p className="text-sm font-black text-[#0F172A] mt-1">TZS {(item.price * item.quantity).toLocaleString()}</p>
-                          </div>
-                          <button onClick={() => removeFromCart(item.id)} className="text-red-500 hover:bg-red-50 p-2 rounded-full"><FiTrash2 /></button>
-                        </div>
-                      ))}
-                      <div className="border-t pt-4 mt-4 flex justify-between items-center">
-                        <span className="text-sm font-bold text-gray-500">Subtotal:</span>
-                        <span className="text-2xl font-black text-gray-900">TZS {cartTotal.toLocaleString()}</span>
-                      </div>
-                      <button onClick={() => setWorkflowStep(2)} className="w-full bg-[#0F172A] text-white font-bold py-4 rounded-xl mt-4 flex items-center justify-center gap-2 hover:bg-gray-800 transition">
-                         {t.proceedLocation} <FiChevronRight />
-                      </button>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {workflowStep === 2 && (
-                <div>
-                  <h3 className="text-xl font-black text-gray-900 mb-4 flex items-center gap-2"><FiMapPin className="text-[#F2A900]"/> {t.location}</h3>
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">Region</label>
-                      <select value={region} onChange={e => setRegion(e.target.value)} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-medium outline-none focus:border-[#F2A900]">
-                        <option value="Dar es Salaam">Dar es Salaam (Free Delivery)</option>
-                        <option value="Mwanza">Mwanza (+ TZS 10,000)</option>
-                        <option value="Arusha">Arusha (+ TZS 10,000)</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">Full Address</label>
-                      <input type="text" required value={address} onChange={e => setAddress(e.target.value)} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-[#F2A900]" placeholder="Example: Kinondoni, Mkwajuni" />
-                    </div>
-                    <button onClick={() => setWorkflowStep(3)} disabled={!address} className="w-full bg-[#0F172A] disabled:bg-gray-300 text-white font-bold py-4 rounded-xl mt-4 flex items-center justify-center gap-2 transition">
-                       {t.proceedPayment} <FiChevronRight />
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {workflowStep === 3 && (
-                <form onSubmit={handlePlaceOrder}>
-                  <h3 className="text-xl font-black text-gray-900 mb-4 flex items-center gap-2"><FiShield className="text-green-500"/> {t.payment}</h3>
-                  <div className="bg-[#F2A900]/10 border border-[#F2A900] rounded-xl p-4 mb-6">
-                     <p className="font-bold text-gray-900 text-sm">Pay On Delivery (COD)</p>
-                     <p className="text-xs text-gray-600 mt-1">Pay when you receive the product.</p>
-                  </div>
-                  <div className="border-t border-gray-100 pt-4 space-y-3 text-sm">
-                    <div className="flex justify-between text-gray-600"><span>Subtotal</span><span className="font-bold">TZS {cartTotal.toLocaleString()}</span></div>
-                    <div className="flex justify-between text-gray-600"><span>{t.deliveryFee}</span><span className="font-bold">TZS {shippingFee.toLocaleString()}</span></div>
-                    <div className="flex justify-between text-lg font-black text-gray-900 border-t border-gray-200 pt-3"><span>{t.grandTotal}</span><span>TZS {grandTotal.toLocaleString()}</span></div>
-                    {upfrontPayment > 0 && (
-                      <div className="bg-red-50 p-4 rounded-xl border border-red-200 flex justify-between items-center mt-4">
-                        <span className="block text-xs font-black text-red-600 uppercase">{t.upfrontPaid}</span>
-                        <span className="font-black text-red-600 text-lg">TZS {upfrontPayment.toLocaleString()}</span>
-                      </div>
-                    )}
-                  </div>
-                  <button type="submit" disabled={checkoutLoading} className="w-full bg-green-600 text-white font-bold py-4 rounded-xl mt-6 transition hover:bg-green-700 shadow-lg">
-                    {checkoutLoading ? 'Processing...' : t.confirmOrder}
-                  </button>
-                </form>
-              )}
-
-              {workflowStep === 4 && (
-                <div className="text-center py-8">
-                  <FiCheckCircle className="text-7xl text-green-500 mx-auto mb-4 animate-bounce" />
-                  <h3 className="text-2xl font-black text-gray-900 mb-2">Order Successful!</h3>
-                  <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 mt-4 mb-6 flex items-start gap-3 text-left">
-                    <FiSmartphone className="text-blue-600 text-3xl flex-shrink-0" />
-                    <p className="text-sm text-blue-800 font-medium">{t.successMsg}</p>
-                  </div>
-                  <button onClick={() => { setIsWorkflowOpen(false); window.location.reload(); }} className="w-full bg-[#0F172A] text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-gray-800 transition">
-                    View Invoice in Orders
-                  </button>
-                </div>
-              )}
-
-            </div>
-          </div>
-        </div>
-      )}
-
     </div>
   );
 }

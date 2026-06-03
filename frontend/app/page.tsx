@@ -101,7 +101,7 @@ export default function HomePage() {
   const { cart, addToCart, removeFromCart, clearCart, cartTotal } = useCart();
   const t = translations[lang];
 
-  // FORMULA YA URL (Inaondoa / mwishoni isisumbue)
+  // FORMULA YA URL 
   const getApiUrl = () => {
     const url = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
     return url.replace(/\/$/, ''); 
@@ -115,20 +115,17 @@ export default function HomePage() {
     const fetchRealProducts = async () => {
       try {
         const url = `${getApiUrl()}/api/products`;
-        
-        // TUMEONGEZA cache: 'no-store' KUTATUA KOSA LA CONTENT-LENGTH
         const res = await fetch(url, {
           cache: 'no-store',
           headers: { 'Accept': 'application/json' }
         });
         
-        if (!res.ok) {
-          throw new Error(`Kosa la Server (Code ${res.status})`);
-        }
+        if (!res.ok) throw new Error(`Kosa la Server (Code ${res.status})`);
         
         const data = await res.json();
         if (Array.isArray(data)) {
-          setProducts(data.filter((p: any) => p.stockQuantity > 0));
+          // KIZUIZI CHA STOCK KIMEONDOLEWA ILI ZOTE ZIONEKANE!
+          setProducts(data);
         } else {
           setProducts([]);
         }
@@ -387,7 +384,7 @@ export default function HomePage() {
                 <h1 className="text-lg sm:text-2xl font-bold text-gray-900 leading-tight">{selectedProduct.name}</h1>
                 <div className="flex items-center gap-2 mt-2 border-b border-gray-100 pb-3">
                    <span className="text-[#F2A900] text-xs sm:text-sm">⭐⭐⭐⭐⭐</span>
-                   <span className="text-blue-600 text-[10px] sm:text-xs">In Stock: {selectedProduct.stockQuantity}</span>
+                   <span className="text-blue-600 text-[10px] sm:text-xs">In Stock: {selectedProduct.stockQuantity || 'N/A'}</span>
                 </div>
                 <div className="mt-3 space-y-2 text-xs sm:text-sm text-gray-700">
                    <p><strong>Category:</strong> {selectedProduct.category}</p>
