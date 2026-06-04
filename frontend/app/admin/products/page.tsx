@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { FiPlus, FiBox, FiDatabase, FiAlertTriangle, FiCheckCircle, FiImage, FiX } from 'react-icons/fi';
+import { FiPlus, FiBox, FiDatabase, FiAlertTriangle, FiCheckCircle, FiImage } from 'react-icons/fi';
 
 export default function AdminProducts() {
   const [products, setProducts] = useState<any[]>([]);
@@ -20,16 +20,16 @@ export default function AdminProducts() {
   const [stockQuantity, setStockQuantity] = useState('');
   const [specifications, setSpecifications] = useState('');
   
-  // State kwa ajili ya faili za Picha Nyingi (Multiple Photos)
-  const [imageFiles, setImageFiles] = useState<File[]>([]);
-  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  // State kwa ajili ya faili la Picha Moja
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
 
-  // LINK YA MTANDAONI (HARDCODED KUONDOA LOCALHOST)
+  // LINK YA MTANDAONI
   const API_URL = 'https://jtex-ecommerce-production.up.railway.app';
 
   const fetchProducts = async () => {
     try {
-      const res = await fetch(`${API_URL}/api/products`, { cache: 'no-store' });
+      const res = await fetch(`${API_URL}/api/products`);
       if (res.ok) {
         const data = await res.json();
         setProducts(data);
@@ -43,25 +43,12 @@ export default function AdminProducts() {
     fetchProducts();
   }, []);
 
-  // Kazi ya kupokea picha nyingi
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (files) {
-      const filesArray = Array.from(files);
-      
-      // Hifadhi faili zenyewe
-      setImageFiles(prev => [...prev, ...filesArray]);
-      
-      // Tengeneza link za muda ili kuzitazama (Previews)
-      const newPreviews = filesArray.map(file => URL.createObjectURL(file));
-      setImagePreviews(prev => [...prev, ...newPreviews]);
+    const file = e.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+      setImagePreview(URL.createObjectURL(file)); 
     }
-  };
-
-  // Kazi ya kufuta picha uliyokosea kuweka
-  const removeImage = (indexToRemove: number) => {
-    setImageFiles(prev => prev.filter((_, index) => index !== indexToRemove));
-    setImagePreviews(prev => prev.filter((_, index) => index !== indexToRemove));
   };
 
   const handleAddProduct = async (e: React.FormEvent) => {
@@ -80,11 +67,9 @@ export default function AdminProducts() {
     formData.append('stockQuantity', stockQuantity);
     formData.append('specifications', specifications);
     
-    // Tuma picha zote kwenye FormData chini ya jina 'images'
-    if (imageFiles.length > 0) {
-      imageFiles.forEach((file) => {
-        formData.append('images', file); 
-      });
+    // TUNAITUMA KAMA 'image' ILI BACKEND IKUBALI
+    if (imageFile) {
+      formData.append('image', imageFile);
     }
 
     try {
@@ -98,9 +83,9 @@ export default function AdminProducts() {
       if (res.ok) {
         setMessage('Bidhaa imeongezwa kikamilifu!');
         setSku(''); setName(''); setBrand(''); setBuyingPrice(''); setPrice(''); setStockQuantity(''); setSpecifications('');
-        setImageFiles([]); setImagePreviews([]); // Safisha picha
+        setImageFile(null); setImagePreview(null);
         if (fileInputRef.current) fileInputRef.current.value = '';
-        fetchProducts(); // Vuta upya orodha ya bidhaa
+        fetchProducts();
       } else {
         setError(data.error || 'Imeshindwa kuweka bidhaa.');
       }
@@ -128,38 +113,25 @@ export default function AdminProducts() {
             <FiPlus className="text-[#F2A900]" /> Weka Bidhaa Mpya
           </h2>
 
-          {message && <div className="mb-4 p-3 bg-green-50 text-green-600 text-sm rounded-lg flex items-center gap-2 font-bold"><FiCheckCircle /> {message}</div>}
-          {error && <div className="mb-4 p-3 bg-red-50 text-red-600 text-sm rounded-lg flex items-center gap-2 font-bold"><FiAlertTriangle /> {error}</div>}
+          {message && <div className="mb-4 p-3 bg-green-50 text-green-600 text-sm rounded-lg flex items-center gap-2"><FiCheckCircle /> {message}</div>}
+          {error && <div className="mb-4 p-3 bg-red-50 text-red-600 text-sm rounded-lg flex items-center gap-2"><FiAlertTriangle /> {error}</div>}
 
           <form onSubmit={handleAddProduct} className="space-y-4">
             
-            {/* SEHEMU YA KUWEKA PICHA NYINGI */}
+            {/* SEHEMU YA KUWEKA PICHA */}
             <div>
-              <label className="block text-[11px] font-bold text-gray-500 uppercase mb-2">Picha za Bidhaa (Zinazoruhusiwa ni nyingi)</label>
-              
-              {/* Orodha ya Picha Zilizochaguliwa */}
-              {imagePreviews.length > 0 && (
-                <div className="flex flex-wrap gap-2 mb-3">
-                  {imagePreviews.map((preview, index) => (
-                    <div key={index} className="relative group">
-                      <img src={preview} alt={`Preview ${index}`} className="w-16 h-16 object-cover rounded-lg border border-gray-200 shadow-sm" />
-                      <button 
-                        type="button"
-                        onClick={() => removeImage(index)}
-                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity shadow-md"
-                      >
-                        <FiX className="text-xs" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-
+              <label className="block text-[11px] font-bold text-gray-500 uppercase mb-1">Picha ya Bidhaa</label>
               <div className="flex items-center gap-4">
+                {imagePreview ? (
+                  <img src={imagePreview} alt="Preview" className="w-16 h-16 object-cover rounded-lg border border-gray-200 shadow-sm" />
+                ) : (
+                  <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center border border-gray-200">
+                    <FiImage className="text-gray-400 text-2xl" />
+                  </div>
+                )}
                 <input 
                   type="file" 
                   accept="image/*"
-                  multiple // HII INARUHUSU KUCHAGUA PICHA NYINGI
                   onChange={handleImageChange}
                   ref={fileInputRef}
                   className="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-[#F2A900]/10 file:text-[#0F172A] hover:file:bg-[#F2A900]/20 transition cursor-pointer"
@@ -192,7 +164,7 @@ export default function AdminProducts() {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block text-[11px] font-bold text-gray-500 uppercase mb-1">Kategoria</label>
-                <select value={category} onChange={e => setCategory(e.target.value)} className="w-full bg-gray-50 border rounded-lg px-3 py-2 outline-none text-sm font-medium">
+                <select value={category} onChange={e => setCategory(e.target.value)} className="w-full bg-gray-50 border rounded-lg px-3 py-2 outline-none text-sm">
                   <option value="Elektroniki">Elektroniki</option>
                   <option value="Nguo">Nguo</option>
                   <option value="Viatu">Viatu</option>
@@ -207,11 +179,11 @@ export default function AdminProducts() {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block text-[11px] font-bold text-gray-500 uppercase mb-1">Bei ya Kununua</label>
-                <input type="number" value={buyingPrice} onChange={e => setBuyingPrice(e.target.value)} className="w-full bg-gray-50 border rounded-lg px-3 py-2 outline-none text-sm font-black" placeholder="2000000" />
+                <input type="number" value={buyingPrice} onChange={e => setBuyingPrice(e.target.value)} className="w-full bg-gray-50 border rounded-lg px-3 py-2 outline-none text-sm" placeholder="2000000" />
               </div>
               <div>
                 <label className="block text-[11px] font-bold text-gray-500 uppercase mb-1">Bei ya Kuuza</label>
-                <input type="number" required value={price} onChange={e => setPrice(e.target.value)} className="w-full bg-gray-50 border rounded-lg px-3 py-2 outline-none text-sm font-black text-[#0F172A]" placeholder="2500000" />
+                <input type="number" required value={price} onChange={e => setPrice(e.target.value)} className="w-full bg-gray-50 border rounded-lg px-3 py-2 outline-none text-sm" placeholder="2500000" />
               </div>
             </div>
 
@@ -221,13 +193,13 @@ export default function AdminProducts() {
                 value={specifications} 
                 onChange={e => setSpecifications(e.target.value)} 
                 rows={2} 
-                className="w-full bg-gray-50 border rounded-lg px-3 py-2 outline-none text-sm font-mono" 
+                className="w-full bg-gray-50 border rounded-lg px-3 py-2 outline-none text-sm" 
                 placeholder='{"RAM": "8GB", "Storage": "256GB"}'
               ></textarea>
             </div>
 
-            <button type="submit" disabled={isLoading} className="w-full bg-[#0F172A] hover:bg-gray-800 text-white font-bold py-3.5 rounded-xl text-sm transition mt-4 shadow-md">
-              {isLoading ? 'Inaweka Bidhaa...' : 'Hifadhi Bidhaa'}
+            <button type="submit" disabled={isLoading} className="w-full bg-[#0F172A] hover:bg-gray-800 text-white font-bold py-3 rounded-xl text-sm transition mt-4">
+              {isLoading ? 'Inaweka...' : 'Hifadhi Bidhaa'}
             </button>
           </form>
         </div>
@@ -240,44 +212,43 @@ export default function AdminProducts() {
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left">
-              <thead className="bg-gray-50 text-[10px] uppercase text-gray-500 font-bold tracking-wider">
+              <thead className="bg-gray-50 text-[10px] uppercase text-gray-500 font-bold">
                 <tr>
-                  <th className="px-6 py-4">Picha & SKU</th>
-                  <th className="px-6 py-4">Bidhaa</th>
-                  <th className="px-6 py-4">Bei (Tsh)</th>
-                  <th className="px-6 py-4">Stock</th>
-                  <th className="px-6 py-4">Hali</th>
+                  <th className="px-6 py-3">Picha & SKU</th>
+                  <th className="px-6 py-3">Bidhaa</th>
+                  <th className="px-6 py-3">Bei (Tsh)</th>
+                  <th className="px-6 py-3">Stock</th>
+                  <th className="px-6 py-3">Hali</th>
                 </tr>
               </thead>
-              <tbody className="text-sm divide-y divide-gray-100">
+              <tbody className="text-sm">
                 {products.map((p) => (
-                  <tr key={p.id} className="hover:bg-gray-50 transition">
+                  <tr key={p.id} className="border-b last:border-0 hover:bg-gray-50">
                     <td className="px-6 py-4 flex items-center gap-3">
                       {p.imageUrl ? (
-                        <img src={`${API_URL}${p.imageUrl}`} alt={p.name} className="w-12 h-12 object-cover rounded-lg border border-gray-200 bg-white" />
-                      ) : p.imageUrls && p.imageUrls.length > 0 ? (
-                        <img src={`${API_URL}${p.imageUrls[0]}`} alt={p.name} className="w-12 h-12 object-cover rounded-lg border border-gray-200 bg-white" />
+                        <img src={`${API_URL}${p.imageUrl}`} alt={p.name} className="w-10 h-10 object-cover rounded-lg border border-gray-200" />
                       ) : (
-                        <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center text-xl border border-gray-200">{p.imageEmoji || '📦'}</div>
+                        <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center text-xl">{p.imageEmoji}</div>
                       )}
-                      <span className="font-mono text-xs font-bold text-gray-500 bg-gray-100 px-2 py-1 rounded">{p.sku}</span>
+                      <span className="font-mono text-xs text-gray-500">{p.sku}</span>
                     </td>
-                    <td className="px-6 py-4 font-bold text-gray-800">{p.name} <br/><span className="text-[10px] uppercase text-gray-400 font-bold tracking-wider">{p.category}</span></td>
-                    <td className="px-6 py-4 text-[#0F172A] font-black">{p.price.toLocaleString()}</td>
-                    <td className="px-6 py-4 font-bold text-gray-600">{p.stockQuantity}</td>
+                    <td className="px-6 py-4 font-bold text-gray-800">{p.name} <br/><span className="text-xs text-gray-400 font-normal">{p.category}</span></td>
+                    <td className="px-6 py-4 text-green-600 font-bold">{p.price.toLocaleString()}</td>
+                    <td className="px-6 py-4 font-bold">{p.stockQuantity}</td>
                     <td className="px-6 py-4">
-                      <span className={`px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-wider ${
-                        p.stockQuantity > (p.lowStockAlert || 5) ? 'bg-green-100 text-green-700' : 
-                        p.stockQuantity > 0 ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'
-                      }`}>
-                        {p.stockQuantity > (p.lowStockAlert || 5) ? 'In Stock' : p.stockQuantity > 0 ? 'Low Stock' : 'Out of Stock'}
-                      </span>
+                      {p.stockQuantity > (p.lowStockAlert || 5) ? (
+                        <span className="bg-green-100 text-green-700 px-2 py-1 rounded text-[10px] font-bold">In Stock</span>
+                      ) : p.stockQuantity > 0 ? (
+                        <span className="bg-yellow-100 text-yellow-700 px-2 py-1 rounded text-[10px] font-bold">Low Stock</span>
+                      ) : (
+                        <span className="bg-red-100 text-red-700 px-2 py-1 rounded text-[10px] font-bold">Out of Stock</span>
+                      )}
                     </td>
                   </tr>
                 ))}
                 {products.length === 0 && (
                   <tr>
-                    <td colSpan={5} className="p-12 text-center text-gray-400 font-medium">Hakuna bidhaa zilizowekwa bado kwenye Database mpya.</td>
+                    <td colSpan={5} className="p-8 text-center text-gray-400">Hakuna bidhaa zilizowekwa bado.</td>
                   </tr>
                 )}
               </tbody>
