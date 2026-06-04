@@ -92,7 +92,6 @@ export default function HomePage() {
 
   const filteredSuggestions = products.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase())).slice(0, 5);
   
-  const [selectedProduct, setSelectedProduct] = useState<any | null>(null);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
   const [isWorkflowOpen, setIsWorkflowOpen] = useState(false);
@@ -188,7 +187,7 @@ export default function HomePage() {
     }
   };
 
-  const openCartWorkflow = () => { setSelectedProduct(null); setWorkflowStep(1); setIsWorkflowOpen(true); };
+  const openCartWorkflow = () => { setWorkflowStep(1); setIsWorkflowOpen(true); };
   const handleProceedToLocation = () => { if (!user) setIsLoginOpen(true); else setWorkflowStep(2); };
 
   const shippingFee = (city.toLowerCase() === 'dar es salaam' || city.toLowerCase() === 'dar') ? 0 : 10000;
@@ -224,8 +223,6 @@ export default function HomePage() {
       if (res.ok) { setWorkflowStep(4); clearCart(); }
     } catch (err) { console.error(err); } finally { setCheckoutLoading(false); }
   };
-
-  const handleBuyNow = (product: any) => { setSelectedProduct(null); addToCart(product); setWorkflowStep(1); setIsWorkflowOpen(true); };
 
   const SkeletonCard = () => (
     <div className="min-w-[140px] sm:min-w-[200px] bg-white rounded-xl p-3 border border-gray-100 shadow-sm animate-pulse flex flex-col h-full">
@@ -298,7 +295,7 @@ export default function HomePage() {
             {showSuggestions && searchQuery && (
               <div className="absolute top-full left-0 w-full bg-white border border-gray-200 rounded-b-xl shadow-xl z-50 max-h-80 overflow-y-auto">
                 {filteredSuggestions.map(item => (
-                  <div key={item.id} onClick={() => { setSelectedProduct(item); setShowSuggestions(false); setSearchQuery(''); }} className="flex items-center gap-3 p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-50 transition">
+                  <div key={item.id} onClick={() => { router.push(`/product/${item.id}`); setShowSuggestions(false); setSearchQuery(''); }} className="flex items-center gap-3 p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-50 transition">
                     <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center p-1">
                       {item.imageUrl ? <img src={`${getApiUrl()}${item.imageUrl}`} className="w-full h-full object-contain" /> : item.imageEmoji}
                     </div>
@@ -393,45 +390,6 @@ export default function HomePage() {
       <Footer />
       <FloatingWhatsApp />
       <MobileBottomNav />
-
-      {/* PRODUCT MODAL */}
-      {selectedProduct && !isWorkflowOpen && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-2 md:p-4 backdrop-blur-sm">
-          <div className="bg-white w-full max-w-5xl rounded-2xl max-h-[95vh] overflow-y-auto shadow-2xl relative animate-fade-in pb-20 sm:pb-0">
-            <button onClick={() => setSelectedProduct(null)} className="absolute top-2 right-2 sm:top-4 sm:right-4 text-gray-500 hover:text-gray-900 bg-gray-100 p-2 rounded-full z-10 transition"><FiX size={20} /></button>
-            <div className="flex flex-col lg:flex-row gap-4 sm:gap-8 p-4 sm:p-8">
-              <div className="w-full lg:w-1/3">
-                <div className="bg-gray-50 aspect-square rounded-xl border border-gray-200 flex items-center justify-center p-4">
-                  {selectedProduct.imageUrl ? ( <img src={`${getApiUrl()}${selectedProduct.imageUrl}`} alt={selectedProduct.name} className="object-contain w-full h-full" /> ) : ( <span className="text-6xl sm:text-8xl">{selectedProduct.imageEmoji}</span> )}
-                </div>
-              </div>
-              <div className="w-full lg:w-1/3 flex flex-col">
-                <h1 className="text-lg sm:text-2xl font-bold text-gray-900 leading-tight">{selectedProduct.name}</h1>
-                <div className="flex items-center gap-2 mt-2 border-b border-gray-100 pb-3">
-                   <span className="text-[#F2A900] text-xs sm:text-sm">⭐⭐⭐⭐⭐</span>
-                   <span className="text-blue-600 text-[10px] sm:text-xs">In Stock: {selectedProduct.stockQuantity || 'N/A'}</span>
-                </div>
-                <div className="mt-3 space-y-2 text-xs sm:text-sm text-gray-700">
-                   <p><strong>Category:</strong> {selectedProduct.category}</p>
-                   {selectedProduct.specifications && (
-                      <div className="mt-2 bg-gray-50 p-2 rounded-lg border border-gray-100 font-mono text-[10px] sm:text-xs">{selectedProduct.specifications}</div>
-                   )}
-                </div>
-              </div>
-              <div className="w-full lg:w-1/3">
-                <div className="border border-gray-200 rounded-xl p-4 sm:p-5 shadow-sm bg-white">
-                   <p className="text-2xl sm:text-3xl font-black text-gray-900 mb-1">TZS {selectedProduct.price.toLocaleString()}</p>
-                   {selectedProduct.oldPrice && <p className="text-xs sm:text-sm text-gray-400 line-through mb-4">Was: TZS {selectedProduct.oldPrice.toLocaleString()}</p>}
-                   <div className="space-y-2 sm:space-y-3">
-                     <button onClick={() => { addToCart(selectedProduct); setSelectedProduct(null); openCartWorkflow(); }} className="w-full bg-[#FFD814] text-black font-bold py-2.5 sm:py-3 rounded-full text-xs sm:text-sm shadow-sm">Add to Cart</button>
-                     <button onClick={() => handleBuyNow(selectedProduct)} className="w-full bg-[#FFA41C] text-black font-bold py-2.5 sm:py-3 rounded-full text-xs sm:text-sm shadow-sm">Buy Now</button>
-                   </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* LOGIN POPUP */}
       {isLoginOpen && (
