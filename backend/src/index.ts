@@ -36,6 +36,7 @@ const storage = multer.diskStorage({
     cb(null, uniqueSuffix + path.extname(file.originalname)); 
   }
 });
+// upload.any() inaruhusu picha yoyote kupita bila kuzuia mawasiliano
 const upload = multer({ storage: storage });
 
 // ==========================================
@@ -128,6 +129,19 @@ app.post('/api/login', async (req: Request, res: Response): Promise<void> => {
 // ==========================================
 // 3. BIDHAA & INVENTORY (PRODUCTS)
 // ==========================================
+
+// KUVUTA BIDHAA (GET ALL)
+app.get('/api/products', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const products = await prisma.product.findMany({ orderBy: { createdAt: 'desc' } });
+    res.status(200).json(products);
+  } catch (error) {
+    console.error('Fetch Products Error:', error);
+    res.status(500).json({ error: 'Kuna tatizo kuvuta bidhaa.' });
+  }
+});
+
+// KUWEKA BIDHAA MPYA (ADD)
 app.post('/api/products', upload.any(), async (req: Request, res: Response): Promise<void> => {
   try {
     const { sku, name, description, category, brand, buyingPrice, price, oldPrice, stockQuantity, lowStockAlert, specifications } = req.body;
@@ -166,15 +180,56 @@ app.post('/api/products', upload.any(), async (req: Request, res: Response): Pro
   }
 });
 
-app.get('/api/products', async (req: Request, res: Response): Promise<void> => {
+// KUHARIRI BIDHAA (UPDATE / EDIT)
+app.put('/api/products/:id', upload.any(), async (req: Request, res: Response): Promise<void> => {
   try {
-    const products = await prisma.product.findMany({ orderBy: { createdAt: 'desc' } });
-    res.status(200).json(products);
+    const { id } = req.params;
+    const { sku, name, description, category, brand, buyingPrice, price, oldPrice, stockQuantity, specifications } = req.body;
+
+    // Angalia kama kuna picha mpya iliyotumwa wakati wa Edit
+    const files = req.files as Express.Multer.File[];
+    let imageUrl = undefined;
+    if (files && files.length > 0) {
+      imageUrl = `/uploads/${files[0].filename}`;
+    }
+
+    const updatedProduct = await prisma.product.update({
+      where: { id },
+      data: {
+        sku, 
+        name, 
+        category, 
+        brand,
+        description: description || '',
+        buyingPrice: Number(buyingPrice) || 0,
+        price: Number(price),
+        oldPrice: oldPrice ? Number(oldPrice) : null,
+        stockQuantity: Number(stockQuantity) || 0,
+        inStock: Number(stockQuantity) > 0,
+        specifications: specifications || '',
+        ...(imageUrl && { imageUrl }), // Update picha kama tu imetumwa mpya
+      },
+    });
+
+    res.status(200).json({ message: 'Bidhaa imesasishwa kikamilifu!', product: updatedProduct });
   } catch (error) {
-    console.error('Fetch Products Error:', error);
-    res.status(500).json({ error: 'Kuna tatizo kuvuta bidhaa.' });
+    console.error('Product Update Error:', error);
+    res.status(500).json({ error: 'Kuna tatizo wakati wa kusasisha bidhaa.' });
   }
 });
+
+// KUFUTA BIDHAA (DELETE)
+app.delete('/api/products/:id', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    await prisma.product.delete({ where: { id } });
+    res.status(200).json({ message: 'Bidhaa imefutwa kikamilifu.' });
+  } catch (error) {
+    console.error('Product Delete Error:', error);
+    res.status(500).json({ error: 'Imeshindwa kufuta bidhaa.' });
+  }
+});
+
 
 // ==========================================
 // 4. DASHBOARD (CEO OVERVIEW)
