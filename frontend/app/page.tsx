@@ -33,7 +33,12 @@ const translations = {
     proceedLocation: "Proceed to Location",
     proceedPayment: "Proceed to Payment",
     confirmOrder: "Confirm & Place Order",
-    successMsg: "Order placed successfully! SMS/Email sent."
+    successMsg: "Order placed successfully! SMS/Email sent.",
+    deliveryFee: "Shipping Fee",
+    grandTotal: "Grand Total",
+    upfront: "Required Upfront",
+    signIn: "Sign In",
+    register: "Register"
   },
   sw: {
     allProducts: "Bidhaa Zote",
@@ -49,7 +54,12 @@ const translations = {
     proceedLocation: "Endelea na Mahali",
     proceedPayment: "Endelea na Malipo",
     confirmOrder: "Thibitisha na Lipia",
-    successMsg: "Oda imekamilika! Tumekutumia SMS na Barua Pepe."
+    successMsg: "Oda imekamilika! Tumekutumia SMS na Barua Pepe (Email) yenye Risiti na Invoice.",
+    deliveryFee: "Gharama ya Usafiri",
+    grandTotal: "Jumla Kuu",
+    upfront: "Kianzio",
+    signIn: "Ingia",
+    register: "Jisajili"
   }
 };
 
@@ -88,10 +98,10 @@ export default function HomePage() {
   const [address, setAddress] = useState('');
   const [checkoutLoading, setCheckoutLoading] = useState(false);
 
-  const { cart, addToCart, clearCart, cartTotal } = useCart();
+  const { cart, addToCart, removeFromCart, clearCart, cartTotal } = useCart();
   const t = translations[lang];
 
-  // HAPA TUNAWEKA LINK KWA NGUVU (HARDCODED) BADALA YA KUTEGEMEA VARIABLES
+  // Tunatumia link ya moja kwa moja ya mtandaoni kuhakikisha inapita
   const getApiUrl = () => {
     return 'https://jtex-ecommerce-production.up.railway.app';
   };
@@ -330,7 +340,6 @@ export default function HomePage() {
                <div className="bg-red-50 border border-red-200 text-red-600 p-6 rounded-xl flex flex-col items-center justify-center text-center">
                  <FiAlertCircle className="text-4xl mb-3" />
                  <p className="font-bold mb-1">Imeshindwa kuwasiliana na Server</p>
-                 <p className="text-xs">{fetchError}</p>
                  <button onClick={() => window.location.reload()} className="mt-4 bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-bold">Refresh Page</button>
                </div>
             ) : isLoading ? (
