@@ -128,23 +128,29 @@ export default function HomePage() {
       try {
         const url = `${getApiUrl()}/api/products`;
         const res = await fetch(url);
-        
         if (!res.ok) throw new Error(`Kosa la Server (Code ${res.status})`);
-        
         const data = await res.json();
-        if (Array.isArray(data)) {
-          setProducts(data);
-        } else {
-          setProducts([]);
-        }
+        if (Array.isArray(data)) setProducts(data);
       } catch (error: any) {
-        console.error("Kosa kuvuta bidhaa:", error);
         setFetchError(error.message); 
       } finally {
         setIsLoading(false);
       }
     };
     fetchRealProducts();
+
+    // MSIKILIZAJI WA MENU YA SIMU
+    const handleOpenCart = () => {
+      setWorkflowStep(1);
+      setIsWorkflowOpen(true);
+    };
+
+    if (window.location.search.includes('cart=open')) {
+      handleOpenCart();
+    }
+
+    window.addEventListener('openCart', handleOpenCart);
+    return () => window.removeEventListener('openCart', handleOpenCart);
   }, []);
 
   const toggleLanguage = () => setLang(prev => prev === 'en' ? 'sw' : 'en');
