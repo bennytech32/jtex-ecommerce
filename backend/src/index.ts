@@ -19,9 +19,10 @@ const PORT = Number(process.env.PORT) || 5001;
 const JWT_SECRET = process.env.JWT_SECRET || 'siri_nzito_ya_jtex_2026';
 
 // ==========================================
-// MFUMO WA KUHIFADHI PICHA (MULTER)
+// MFUMO WA KUHIFADHI PICHA (MULTER) - KWA RAILWAY VOLUMES
 // ==========================================
-const uploadDir = path.join(__dirname, '../uploads');
+const uploadDir = '/app/uploads'; // Njia ya moja kwa moja ya Railway Volume
+
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
@@ -42,7 +43,9 @@ const upload = multer({ storage: storage });
 // ==========================================
 app.use(cors()); 
 app.use(express.json()); 
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
+// RUHUSU KUSOMA PICHA KUTOKA KWENYE VOLUME MOJA KWA MOJA
+app.use('/uploads', express.static('/app/uploads'));
 
 // ==========================================
 // 0. HEALTH CHECK
@@ -125,7 +128,6 @@ app.post('/api/login', async (req: Request, res: Response): Promise<void> => {
 // ==========================================
 // 3. BIDHAA & INVENTORY (PRODUCTS)
 // ==========================================
-// MABADILIKO: upload.any() inaruhusu picha yoyote kupita bila kuzuia mawasiliano
 app.post('/api/products', upload.any(), async (req: Request, res: Response): Promise<void> => {
   try {
     const { sku, name, description, category, brand, buyingPrice, price, oldPrice, stockQuantity, lowStockAlert, specifications } = req.body;
@@ -136,7 +138,6 @@ app.post('/api/products', upload.any(), async (req: Request, res: Response): Pro
       return;
     }
 
-    // Kuchakata Picha Zilizotumwa
     const files = req.files as Express.Multer.File[];
     const imageUrl = files && files.length > 0 ? `/uploads/${files[0].filename}` : null;
 
