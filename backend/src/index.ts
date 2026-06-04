@@ -125,7 +125,8 @@ app.post('/api/login', async (req: Request, res: Response): Promise<void> => {
 // ==========================================
 // 3. BIDHAA & INVENTORY (PRODUCTS)
 // ==========================================
-app.post('/api/products', upload.single('image'), async (req: Request, res: Response): Promise<void> => {
+// MABADILIKO: upload.any() inaruhusu picha yoyote kupita bila kuzuia mawasiliano
+app.post('/api/products', upload.any(), async (req: Request, res: Response): Promise<void> => {
   try {
     const { sku, name, description, category, brand, buyingPrice, price, oldPrice, stockQuantity, lowStockAlert, specifications } = req.body;
 
@@ -135,7 +136,9 @@ app.post('/api/products', upload.single('image'), async (req: Request, res: Resp
       return;
     }
 
-    const imageUrl = req.file ? `/uploads/${req.file.filename}` : null;
+    // Kuchakata Picha Zilizotumwa
+    const files = req.files as Express.Multer.File[];
+    const imageUrl = files && files.length > 0 ? `/uploads/${files[0].filename}` : null;
 
     const newProduct = await prisma.product.create({
       data: {
@@ -201,7 +204,7 @@ app.get('/api/orders', async (req: Request, res: Response): Promise<void> => {
     const orders = await prisma.order.findMany({
       include: {
         user: { select: { name: true, phone: true } },
-        items: { include: { product: { select: { name: true, imageEmoji: true } } } }
+        items: { include: { product: { select: { name: true, imageUrl: true } } } }
       },
       orderBy: { createdAt: 'desc' }
     });
