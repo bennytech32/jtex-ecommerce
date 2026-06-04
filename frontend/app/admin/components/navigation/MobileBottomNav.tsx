@@ -2,7 +2,7 @@
 import React from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { FiHome, FiGrid, FiShoppingCart, FiUser } from 'react-icons/fi';
-import { useCart } from '../../context/CartContext';
+import { useCart } from '../../../context/CartContext'; // Tumeongeza ../ moja hapa
 
 export default function MobileBottomNav() {
   const router = useRouter();
