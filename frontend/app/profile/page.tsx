@@ -8,7 +8,7 @@ import {
   FiDownload, FiLogOut, FiCheckCircle, FiPhone, FiMail,
   FiShoppingCart, FiSearch, FiGlobe, FiTrash2, FiChevronRight, 
   FiMapPin, FiShield, FiTruck, FiSmartphone, FiSettings, FiHeart, 
-  FiHelpCircle, FiEdit2, FiPlus, FiMessageCircle
+  FiHelpCircle, FiEdit2, FiPlus, FiMessageCircle, FiBox
 } from 'react-icons/fi';
 
 import TopTicker from '../components/navigation/TopTicker';
@@ -387,7 +387,7 @@ export default function ProfilePage() {
 
       <Footer />
 
-      {/* MODAL YA RISITI (RECEIPT) INABAKI VILEVILE */}
+      {/* MODAL YA RISITI (RECEIPT) */}
       {selectedOrder && (
         <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 backdrop-blur-md">
           <div className="bg-white w-full max-w-3xl rounded-xl shadow-2xl relative flex flex-col max-h-[95vh] overflow-hidden animate-fade-in border-t-8 border-[#0F172A]">
@@ -474,7 +474,7 @@ export default function ProfilePage() {
                       <span className="font-black text-green-800">TZS {selectedOrder.upfrontPayment.toLocaleString()}</span>
                     </div>
                   )}
-                  {/* Sehemu mpya inayoonyesha Deni kama kianzio kimelipwa */}
+                  {/* Deni lililobaki */}
                   {selectedOrder.upfrontPayment > 0 && selectedOrder.totalAmount > selectedOrder.upfrontPayment && (
                      <div className="bg-red-50 p-3 rounded-lg border border-red-200 flex items-center justify-between mt-2">
                        <span className="text-[10px] font-black uppercase text-red-600">Remaining Balance</span>
