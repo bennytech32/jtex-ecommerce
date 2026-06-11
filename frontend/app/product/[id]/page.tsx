@@ -13,28 +13,34 @@ export default function ProductDetail() {
   const { addToCart } = useCart();
   
   const [product, setProduct] = useState<any>(null);
+  const [allProducts, setAllProducts] = useState<any[]>([]); // Imeongezwa kwa ajili ya Related Products
   const [loading, setLoading] = useState(true);
   const [mainImage, setMainImage] = useState<string>('');
   
   // States za muonekano (UI States)
-  const [selectedQty, setSelectedQty] = useState(1);
   const [specs, setSpecs] = useState<any>({});
+  const [wishlist, setWishlist] = useState<string[]>([]); // Kwa ajili ya like button kwenye Related Products
 
   const API_URL = 'https://jtex-ecommerce-production.up.railway.app';
+
+  const toggleWishlist = (e: React.MouseEvent, productId: string) => {
+    e.stopPropagation();
+    setWishlist(prev => prev.includes(productId) ? prev.filter(id => id !== productId) : [...prev, productId]);
+  };
 
   useEffect(() => {
     const fetchProduct = async () => {
       try {
-        // Tunavuta bidhaa zote kisha tunachuja ile yenye ID hii
         const res = await fetch(`${API_URL}/api/products`);
         const data = await res.json();
+        setAllProducts(data); // Hifadhi bidhaa zote ili tuchuje zinazofanana
+        
         const foundProduct = data.find((p: any) => p.id === id);
         
         if (foundProduct) {
           setProduct(foundProduct);
           setMainImage(foundProduct.imageUrl ? `${API_URL}${foundProduct.imageUrl}` : '');
           
-          // Jaribu kusoma JSON ya specifications
           if (foundProduct.specifications) {
             try {
               setSpecs(JSON.parse(foundProduct.specifications));
@@ -55,10 +61,51 @@ export default function ProductDetail() {
   if (loading) return <div className="min-h-screen flex items-center justify-center font-bold text-gray-500">Inatafuta bidhaa...</div>;
   if (!product) return <div className="min-h-screen flex items-center justify-center font-bold text-red-500">Bidhaa haijapatikana!</div>;
 
-  // Kutengeneza bei za makundi (Tiers) kama ilivyo kwenye picha ya mteja
   const basePrice = product.price;
-  const tier2Price = basePrice * 0.95; // Punguzo la 5% kwa 2-5 pieces
-  const tier3Price = basePrice * 0.90; // Punguzo la 10% kwa >5 pieces
+  const tier2Price = basePrice * 0.95; 
+  const tier3Price = basePrice * 0.90; 
+
+  // --- KUCHUJA RELATED PRODUCTS ---
+  // Tunachukua bidhaa zenye kategoria moja na hii anayoitazama, LAKINI tunaiondoa hii anayoitazama isijirudie
+  const relatedProducts = allProducts
+    .filter(p => p.category === product.category && p.id !== product.id)
+    .slice(0, 5); // Onyesha bidhaa 5 pekee zinazohusiana
+
+  // Component ya Kadi kwa ajili ya Related Products
+  const RelatedProductCard = ({ item }: { item: any }) => {
+    const isWishlisted = wishlist.includes(item.id);
+    return (
+      <div className="w-full bg-white rounded-xl p-2.5 sm:p-4 border border-gray-100 shadow-sm hover:shadow-lg transition-all duration-300 relative group flex flex-col cursor-pointer" onClick={() => router.push(`/product/${item.id}`)}>
+        <button onClick={(e) => toggleWishlist(e, item.id)} className="absolute top-2 right-2 z-20 w-7 h-7 bg-white/90 backdrop-blur rounded-full flex items-center justify-center text-gray-400 hover:text-red-500 shadow-sm transition">
+          <FiHeart className={`text-sm ${isWishlisted ? "fill-red-500 text-red-500" : ""}`} />
+        </button>
+        {item.oldPrice && (
+          <span className="absolute top-2 left-2 bg-red-500 text-white text-[9px] sm:text-[10px] font-black px-1.5 py-0.5 rounded shadow-sm z-10">
+            -{Math.round(((item.oldPrice - item.price) / item.oldPrice) * 100)}%
+          </span>
+        )}
+        <div className="aspect-square bg-white border border-gray-50 rounded-lg mb-2 sm:mb-3 flex items-center justify-center p-1 sm:p-2 relative overflow-hidden group-hover:bg-gray-50 transition">
+          {item.imageUrl ? (
+            <img src={`${API_URL}${item.imageUrl}`} alt={item.name} className="object-contain w-full h-full mix-blend-multiply group-hover:scale-105 transition duration-500" />
+          ) : (
+            <span className="text-4xl group-hover:scale-105 transition duration-500">{item.imageEmoji}</span>
+          )}
+        </div>
+        <h3 className="text-[11px] sm:text-sm font-bold text-gray-800 leading-tight mb-1 line-clamp-2 group-hover:text-[#F2A900] transition h-8">{item.name}</h3>
+        <div className="flex flex-col mb-2 mt-auto">
+          <span className="text-sm sm:text-lg font-black text-[#0F172A] leading-none">TZS {item.price.toLocaleString()}</span>
+        </div>
+        <div className="flex items-center justify-between border-t border-gray-50 pt-2">
+            <div className="flex items-center text-[#F2A900] text-[8px] sm:text-[10px]">
+              ★★★★★
+            </div>
+            <button onClick={(e) => { e.stopPropagation(); addToCart(item); }} className="w-7 h-7 sm:w-9 sm:h-9 rounded-full bg-gray-50 border border-gray-200 flex items-center justify-center text-[#0F172A] hover:bg-[#F2A900] transition-all shadow-sm">
+              <FiShoppingCart className="text-xs sm:text-sm" />
+            </button>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="min-h-screen bg-white text-gray-900 font-sans pb-20">
@@ -82,9 +129,7 @@ export default function ProductDetail() {
         {/* SEHEMU YA JUU: PICHA NA MAELEZO MAFUPI */}
         <div className="flex flex-col lg:flex-row gap-10 mb-12">
           
-          {/* UPANDE WA KUSHOTO: GALLERY */}
           <div className="w-full lg:w-1/2 flex gap-4">
-            {/* Thumbnails (Tunaweka picha ileile mara nyingi kwa ajili ya muonekano) */}
             <div className="flex flex-col gap-3 w-20">
               {[1, 2, 3, 4].map((i) => (
                 <div key={i} className="w-20 h-20 bg-gray-50 rounded-lg border border-gray-200 p-2 cursor-pointer hover:border-[#F2A900] transition">
@@ -93,7 +138,6 @@ export default function ProductDetail() {
               ))}
             </div>
             
-            {/* Main Image */}
             <div className="flex-1 bg-gray-50 rounded-2xl border border-gray-100 flex items-center justify-center p-8 relative">
               <span className="absolute top-4 left-4 bg-black text-white text-[10px] font-bold px-2 py-1 uppercase rounded tracking-wider">
                 {product.brand}
@@ -106,7 +150,6 @@ export default function ProductDetail() {
             </div>
           </div>
 
-          {/* UPANDE WA KULIA: TAARIFA ZA KUNUNUA */}
           <div className="w-full lg:w-1/2 flex flex-col">
             <div className="flex items-center gap-2 text-[#F2A900] text-sm mb-3">
               <FiStar className="fill-current" /><FiStar className="fill-current" /><FiStar className="fill-current" /><FiStar className="fill-current" /><FiStar className="fill-current text-gray-300" />
@@ -115,7 +158,6 @@ export default function ProductDetail() {
             
             <h1 className="text-2xl sm:text-3xl font-black text-gray-900 leading-tight mb-6">{product.name}</h1>
 
-            {/* Pricing Tiers */}
             <div className="bg-gray-50 rounded-xl p-4 border border-gray-100 mb-6">
               <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Minimum Order 1 Piece</p>
               <div className="grid grid-cols-3 gap-4 divide-x divide-gray-200">
@@ -134,7 +176,6 @@ export default function ProductDetail() {
               </div>
             </div>
 
-            {/* Additional Info */}
             <div className="mb-6">
               <p className="font-bold text-sm text-green-600 mb-1">In Stock - Ready to Ship</p>
               <p className="text-xs text-gray-500 leading-relaxed">
@@ -143,7 +184,6 @@ export default function ProductDetail() {
               </p>
             </div>
 
-            {/* Variants (Mockup kulingana na picha) */}
             <div className="mb-8 space-y-4">
               {specs.Processor && (
                 <div>
@@ -163,19 +203,18 @@ export default function ProductDetail() {
               )}
             </div>
 
-            {/* Action Buttons */}
             <div className="flex flex-col sm:flex-row gap-3 mt-auto">
               <button onClick={() => { addToCart(product); alert('Imewekwa kwenye kikapu!'); }} className="flex-1 bg-[#F2A900] hover:bg-yellow-500 text-[#0F172A] font-black py-4 rounded-xl text-sm transition shadow-sm flex justify-center items-center gap-2">
                 <FiShoppingCart /> Add To Cart
               </button>
-              <button onClick={() => { addToCart(product); router.push('/?checkout=true'); }} className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-900 font-black py-4 rounded-xl text-sm transition flex justify-center items-center gap-2">
+              <button onClick={() => { addToCart(product); router.push('/?cart=open'); }} className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-900 font-black py-4 rounded-xl text-sm transition flex justify-center items-center gap-2">
                 Check-Out <FiChevronRight />
               </button>
             </div>
           </div>
         </div>
 
-        {/* SEHEMU YA CHINI: MAELEZO NA SPECIFICATIONS */}
+        {/* SEHEMU YA KATI: MAELEZO NA SPECIFICATIONS */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 border-t border-gray-100 pt-12 mb-16">
           <div>
             <h3 className="text-xl font-black mb-4">Description</h3>
@@ -203,6 +242,21 @@ export default function ProductDetail() {
             </div>
           </div>
         </div>
+
+        {/* SEHEMU YA CHINI: RELATED PRODUCTS (BIDHAA ZINAZOHUSIANA) */}
+        {relatedProducts.length > 0 && (
+          <div className="border-t border-gray-100 pt-12 mb-10">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl sm:text-2xl font-black text-gray-900">Recommended Products</h3>
+              <button onClick={() => router.push('/')} className="text-sm font-bold text-blue-600 hover:underline">View All</button>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4 animate-fade-in">
+              {relatedProducts.map(item => (
+                <RelatedProductCard key={item.id} item={item} />
+              ))}
+            </div>
+          </div>
+        )}
 
       </main>
       <Footer />
