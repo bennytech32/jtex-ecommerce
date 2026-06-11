@@ -7,7 +7,7 @@ import {
   FiShoppingCart, FiGlobe, FiX, FiCheckCircle, FiMapPin, FiTruck, FiShield, 
   FiLock, FiMail, FiUser, FiPhone, FiTrash2, FiChevronRight, FiSearch, FiHeart, 
   FiBox, FiAlertCircle, FiCreditCard, FiSmartphone, FiGrid, FiArrowRight, FiArrowLeft,
-  FiMic, FiCamera, FiCpu, FiMaximize, FiUploadCloud
+  FiCpu, FiMic, FiMaximize, FiCamera, FiUploadCloud
 } from 'react-icons/fi';
 
 import TopTicker from './components/navigation/TopTicker';
@@ -29,7 +29,7 @@ const translations = {
     addToCart: "Add to Cart",
     buyNow: "Buy Now",
     searchPlaceholder: "Search products, brands...",
-    aiSearchPlaceholder: "Ask Jtex AI (e.g., 'Best gaming laptop under 1.5M')...",
+    aiSearchPlaceholder: "Ask Jtex AI (e.g., 'Best gaming laptop')...",
     cart: "Cart Review",
     location: "Shipping Address",
     payment: "Payment Method",
@@ -47,6 +47,7 @@ const translations = {
     city: "City / State",
     street: "Street Address",
     zip: "ZIP / Postal Code",
+    // Banner Texts EN
     banner1Title: "Huge Discount Season!",
     banner1Sub: "Get up to 40% off on Electronics",
     banner1Btn: "Shop Now",
@@ -56,6 +57,7 @@ const translations = {
     banner3Title: "Modern Fashion",
     banner3Sub: "Look good with trendy clothes at affordable prices",
     banner3Btn: "View Fashion",
+    // Kategoria za juu
     catAll: "All Categories",
     catElectronics: "Electronics",
     catFashion: "Fashion",
@@ -63,7 +65,6 @@ const translations = {
     catPhones: "Phones",
     catComputers: "Computers",
     catBeauty: "Beauty",
-    // Smart search headers
     voiceListening: "Listening... Speak now",
     voiceError: "Voice search not supported or microphone denied.",
     imageSearchTitle: "AI Image Search",
@@ -80,7 +81,7 @@ const translations = {
     addToCart: "Weka Kikapuni",
     buyNow: "Nunua Sasa",
     searchPlaceholder: "Tafuta bidhaa, aina...",
-    aiSearchPlaceholder: "Uliza Jtex AI (mfano, 'Simu nzuri ya gaming chini ya laki 5')...",
+    aiSearchPlaceholder: "Uliza Jtex AI (mfano, 'Simu nzuri ya gaming')...",
     cart: "Kikapu Chako",
     location: "Anwani ya Usafirishaji",
     payment: "Njia ya Malipo",
@@ -98,6 +99,7 @@ const translations = {
     city: "Mkoa / Mji",
     street: "Mtaa / Anwani Kamili",
     zip: "Postikodi (Zip Code)",
+    // Banner Texts SW
     banner1Title: "Msimu wa Punguzo Kubwa!",
     banner1Sub: "Pata hadi 40% punguzo kwenye Elektroniki",
     banner1Btn: "Nunua Sasa",
@@ -107,6 +109,7 @@ const translations = {
     banner3Title: "Fesheni ya Kisasa",
     banner3Sub: "Pendeza na nguo za kijanja kwa bei nafuu",
     banner3Btn: "Tazama Nguo",
+    // Kategoria za juu
     catAll: "Kategoria Zote",
     catElectronics: "Elektroniki",
     catFashion: "Nguo",
@@ -114,7 +117,6 @@ const translations = {
     catPhones: "Simu",
     catComputers: "Kompyuta",
     catBeauty: "Urembo",
-    // Smart search headers
     voiceListening: "Inasikiliza... Ongea sasa",
     voiceError: "Mfumo wa sauti haukubaliwi kwenye kivinjari hiki.",
     imageSearchTitle: "Tafuta kwa Picha (AI)",
@@ -125,12 +127,35 @@ const translations = {
   }
 };
 
+// Tumia "Keys" kwa kategoria badala ya maneno halisi ili iwe rahisi kutafsiri
 const CATEGORY_KEYS = ['All', 'Electronics', 'Fashion', 'Shoes', 'Phones', 'Computers', 'Beauty'];
 
+// --- BANNERS DATA YENYE TAFSIRI ---
 const getBanners = (t: any) => [
-  { id: 1, title: t.banner1Title, subtitle: t.banner1Sub, bgColor: "from-blue-600 to-blue-800", buttonText: t.banner1Btn, categoryTarget: "Electronics" },
-  { id: 2, title: t.banner2Title, subtitle: t.banner2Sub, bgColor: "from-[#F2A900] to-yellow-600", buttonText: t.banner2Btn, categoryTarget: "Phones" },
-  { id: 3, title: t.banner3Title, subtitle: t.banner3Sub, bgColor: "from-purple-600 to-purple-800", buttonText: t.banner3Btn, categoryTarget: "Fashion" }
+  {
+    id: 1,
+    title: t.banner1Title,
+    subtitle: t.banner1Sub,
+    bgColor: "from-blue-600 to-blue-800",
+    buttonText: t.banner1Btn,
+    categoryTarget: "Electronics" // Target ni ile key
+  },
+  {
+    id: 2,
+    title: t.banner2Title,
+    subtitle: t.banner2Sub,
+    bgColor: "from-[#F2A900] to-yellow-600",
+    buttonText: t.banner2Btn,
+    categoryTarget: "Phones"
+  },
+  {
+    id: 3,
+    title: t.banner3Title,
+    subtitle: t.banner3Sub,
+    bgColor: "from-purple-600 to-purple-800",
+    buttonText: t.banner3Btn,
+    categoryTarget: "Fashion"
+  }
 ];
 
 export default function HomePage() {
@@ -146,24 +171,28 @@ export default function HomePage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [wishlist, setWishlist] = useState<string[]>([]);
-  
+
   // Advanced Search Feature States
   const [isAiSearch, setIsAiSearch] = useState(false);
   const [isVoiceListening, setIsVoiceListening] = useState(false);
   const [isBarcodeOpen, setIsBarcodeOpen] = useState(false);
   const [isImageSearchOpen, setIsImageSearchOpen] = useState(false);
   const [aiActionLoading, setAiActionLoading] = useState(false);
-
+  
+  // Banner States
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
+  
   const categoriesRef = useRef<HTMLDivElement>(null);
+
   const t = translations[lang];
   const activeBanners = getBanners(t);
 
-  const { cart, addToCart, removeFromCart, clearCart, cartTotal } = useCart();
+  const toggleWishlist = (e: React.MouseEvent, productId: string) => {
+    e.stopPropagation();
+    setWishlist(prev => prev.includes(productId) ? prev.filter(id => id !== productId) : [...prev, productId]);
+  };
 
-  const getApiUrl = () => 'https://jtex-ecommerce-production.up.railway.app';
-
-  // 1. VOICE SEARCH LOGIC (WEB SPEECH API Halisi)
+  // 1. VOICE SEARCH LOGIC (WEB SPEECH API)
   const startVoiceSearch = () => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) {
@@ -195,7 +224,6 @@ export default function HomePage() {
     setTimeout(() => {
       setAiActionLoading(false);
       setIsImageSearchOpen(false);
-      // Simulates identifying a phone from image
       setSearchQuery(lang === 'en' ? 'Smartphone' : 'Simu'); 
       if (categoriesRef.current) categoriesRef.current.scrollIntoView({ behavior: 'smooth' });
     }, 2500);
@@ -207,23 +235,20 @@ export default function HomePage() {
     setTimeout(() => {
       setAiActionLoading(false);
       setIsBarcodeOpen(false);
-      // Simulates scanning a random barcode that maps to standard query or SKU
       setSearchQuery('Pro'); 
       if (categoriesRef.current) categoriesRef.current.scrollIntoView({ behavior: 'smooth' });
     }, 2000);
   };
 
-  const toggleWishlist = (e: React.MouseEvent, productId: string) => {
-    e.stopPropagation();
-    setWishlist(prev => prev.includes(productId) ? prev.filter(id => id !== productId) : [...prev, productId]);
-  };
-
+  // Mfumo Mzuri wa Kufilter (Anatafsiri Electronics = Elektroniki na Kompyuta = Computers)
   const isCategoryMatch = (productCategory: string, targetCategory: string) => {
     if (targetCategory === 'All') return true;
     if (!productCategory) return false;
+    
     const pCat = productCategory.toLowerCase();
     const tCat = targetCategory.toLowerCase();
 
+    // Map za kategoria zinazoshabihiana
     const mappings: any = {
       'electronics': ['electronics', 'elektroniki'],
       'fashion': ['fashion', 'nguo', 'clothing', 'apparel'],
@@ -233,7 +258,12 @@ export default function HomePage() {
       'beauty': ['beauty', 'urembo', 'cosmetics', 'health']
     };
 
-    if (mappings[tCat]) return mappings[tCat].some((cat: string) => pCat.includes(cat));
+    // Kama target ina mapping, angalia kama product ipo kwenye hiyo map
+    if (mappings[tCat]) {
+       return mappings[tCat].some((cat: string) => pCat.includes(cat));
+    }
+    
+    // Kama haiko kwenye map, fanya string matching ya kawaida
     return pCat.includes(tCat);
   };
 
@@ -262,7 +292,14 @@ export default function HomePage() {
   const [streetAddress, setStreetAddress] = useState('');
   const [zipCode, setZipCode] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('Card');
+  
   const [checkoutLoading, setCheckoutLoading] = useState(false);
+
+  const { cart, addToCart, removeFromCart, clearCart, cartTotal } = useCart();
+
+  const getApiUrl = () => {
+    return 'https://jtex-ecommerce-production.up.railway.app';
+  };
 
   useEffect(() => {
     setIsClient(true);
@@ -296,6 +333,7 @@ export default function HomePage() {
     window.addEventListener('openCart', handleOpenCart);
     window.addEventListener('openCategories', handleOpenCategories);
     
+    // CUSTOM EVENT: Kupokea amri kutoka SidebarCategories (Ikibonyeza kategoria kule iseti hapa)
     const handleCategorySelect = (e: any) => {
         if(e.detail && e.detail.category) {
             setActiveCategory(e.detail.category);
@@ -311,6 +349,7 @@ export default function HomePage() {
     };
   }, []);
 
+  // Banners Auto-Slide Logic
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentBannerIndex((prev) => (prev + 1) % activeBanners.length);
@@ -443,16 +482,13 @@ export default function HomePage() {
             J<span className="text-[#F2A900]">tex</span>
           </span>
           
-          {/* SEARCH BAR SYSTEM WITH AI, VOICE, BARCODE & IMAGE LINKS */}
           <div className="hidden md:flex flex-1 max-w-2xl mx-8 relative">
-            <div className={`relative w-full flex border-2 ${showSuggestions ? 'border-[#F2A900] rounded-t-xl' : 'border-[#F2A900] rounded-full'} overflow-hidden transition-all bg-white shadow-sm`}>
-              <select value={activeCategory} onChange={(e) => setActiveCategory(e.target.value)} className="bg-gray-50 border-r border-gray-200 px-3 py-2 text-xs outline-none hidden lg:block font-bold cursor-pointer text-gray-600">
+            <div className={`relative w-full flex border-2 ${showSuggestions ? 'border-[#F2A900] rounded-t-xl' : 'border-[#F2A900] rounded-full'} overflow-hidden transition-all bg-white`}>
+              <select value={activeCategory} onChange={(e) => setActiveCategory(e.target.value)} className="bg-gray-50 border-r border-gray-200 px-3 py-2 text-xs outline-none hidden lg:block font-medium cursor-pointer">
                 {CATEGORY_KEYS.map(cat => <option key={cat} value={cat}>{getTranslatedCategoryName(cat)}</option>)}
               </select>
               <input 
-                type="text" 
-                placeholder={isAiSearch ? t.aiSearchPlaceholder : t.searchPlaceholder} 
-                value={searchQuery}
+                type="text" placeholder={isAiSearch ? t.aiSearchPlaceholder : t.searchPlaceholder} value={searchQuery}
                 onChange={(e) => { setSearchQuery(e.target.value); setShowSuggestions(e.target.value.length > 0); }}
                 onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
                 onFocus={() => { if(searchQuery) setShowSuggestions(true); }}
@@ -481,7 +517,7 @@ export default function HomePage() {
                     <span className="text-sm font-black text-[#0F172A]">TZS {item.price.toLocaleString()}</span>
                   </div>
                 )) : (
-                  <div className="p-4 text-center text-sm text-gray-500 font-medium">No records match "{searchQuery}"</div>
+                  <div className="p-4 text-center text-sm text-gray-500 font-medium">Hakuna bidhaa inayofanana na "{searchQuery}"</div>
                 )}
               </div>
             )}
@@ -517,7 +553,7 @@ export default function HomePage() {
         {/* MOBILE SMART SEARCH CONTROL HEADER */}
         <div className="md:hidden px-4 pb-3">
           <div className="relative w-full flex border border-gray-300 rounded-full overflow-hidden bg-gray-50 p-1">
-             <input type="text" placeholder={isAiSearch ? t.aiSearchPlaceholder : t.searchPlaceholder} value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="flex-1 px-3 py-1.5 text-xs outline-none bg-transparent" />
+             <input type="text" placeholder={isAiSearch ? t.aiSearchPlaceholder : t.searchPlaceholder} value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className={`flex-1 px-3 py-1.5 text-xs outline-none bg-transparent font-medium ${isAiSearch ? 'text-purple-700' : 'text-gray-900'}`} />
              <div className="flex items-center gap-1 text-gray-400 mr-2">
                 <button onClick={() => setIsAiSearch(!isAiSearch)} className={`p-1 ${isAiSearch ? 'text-purple-600' : ''}`}><FiCpu size={14} /></button>
                 <button onClick={startVoiceSearch} className={`p-1 ${isVoiceListening ? 'text-red-500 animate-pulse' : ''}`}><FiMic size={14} /></button>
@@ -551,7 +587,7 @@ export default function HomePage() {
               
               {/* LASER FRAME WORKSPACE */}
               <div className="w-full aspect-[4/3] bg-gray-900 border-2 border-dashed border-gray-600 rounded-xl relative overflow-hidden flex items-center justify-center mb-6">
-                 <div className="w-4/5 h-0.5 bg-red-500 absolute animate-laser shadow-lg shadow-red-500/80"></div>
+                 <div className="w-4/5 h-0.5 bg-red-500 absolute animate-pulse shadow-lg shadow-red-500/80"></div>
                  <span className="text-5xl opacity-20 select-none">📷 Camera Ready</span>
               </div>
 
@@ -597,7 +633,36 @@ export default function HomePage() {
         </div>
 
         <div className="flex-1 flex flex-col gap-5 sm:gap-8 min-w-0">
-          <HeroSlider />
+          
+          {/* MATANGAZO YANAYOTELEZA (BANNERS) */}
+          <div className="relative w-full h-[180px] sm:h-[250px] md:h-[300px] rounded-2xl overflow-hidden shadow-sm group">
+            {activeBanners.map((banner, index) => (
+              <div 
+                key={banner.id}
+                className={`absolute inset-0 w-full h-full transition-opacity duration-1000 bg-gradient-to-r ${banner.bgColor} flex flex-col justify-center px-8 sm:px-12 md:px-20 text-white
+                ${index === currentBannerIndex ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}
+              >
+                <h1 className="text-2xl sm:text-4xl md:text-5xl font-black mb-2 sm:mb-4 tracking-tight leading-tight">{banner.title}</h1>
+                <p className="text-sm sm:text-lg md:text-xl font-medium mb-6 sm:mb-8 opacity-90 max-w-xl">{banner.subtitle}</p>
+                <button 
+                  onClick={() => handleBannerClick(banner.categoryTarget)}
+                  className="bg-white text-gray-900 font-black px-6 sm:px-8 py-2.5 sm:py-3.5 rounded-xl w-max hover:bg-gray-100 transition shadow-lg flex items-center gap-2 text-sm sm:text-base"
+                >
+                  {banner.buttonText} <FiArrowRight />
+                </button>
+              </div>
+            ))}
+            
+            <button onClick={prevBanner} className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/40 text-white p-2 rounded-full backdrop-blur-sm z-20 opacity-0 group-hover:opacity-100 transition"><FiArrowLeft size={24} /></button>
+            <button onClick={nextBanner} className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/40 text-white p-2 rounded-full backdrop-blur-sm z-20 opacity-0 group-hover:opacity-100 transition"><FiArrowRight size={24} /></button>
+            
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-20">
+              {activeBanners.map((_, index) => (
+                <div key={index} onClick={() => setCurrentBannerIndex(index)} className={`w-2 h-2 rounded-full cursor-pointer transition-all ${index === currentBannerIndex ? 'bg-white w-6' : 'bg-white/50'}`}></div>
+              ))}
+            </div>
+          </div>
+
           <TrustBadges />
 
           <div ref={categoriesRef} className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100 mt-2 scroll-mt-24">
