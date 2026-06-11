@@ -6,7 +6,7 @@ import { useCart } from './context/CartContext';
 import { 
   FiShoppingCart, FiGlobe, FiX, FiCheckCircle, FiMapPin, FiTruck, FiShield, 
   FiLock, FiMail, FiUser, FiPhone, FiTrash2, FiChevronRight, FiSearch, FiHeart, 
-  FiBox, FiAlertCircle, FiCreditCard, FiSmartphone, FiGrid
+  FiBox, FiAlertCircle, FiCreditCard, FiSmartphone, FiGrid, FiArrowRight, FiArrowLeft
 } from 'react-icons/fi';
 
 import TopTicker from './components/navigation/TopTicker';
@@ -74,8 +74,35 @@ const translations = {
   }
 };
 
-// Orodha ya Kategoria zetu
 const CATEGORIES = ['All', 'Elektroniki', 'Nguo', 'Viatu', 'Simu', 'Kompyuta', 'Urembo'];
+
+// --- BANNERS DATA ---
+const BANNERS = [
+  {
+    id: 1,
+    title: "Msimu wa Punguzo Kubwa!",
+    subtitle: "Pata hadi 40% punguzo kwenye Elektroniki",
+    bgColor: "from-blue-600 to-blue-800",
+    buttonText: "Nunua Sasa",
+    categoryTarget: "Elektroniki"
+  },
+  {
+    id: 2,
+    title: "Simu Mpya Mjini",
+    subtitle: "Agiza leo uletewe mlangoni ndani ya saa 24",
+    bgColor: "from-[#F2A900] to-yellow-600",
+    buttonText: "Tazama Simu",
+    categoryTarget: "Simu"
+  },
+  {
+    id: 3,
+    title: "Fesheni ya Kisasa",
+    subtitle: "Pendeza na nguo za kijanja kwa bei nafuu",
+    bgColor: "from-purple-600 to-purple-800",
+    buttonText: "Tazama Nguo",
+    categoryTarget: "Nguo"
+  }
+];
 
 export default function HomePage() {
   const router = useRouter();
@@ -86,11 +113,13 @@ export default function HomePage() {
   const [lang, setLang] = useState<'en' | 'sw'>('en'); 
   const [isClient, setIsClient] = useState(false); 
   
-  // States za Kategoria na Kutafuta
   const [activeCategory, setActiveCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [wishlist, setWishlist] = useState<string[]>([]);
+  
+  // Banner States
+  const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
   
   const categoriesRef = useRef<HTMLDivElement>(null);
 
@@ -99,7 +128,6 @@ export default function HomePage() {
     setWishlist(prev => prev.includes(productId) ? prev.filter(id => id !== productId) : [...prev, productId]);
   };
 
-  // Logic ya Kuchuja Bidhaa (Filtering Logic)
   const displayedProducts = products.filter(p => {
     const matchCategory = activeCategory === 'All' || p.category?.toLowerCase() === activeCategory.toLowerCase();
     const matchSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase());
@@ -119,7 +147,6 @@ export default function HomePage() {
   const [registerPhone, setRegisterPhone] = useState('');
   const [loginError, setLoginError] = useState('');
   
-  // Checkout States
   const [country, setCountry] = useState('Tanzania');
   const [city, setCity] = useState('');
   const [streetAddress, setStreetAddress] = useState('');
@@ -155,7 +182,6 @@ export default function HomePage() {
     };
     fetchRealProducts();
 
-    // MSIKILIZAJI WA MENU YA SIMU
     const handleOpenCart = () => { setWorkflowStep(1); setIsWorkflowOpen(true); };
     const handleOpenCategories = () => {
       if (categoriesRef.current) {
@@ -172,6 +198,24 @@ export default function HomePage() {
       window.removeEventListener('openCategories', handleOpenCategories);
     };
   }, []);
+
+  // Banners Auto-Slide Logic
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentBannerIndex((prev) => (prev + 1) % BANNERS.length);
+    }, 5000); // Badilisha kila sekunde 5
+    return () => clearInterval(timer);
+  }, []);
+
+  const nextBanner = () => setCurrentBannerIndex((prev) => (prev + 1) % BANNERS.length);
+  const prevBanner = () => setCurrentBannerIndex((prev) => (prev - 1 + BANNERS.length) % BANNERS.length);
+
+  const handleBannerClick = (categoryTarget: string) => {
+    setActiveCategory(categoryTarget);
+    if (categoriesRef.current) {
+      categoriesRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
 
   const toggleLanguage = () => setLang(prev => prev === 'en' ? 'sw' : 'en');
 
@@ -352,12 +396,42 @@ export default function HomePage() {
         </div>
 
         <div className="flex-1 flex flex-col gap-5 sm:gap-8 min-w-0">
-          <HeroSlider />
+          
+          {/* MATANGAZO YANAYOTELEZA (BANNERS) */}
+          <div className="relative w-full h-[180px] sm:h-[250px] md:h-[300px] rounded-2xl overflow-hidden shadow-sm group">
+            {BANNERS.map((banner, index) => (
+              <div 
+                key={banner.id}
+                className={`absolute inset-0 w-full h-full transition-opacity duration-1000 bg-gradient-to-r ${banner.bgColor} flex flex-col justify-center px-8 sm:px-12 md:px-20 text-white
+                ${index === currentBannerIndex ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}
+              >
+                <h1 className="text-2xl sm:text-4xl md:text-5xl font-black mb-2 sm:mb-4 tracking-tight leading-tight">{banner.title}</h1>
+                <p className="text-sm sm:text-lg md:text-xl font-medium mb-6 sm:mb-8 opacity-90 max-w-xl">{banner.subtitle}</p>
+                <button 
+                  onClick={() => handleBannerClick(banner.categoryTarget)}
+                  className="bg-white text-gray-900 font-black px-6 sm:px-8 py-2.5 sm:py-3.5 rounded-xl w-max hover:bg-gray-100 transition shadow-lg flex items-center gap-2 text-sm sm:text-base"
+                >
+                  {banner.buttonText} <FiArrowRight />
+                </button>
+              </div>
+            ))}
+            
+            {/* Vitufe vya kusogeza Banners */}
+            <button onClick={prevBanner} className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/40 text-white p-2 rounded-full backdrop-blur-sm z-20 opacity-0 group-hover:opacity-100 transition"><FiArrowLeft size={24} /></button>
+            <button onClick={nextBanner} className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/40 text-white p-2 rounded-full backdrop-blur-sm z-20 opacity-0 group-hover:opacity-100 transition"><FiArrowRight size={24} /></button>
+            
+            {/* Vidoti vya Banners */}
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-20">
+              {BANNERS.map((_, index) => (
+                <div key={index} onClick={() => setCurrentBannerIndex(index)} className={`w-2 h-2 rounded-full cursor-pointer transition-all ${index === currentBannerIndex ? 'bg-white w-6' : 'bg-white/50'}`}></div>
+              ))}
+            </div>
+          </div>
+
           <TrustBadges />
 
           <div ref={categoriesRef} className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100 mt-2 scroll-mt-24">
             
-            {/* CATEGORY TABS (MABORESHO YA KUCHUJA BIDHAA) */}
             <div className="flex overflow-x-auto gap-2 pb-4 mb-4 hide-scrollbar border-b border-gray-100">
               {CATEGORIES.map(cat => (
                 <button 
@@ -420,7 +494,6 @@ export default function HomePage() {
       <MobileBottomNav />
 
       {/* LOGIN POPUP & CHECKOUT WORKFLOW */}
-      {/* ... (Modal za Login na Checkout zimebaki vilevile bila kubadilika) ... */}
       {isLoginOpen && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
           <div className="bg-white w-full max-w-4xl rounded-2xl shadow-2xl relative flex overflow-hidden min-h-[500px] animate-fade-in">
