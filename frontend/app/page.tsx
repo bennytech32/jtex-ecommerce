@@ -44,7 +44,25 @@ const translations = {
     country: "Country",
     city: "City / State",
     street: "Street Address",
-    zip: "ZIP / Postal Code"
+    zip: "ZIP / Postal Code",
+    // Banner Texts EN
+    banner1Title: "Huge Discount Season!",
+    banner1Sub: "Get up to 40% off on Electronics",
+    banner1Btn: "Shop Now",
+    banner2Title: "New Phones in Town",
+    banner2Sub: "Order today and get it delivered within 24 hours",
+    banner2Btn: "View Phones",
+    banner3Title: "Modern Fashion",
+    banner3Sub: "Look good with trendy clothes at affordable prices",
+    banner3Btn: "View Fashion",
+    // Kategoria za juu
+    catAll: "All Categories",
+    catElectronics: "Electronics",
+    catFashion: "Fashion",
+    catShoes: "Shoes",
+    catPhones: "Phones",
+    catComputers: "Computers",
+    catBeauty: "Beauty"
   },
   sw: {
     allProducts: "Bidhaa Zote",
@@ -70,37 +88,56 @@ const translations = {
     country: "Nchi",
     city: "Mkoa / Mji",
     street: "Mtaa / Anwani Kamili",
-    zip: "Postikodi (Zip Code)"
+    zip: "Postikodi (Zip Code)",
+    // Banner Texts SW
+    banner1Title: "Msimu wa Punguzo Kubwa!",
+    banner1Sub: "Pata hadi 40% punguzo kwenye Elektroniki",
+    banner1Btn: "Nunua Sasa",
+    banner2Title: "Simu Mpya Mjini",
+    banner2Sub: "Agiza leo uletewe mlangoni ndani ya saa 24",
+    banner2Btn: "Tazama Simu",
+    banner3Title: "Fesheni ya Kisasa",
+    banner3Sub: "Pendeza na nguo za kijanja kwa bei nafuu",
+    banner3Btn: "Tazama Nguo",
+    // Kategoria za juu
+    catAll: "Kategoria Zote",
+    catElectronics: "Elektroniki",
+    catFashion: "Nguo",
+    catShoes: "Viatu",
+    catPhones: "Simu",
+    catComputers: "Kompyuta",
+    catBeauty: "Urembo"
   }
 };
 
-const CATEGORIES = ['All', 'Elektroniki', 'Nguo', 'Viatu', 'Simu', 'Kompyuta', 'Urembo'];
+// Tumia "Keys" kwa kategoria badala ya maneno halisi ili iwe rahisi kutafsiri
+const CATEGORY_KEYS = ['All', 'Electronics', 'Fashion', 'Shoes', 'Phones', 'Computers', 'Beauty'];
 
-// --- BANNERS DATA ---
-const BANNERS = [
+// --- BANNERS DATA YENYE TAFSIRI ---
+const getBanners = (t: any) => [
   {
     id: 1,
-    title: "Msimu wa Punguzo Kubwa!",
-    subtitle: "Pata hadi 40% punguzo kwenye Elektroniki",
+    title: t.banner1Title,
+    subtitle: t.banner1Sub,
     bgColor: "from-blue-600 to-blue-800",
-    buttonText: "Nunua Sasa",
-    categoryTarget: "Elektroniki"
+    buttonText: t.banner1Btn,
+    categoryTarget: "Electronics" // Target ni ile key
   },
   {
     id: 2,
-    title: "Simu Mpya Mjini",
-    subtitle: "Agiza leo uletewe mlangoni ndani ya saa 24",
+    title: t.banner2Title,
+    subtitle: t.banner2Sub,
     bgColor: "from-[#F2A900] to-yellow-600",
-    buttonText: "Tazama Simu",
-    categoryTarget: "Simu"
+    buttonText: t.banner2Btn,
+    categoryTarget: "Phones"
   },
   {
     id: 3,
-    title: "Fesheni ya Kisasa",
-    subtitle: "Pendeza na nguo za kijanja kwa bei nafuu",
+    title: t.banner3Title,
+    subtitle: t.banner3Sub,
     bgColor: "from-purple-600 to-purple-800",
-    buttonText: "Tazama Nguo",
-    categoryTarget: "Nguo"
+    buttonText: t.banner3Btn,
+    categoryTarget: "Fashion"
   }
 ];
 
@@ -123,14 +160,45 @@ export default function HomePage() {
   
   const categoriesRef = useRef<HTMLDivElement>(null);
 
+  const t = translations[lang];
+  const activeBanners = getBanners(t);
+
   const toggleWishlist = (e: React.MouseEvent, productId: string) => {
     e.stopPropagation();
     setWishlist(prev => prev.includes(productId) ? prev.filter(id => id !== productId) : [...prev, productId]);
   };
 
+  // Mfumo Mzuri wa Kufilter (Anatafsiri Electronics = Elektroniki na Kompyuta = Computers)
+  const isCategoryMatch = (productCategory: string, targetCategory: string) => {
+    if (targetCategory === 'All') return true;
+    if (!productCategory) return false;
+    
+    const pCat = productCategory.toLowerCase();
+    const tCat = targetCategory.toLowerCase();
+
+    // Map za kategoria zinazoshabihiana
+    const mappings: any = {
+      'electronics': ['electronics', 'elektroniki'],
+      'fashion': ['fashion', 'nguo', 'clothing', 'apparel'],
+      'shoes': ['shoes', 'viatu', 'footwear'],
+      'phones': ['phones', 'simu', 'mobile', 'smartphones'],
+      'computers': ['computers', 'kompyuta', 'laptops', 'desktops'],
+      'beauty': ['beauty', 'urembo', 'cosmetics', 'health']
+    };
+
+    // Kama target ina mapping, angalia kama product ipo kwenye hiyo map
+    if (mappings[tCat]) {
+       return mappings[tCat].some((cat: string) => pCat.includes(cat));
+    }
+    
+    // Kama haiko kwenye map, fanya string matching ya kawaida
+    return pCat.includes(tCat);
+  };
+
   const displayedProducts = products.filter(p => {
-    const matchCategory = activeCategory === 'All' || p.category?.toLowerCase() === activeCategory.toLowerCase();
-    const matchSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchCategory = isCategoryMatch(p.category, activeCategory);
+    const matchSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                        (p.brand && p.brand.toLowerCase().includes(searchQuery.toLowerCase()));
     return matchCategory && matchSearch;
   });
 
@@ -156,7 +224,6 @@ export default function HomePage() {
   const [checkoutLoading, setCheckoutLoading] = useState(false);
 
   const { cart, addToCart, removeFromCart, clearCart, cartTotal } = useCart();
-  const t = translations[lang];
 
   const getApiUrl = () => {
     return 'https://jtex-ecommerce-production.up.railway.app';
@@ -193,22 +260,33 @@ export default function HomePage() {
 
     window.addEventListener('openCart', handleOpenCart);
     window.addEventListener('openCategories', handleOpenCategories);
+    
+    // CUSTOM EVENT: Kupokea amri kutoka SidebarCategories (Ikibonyeza kategoria kule iseti hapa)
+    const handleCategorySelect = (e: any) => {
+        if(e.detail && e.detail.category) {
+            setActiveCategory(e.detail.category);
+            handleOpenCategories();
+        }
+    };
+    window.addEventListener('selectCategory', handleCategorySelect);
+
     return () => {
       window.removeEventListener('openCart', handleOpenCart);
       window.removeEventListener('openCategories', handleOpenCategories);
+      window.removeEventListener('selectCategory', handleCategorySelect);
     };
   }, []);
 
   // Banners Auto-Slide Logic
   useEffect(() => {
     const timer = setInterval(() => {
-      setCurrentBannerIndex((prev) => (prev + 1) % BANNERS.length);
-    }, 5000); // Badilisha kila sekunde 5
+      setCurrentBannerIndex((prev) => (prev + 1) % activeBanners.length);
+    }, 5000); 
     return () => clearInterval(timer);
-  }, []);
+  }, [activeBanners.length]);
 
-  const nextBanner = () => setCurrentBannerIndex((prev) => (prev + 1) % BANNERS.length);
-  const prevBanner = () => setCurrentBannerIndex((prev) => (prev - 1 + BANNERS.length) % BANNERS.length);
+  const nextBanner = () => setCurrentBannerIndex((prev) => (prev + 1) % activeBanners.length);
+  const prevBanner = () => setCurrentBannerIndex((prev) => (prev - 1 + activeBanners.length) % activeBanners.length);
 
   const handleBannerClick = (categoryTarget: string) => {
     setActiveCategory(categoryTarget);
@@ -310,6 +388,18 @@ export default function HomePage() {
     );
   };
 
+  const getTranslatedCategoryName = (catKey: string) => {
+      switch(catKey) {
+          case 'Electronics': return t.catElectronics;
+          case 'Fashion': return t.catFashion;
+          case 'Shoes': return t.catShoes;
+          case 'Phones': return t.catPhones;
+          case 'Computers': return t.catComputers;
+          case 'Beauty': return t.catBeauty;
+          default: return catKey === 'All' ? t.catAll : catKey;
+      }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#F8FAFC] to-[#F1F5F9] text-gray-900 font-sans antialiased pb-20 md:pb-0">
       <TopTicker />
@@ -323,7 +413,7 @@ export default function HomePage() {
           <div className="hidden md:flex flex-1 max-w-2xl mx-8 relative">
             <div className={`relative w-full flex border-2 ${showSuggestions ? 'border-[#F2A900] rounded-t-xl' : 'border-[#F2A900] rounded-full'} overflow-hidden transition-all bg-white`}>
               <select value={activeCategory} onChange={(e) => setActiveCategory(e.target.value)} className="bg-gray-50 border-r border-gray-200 px-3 py-2 text-xs outline-none hidden lg:block font-medium cursor-pointer">
-                {CATEGORIES.map(cat => <option key={cat} value={cat}>{cat === 'All' ? 'All Categories' : cat}</option>)}
+                {CATEGORY_KEYS.map(cat => <option key={cat} value={cat}>{getTranslatedCategoryName(cat)}</option>)}
               </select>
               <input 
                 type="text" placeholder={t.searchPlaceholder} value={searchQuery}
@@ -399,7 +489,7 @@ export default function HomePage() {
           
           {/* MATANGAZO YANAYOTELEZA (BANNERS) */}
           <div className="relative w-full h-[180px] sm:h-[250px] md:h-[300px] rounded-2xl overflow-hidden shadow-sm group">
-            {BANNERS.map((banner, index) => (
+            {activeBanners.map((banner, index) => (
               <div 
                 key={banner.id}
                 className={`absolute inset-0 w-full h-full transition-opacity duration-1000 bg-gradient-to-r ${banner.bgColor} flex flex-col justify-center px-8 sm:px-12 md:px-20 text-white
@@ -416,13 +506,11 @@ export default function HomePage() {
               </div>
             ))}
             
-            {/* Vitufe vya kusogeza Banners */}
             <button onClick={prevBanner} className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/40 text-white p-2 rounded-full backdrop-blur-sm z-20 opacity-0 group-hover:opacity-100 transition"><FiArrowLeft size={24} /></button>
             <button onClick={nextBanner} className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/40 text-white p-2 rounded-full backdrop-blur-sm z-20 opacity-0 group-hover:opacity-100 transition"><FiArrowRight size={24} /></button>
             
-            {/* Vidoti vya Banners */}
             <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-20">
-              {BANNERS.map((_, index) => (
+              {activeBanners.map((_, index) => (
                 <div key={index} onClick={() => setCurrentBannerIndex(index)} className={`w-2 h-2 rounded-full cursor-pointer transition-all ${index === currentBannerIndex ? 'bg-white w-6' : 'bg-white/50'}`}></div>
               ))}
             </div>
@@ -433,7 +521,7 @@ export default function HomePage() {
           <div ref={categoriesRef} className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100 mt-2 scroll-mt-24">
             
             <div className="flex overflow-x-auto gap-2 pb-4 mb-4 hide-scrollbar border-b border-gray-100">
-              {CATEGORIES.map(cat => (
+              {CATEGORY_KEYS.map(cat => (
                 <button 
                   key={cat}
                   onClick={() => setActiveCategory(cat)}
@@ -444,7 +532,7 @@ export default function HomePage() {
                   }`}
                 >
                   {cat === 'All' ? <FiGrid /> : ''}
-                  {cat === 'All' ? t.allProducts : cat}
+                  {getTranslatedCategoryName(cat)}
                 </button>
               ))}
             </div>
@@ -454,7 +542,7 @@ export default function HomePage() {
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-[#F2A900]/10 text-[#F2A900] rounded-full flex items-center justify-center"><FiBox className="text-xl" /></div>
                   <h2 className="text-xl sm:text-2xl font-black text-gray-900">
-                    {activeCategory === 'All' ? t.allProducts : activeCategory}
+                    {getTranslatedCategoryName(activeCategory)}
                   </h2>
                 </div>
                 <span className="text-xs font-bold text-gray-400 bg-gray-50 px-3 py-1 rounded-full">{displayedProducts.length} Items</span>
@@ -476,7 +564,7 @@ export default function HomePage() {
                <div className="text-center py-16 flex flex-col items-center justify-center bg-gray-50 rounded-xl border border-dashed border-gray-200">
                  <FiBox className="text-6xl text-gray-300 mb-4" />
                  <p className="text-gray-500 font-bold text-lg mb-2">{activeCategory === 'All' ? t.noProducts : t.noCategoryProducts}</p>
-                 <button onClick={() => setActiveCategory('All')} className="text-sm font-bold text-blue-600 hover:underline">Rudi kwenye Bidhaa Zote</button>
+                 <button onClick={() => setActiveCategory('All')} className="text-sm font-bold text-blue-600 hover:underline">Rudi kwenye Bidhaa Zote / Back to All</button>
                </div>
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4 animate-fade-in">
