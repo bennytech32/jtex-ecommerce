@@ -1,12 +1,12 @@
 'use client'; 
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCart } from './context/CartContext'; 
 import { 
   FiShoppingCart, FiGlobe, FiX, FiCheckCircle, FiMapPin, FiTruck, FiShield, 
   FiLock, FiMail, FiUser, FiPhone, FiTrash2, FiChevronRight, FiSearch, FiHeart, 
-  FiBox, FiAlertCircle, FiCreditCard, FiSmartphone
+  FiBox, FiAlertCircle, FiCreditCard, FiSmartphone, FiGrid
 } from 'react-icons/fi';
 
 import TopTicker from './components/navigation/TopTicker';
@@ -24,6 +24,7 @@ const translations = {
     allProducts: "All Products",
     loading: "Loading store...",
     noProducts: "No products available currently.",
+    noCategoryProducts: "No products found in this category.",
     addToCart: "Add to Cart",
     buyNow: "Buy Now",
     searchPlaceholder: "Search products, brands...",
@@ -49,6 +50,7 @@ const translations = {
     allProducts: "Bidhaa Zote",
     loading: "Inafungua duka...",
     noProducts: "Hakuna bidhaa iliyopo kwa sasa.",
+    noCategoryProducts: "Hakuna bidhaa zilizopatikana kwenye kategoria hii.",
     addToCart: "Weka Kikapuni",
     buyNow: "Nunua Sasa",
     searchPlaceholder: "Tafuta bidhaa, aina...",
@@ -72,6 +74,9 @@ const translations = {
   }
 };
 
+// Orodha ya Kategoria zetu
+const CATEGORIES = ['All', 'Elektroniki', 'Nguo', 'Viatu', 'Simu', 'Kompyuta', 'Urembo'];
+
 export default function HomePage() {
   const router = useRouter();
   const [products, setProducts] = useState<any[]>([]);
@@ -81,16 +86,27 @@ export default function HomePage() {
   const [lang, setLang] = useState<'en' | 'sw'>('en'); 
   const [isClient, setIsClient] = useState(false); 
   
+  // States za Kategoria na Kutafuta
+  const [activeCategory, setActiveCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [wishlist, setWishlist] = useState<string[]>([]);
   
+  const categoriesRef = useRef<HTMLDivElement>(null);
+
   const toggleWishlist = (e: React.MouseEvent, productId: string) => {
     e.stopPropagation();
     setWishlist(prev => prev.includes(productId) ? prev.filter(id => id !== productId) : [...prev, productId]);
   };
 
-  const filteredSuggestions = products.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase())).slice(0, 5);
+  // Logic ya Kuchuja Bidhaa (Filtering Logic)
+  const displayedProducts = products.filter(p => {
+    const matchCategory = activeCategory === 'All' || p.category?.toLowerCase() === activeCategory.toLowerCase();
+    const matchSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchCategory && matchSearch;
+  });
+
+  const filteredSuggestions = displayedProducts.slice(0, 5);
   
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
@@ -140,17 +156,21 @@ export default function HomePage() {
     fetchRealProducts();
 
     // MSIKILIZAJI WA MENU YA SIMU
-    const handleOpenCart = () => {
-      setWorkflowStep(1);
-      setIsWorkflowOpen(true);
+    const handleOpenCart = () => { setWorkflowStep(1); setIsWorkflowOpen(true); };
+    const handleOpenCategories = () => {
+      if (categoriesRef.current) {
+        categoriesRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
     };
 
-    if (window.location.search.includes('cart=open')) {
-      handleOpenCart();
-    }
+    if (window.location.search.includes('cart=open')) handleOpenCart();
 
     window.addEventListener('openCart', handleOpenCart);
-    return () => window.removeEventListener('openCart', handleOpenCart);
+    window.addEventListener('openCategories', handleOpenCategories);
+    return () => {
+      window.removeEventListener('openCart', handleOpenCart);
+      window.removeEventListener('openCategories', handleOpenCategories);
+    };
   }, []);
 
   const toggleLanguage = () => setLang(prev => prev === 'en' ? 'sw' : 'en');
@@ -166,31 +186,19 @@ export default function HomePage() {
   const handleInlineLogin = async (e: React.FormEvent) => {
     e.preventDefault(); setLoginError('');
     try {
-      const res = await fetch(`${getApiUrl()}/api/login`, { 
-        method: 'POST', 
-        headers: { 'Content-Type': 'application/json' }, 
-        body: JSON.stringify({ email: loginEmail, password: loginPassword }) 
-      });
+      const res = await fetch(`${getApiUrl()}/api/login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: loginEmail, password: loginPassword }) });
       const data = await res.json();
       if (res.ok) handleAuthSuccess(data); else setLoginError(data.error || 'Kosa la kuingia.');
-    } catch (err: any) { 
-      setLoginError(`Tatizo la mtandao au server.`); 
-    }
+    } catch (err: any) { setLoginError(`Tatizo la mtandao au server.`); }
   };
 
   const handleInlineRegister = async (e: React.FormEvent) => {
     e.preventDefault(); setLoginError('');
     try {
-      const res = await fetch(`${getApiUrl()}/api/register`, { 
-        method: 'POST', 
-        headers: { 'Content-Type': 'application/json' }, 
-        body: JSON.stringify({ name: registerName, phone: registerPhone, email: loginEmail, password: loginPassword }) 
-      });
+      const res = await fetch(`${getApiUrl()}/api/register`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: registerName, phone: registerPhone, email: loginEmail, password: loginPassword }) });
       const data = await res.json();
       if (res.ok) handleAuthSuccess(data); else setLoginError(data.error || 'Kosa la kusajili.');
-    } catch (err: any) { 
-      setLoginError(`Tatizo la mtandao au server.`); 
-    }
+    } catch (err: any) { setLoginError(`Tatizo la mtandao au server.`); }
   };
 
   const openCartWorkflow = () => { setWorkflowStep(1); setIsWorkflowOpen(true); };
@@ -202,29 +210,13 @@ export default function HomePage() {
 
   const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault(); setCheckoutLoading(true);
-    
-    const checkoutItems = cart.map((item: any) => ({ 
-      productId: item.id, 
-      quantity: item.quantity, 
-      unitPrice: item.price, 
-      subTotal: item.price * item.quantity 
-    }));
-    
+    const checkoutItems = cart.map((item: any) => ({ productId: item.id, quantity: item.quantity, unitPrice: item.price, subTotal: item.price * item.quantity }));
     const fullAddress = `${streetAddress}, ${city}, ${zipCode}, ${country}`;
 
     try {
       const res = await fetch(`${getApiUrl()}/api/orders`, { 
-        method: 'POST', 
-        headers: { 'Content-Type': 'application/json' }, 
-        body: JSON.stringify({ 
-          userId: user.id, 
-          deliveryRegion: city, 
-          address: fullAddress, 
-          paymentMethod: paymentMethod, 
-          shippingFee, 
-          upfrontPayment, 
-          items: checkoutItems 
-        }) 
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, 
+        body: JSON.stringify({ userId: user.id, deliveryRegion: city, address: fullAddress, paymentMethod: paymentMethod, shippingFee, upfrontPayment, items: checkoutItems }) 
       });
       if (res.ok) { setWorkflowStep(4); clearCart(); }
     } catch (err) { console.error(err); } finally { setCheckoutLoading(false); }
@@ -240,7 +232,6 @@ export default function HomePage() {
 
   const ProductCard = ({ product }: { product: any }) => {
     const isWishlisted = wishlist.includes(product.id);
-    
     return (
       <div className="w-full bg-white rounded-xl p-2.5 sm:p-4 border border-gray-100 shadow-sm hover:shadow-lg transition-all duration-300 relative group flex flex-col cursor-pointer" onClick={() => router.push(`/product/${product.id}`)}>
         <button onClick={(e) => toggleWishlist(e, product.id)} className="absolute top-2 right-2 z-20 w-7 h-7 bg-white/90 backdrop-blur rounded-full flex items-center justify-center text-gray-400 hover:text-red-500 shadow-sm transition">
@@ -287,7 +278,9 @@ export default function HomePage() {
           
           <div className="hidden md:flex flex-1 max-w-2xl mx-8 relative">
             <div className={`relative w-full flex border-2 ${showSuggestions ? 'border-[#F2A900] rounded-t-xl' : 'border-[#F2A900] rounded-full'} overflow-hidden transition-all bg-white`}>
-              <select className="bg-gray-50 border-r border-gray-200 px-3 py-2 text-xs outline-none hidden lg:block font-medium"><option>All Categories</option></select>
+              <select value={activeCategory} onChange={(e) => setActiveCategory(e.target.value)} className="bg-gray-50 border-r border-gray-200 px-3 py-2 text-xs outline-none hidden lg:block font-medium cursor-pointer">
+                {CATEGORIES.map(cat => <option key={cat} value={cat}>{cat === 'All' ? 'All Categories' : cat}</option>)}
+              </select>
               <input 
                 type="text" placeholder={t.searchPlaceholder} value={searchQuery}
                 onChange={(e) => { setSearchQuery(e.target.value); setShowSuggestions(e.target.value.length > 0); }}
@@ -300,7 +293,7 @@ export default function HomePage() {
             
             {showSuggestions && searchQuery && (
               <div className="absolute top-full left-0 w-full bg-white border border-gray-200 rounded-b-xl shadow-xl z-50 max-h-80 overflow-y-auto">
-                {filteredSuggestions.map(item => (
+                {filteredSuggestions.length > 0 ? filteredSuggestions.map(item => (
                   <div key={item.id} onClick={() => { router.push(`/product/${item.id}`); setShowSuggestions(false); setSearchQuery(''); }} className="flex items-center gap-3 p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-50 transition">
                     <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center p-1">
                       {item.imageUrl ? <img src={`${getApiUrl()}${item.imageUrl}`} className="w-full h-full object-contain" /> : item.imageEmoji}
@@ -308,7 +301,9 @@ export default function HomePage() {
                     <div className="flex-1"><h4 className="text-sm font-bold text-gray-800 line-clamp-1">{item.name}</h4></div>
                     <span className="text-sm font-black text-[#0F172A]">TZS {item.price.toLocaleString()}</span>
                   </div>
-                ))}
+                )) : (
+                  <div className="p-4 text-center text-sm text-gray-500 font-medium">Hakuna bidhaa inayofanana na "{searchQuery}"</div>
+                )}
               </div>
             )}
           </div>
@@ -357,15 +352,38 @@ export default function HomePage() {
         </div>
 
         <div className="flex-1 flex flex-col gap-5 sm:gap-8 min-w-0">
-          
           <HeroSlider />
           <TrustBadges />
 
-          <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100 mt-2">
-            <div className="flex flex-col mb-6 border-b border-gray-100 pb-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center"><FiBox className="text-xl" /></div>
-                <h2 className="text-xl sm:text-2xl font-black text-gray-900">{t.allProducts}</h2>
+          <div ref={categoriesRef} className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100 mt-2 scroll-mt-24">
+            
+            {/* CATEGORY TABS (MABORESHO YA KUCHUJA BIDHAA) */}
+            <div className="flex overflow-x-auto gap-2 pb-4 mb-4 hide-scrollbar border-b border-gray-100">
+              {CATEGORIES.map(cat => (
+                <button 
+                  key={cat}
+                  onClick={() => setActiveCategory(cat)}
+                  className={`whitespace-nowrap px-5 py-2.5 rounded-full text-xs sm:text-sm font-bold transition-all flex items-center gap-2 ${
+                    activeCategory === cat 
+                      ? 'bg-[#0F172A] text-[#F2A900] shadow-md' 
+                      : 'bg-gray-50 text-gray-600 border border-gray-200 hover:bg-gray-100'
+                  }`}
+                >
+                  {cat === 'All' ? <FiGrid /> : ''}
+                  {cat === 'All' ? t.allProducts : cat}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex flex-col mb-6 pb-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-[#F2A900]/10 text-[#F2A900] rounded-full flex items-center justify-center"><FiBox className="text-xl" /></div>
+                  <h2 className="text-xl sm:text-2xl font-black text-gray-900">
+                    {activeCategory === 'All' ? t.allProducts : activeCategory}
+                  </h2>
+                </div>
+                <span className="text-xs font-bold text-gray-400 bg-gray-50 px-3 py-1 rounded-full">{displayedProducts.length} Items</span>
               </div>
             </div>
             
@@ -380,11 +398,15 @@ export default function HomePage() {
                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
                  {Array(10).fill(0).map((_, i) => <SkeletonCard key={i} />)}
                </div>
-            ) : products.length === 0 ? (
-               <div className="text-center py-10 text-gray-500 font-medium w-full">{t.noProducts}</div>
+            ) : displayedProducts.length === 0 ? (
+               <div className="text-center py-16 flex flex-col items-center justify-center bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                 <FiBox className="text-6xl text-gray-300 mb-4" />
+                 <p className="text-gray-500 font-bold text-lg mb-2">{activeCategory === 'All' ? t.noProducts : t.noCategoryProducts}</p>
+                 <button onClick={() => setActiveCategory('All')} className="text-sm font-bold text-blue-600 hover:underline">Rudi kwenye Bidhaa Zote</button>
+               </div>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
-                {products.map(product => <ProductCard key={`all-${product.id}`} product={product} />)}
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4 animate-fade-in">
+                {displayedProducts.map(product => <ProductCard key={`all-${product.id}`} product={product} />)}
               </div>
             )}
           </div>
@@ -397,7 +419,8 @@ export default function HomePage() {
       <FloatingWhatsApp />
       <MobileBottomNav />
 
-      {/* LOGIN POPUP */}
+      {/* LOGIN POPUP & CHECKOUT WORKFLOW */}
+      {/* ... (Modal za Login na Checkout zimebaki vilevile bila kubadilika) ... */}
       {isLoginOpen && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
           <div className="bg-white w-full max-w-4xl rounded-2xl shadow-2xl relative flex overflow-hidden min-h-[500px] animate-fade-in">
@@ -428,13 +451,10 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* CHECKOUT WORKFLOW POPUP (PRO LEVEL) */}
       {isWorkflowOpen && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-2 sm:p-4 backdrop-blur-sm pb-16">
           <div className="bg-white w-full max-w-3xl rounded-2xl shadow-2xl overflow-hidden relative max-h-[90vh] flex flex-col animate-fade-in">
             <button onClick={() => setIsWorkflowOpen(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-900 z-20"><FiX size={20} /></button>
-            
-            {/* PROGRESS BAR */}
             <div className="bg-gray-50 p-6 border-b border-gray-100 flex items-center justify-between sm:justify-center sm:gap-12 relative">
               {['Cart', 'Shipping', 'Payment', 'Done'].map((step, idx) => (
                 <div key={step} className={`flex flex-col items-center z-10 ${workflowStep >= idx + 1 ? 'text-[#0F172A]' : 'text-gray-300'}`}>
@@ -447,8 +467,6 @@ export default function HomePage() {
             </div>
 
             <div className="p-4 sm:p-8 overflow-y-auto flex-1 bg-white">
-               
-               {/* STEP 1: CART */}
                {workflowStep === 1 && (
                   <div className="max-w-xl mx-auto">
                     <div className="flex justify-between items-center mb-6 border-b border-gray-100 pb-4">
@@ -494,24 +512,18 @@ export default function HomePage() {
                   </div>
                )}
 
-               {/* STEP 2: SHIPPING ADDRESS */}
                {workflowStep === 2 && (
                   <div className="max-w-xl mx-auto animate-fade-in">
                      <h3 className="text-xl sm:text-2xl font-black mb-6 flex items-center gap-3 text-gray-900 border-b border-gray-100 pb-4">
                        <FiMapPin className="text-[#F2A900]"/> {t.location}
                      </h3>
-                     
                      <div className="space-y-5">
                        <div>
                          <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">{t.country}</label>
                          <select value={country} onChange={e => setCountry(e.target.value)} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none text-sm font-medium focus:ring-2 focus:ring-[#F2A900]/50 transition">
-                           <option value="Tanzania">Tanzania</option>
-                           <option value="Kenya">Kenya</option>
-                           <option value="Uganda">Uganda</option>
-                           <option value="Rwanda">Rwanda</option>
+                           <option value="Tanzania">Tanzania</option><option value="Kenya">Kenya</option><option value="Uganda">Uganda</option><option value="Rwanda">Rwanda</option>
                          </select>
                        </div>
-                       
                        <div className="grid grid-cols-2 gap-4">
                          <div>
                            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">{t.city}</label>
@@ -522,13 +534,11 @@ export default function HomePage() {
                            <input type="text" value={zipCode} onChange={e => setZipCode(e.target.value)} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none text-sm focus:ring-2 focus:ring-[#F2A900]/50 transition" placeholder="e.g. 11000" />
                          </div>
                        </div>
-
                        <div>
                          <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">{t.street}</label>
                          <input type="text" value={streetAddress} onChange={e => setStreetAddress(e.target.value)} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none text-sm focus:ring-2 focus:ring-[#F2A900]/50 transition" placeholder="e.g. Makumbusho, Uhuru Street, House 42" />
                        </div>
                      </div>
-
                      <div className="mt-8 flex gap-3">
                        <button onClick={() => setWorkflowStep(1)} className="px-6 py-4 bg-gray-100 text-gray-600 font-bold rounded-xl text-sm hover:bg-gray-200 transition">Back</button>
                        <button onClick={() => { if(city && streetAddress) setWorkflowStep(3); else alert('Please fill in City and Street Address'); }} className="flex-1 bg-[#0F172A] hover:bg-gray-800 text-white font-bold py-4 rounded-xl text-sm transition shadow-lg flex justify-center items-center gap-2">
@@ -538,30 +548,22 @@ export default function HomePage() {
                   </div>
                )}
 
-               {/* STEP 3: PAYMENT & CONFIRMATION */}
                {workflowStep === 3 && (
                  <form onSubmit={handlePlaceOrder} className="max-w-xl mx-auto animate-fade-in">
                    <h3 className="text-xl sm:text-2xl font-black mb-6 flex items-center gap-3 text-gray-900 border-b border-gray-100 pb-4">
                      <FiShield className="text-green-500"/> {t.payment}
                    </h3>
-
-                   {/* Payment Selection Cards */}
                    <div className="grid grid-cols-3 gap-3 mb-8">
                      <div onClick={() => setPaymentMethod('Card')} className={`border-2 p-4 rounded-xl cursor-pointer flex flex-col items-center justify-center gap-2 text-center transition-all ${paymentMethod === 'Card' ? 'border-[#0F172A] bg-[#0F172A] text-white shadow-md' : 'border-gray-100 bg-gray-50 hover:border-gray-300 text-gray-600'}`}>
-                       <FiCreditCard className="text-2xl" />
-                       <span className="font-bold text-[10px] sm:text-xs uppercase tracking-wider">Card</span>
+                       <FiCreditCard className="text-2xl" /><span className="font-bold text-[10px] sm:text-xs uppercase tracking-wider">Card</span>
                      </div>
                      <div onClick={() => setPaymentMethod('M-Pesa')} className={`border-2 p-4 rounded-xl cursor-pointer flex flex-col items-center justify-center gap-2 text-center transition-all ${paymentMethod === 'M-Pesa' ? 'border-red-600 bg-red-600 text-white shadow-md' : 'border-gray-100 bg-gray-50 hover:border-gray-300 text-gray-600'}`}>
-                       <FiSmartphone className="text-2xl" />
-                       <span className="font-bold text-[10px] sm:text-xs uppercase tracking-wider">M-Pesa</span>
+                       <FiSmartphone className="text-2xl" /><span className="font-bold text-[10px] sm:text-xs uppercase tracking-wider">M-Pesa</span>
                      </div>
                      <div onClick={() => setPaymentMethod('Raha')} className={`border-2 p-4 rounded-xl cursor-pointer flex flex-col items-center justify-center gap-2 text-center transition-all ${paymentMethod === 'Raha' ? 'border-[#F2A900] bg-[#F2A900] text-[#0F172A] shadow-md' : 'border-gray-100 bg-gray-50 hover:border-gray-300 text-gray-600'}`}>
-                       <FiGlobe className="text-2xl" />
-                       <span className="font-bold text-[10px] sm:text-xs uppercase tracking-wider">Raha</span>
+                       <FiGlobe className="text-2xl" /><span className="font-bold text-[10px] sm:text-xs uppercase tracking-wider">Raha</span>
                      </div>
                    </div>
-
-                   {/* Order Summary */}
                    <div className="bg-gray-50 p-6 rounded-2xl border border-gray-200 mb-8 space-y-3">
                      <div className="flex justify-between text-sm text-gray-600 font-medium"><span>Subtotal</span><span>TZS {cartTotal.toLocaleString()}</span></div>
                      <div className="flex justify-between text-sm text-gray-600 font-medium"><span>{t.deliveryFee}</span><span>TZS {shippingFee.toLocaleString()}</span></div>
@@ -575,7 +577,6 @@ export default function HomePage() {
                        <span className="text-2xl font-black text-[#0F172A]">TZS {grandTotal.toLocaleString()}</span>
                      </div>
                    </div>
-
                    <div className="flex gap-3">
                      <button type="button" onClick={() => setWorkflowStep(2)} className="px-6 py-4 bg-gray-100 text-gray-600 font-bold rounded-xl text-sm hover:bg-gray-200 transition">Back</button>
                      <button type="submit" disabled={checkoutLoading} className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-4 rounded-xl text-sm transition shadow-lg flex justify-center items-center gap-2">
@@ -585,12 +586,9 @@ export default function HomePage() {
                  </form>
                )}
 
-               {/* STEP 4: SUCCESS */}
                {workflowStep === 4 && (
                  <div className="text-center py-12 px-4 animate-fade-in max-w-md mx-auto">
-                   <div className="w-24 h-24 bg-green-100 text-green-500 rounded-full flex items-center justify-center text-5xl mx-auto mb-6 shadow-inner ring-8 ring-green-50">
-                     <FiCheckCircle />
-                   </div>
+                   <div className="w-24 h-24 bg-green-100 text-green-500 rounded-full flex items-center justify-center text-5xl mx-auto mb-6 shadow-inner ring-8 ring-green-50"><FiCheckCircle /></div>
                    <h3 className="text-2xl sm:text-3xl font-black text-gray-900 mb-4">Order Successful!</h3>
                    <p className="text-gray-500 mb-8 text-sm leading-relaxed">{t.successMsg}</p>
                    <button onClick={() => { setIsWorkflowOpen(false); router.push('/profile'); }} className="w-full bg-[#0F172A] hover:bg-gray-800 text-white font-bold py-4 rounded-xl text-sm transition shadow-lg">
