@@ -32,7 +32,8 @@ const translations = {
     labelRole: "Account Role",
     btnSave: "Save Changes",
     alertSuccess: "Operation completed successfully! 🔥",
-    alertError: "Something went wrong updating user database."
+    alertError: "Something went wrong updating user database.",
+    switchLang: "SWAHILI" // Fixed: Added switchLang for English
   },
   sw: {
     title: "Wateja & Wauzaji (CRM)",
@@ -59,7 +60,8 @@ const translations = {
     labelRole: "Mamlaka ya Akaunti",
     btnSave: "Hifadhi Marekebisho",
     alertSuccess: "Mabadiliko yamekamilika kikamilifu! 🔥",
-    alertError: "Kuna hitilafu imetokea kusave taarifa."
+    alertError: "Kuna hitilafu imetokea kusave taarifa.",
+    switchLang: "ENGLISH" // Fixed: Added switchLang for Swahili
   }
 };
 
@@ -67,7 +69,7 @@ export default function AdminUsers() {
   const [lang, setLang] = useState<'en' | 'sw'>('en');
   const [users, setUsers] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [filterTab, setFilterTab] = useState<'ALL' | 'VENDOR'>('ALL'); // Fixed: Changed from 'all' to 'ALL'
+  const [filterTab, setFilterTab] = useState<'ALL' | 'VENDOR'>('ALL');
   
   // Edit Modal States
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -94,7 +96,7 @@ export default function AdminUsers() {
       }
     } catch (err) {
       console.error('Fetch Error:', err);
-    } finally {
+    } fill_finally: {
       setIsLoading(false);
     }
   };
@@ -193,7 +195,7 @@ export default function AdminUsers() {
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-6">
         <div className="p-3 border-b border-gray-100 flex gap-2 bg-gray-50/30">
           <button 
-            onClick={() => setFilterTab('ALL')} // Fixed: Changed from 'all' to 'ALL'
+            onClick={() => setFilterTab('ALL')}
             className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all ${filterTab === 'ALL' ? 'bg-[#0F172A] text-[#F2A900] shadow-sm' : 'text-gray-600 hover:bg-gray-100'}`}
           >
             <FiUsers /> {t.tabAll} ({users.length})
