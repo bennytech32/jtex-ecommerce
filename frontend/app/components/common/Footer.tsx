@@ -1,92 +1,134 @@
+'use client';
+
 import React from 'react';
-import { FiFacebook, FiTwitter, FiInstagram, FiLinkedin, FiMail, FiPhoneCall, FiMapPin } from 'react-icons/fi';
+import Link from 'next/link';
+import { 
+  FiPhone, FiMail, FiMapPin, FiFacebook, 
+  FiInstagram, FiTwitter, FiLinkedin, FiChevronRight 
+} from 'react-icons/fi';
 
 export default function Footer() {
+  const currentYear = new Date().getFullYear();
+
   return (
-    <footer className="bg-[#0F172A] text-gray-300 pt-16 pb-8 border-t-4 border-[#F2A900] mt-12">
-      <div className="max-w-[1400px] mx-auto px-4 md:px-6">
-        {/* Gridi kuu ya Footer (Sehemu 4) */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 mb-12">
+    <footer className="bg-[#0F172A] text-gray-400 pt-16 pb-8 font-sans border-t-[6px] border-[#F2A900]">
+      <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-12 mb-12 border-b border-gray-800 pb-12">
           
-          {/* 1. Taarifa za Jtex na Mawasiliano */}
-          <div>
-            <div className="text-3xl font-black text-white mb-6">J<span className="text-[#F2A900]">tex</span></div>
-            <p className="text-sm text-gray-400 mb-6 leading-relaxed pr-4">
-              Best Quality, Best Prices. Shop the latest gadgets, electronics, fashion and more at unbeatable prices directly from Kariakoo.
+          {/* COLUMN 1: BRAND INFO */}
+          <div className="space-y-6">
+            <Link href="/" className="text-3xl font-black text-white tracking-tight flex items-center">
+              J<span className="text-[#F2A900]">tex</span>
+            </Link>
+            <p className="text-sm leading-relaxed pr-4">
+              Your ultimate online marketplace for electronics, fashion, and home essentials. Fast delivery, secure payments, and top-notch customer service.
             </p>
-            <ul className="space-y-4 text-sm">
+            <div className="flex gap-4">
+              <a href="#" className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center text-white hover:bg-[#F2A900] hover:text-[#0F172A] transition shadow-md">
+                <FiFacebook size={18} />
+              </a>
+              <a href="#" className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center text-white hover:bg-[#F2A900] hover:text-[#0F172A] transition shadow-md">
+                <FiInstagram size={18} />
+              </a>
+              <a href="#" className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center text-white hover:bg-[#F2A900] hover:text-[#0F172A] transition shadow-md">
+                <FiTwitter size={18} />
+              </a>
+              <a href="#" className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center text-white hover:bg-[#F2A900] hover:text-[#0F172A] transition shadow-md">
+                <FiLinkedin size={18} />
+              </a>
+            </div>
+          </div>
+
+          {/* COLUMN 2: QUICK LINKS */}
+          <div>
+            <h4 className="text-white font-black text-lg mb-6 uppercase tracking-wider">Quick Links</h4>
+            <ul className="space-y-3">
+              <li>
+                <Link href="/" className="flex items-center gap-2 text-sm hover:text-[#F2A900] transition group">
+                  <FiChevronRight className="text-gray-600 group-hover:text-[#F2A900] transition" /> Home
+                </Link>
+              </li>
+              <li>
+                <Link href="/?cart=open" className="flex items-center gap-2 text-sm hover:text-[#F2A900] transition group">
+                  <FiChevronRight className="text-gray-600 group-hover:text-[#F2A900] transition" /> View Cart
+                </Link>
+              </li>
+              <li>
+                <Link href="/profile" className="flex items-center gap-2 text-sm hover:text-[#F2A900] transition group">
+                  <FiChevronRight className="text-gray-600 group-hover:text-[#F2A900] transition" /> My Account
+                </Link>
+              </li>
+              <li>
+                <Link href="/profile" className="flex items-center gap-2 text-sm hover:text-[#F2A900] transition group">
+                  <FiChevronRight className="text-gray-600 group-hover:text-[#F2A900] transition" /> Order History
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          {/* COLUMN 3: CUSTOMER SERVICE (Linked to Help Center Tabs) */}
+          <div>
+            <h4 className="text-white font-black text-lg mb-6 uppercase tracking-wider">Customer Service</h4>
+            <ul className="space-y-3">
+              <li>
+                <Link href="/help?tab=faq" className="flex items-center gap-2 text-sm hover:text-[#F2A900] transition group">
+                  <FiChevronRight className="text-gray-600 group-hover:text-[#F2A900] transition" /> Help Center
+                </Link>
+              </li>
+              <li>
+                <Link href="/help?tab=track" className="flex items-center gap-2 text-sm hover:text-[#F2A900] transition group">
+                  <FiChevronRight className="text-gray-600 group-hover:text-[#F2A900] transition" /> Track Your Order
+                </Link>
+              </li>
+              <li>
+                <Link href="/help?tab=returns" className="flex items-center gap-2 text-sm hover:text-[#F2A900] transition group">
+                  <FiChevronRight className="text-gray-600 group-hover:text-[#F2A900] transition" /> Returns & Refunds
+                </Link>
+              </li>
+              <li>
+                <Link href="/help?tab=shipping" className="flex items-center gap-2 text-sm hover:text-[#F2A900] transition group">
+                  <FiChevronRight className="text-gray-600 group-hover:text-[#F2A900] transition" /> Shipping Information
+                </Link>
+              </li>
+              <li>
+                <Link href="/help?tab=faq" className="flex items-center gap-2 text-sm hover:text-[#F2A900] transition group">
+                  <FiChevronRight className="text-gray-600 group-hover:text-[#F2A900] transition" /> FAQs
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          {/* COLUMN 4: CONTACT INFO */}
+          <div>
+            <h4 className="text-white font-black text-lg mb-6 uppercase tracking-wider">Contact Us</h4>
+            <ul className="space-y-4">
               <li className="flex items-start gap-3">
-                <FiMapPin className="text-[#F2A900] text-lg flex-shrink-0 mt-0.5" /> 
-                <span>Kariakoo, Dar es Salaam,<br/>Tanzania</span>
+                <FiMapPin className="text-[#F2A900] text-xl shrink-0 mt-0.5" />
+                <span className="text-sm leading-relaxed">Makumbusho, Uhuru Street<br />Dar es Salaam, Tanzania</span>
               </li>
               <li className="flex items-center gap-3">
-                <FiPhoneCall className="text-[#F2A900] text-lg flex-shrink-0" /> 
-                <span>+255 767 659 586</span>
+                <FiPhone className="text-[#F2A900] text-xl shrink-0" />
+                <span className="text-sm">+255 700 000 000</span>
               </li>
               <li className="flex items-center gap-3">
-                <FiMail className="text-[#F2A900] text-lg flex-shrink-0" /> 
-                <span>support@jtex.co.tz</span>
+                <FiMail className="text-[#F2A900] text-xl shrink-0" />
+                <span className="text-sm">support@jtex.co.tz</span>
               </li>
             </ul>
-          </div>
-
-          {/* 2. Huduma kwa Wateja (Customer Service) */}
-          <div>
-            <h4 className="text-white font-bold mb-6 text-lg tracking-wide">Customer Service</h4>
-            <ul className="space-y-3 text-sm">
-              <li><a href="#" className="hover:text-[#F2A900] transition flex items-center gap-2"><span className="text-[#F2A900] text-xs">▸</span> Help Center</a></li>
-              <li><a href="#" className="hover:text-[#F2A900] transition flex items-center gap-2"><span className="text-[#F2A900] text-xs">▸</span> Track Your Order</a></li>
-              <li><a href="#" className="hover:text-[#F2A900] transition flex items-center gap-2"><span className="text-[#F2A900] text-xs">▸</span> Returns & Refunds</a></li>
-              <li><a href="#" className="hover:text-[#F2A900] transition flex items-center gap-2"><span className="text-[#F2A900] text-xs">▸</span> Shipping Information</a></li>
-              <li><a href="#" className="hover:text-[#F2A900] transition flex items-center gap-2"><span className="text-[#F2A900] text-xs">▸</span> FAQs</a></li>
-            </ul>
-          </div>
-
-          {/* 3. Viungo vya Haraka (Quick Links) */}
-          <div>
-            <h4 className="text-white font-bold mb-6 text-lg tracking-wide">Quick Links</h4>
-            <ul className="space-y-3 text-sm">
-              <li><a href="#" className="hover:text-[#F2A900] transition flex items-center gap-2"><span className="text-[#F2A900] text-xs">▸</span> About Us</a></li>
-              <li><a href="#" className="hover:text-[#F2A900] transition flex items-center gap-2"><span className="text-[#F2A900] text-xs">▸</span> Flash Deals</a></li>
-              <li><a href="#" className="hover:text-[#F2A900] transition flex items-center gap-2"><span className="text-[#F2A900] text-xs">▸</span> Top Brands</a></li>
-              <li><a href="#" className="hover:text-[#F2A900] transition flex items-center gap-2"><span className="text-[#F2A900] text-xs">▸</span> Privacy Policy</a></li>
-              <li><a href="#" className="hover:text-[#F2A900] transition flex items-center gap-2"><span className="text-[#F2A900] text-xs">▸</span> Terms & Conditions</a></li>
-            </ul>
-          </div>
-
-          {/* 4. Usajili wa Barua Pepe (Newsletter) & Socials */}
-          <div>
-            <h4 className="text-white font-bold mb-6 text-lg tracking-wide">Newsletter</h4>
-            <p className="text-sm text-gray-400 mb-4">Subscribe to get special offers, free giveaways, and once-in-a-lifetime deals.</p>
-            <div className="flex items-center bg-[#15233D] rounded-md overflow-hidden border border-slate-700 focus-within:border-[#F2A900] transition">
-              <input type="email" placeholder="Your email address" className="bg-transparent w-full px-4 py-3 text-sm text-white outline-none" />
-              <button className="bg-[#F2A900] text-[#0F172A] px-5 py-3 font-bold hover:bg-yellow-500 transition text-sm">
-                Subscribe
-              </button>
-            </div>
-            
-            {/* Social Media Icons */}
-            <div className="flex gap-3 mt-8">
-              <a href="#" className="w-10 h-10 rounded-full bg-[#15233D] border border-slate-700 flex items-center justify-center hover:bg-[#F2A900] hover:text-[#0F172A] transition text-white"><FiFacebook size={18} /></a>
-              <a href="#" className="w-10 h-10 rounded-full bg-[#15233D] border border-slate-700 flex items-center justify-center hover:bg-[#F2A900] hover:text-[#0F172A] transition text-white"><FiTwitter size={18} /></a>
-              <a href="#" className="w-10 h-10 rounded-full bg-[#15233D] border border-slate-700 flex items-center justify-center hover:bg-[#F2A900] hover:text-[#0F172A] transition text-white"><FiInstagram size={18} /></a>
-              <a href="#" className="w-10 h-10 rounded-full bg-[#15233D] border border-slate-700 flex items-center justify-center hover:bg-[#F2A900] hover:text-[#0F172A] transition text-white"><FiLinkedin size={18} /></a>
-            </div>
           </div>
         </div>
 
-        {/* Mstari wa Chini Kabisa (Copyright & Payment Methods) */}
-        <div className="border-t border-slate-800 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-          <p className="text-xs text-gray-500">
-            &copy; {new Date().getFullYear()} Jtex E-commerce. All Rights Reserved.
-          </p>
-          
-          <div className="flex gap-2 items-center opacity-80 hover:opacity-100 transition">
-            {/* Badges za malipo (Mockups) */}
-            <div className="px-3 py-1.5 bg-white rounded-md text-[#0F172A] text-[10px] font-black italic tracking-tighter">VISA</div>
-            <div className="px-3 py-1.5 bg-white rounded-md text-[#0F172A] text-[10px] font-black italic">MasterCard</div>
-            <div className="px-3 py-1.5 bg-blue-600 rounded-md text-white text-[10px] font-bold">Selcom Pay</div>
-            <div className="px-3 py-1.5 bg-[#F2A900] rounded-md text-[#0F172A] text-[10px] font-bold">Mobile Money</div>
+        {/* BOTTOM BAR: COPYRIGHT & PAYMENTS */}
+        <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-xs font-medium">
+          <p>&copy; {currentYear} Jtex Marketplace. All rights reserved.</p>
+          <div className="flex items-center gap-2">
+            <span className="text-gray-500">Secure Payments via:</span>
+            <div className="flex gap-2">
+              <span className="bg-gray-800 text-white px-2 py-1 rounded text-[10px] font-black uppercase tracking-wider">M-Pesa</span>
+              <span className="bg-gray-800 text-white px-2 py-1 rounded text-[10px] font-black uppercase tracking-wider">Tigo Pesa</span>
+              <span className="bg-gray-800 text-white px-2 py-1 rounded text-[10px] font-black uppercase tracking-wider">Visa</span>
+              <span className="bg-gray-800 text-white px-2 py-1 rounded text-[10px] font-black uppercase tracking-wider">Mastercard</span>
+            </div>
           </div>
         </div>
       </div>
