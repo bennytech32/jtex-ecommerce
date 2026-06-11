@@ -4,7 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
   FiHelpCircle, FiTruck, FiRefreshCcw, FiMapPin, 
-  FiMessageCircle, FiSearch, FiChevronDown, FiChevronRight, FiPackage
+  FiMessageCircle, FiSearch, FiChevronDown, FiChevronRight, 
+  FiPackage, FiGlobe 
 } from 'react-icons/fi';
 
 import TopTicker from '../components/navigation/TopTicker';
