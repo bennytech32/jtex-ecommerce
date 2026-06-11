@@ -67,7 +67,7 @@ export default function AdminUsers() {
   const [lang, setLang] = useState<'en' | 'sw'>('en');
   const [users, setUsers] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [filterTab, setFilterTab] = useState<'ALL' | 'VENDOR'>('all');
+  const [filterTab, setFilterTab] = useState<'ALL' | 'VENDOR'>('ALL'); // Fixed: Changed from 'all' to 'ALL'
   
   // Edit Modal States
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -103,7 +103,6 @@ export default function AdminUsers() {
     fetchUsers();
   }, []);
 
-  // 1. MFUMO WA KUBLOCK / UNBLOCK WATEJA
   const handleToggleBlock = async (userId: string, currentBlockStatus: boolean) => {
     try {
       const url = getApiUrl();
@@ -115,7 +114,7 @@ export default function AdminUsers() {
       
       if (res.ok) {
         alert(t.alertSuccess);
-        fetchUsers(); // Refresh orodha
+        fetchUsers(); 
       } else {
         alert(t.alertError);
       }
@@ -124,7 +123,6 @@ export default function AdminUsers() {
     }
   };
 
-  // 2. MFUMO WA KUFUNGUA MODAL YA KUREKEBISHA
   const openEditModal = (user: any) => {
     setSelectedOrderUser(user);
     setEditName(user.name);
@@ -135,7 +133,6 @@ export default function AdminUsers() {
     setIsEditOpen(true);
   };
 
-  // 3. MFUMO WA KUSAVE MAREKEBISHO YA MTEJA
   const handleSaveEdit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -170,7 +167,6 @@ export default function AdminUsers() {
     return 'bg-blue-50 text-blue-700 border border-blue-200'; 
   };
 
-  // Kufilter watumiaji kulingana na Tab iliyobonyezwa
   const displayedUsers = users.filter(u => {
     if (filterTab === 'VENDOR') return u.role === 'VENDOR';
     return true;
@@ -197,8 +193,8 @@ export default function AdminUsers() {
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-6">
         <div className="p-3 border-b border-gray-100 flex gap-2 bg-gray-50/30">
           <button 
-            onClick={() => setFilterTab('all')}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all ${filterTab === 'all' ? 'bg-[#0F172A] text-[#F2A900] shadow-sm' : 'text-gray-600 hover:bg-gray-100'}`}
+            onClick={() => setFilterTab('ALL')} // Fixed: Changed from 'all' to 'ALL'
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all ${filterTab === 'ALL' ? 'bg-[#0F172A] text-[#F2A900] shadow-sm' : 'text-gray-600 hover:bg-gray-100'}`}
           >
             <FiUsers /> {t.tabAll} ({users.length})
           </button>
