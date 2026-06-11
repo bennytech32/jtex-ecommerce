@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { 
   FiHelpCircle, FiTruck, FiRefreshCcw, FiMapPin, 
   FiMessageCircle, FiSearch, FiChevronDown, FiChevronRight, 
-  FiPackage, FiGlobe 
+  FiPackage, FiGlobe, FiMail 
 } from 'react-icons/fi';
 
 import TopTicker from '../components/navigation/TopTicker';
