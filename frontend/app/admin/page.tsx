@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { 
   FiBox, FiUsers, FiDollarSign, FiAlertCircle, FiGlobe, 
   FiPlusCircle, FiMonitor, FiTruck, FiTrendingUp, FiCreditCard,
-  FiCheckCircle, FiPhone
+  FiCheckCircle, FiPhone, FiTag
 } from 'react-icons/fi';
 import { 
   LineChart, Line, BarChart, Bar, XAxis, YAxis, 
@@ -39,13 +39,18 @@ const translations = {
     openPos: "Open POS System",
     addProduct: "Add New Product",
     manageOrders: "Manage Orders",
+    // Tabs
     tabOverview: "Dashboard",
     tabOrders: "Order Management",
     tabCrm: "CRM & Debts",
+    tabProducts: "Products & Inventory",
+    productsDesc: "Manage stock, SKUs, images, and prices of your products.",
+    // Order Management
     updateStatus: "Update Status",
     address: "Delivery Address",
     upfront: "Upfront Paid",
     debt: "Remaining Debt",
+    // CRM
     phone: "Phone Number",
     loyalty: "Loyalty Points",
     clearDebt: "Clear Debt",
@@ -59,7 +64,21 @@ const translations = {
     optPending: "PENDING",
     optShipped: "SHIPPED",
     optDelivered: "DELIVERED",
-    optCancelled: "CANCELLED"
+    optCancelled: "CANCELLED",
+    // Products table headers
+    prodName: "Product Name",
+    prodSku: "SKU",
+    prodPrice: "Price",
+    prodStock: "Stock",
+    prodCategory: "Category",
+    noProducts: "No products available in inventory.",
+    // Categories matching frontend
+    catElectronics: "Electronics",
+    catFashion: "Fashion",
+    catShoes: "Shoes",
+    catPhones: "Phones",
+    catComputers: "Computers",
+    catBeauty: "Beauty"
   },
   sw: {
     overview: "Muhtasari",
@@ -87,13 +106,18 @@ const translations = {
     openPos: "Fungua POS (Uza)",
     addProduct: "Weka Bidhaa Mpya",
     manageOrders: "Shughulikia Oda",
+    // Tabs
     tabOverview: "Dashibodi",
     tabOrders: "Usimamizi wa Oda",
     tabCrm: "Wateja & Madeni",
+    tabProducts: "Bidhaa & Inventory",
+    productsDesc: "Dhibiti stock, SKU, picha na bei za bidhaa zako.",
+    // Order Management
     updateStatus: "Badili Hali",
     address: "Anwani ya Mzigo",
     upfront: "Kianzio (Imelipwa)",
     debt: "Deni Lililobaki",
+    // CRM
     phone: "Namba ya Simu",
     loyalty: "Pointi za Uaminifu",
     clearDebt: "Futa Deni",
@@ -107,20 +131,35 @@ const translations = {
     optPending: "PENDING (Subiri)",
     optShipped: "SHIPPED (Njiani)",
     optDelivered: "DELIVERED (Imefika)",
-    optCancelled: "CANCELLED (Ghairi)"
+    optCancelled: "CANCELLED (Ghairi)",
+    // Products table headers
+    prodName: "Jina la Bidhaa",
+    prodSku: "SKU",
+    prodPrice: "Bei",
+    prodStock: "Stoki",
+    prodCategory: "Kategoria",
+    noProducts: "Hakuna bidhaa ghalani kwa sasa.",
+    // Categories matching frontend
+    catElectronics: "Elektroniki",
+    catFashion: "Nguo",
+    catShoes: "Viatu",
+    catPhones: "Simu",
+    catComputers: "Kompyuta",
+    catBeauty: "Urembo"
   }
 };
 
 export default function AdminDashboard() {
   const router = useRouter();
   const [lang, setLang] = useState<'en' | 'sw'>('en');
-  const [activeTab, setActiveTab] = useState<'overview' | 'orders' | 'crm'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'orders' | 'crm' | 'products'>('overview');
   
   const [stats, setStats] = useState({
     totalProducts: 0, lowStock: 0, outOfStock: 0, inventoryValue: 0, totalUsers: 0
   });
   const [allOrders, setAllOrders] = useState<any[]>([]);
   const [allUsers, setAllUsers] = useState<any[]>([]);
+  const [realProducts, setRealProducts] = useState<any[]>([]);
   const [calculatedStats, setCalculatedStats] = useState({ revenue: 0, pending: 0 });
   const [isLoading, setIsLoading] = useState(true);
 
@@ -136,6 +175,18 @@ export default function AdminDashboard() {
   ];
 
   const getApiUrl = () => process.env.NEXT_PUBLIC_API_URL || 'https://jtex-ecommerce-production.up.railway.app';
+
+  const getTranslatedCategoryName = (categoryStr: string) => {
+    if (!categoryStr) return 'N/A';
+    const cat = categoryStr.toLowerCase();
+    if (cat.includes('electronics') || cat.includes('elektroniki')) return t.catElectronics;
+    if (cat.includes('fashion') || cat.includes('nguo')) return t.catFashion;
+    if (cat.includes('shoes') || cat.includes('viatu')) return t.catShoes;
+    if (cat.includes('phones') || cat.includes('simu')) return t.catPhones;
+    if (cat.includes('computers') || cat.includes('kompyuta')) return t.catComputers;
+    if (cat.includes('beauty') || cat.includes('urembo')) return t.catBeauty;
+    return categoryStr;
+  };
 
   const fetchData = async () => {
     try {
@@ -158,6 +209,9 @@ export default function AdminDashboard() {
 
       const usersRes = await fetch(`${apiUrl}/api/users`, { cache: 'no-store' });
       if (usersRes.ok) setAllUsers(await usersRes.json());
+
+      const productsRes = await fetch(`${apiUrl}/api/products`, { cache: 'no-store' });
+      if (productsRes.ok) setRealProducts(await productsRes.json());
 
     } catch (error) {
       console.error("Kosa kuvuta data za admin:", error);
@@ -223,6 +277,12 @@ export default function AdminDashboard() {
           <FiTrendingUp /> {t.tabOverview}
         </button>
         <button 
+          onClick={() => setActiveTab('products')}
+          className={`flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm transition-all whitespace-nowrap ${activeTab === 'products' ? 'bg-amber-500 text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
+        >
+          <FiBox /> {t.tabProducts}
+        </button>
+        <button 
           onClick={() => setActiveTab('orders')}
           className={`flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm transition-all whitespace-nowrap ${activeTab === 'orders' ? 'bg-blue-600 text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
         >
@@ -248,8 +308,8 @@ export default function AdminDashboard() {
                 <div className="w-12 h-12 bg-white/10 rounded-full flex items-center justify-center text-2xl"><FiMonitor /></div>
                 <div className="text-left"><p className="font-black text-lg">{t.openPos}</p><p className="text-[10px] text-gray-300">Point of Sale System</p></div>
               </button>
-              <button onClick={() => router.push('/admin/products')} className="flex items-center gap-4 bg-white border border-gray-200 p-4 rounded-2xl text-[#0F172A] hover:border-[#F2A900] hover:shadow-md transition">
-                <div className="w-12 h-12 bg-yellow-50 text-[#F2A900] rounded-full flex items-center justify-center text-2xl"><FiPlusCircle /></div>
+              <button onClick={() => setActiveTab('products')} className="flex items-center gap-4 bg-white border border-gray-200 p-4 rounded-2xl text-[#0F172A] hover:border-amber-500 hover:shadow-md transition">
+                <div className="w-12 h-12 bg-yellow-50 text-amber-500 rounded-full flex items-center justify-center text-2xl"><FiPlusCircle /></div>
                 <div className="text-left"><p className="font-bold text-sm">{t.addProduct}</p><p className="text-[10px] text-gray-500">Update Inventory</p></div>
               </button>
               <button onClick={() => setActiveTab('orders')} className="flex items-center gap-4 bg-white border border-gray-200 p-4 rounded-2xl text-[#0F172A] hover:border-blue-500 hover:shadow-md transition">
@@ -326,7 +386,71 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {/* TAB 2: ORDER MANAGEMENT */}
+      {/* TAB 2: PRODUCTS & INVENTORY */}
+      {activeTab === 'products' && (
+        <div className="bg-white rounded-2xl shadow-sm overflow-hidden animate-fade-in border border-gray-100 min-h-[500px]">
+          <div className="p-6 border-b border-gray-100 bg-amber-50/10 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+              <h3 className="text-xl font-black text-gray-900 flex items-center gap-2"><FiBox className="text-amber-500"/> {t.tabProducts}</h3>
+              <p className="text-sm text-gray-500 mt-1">{t.productsDesc}</p>
+            </div>
+            <button onClick={() => router.push('/admin/products')} className="bg-[#0F172A] text-white font-bold px-4 py-2.5 rounded-xl flex items-center gap-2 text-sm hover:bg-gray-800 transition shadow-sm">
+              <FiPlusCircle /> {t.addProduct}
+            </button>
+          </div>
+          
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead className="bg-gray-50 text-gray-500 font-bold uppercase text-[10px] tracking-wider border-b border-gray-100">
+                <tr>
+                  <th className="px-6 py-4">{t.prodName}</th>
+                  <th className="px-6 py-4">{t.prodSku}</th>
+                  <th className="px-6 py-4">{t.prodCategory}</th>
+                  <th className="px-6 py-4">{t.prodPrice}</th>
+                  <th className="px-6 py-4 text-center">{t.prodStock}</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {realProducts.length === 0 ? (
+                  <tr><td colSpan={5} className="px-6 py-12 text-center text-gray-400 font-medium">{t.noProducts}</td></tr>
+                ) : (
+                  realProducts.map((product) => (
+                    <tr key={product.id} className="hover:bg-gray-50/50 transition">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <span className="text-2xl">{product.imageEmoji || '📦'}</span>
+                          <p className="font-bold text-gray-900 line-clamp-1 max-w-xs">{product.name}</p>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 font-mono text-xs text-gray-500 font-bold">
+                        {product.sku || `SKU-${product.id.slice(-4).toUpperCase()}`}
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="flex items-center gap-1.5 text-xs text-gray-700 font-medium bg-gray-100 px-2.5 py-1 rounded-full w-max">
+                          <FiTag className="text-gray-400 text-[10px]" />
+                          {getTranslatedCategoryName(product.category)}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 font-black text-[#0F172A]">
+                        TZS {product.price.toLocaleString()}
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        <span className={`px-2.5 py-1 rounded font-black text-xs ${
+                          (product.stock || 0) <= 5 ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'
+                        }`}>
+                          {product.stock || 0}
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* TAB 3: ORDER MANAGEMENT */}
       {activeTab === 'orders' && (
         <div className="bg-white rounded-2xl shadow-sm overflow-hidden animate-fade-in border border-gray-100 min-h-[500px]">
           <div className="p-6 border-b border-gray-100 bg-blue-50/10">
@@ -393,7 +517,7 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {/* TAB 3: CRM & DEBTS */}
+      {/* TAB 4: CRM & DEBTS */}
       {activeTab === 'crm' && (
         <div className="bg-white rounded-2xl shadow-sm overflow-hidden animate-fade-in border border-gray-100 min-h-[500px]">
           <div className="p-6 border-b border-gray-100 bg-purple-50/10">
