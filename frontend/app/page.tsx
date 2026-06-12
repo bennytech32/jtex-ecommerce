@@ -7,7 +7,7 @@ import {
   FiShoppingCart, FiGlobe, FiX, FiCheckCircle, FiMapPin, FiTruck, FiShield, 
   FiLock, FiMail, FiUser, FiPhone, FiTrash2, FiChevronRight, FiSearch, FiHeart, 
   FiBox, FiAlertCircle, FiCreditCard, FiSmartphone, FiGrid, FiArrowRight, FiArrowLeft,
-  FiCpu, FiMic, FiMaximize, FiCamera, FiUploadCloud
+  FiCpu, FiMic, FiMaximize, FiCamera, FiUploadCloud, FiMoon, FiSun
 } from 'react-icons/fi';
 
 import TopTicker from './components/navigation/TopTicker';
@@ -47,7 +47,6 @@ const translations = {
     city: "City / State",
     street: "Street Address",
     zip: "ZIP / Postal Code",
-    // Banner Texts EN
     banner1Title: "Huge Discount Season!",
     banner1Sub: "Get up to 40% off on Electronics",
     banner1Btn: "Shop Now",
@@ -57,7 +56,6 @@ const translations = {
     banner3Title: "Modern Fashion",
     banner3Sub: "Look good with trendy clothes at affordable prices",
     banner3Btn: "View Fashion",
-    // Kategoria za juu
     catAll: "All Categories",
     catElectronics: "Electronics",
     catFashion: "Fashion",
@@ -99,7 +97,6 @@ const translations = {
     city: "Mkoa / Mji",
     street: "Mtaa / Anwani Kamili",
     zip: "Postikodi (Zip Code)",
-    // Banner Texts SW
     banner1Title: "Msimu wa Punguzo Kubwa!",
     banner1Sub: "Pata hadi 40% punguzo kwenye Elektroniki",
     banner1Btn: "Nunua Sasa",
@@ -109,7 +106,6 @@ const translations = {
     banner3Title: "Fesheni ya Kisasa",
     banner3Sub: "Pendeza na nguo za kijanja kwa bei nafuu",
     banner3Btn: "Tazama Nguo",
-    // Kategoria za juu
     catAll: "Kategoria Zote",
     catElectronics: "Elektroniki",
     catFashion: "Nguo",
@@ -127,10 +123,8 @@ const translations = {
   }
 };
 
-// Tumia "Keys" kwa kategoria badala ya maneno halisi ili iwe rahisi kutafsiri
 const CATEGORY_KEYS = ['All', 'Electronics', 'Fashion', 'Shoes', 'Phones', 'Computers', 'Beauty'];
 
-// --- BANNERS DATA YENYE TAFSIRI ---
 const getBanners = (t: any) => [
   {
     id: 1,
@@ -138,7 +132,7 @@ const getBanners = (t: any) => [
     subtitle: t.banner1Sub,
     bgColor: "from-blue-600 to-blue-800",
     buttonText: t.banner1Btn,
-    categoryTarget: "Electronics" // Target ni ile key
+    categoryTarget: "Electronics" 
   },
   {
     id: 2,
@@ -165,6 +159,7 @@ export default function HomePage() {
   const [fetchError, setFetchError] = useState<string | null>(null); 
   const [user, setUser] = useState<any>(null);
   const [lang, setLang] = useState<'en' | 'sw'>('en'); 
+  const [theme, setTheme] = useState<'light' | 'dark'>('light'); // Theme State Added
   const [isClient, setIsClient] = useState(false); 
   
   const [activeCategory, setActiveCategory] = useState('All');
@@ -172,14 +167,12 @@ export default function HomePage() {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [wishlist, setWishlist] = useState<string[]>([]);
 
-  // Advanced Search Feature States
   const [isAiSearch, setIsAiSearch] = useState(false);
   const [isVoiceListening, setIsVoiceListening] = useState(false);
   const [isBarcodeOpen, setIsBarcodeOpen] = useState(false);
   const [isImageSearchOpen, setIsImageSearchOpen] = useState(false);
   const [aiActionLoading, setAiActionLoading] = useState(false);
   
-  // Banner States
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
   
   const categoriesRef = useRef<HTMLDivElement>(null);
@@ -192,7 +185,6 @@ export default function HomePage() {
     setWishlist(prev => prev.includes(productId) ? prev.filter(id => id !== productId) : [...prev, productId]);
   };
 
-  // 1. VOICE SEARCH LOGIC (WEB SPEECH API)
   const startVoiceSearch = () => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) {
@@ -218,7 +210,6 @@ export default function HomePage() {
     recognition.onend = () => setIsVoiceListening(false);
   };
 
-  // 2. IMAGE SEARCH LOGIC SIMULATION
   const handleImageUploadSimulation = () => {
     setAiActionLoading(true);
     setTimeout(() => {
@@ -229,7 +220,6 @@ export default function HomePage() {
     }, 2500);
   };
 
-  // 3. BARCODE SCANNER SIMULATION
   const handleBarcodeScanSimulation = () => {
     setAiActionLoading(true);
     setTimeout(() => {
@@ -240,7 +230,6 @@ export default function HomePage() {
     }, 2000);
   };
 
-  // Mfumo Mzuri wa Kufilter (Anatafsiri Electronics = Elektroniki na Kompyuta = Computers)
   const isCategoryMatch = (productCategory: string, targetCategory: string) => {
     if (targetCategory === 'All') return true;
     if (!productCategory) return false;
@@ -248,7 +237,6 @@ export default function HomePage() {
     const pCat = productCategory.toLowerCase();
     const tCat = targetCategory.toLowerCase();
 
-    // Map za kategoria zinazoshabihiana
     const mappings: any = {
       'electronics': ['electronics', 'elektroniki'],
       'fashion': ['fashion', 'nguo', 'clothing', 'apparel'],
@@ -258,12 +246,10 @@ export default function HomePage() {
       'beauty': ['beauty', 'urembo', 'cosmetics', 'health']
     };
 
-    // Kama target ina mapping, angalia kama product ipo kwenye hiyo map
     if (mappings[tCat]) {
        return mappings[tCat].some((cat: string) => pCat.includes(cat));
     }
     
-    // Kama haiko kwenye map, fanya string matching ya kawaida
     return pCat.includes(tCat);
   };
 
@@ -305,6 +291,12 @@ export default function HomePage() {
     setIsClient(true);
     const savedUser = localStorage.getItem('jtex_user');
     if (savedUser) setUser(JSON.parse(savedUser));
+    
+    // Check saved theme or system preference
+    const savedTheme = localStorage.getItem('jtex_theme');
+    if (savedTheme) {
+      setTheme(savedTheme as 'light' | 'dark');
+    }
 
     const fetchRealProducts = async () => {
       try {
@@ -333,7 +325,6 @@ export default function HomePage() {
     window.addEventListener('openCart', handleOpenCart);
     window.addEventListener('openCategories', handleOpenCategories);
     
-    // CUSTOM EVENT: Kupokea amri kutoka SidebarCategories (Ikibonyeza kategoria kule iseti hapa)
     const handleCategorySelect = (e: any) => {
         if(e.detail && e.detail.category) {
             setActiveCategory(e.detail.category);
@@ -349,7 +340,6 @@ export default function HomePage() {
     };
   }, []);
 
-  // Banners Auto-Slide Logic
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentBannerIndex((prev) => (prev + 1) % activeBanners.length);
@@ -368,6 +358,12 @@ export default function HomePage() {
   };
 
   const toggleLanguage = () => setLang(prev => prev === 'en' ? 'sw' : 'en');
+
+  const toggleTheme = () => {
+    const newTheme = theme === 'light' ? 'dark' : 'light';
+    setTheme(newTheme);
+    localStorage.setItem('jtex_theme', newTheme);
+  };
 
   const handleAuthSuccess = (data: any) => {
     localStorage.setItem('jtex_token', data.token);
@@ -416,19 +412,37 @@ export default function HomePage() {
     } catch (err) { console.error(err); } finally { setCheckoutLoading(false); }
   };
 
+  // Dynamic Theme Classes
+  const isDark = theme === 'dark';
+  const bgMain = isDark ? "bg-[#0B1120]" : "bg-gradient-to-br from-[#F8FAFC] to-[#F1F5F9]";
+  const textMain = isDark ? "text-gray-200" : "text-gray-900";
+  const headerBg = isDark ? "bg-[#0B1120]/90 border-gray-800" : "bg-white/90 border-gray-200";
+  const logoText = isDark ? "text-white" : "text-[#0F172A]";
+  const searchBg = isDark ? "bg-[#1E293B] border-[#F2A900]" : "bg-white border-[#F2A900]";
+  const searchInput = isDark ? "text-white placeholder-gray-500" : "text-gray-900";
+  const searchSelect = isDark ? "bg-[#0F172A] border-gray-800 text-gray-300" : "bg-gray-50 border-gray-200 text-gray-600";
+  const btnHover = isDark ? "hover:bg-[#1E293B] text-gray-300 border-gray-700" : "hover:bg-gray-50 text-gray-700 border-gray-200";
+  const cardBg = isDark ? "bg-[#1E293B] border-gray-800" : "bg-white border-gray-100";
+  const cardInnerBg = isDark ? "bg-[#0B1120]" : "bg-gray-50";
+  const textCardTitle = isDark ? "text-gray-200" : "text-gray-800";
+  const textPrice = isDark ? "text-white" : "text-[#0F172A]";
+  const btnCartCard = isDark ? "bg-[#0B1120] border-gray-700 text-white" : "bg-gray-50 border-gray-200 text-[#0F172A]";
+  const modalBg = isDark ? "bg-[#1E293B] border-gray-800 text-white" : "bg-white border-gray-100 text-gray-900";
+  const modalInnerBg = isDark ? "bg-[#0F172A] border-gray-800" : "bg-gray-50 border-gray-100";
+
   const SkeletonCard = () => (
-    <div className="min-w-[140px] sm:min-w-[200px] bg-white rounded-xl p-3 border border-gray-100 shadow-sm animate-pulse flex flex-col h-full">
-      <div className="aspect-square bg-gray-200 rounded-lg mb-2 w-full"></div>
-      <div className="h-3 bg-gray-200 rounded w-3/4 mb-2"></div>
-      <div className="h-4 bg-gray-200 rounded w-1/2 mb-3"></div>
+    <div className={`min-w-[140px] sm:min-w-[200px] ${cardBg} rounded-xl p-3 border shadow-sm animate-pulse flex flex-col h-full`}>
+      <div className={`aspect-square ${cardInnerBg} rounded-lg mb-2 w-full`}></div>
+      <div className={`h-3 ${isDark ? 'bg-gray-700' : 'bg-gray-200'} rounded w-3/4 mb-2`}></div>
+      <div className={`h-4 ${isDark ? 'bg-gray-700' : 'bg-gray-200'} rounded w-1/2 mb-3`}></div>
     </div>
   );
 
   const ProductCard = ({ product }: { product: any }) => {
     const isWishlisted = wishlist.includes(product.id);
     return (
-      <div className="w-full bg-white rounded-xl p-2.5 sm:p-4 border border-gray-100 shadow-sm hover:shadow-lg transition-all duration-300 relative group flex flex-col cursor-pointer" onClick={() => router.push(`/product/${product.id}`)}>
-        <button onClick={(e) => toggleWishlist(e, product.id)} className="absolute top-2 right-2 z-20 w-7 h-7 bg-white/90 backdrop-blur rounded-full flex items-center justify-center text-gray-400 hover:text-red-500 shadow-sm transition">
+      <div className={`w-full ${cardBg} rounded-xl p-2.5 sm:p-4 border shadow-sm hover:shadow-lg transition-all duration-300 relative group flex flex-col cursor-pointer`} onClick={() => router.push(`/product/${product.id}`)}>
+        <button onClick={(e) => toggleWishlist(e, product.id)} className={`absolute top-2 right-2 z-20 w-7 h-7 ${isDark ? 'bg-[#0B1120]/80 border-gray-700' : 'bg-white/90 border-gray-100'} backdrop-blur rounded-full flex items-center justify-center text-gray-400 hover:text-red-500 shadow-sm transition`}>
           <FiHeart className={`text-sm ${isWishlisted ? "fill-red-500 text-red-500" : ""}`} />
         </button>
         {product.oldPrice && (
@@ -436,23 +450,23 @@ export default function HomePage() {
             -{Math.round(((product.oldPrice - product.price) / product.oldPrice) * 100)}%
           </span>
         )}
-        <div className="aspect-square bg-white border border-gray-50 rounded-lg mb-2 sm:mb-3 flex items-center justify-center p-1 sm:p-2 relative overflow-hidden group-hover:bg-gray-50 transition">
+        <div className={`aspect-square ${cardInnerBg} border ${isDark ? 'border-gray-800' : 'border-gray-50'} rounded-lg mb-2 sm:mb-3 flex items-center justify-center p-1 sm:p-2 relative overflow-hidden group-hover:${isDark ? 'bg-[#0F172A]' : 'bg-gray-100'} transition`}>
           {product.imageUrl ? (
-            <img src={`${getApiUrl()}${product.imageUrl}`} alt={product.name} className="object-contain w-full h-full mix-blend-multiply group-hover:scale-105 transition duration-500" />
+            <img src={`${getApiUrl()}${product.imageUrl}`} alt={product.name} className={`object-contain w-full h-full ${isDark ? 'mix-blend-screen' : 'mix-blend-multiply'} group-hover:scale-105 transition duration-500`} />
           ) : (
             <span className="text-4xl group-hover:scale-105 transition duration-500">{product.imageEmoji}</span>
           )}
         </div>
-        <h3 className="text-[11px] sm:text-sm font-bold text-gray-800 leading-tight mb-1 line-clamp-2 group-hover:text-[#F2A900] transition h-8">{product.name}</h3>
+        <h3 className={`text-[11px] sm:text-sm font-bold ${textCardTitle} leading-tight mb-1 line-clamp-2 group-hover:text-[#F2A900] transition h-8`}>{product.name}</h3>
         <div className="flex flex-col mb-2 mt-auto">
-          <span className="text-sm sm:text-lg font-black text-[#0F172A] leading-none">TZS {product.price.toLocaleString()}</span>
-          {product.oldPrice && <span className="text-[10px] sm:text-xs text-gray-400 line-through mt-0.5">TZS {product.oldPrice.toLocaleString()}</span>}
+          <span className={`text-sm sm:text-lg font-black ${textPrice} leading-none`}>TZS {product.price.toLocaleString()}</span>
+          {product.oldPrice && <span className="text-[10px] sm:text-xs text-gray-500 line-through mt-0.5">TZS {product.oldPrice.toLocaleString()}</span>}
         </div>
-        <div className="flex items-center justify-between border-t border-gray-50 pt-2">
+        <div className={`flex items-center justify-between border-t ${isDark ? 'border-gray-800' : 'border-gray-50'} pt-2`}>
             <div className="flex items-center text-[#F2A900] text-[8px] sm:text-[10px]">
-              ★★★★★ <span className="text-gray-400 ml-1 font-medium hidden sm:block">(24)</span>
+              ★★★★★ <span className="text-gray-500 ml-1 font-medium hidden sm:block">(24)</span>
             </div>
-            <button onClick={(e) => { e.stopPropagation(); addToCart(product); }} className="w-7 h-7 sm:w-9 sm:h-9 rounded-full bg-gray-50 border border-gray-200 flex items-center justify-center text-[#0F172A] hover:bg-[#F2A900] transition-all shadow-sm">
+            <button onClick={(e) => { e.stopPropagation(); addToCart(product); }} className={`w-7 h-7 sm:w-9 sm:h-9 rounded-full ${btnCartCard} border flex items-center justify-center hover:bg-[#F2A900] hover:text-[#0F172A] hover:border-[#F2A900] transition-all shadow-sm`}>
               <FiShoppingCart className="text-xs sm:text-sm" />
             </button>
         </div>
@@ -473,18 +487,18 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#F8FAFC] to-[#F1F5F9] text-gray-900 font-sans antialiased pb-20 md:pb-0">
+    <div className={`min-h-screen ${bgMain} ${textMain} font-sans antialiased pb-20 md:pb-0 transition-colors duration-300`}>
       <TopTicker />
       
-      <header className="bg-white/90 backdrop-blur-md border-b border-gray-200 sticky top-0 z-40 shadow-sm">
+      <header className={`${headerBg} backdrop-blur-md border-b sticky top-0 z-40 shadow-sm transition-colors duration-300`}>
         <div className="w-full max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 h-14 sm:h-16 flex items-center justify-between">
-          <span onClick={() => router.push('/')} className="text-xl sm:text-2xl font-black text-[#0F172A] tracking-tight cursor-pointer">
+          <span onClick={() => router.push('/')} className={`text-xl sm:text-2xl font-black ${logoText} tracking-tight cursor-pointer`}>
             J<span className="text-[#F2A900]">tex</span>
           </span>
           
           <div className="hidden md:flex flex-1 max-w-2xl mx-8 relative">
-            <div className={`relative w-full flex border-2 ${showSuggestions ? 'border-[#F2A900] rounded-t-xl' : 'border-[#F2A900] rounded-full'} overflow-hidden transition-all bg-white`}>
-              <select value={activeCategory} onChange={(e) => setActiveCategory(e.target.value)} className="bg-gray-50 border-r border-gray-200 px-3 py-2 text-xs outline-none hidden lg:block font-medium cursor-pointer">
+            <div className={`relative w-full flex border-2 ${showSuggestions ? 'border-[#F2A900] rounded-t-xl' : 'border-[#F2A900] rounded-full'} overflow-hidden transition-all ${searchBg} shadow-sm`}>
+              <select value={activeCategory} onChange={(e) => setActiveCategory(e.target.value)} className={`${searchSelect} border-r px-3 py-2 text-xs outline-none hidden lg:block font-bold cursor-pointer`}>
                 {CATEGORY_KEYS.map(cat => <option key={cat} value={cat}>{getTranslatedCategoryName(cat)}</option>)}
               </select>
               <input 
@@ -492,42 +506,44 @@ export default function HomePage() {
                 onChange={(e) => { setSearchQuery(e.target.value); setShowSuggestions(e.target.value.length > 0); }}
                 onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
                 onFocus={() => { if(searchQuery) setShowSuggestions(true); }}
-                className={`flex-1 px-4 py-2.5 text-sm outline-none bg-transparent font-medium ${isAiSearch ? 'text-purple-700 placeholder-purple-400 font-bold' : 'text-gray-900'}`} 
+                className={`flex-1 px-4 py-2.5 text-sm outline-none bg-transparent font-medium ${isAiSearch ? 'text-purple-500 placeholder-purple-500 font-bold' : searchInput}`} 
               />
               
-              {/* ADVANCED SEARCH BUTTONS CONTROLS */}
               <div className="flex items-center gap-2 px-2 text-gray-400">
-                <button title="Toggle AI Search" onClick={() => setIsAiSearch(!isAiSearch)} className={`p-1.5 rounded-full transition ${isAiSearch ? 'bg-purple-100 text-purple-600' : 'hover:bg-gray-100 hover:text-purple-500'}`}><FiCpu size={16} /></button>
-                <button title="Voice Search" onClick={startVoiceSearch} className={`p-1.5 rounded-full transition ${isVoiceListening ? 'bg-red-100 text-red-500 animate-pulse' : 'hover:bg-gray-100 hover:text-blue-500'}`}><FiMic size={16} /></button>
-                <button title="Barcode Search" onClick={() => setIsBarcodeOpen(true)} className="p-1.5 rounded-full hover:bg-gray-100 hover:text-amber-500 transition"><FiMaximize size={16} /></button>
-                <button title="Image Search" onClick={() => setIsImageSearchOpen(true)} className="p-1.5 rounded-full hover:bg-gray-100 hover:text-green-500 transition"><FiCamera size={16} /></button>
+                <button title="Toggle AI Search" onClick={() => setIsAiSearch(!isAiSearch)} className={`p-1.5 rounded-full transition ${isAiSearch ? (isDark ? 'bg-purple-900/50 text-purple-400' : 'bg-purple-100 text-purple-600') : (isDark ? 'hover:bg-gray-800 hover:text-purple-400' : 'hover:bg-gray-100 hover:text-purple-600')}`}><FiCpu size={16} /></button>
+                <button title="Voice Search" onClick={startVoiceSearch} className={`p-1.5 rounded-full transition ${isVoiceListening ? 'bg-red-500/20 text-red-500 animate-pulse' : (isDark ? 'hover:bg-gray-800 hover:text-blue-400' : 'hover:bg-gray-100 hover:text-blue-600')}`}><FiMic size={16} /></button>
+                <button title="Barcode Search" onClick={() => setIsBarcodeOpen(true)} className={`p-1.5 rounded-full transition ${isDark ? 'hover:bg-gray-800 hover:text-amber-400' : 'hover:bg-gray-100 hover:text-amber-600'}`}><FiMaximize size={16} /></button>
+                <button title="Image Search" onClick={() => setIsImageSearchOpen(true)} className={`p-1.5 rounded-full transition ${isDark ? 'hover:bg-gray-800 hover:text-green-400' : 'hover:bg-gray-100 hover:text-green-600'}`}><FiCamera size={16} /></button>
               </div>
 
               <button className={`px-6 flex items-center justify-center text-[#0F172A] transition ${isAiSearch ? 'bg-purple-600 text-white hover:bg-purple-700' : 'bg-[#F2A900] hover:bg-yellow-500'}`}><FiSearch className="text-lg" /></button>
             </div>
             
             {showSuggestions && searchQuery && (
-              <div className="absolute top-full left-0 w-full bg-white border border-gray-200 rounded-b-xl shadow-xl z-50 max-h-80 overflow-y-auto">
+              <div className={`absolute top-full left-0 w-full ${isDark ? 'bg-[#1E293B] border-gray-800' : 'bg-white border-gray-200'} border rounded-b-xl shadow-2xl z-50 max-h-80 overflow-y-auto`}>
                 {filteredSuggestions.length > 0 ? filteredSuggestions.map(item => (
-                  <div key={item.id} onClick={() => { router.push(`/product/${item.id}`); setShowSuggestions(false); setSearchQuery(''); }} className="flex items-center gap-3 p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-50 transition">
-                    <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center p-1">
+                  <div key={item.id} onClick={() => { router.push(`/product/${item.id}`); setShowSuggestions(false); setSearchQuery(''); }} className={`flex items-center gap-3 p-3 cursor-pointer border-b transition ${isDark ? 'hover:bg-[#334155] border-gray-800' : 'hover:bg-gray-50 border-gray-100'}`}>
+                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center p-1 border ${isDark ? 'bg-[#0F172A] border-gray-700' : 'bg-gray-100 border-transparent'}`}>
                       {item.imageUrl ? <img src={`${getApiUrl()}${item.imageUrl}`} className="w-full h-full object-contain" /> : item.imageEmoji}
                     </div>
-                    <div className="flex-1"><h4 className="text-sm font-bold text-gray-800 line-clamp-1">{item.name}</h4></div>
-                    <span className="text-sm font-black text-[#0F172A]">TZS {item.price.toLocaleString()}</span>
+                    <div className="flex-1"><h4 className={`text-sm font-bold line-clamp-1 ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>{item.name}</h4></div>
+                    <span className={`text-sm font-black ${isDark ? 'text-white' : 'text-[#0F172A]'}`}>TZS {item.price.toLocaleString()}</span>
                   </div>
                 )) : (
-                  <div className="p-4 text-center text-sm text-gray-500 font-medium">Hakuna bidhaa inayofanana na "{searchQuery}"</div>
+                  <div className="p-4 text-center text-sm text-gray-500 font-medium">No records match "{searchQuery}"</div>
                 )}
               </div>
             )}
           </div>
 
           <div className="flex items-center gap-3 lg:gap-6">
-            <button onClick={toggleLanguage} className="hidden lg:flex items-center gap-1 text-xs font-bold border border-gray-200 px-2 py-1 rounded hover:bg-gray-50 transition">
+            <button onClick={toggleLanguage} className={`hidden lg:flex items-center gap-1 text-xs font-bold border px-2 py-1 rounded transition ${btnHover}`}>
               <span className="text-[#F2A900]">TZS</span> | {lang === 'en' ? 'EN' : 'SW'}
             </button>
-            <button onClick={openCartWorkflow} className="relative text-gray-700 hover:text-[#F2A900] transition flex flex-col items-center group">
+            <button onClick={toggleTheme} className={`flex items-center gap-1 text-xs font-bold border px-2 py-1 rounded transition ${btnHover}`}>
+              {isDark ? <FiSun className="text-yellow-400" size={16} /> : <FiMoon className="text-indigo-600" size={16} />}
+            </button>
+            <button onClick={openCartWorkflow} className={`relative transition flex flex-col items-center group ${isDark ? 'text-gray-300 hover:text-[#F2A900]' : 'text-gray-700 hover:text-[#F2A900]'}`}>
               <div className="relative">
                 <FiShoppingCart className="text-xl sm:text-2xl group-hover:scale-110 transition" />
                 {isClient && cart && cart.length > 0 && (
@@ -538,12 +554,12 @@ export default function HomePage() {
               </div>
             </button>
             {user ? (
-              <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full cursor-pointer shadow-sm" onClick={() => router.push('/profile')}>
-                <div className="w-6 h-6 bg-[#0F172A] text-white rounded-full flex items-center justify-center font-bold text-xs">{user.name.charAt(0)}</div>
-                <span className="text-xs font-bold hidden md:block">{user.name.split(' ')[0]}</span>
+              <div className={`flex items-center gap-2 border px-2 sm:px-3 py-1 sm:py-1.5 rounded-full cursor-pointer shadow-sm transition ${isDark ? 'bg-[#1E293B] border-gray-800 hover:border-gray-700' : 'bg-gray-50 border-gray-200 hover:bg-gray-100'}`} onClick={() => router.push('/profile')}>
+                <div className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs ${isDark ? 'bg-[#F2A900] text-[#0F172A]' : 'bg-[#0F172A] text-white'}`}>{user.name.charAt(0)}</div>
+                <span className={`text-xs font-bold hidden md:block ${isDark ? 'text-gray-200' : 'text-gray-900'}`}>{user.name.split(' ')[0]}</span>
               </div>
             ) : (
-              <button onClick={() => setIsLoginOpen(true)} className="flex items-center gap-1 bg-[#0F172A] text-[#F2A900] px-3 py-1.5 rounded-full text-xs font-bold">
+              <button onClick={() => setIsLoginOpen(true)} className={`flex items-center gap-1 border px-3 py-1.5 rounded-full text-xs font-bold transition ${isDark ? 'bg-[#1E293B] border-gray-800 text-[#F2A900] hover:border-gray-700' : 'bg-[#0F172A] border-transparent text-[#F2A900] hover:bg-gray-800'}`}>
                 <FiUser /> <span className="hidden sm:block">Login</span>
               </button>
             )}
@@ -552,10 +568,10 @@ export default function HomePage() {
         
         {/* MOBILE SMART SEARCH CONTROL HEADER */}
         <div className="md:hidden px-4 pb-3">
-          <div className="relative w-full flex border border-gray-300 rounded-full overflow-hidden bg-gray-50 p-1">
-             <input type="text" placeholder={isAiSearch ? t.aiSearchPlaceholder : t.searchPlaceholder} value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className={`flex-1 px-3 py-1.5 text-xs outline-none bg-transparent font-medium ${isAiSearch ? 'text-purple-700' : 'text-gray-900'}`} />
+          <div className={`relative w-full flex border rounded-full overflow-hidden p-1 ${isDark ? 'border-gray-700 bg-[#1E293B]' : 'border-gray-300 bg-gray-50'}`}>
+             <input type="text" placeholder={isAiSearch ? t.aiSearchPlaceholder : t.searchPlaceholder} value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className={`flex-1 px-3 py-1.5 text-xs outline-none bg-transparent font-medium ${isAiSearch ? 'text-purple-500' : (isDark ? 'text-white' : 'text-gray-900')}`} />
              <div className="flex items-center gap-1 text-gray-400 mr-2">
-                <button onClick={() => setIsAiSearch(!isAiSearch)} className={`p-1 ${isAiSearch ? 'text-purple-600' : ''}`}><FiCpu size={14} /></button>
+                <button onClick={() => setIsAiSearch(!isAiSearch)} className={`p-1 ${isAiSearch ? 'text-purple-500' : ''}`}><FiCpu size={14} /></button>
                 <button onClick={startVoiceSearch} className={`p-1 ${isVoiceListening ? 'text-red-500 animate-pulse' : ''}`}><FiMic size={14} /></button>
                 <button onClick={() => setIsBarcodeOpen(true)} className="p-1"><FiMaximize size={14} /></button>
                 <button onClick={() => setIsImageSearchOpen(true)} className="p-1"><FiCamera size={14} /></button>
@@ -569,8 +585,8 @@ export default function HomePage() {
 
       {/* VOICE FLOATING OVERLAY RADAR SCREEN */}
       {isVoiceListening && (
-        <div className="fixed inset-0 bg-[#0F172A]/90 text-white z-50 flex flex-col items-center justify-center p-4 backdrop-blur-md">
-           <div className="w-24 h-24 bg-red-600 text-white rounded-full flex items-center justify-center text-4xl animate-ping opacity-75 mb-8">
+        <div className={`fixed inset-0 ${isDark ? 'bg-[#0B1120]/90 text-white' : 'bg-black/80 text-white'} z-50 flex flex-col items-center justify-center p-4 backdrop-blur-md`}>
+           <div className="w-24 h-24 bg-red-600 text-white rounded-full flex items-center justify-center text-4xl animate-ping opacity-75 mb-8 shadow-[0_0_40px_rgba(220,38,38,0.6)]">
               <FiMic />
            </div>
            <p className="font-black text-xl tracking-wider uppercase text-center animate-pulse">{t.voiceListening}</p>
@@ -579,23 +595,22 @@ export default function HomePage() {
 
       {/* SMART BARCODE SCANNER MODAL SCREEN */}
       {isBarcodeOpen && (
-        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 backdrop-blur-md">
-           <div className="bg-[#0F172A] w-full max-w-lg rounded-2xl p-6 border border-gray-800 text-white text-center relative overflow-hidden flex flex-col items-center">
-              <button onClick={() => setIsBarcodeOpen(false)} className="absolute top-4 right-4 bg-white/10 p-2 rounded-full hover:bg-white/20 transition"><FiX size={18} /></button>
-              <h3 className="text-lg font-black tracking-wide mb-2 flex items-center gap-2 text-amber-400"><FiMaximize /> {t.barcodeSearchTitle}</h3>
-              <p className="text-xs text-gray-400 mb-6">{t.barcodePrompt}</p>
+        <div className={`fixed inset-0 ${isDark ? 'bg-[#0B1120]/90' : 'bg-black/80'} z-50 flex items-center justify-center p-4 backdrop-blur-md`}>
+           <div className={`${isDark ? 'bg-[#1E293B] border-gray-700 text-white' : 'bg-white border-gray-200 text-gray-900'} w-full max-w-lg rounded-2xl p-6 border text-center relative overflow-hidden flex flex-col items-center shadow-2xl`}>
+              <button onClick={() => setIsBarcodeOpen(false)} className={`absolute top-4 right-4 ${isDark ? 'bg-gray-800 hover:bg-gray-700' : 'bg-gray-100 hover:bg-gray-200'} p-2 rounded-full transition`}><FiX size={18} /></button>
+              <h3 className="text-lg font-black tracking-wide mb-2 flex items-center gap-2 text-[#F2A900]"><FiMaximize /> {t.barcodeSearchTitle}</h3>
+              <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'} mb-6`}>{t.barcodePrompt}</p>
               
-              {/* LASER FRAME WORKSPACE */}
-              <div className="w-full aspect-[4/3] bg-gray-900 border-2 border-dashed border-gray-600 rounded-xl relative overflow-hidden flex items-center justify-center mb-6">
-                 <div className="w-4/5 h-0.5 bg-red-500 absolute animate-pulse shadow-lg shadow-red-500/80"></div>
-                 <span className="text-5xl opacity-20 select-none">📷 Camera Ready</span>
+              <div className={`w-full aspect-[4/3] ${isDark ? 'bg-[#0F172A] border-gray-600' : 'bg-gray-100 border-gray-300'} border-2 border-dashed rounded-xl relative overflow-hidden flex items-center justify-center mb-6`}>
+                 <div className="w-4/5 h-0.5 bg-red-500 absolute animate-pulse shadow-[0_0_15px_rgba(239,68,68,1)]"></div>
+                 <span className={`text-5xl opacity-20 select-none ${isDark ? 'text-white' : 'text-black'}`}>📷 Camera</span>
               </div>
 
               {aiActionLoading ? (
                  <p className="text-xs font-bold text-[#F2A900] animate-pulse">{t.simulatingAi}</p>
               ) : (
-                 <button type="button" onClick={handleBarcodeScanSimulation} className="bg-amber-500 text-[#0F172A] font-black px-6 py-2.5 rounded-xl text-xs uppercase tracking-wider hover:bg-amber-600 transition shadow-md">
-                    Simulate Barcode Scan (Fanya Skana)
+                 <button type="button" onClick={handleBarcodeScanSimulation} className="bg-[#F2A900] text-[#0F172A] font-black px-6 py-2.5 rounded-xl text-xs uppercase tracking-wider hover:bg-yellow-500 transition shadow-md">
+                    Simulate Barcode Scan
                  </button>
               )}
            </div>
@@ -604,21 +619,20 @@ export default function HomePage() {
 
       {/* IMAGE VISUAL SEARCH MODAL SCREEN */}
       {isImageSearchOpen && (
-        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 backdrop-blur-md">
-           <div className="bg-white w-full max-w-lg rounded-2xl p-6 text-gray-900 text-center relative overflow-hidden flex flex-col items-center">
-              <button onClick={() => setIsImageSearchOpen(false)} className="absolute top-4 right-4 bg-gray-100 p-2 rounded-full hover:bg-gray-200 transition"><FiX size={18} /></button>
-              <h3 className="text-lg font-black tracking-wide mb-1 flex items-center gap-2 text-green-600"><FiCamera /> {t.imageSearchTitle}</h3>
-              <p className="text-xs text-gray-400 mb-6">{t.uploadPrompt}</p>
+        <div className={`fixed inset-0 ${isDark ? 'bg-[#0B1120]/90' : 'bg-black/80'} z-50 flex items-center justify-center p-4 backdrop-blur-md`}>
+           <div className={`${isDark ? 'bg-[#1E293B] border-gray-700 text-gray-200' : 'bg-white border-gray-200 text-gray-900'} w-full max-w-lg rounded-2xl p-6 text-center relative overflow-hidden flex flex-col items-center border shadow-2xl`}>
+              <button onClick={() => setIsImageSearchOpen(false)} className={`absolute top-4 right-4 ${isDark ? 'bg-gray-800 hover:bg-gray-700' : 'bg-gray-100 hover:bg-gray-200'} p-2 rounded-full transition`}><FiX size={18} /></button>
+              <h3 className="text-lg font-black tracking-wide mb-1 flex items-center gap-2 text-green-500"><FiCamera /> {t.imageSearchTitle}</h3>
+              <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'} mb-6`}>{t.uploadPrompt}</p>
               
-              {/* DROPZONE LAYOUT CONTAINER */}
-              <div onClick={handleImageUploadSimulation} className="w-full border-4 border-dashed border-gray-200 hover:border-green-500 transition rounded-2xl p-10 bg-gray-50 flex flex-col items-center justify-center cursor-pointer group mb-4">
-                 <FiUploadCloud size={48} className="text-gray-300 group-hover:text-green-500 transition mb-3" />
-                 <span className="text-xs font-bold text-gray-500 group-hover:text-green-600 transition">Click anywhere to upload picture</span>
+              <div onClick={handleImageUploadSimulation} className={`w-full border-4 border-dashed transition rounded-2xl p-10 flex flex-col items-center justify-center cursor-pointer group mb-4 ${isDark ? 'border-gray-700 bg-[#0F172A] hover:border-green-500' : 'border-gray-200 bg-gray-50 hover:border-green-500'}`}>
+                 <FiUploadCloud size={48} className="text-gray-400 group-hover:text-green-500 transition mb-3" />
+                 <span className="text-xs font-bold text-gray-400 group-hover:text-green-500 transition">Click to upload</span>
               </div>
 
               {aiActionLoading && (
-                 <div className="flex items-center gap-2 text-xs font-bold text-green-600 animate-pulse bg-green-50 px-4 py-2 rounded-lg">
-                    <div className="w-4 h-4 border-2 border-green-600 border-t-transparent rounded-full animate-spin"></div>
+                 <div className="flex items-center gap-2 text-xs font-bold text-green-500 animate-pulse bg-green-500/10 border border-green-500/20 px-4 py-2 rounded-lg">
+                    <div className="w-4 h-4 border-2 border-green-500 border-t-transparent rounded-full animate-spin"></div>
                     {t.simulatingAi}
                  </div>
               )}
@@ -635,7 +649,7 @@ export default function HomePage() {
         <div className="flex-1 flex flex-col gap-5 sm:gap-8 min-w-0">
           
           {/* MATANGAZO YANAYOTELEZA (BANNERS) */}
-          <div className="relative w-full h-[180px] sm:h-[250px] md:h-[300px] rounded-2xl overflow-hidden shadow-sm group">
+          <div className={`relative w-full h-[180px] sm:h-[250px] md:h-[300px] rounded-2xl overflow-hidden shadow-2xl group border ${isDark ? 'border-gray-800' : 'border-gray-100'}`}>
             {activeBanners.map((banner, index) => (
               <div 
                 key={banner.id}
@@ -646,36 +660,36 @@ export default function HomePage() {
                 <p className="text-sm sm:text-lg md:text-xl font-medium mb-6 sm:mb-8 opacity-90 max-w-xl">{banner.subtitle}</p>
                 <button 
                   onClick={() => handleBannerClick(banner.categoryTarget)}
-                  className="bg-white text-gray-900 font-black px-6 sm:px-8 py-2.5 sm:py-3.5 rounded-xl w-max hover:bg-gray-100 transition shadow-lg flex items-center gap-2 text-sm sm:text-base"
+                  className="bg-white text-[#0F172A] font-black px-6 sm:px-8 py-2.5 sm:py-3.5 rounded-xl w-max hover:bg-gray-200 transition shadow-lg flex items-center gap-2 text-sm sm:text-base"
                 >
                   {banner.buttonText} <FiArrowRight />
                 </button>
               </div>
             ))}
             
-            <button onClick={prevBanner} className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/40 text-white p-2 rounded-full backdrop-blur-sm z-20 opacity-0 group-hover:opacity-100 transition"><FiArrowLeft size={24} /></button>
-            <button onClick={nextBanner} className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/40 text-white p-2 rounded-full backdrop-blur-sm z-20 opacity-0 group-hover:opacity-100 transition"><FiArrowRight size={24} /></button>
+            <button onClick={prevBanner} className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 text-white p-2 rounded-full backdrop-blur-sm z-20 opacity-0 group-hover:opacity-100 transition"><FiArrowLeft size={24} /></button>
+            <button onClick={nextBanner} className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 text-white p-2 rounded-full backdrop-blur-sm z-20 opacity-0 group-hover:opacity-100 transition"><FiArrowRight size={24} /></button>
             
             <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-20">
               {activeBanners.map((_, index) => (
-                <div key={index} onClick={() => setCurrentBannerIndex(index)} className={`w-2 h-2 rounded-full cursor-pointer transition-all ${index === currentBannerIndex ? 'bg-white w-6' : 'bg-white/50'}`}></div>
+                <div key={index} onClick={() => setCurrentBannerIndex(index)} className={`w-2 h-2 rounded-full cursor-pointer transition-all ${index === currentBannerIndex ? 'bg-white w-6' : 'bg-white/40'}`}></div>
               ))}
             </div>
           </div>
 
           <TrustBadges />
 
-          <div ref={categoriesRef} className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100 mt-2 scroll-mt-24">
+          <div ref={categoriesRef} className={`${cardBg} rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-sm mt-2 scroll-mt-24 transition-colors duration-300`}>
             
-            <div className="flex overflow-x-auto gap-2 pb-4 mb-4 hide-scrollbar border-b border-gray-100">
+            <div className={`flex overflow-x-auto gap-2 pb-4 mb-4 hide-scrollbar border-b ${isDark ? 'border-gray-800' : 'border-gray-100'}`}>
               {CATEGORY_KEYS.map(cat => (
                 <button 
                   key={cat}
                   onClick={() => setActiveCategory(cat)}
                   className={`whitespace-nowrap px-5 py-2.5 rounded-full text-xs sm:text-sm font-bold transition-all flex items-center gap-2 ${
                     activeCategory === cat 
-                      ? 'bg-[#0F172A] text-[#F2A900] shadow-md' 
-                      : 'bg-gray-50 text-gray-600 border border-gray-200 hover:bg-gray-100'
+                      ? (isDark ? 'bg-[#F2A900] text-[#0F172A]' : 'bg-[#0F172A] text-[#F2A900]')
+                      : (isDark ? 'bg-[#0F172A] text-gray-400 border border-gray-800 hover:bg-gray-800' : 'bg-gray-50 text-gray-600 border border-gray-200 hover:bg-gray-100')
                   }`}
                 >
                   {cat === 'All' ? <FiGrid /> : ''}
@@ -688,16 +702,16 @@ export default function HomePage() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-[#F2A900]/10 text-[#F2A900] rounded-full flex items-center justify-center"><FiBox className="text-xl" /></div>
-                  <h2 className="text-xl sm:text-2xl font-black text-gray-900">
+                  <h2 className={`text-xl sm:text-2xl font-black ${isDark ? 'text-white' : 'text-gray-900'}`}>
                     {getTranslatedCategoryName(activeCategory)}
                   </h2>
                 </div>
-                <span className="text-xs font-bold text-gray-400 bg-gray-50 px-3 py-1 rounded-full">{displayedProducts.length} Items</span>
+                <span className={`text-xs font-bold border px-3 py-1 rounded-full ${isDark ? 'text-gray-400 bg-[#0B1120] border-gray-800' : 'text-gray-500 bg-gray-50 border-gray-200'}`}>{displayedProducts.length} Items</span>
               </div>
             </div>
             
             {fetchError ? (
-               <div className="bg-red-50 border border-red-200 text-red-600 p-6 rounded-xl flex flex-col items-center justify-center text-center">
+               <div className={`border p-6 rounded-xl flex flex-col items-center justify-center text-center ${isDark ? 'bg-red-900/20 border-red-800 text-red-400' : 'bg-red-50 border-red-200 text-red-600'}`}>
                  <FiAlertCircle className="text-4xl mb-3" />
                  <p className="font-bold mb-1">Imeshindwa kuwasiliana na Server</p>
                  <p className="text-xs">{fetchError}</p>
@@ -708,10 +722,10 @@ export default function HomePage() {
                  {Array(10).fill(0).map((_, i) => <SkeletonCard key={i} />)}
                </div>
             ) : displayedProducts.length === 0 ? (
-               <div className="text-center py-16 flex flex-col items-center justify-center bg-gray-50 rounded-xl border border-dashed border-gray-200">
-                 <FiBox className="text-6xl text-gray-300 mb-4" />
-                 <p className="text-gray-500 font-bold text-lg mb-2">{activeCategory === 'All' ? t.noProducts : t.noCategoryProducts}</p>
-                 <button onClick={() => setActiveCategory('All')} className="text-sm font-bold text-blue-600 hover:underline">Rudi kwenye Bidhaa Zote / Back to All</button>
+               <div className={`text-center py-16 flex flex-col items-center justify-center rounded-xl border border-dashed ${isDark ? 'bg-[#0F172A] border-gray-700' : 'bg-gray-50 border-gray-200'}`}>
+                 <FiBox className={`text-6xl mb-4 ${isDark ? 'text-gray-700' : 'text-gray-300'}`} />
+                 <p className={`font-bold text-lg mb-2 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{activeCategory === 'All' ? t.noProducts : t.noCategoryProducts}</p>
+                 <button onClick={() => setActiveCategory('All')} className="text-sm font-bold text-[#F2A900] hover:underline">Rudi kwenye Bidhaa Zote / Back to All</button>
                </div>
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4 animate-fade-in">
@@ -728,31 +742,32 @@ export default function HomePage() {
       <FloatingWhatsApp />
       <MobileBottomNav />
 
-      {/* LOGIN POPUP & CHECKOUT WORKFLOW */}
+      {/* LOGIN POPUP WORKFLOW */}
       {isLoginOpen && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-          <div className="bg-white w-full max-w-4xl rounded-2xl shadow-2xl relative flex overflow-hidden min-h-[500px] animate-fade-in">
-            <button onClick={() => setIsLoginOpen(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-900 bg-gray-100 p-2 rounded-full z-20 transition"><FiX size={20} /></button>
-            <div className="hidden md:flex md:w-1/2 bg-[#0F172A] text-white flex-col justify-center p-12">
+        <div className={`fixed inset-0 ${isDark ? 'bg-[#0B1120]/80' : 'bg-black/60'} z-50 flex items-center justify-center p-4 backdrop-blur-md`}>
+          <div className={`${modalBg} w-full max-w-4xl rounded-2xl shadow-2xl relative flex overflow-hidden min-h-[500px] animate-fade-in`}>
+            <button onClick={() => setIsLoginOpen(false)} className={`absolute top-4 right-4 p-2 rounded-full z-20 transition ${isDark ? 'text-gray-500 hover:text-white bg-[#0F172A] border border-gray-700' : 'text-gray-400 hover:text-gray-900 bg-gray-100'}`}><FiX size={20} /></button>
+            <div className="hidden md:flex md:w-1/2 bg-[#0F172A] text-white flex-col justify-center p-12 relative overflow-hidden">
+               <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#F2A900] to-yellow-600"></div>
                <h2 className="text-5xl font-black mb-4">J<span className="text-[#F2A900]">tex</span></h2>
-               <p className="text-lg font-medium text-gray-300 mb-8">{t.signIn} and Checkout seamlessly.</p>
+               <p className="text-lg font-medium text-gray-400 mb-8">{t.signIn} and Checkout seamlessly.</p>
             </div>
-            <div className="w-full md:w-1/2 p-8 md:p-12 flex flex-col justify-center bg-white">
-              <div className="flex bg-gray-100 p-1 rounded-xl mb-6">
-                <button onClick={() => setAuthMode('login')} className={`flex-1 py-2 text-sm font-bold rounded-lg transition ${authMode === 'login' ? 'bg-white shadow text-gray-900' : 'text-gray-500'}`}>{t.signIn}</button>
-                <button onClick={() => setAuthMode('register')} className={`flex-1 py-2 text-sm font-bold rounded-lg transition ${authMode === 'register' ? 'bg-white shadow text-gray-900' : 'text-gray-500'}`}>{t.register}</button>
+            <div className={`w-full md:w-1/2 p-8 md:p-12 flex flex-col justify-center ${isDark ? 'bg-[#1E293B]' : 'bg-white'}`}>
+              <div className={`flex p-1 rounded-xl mb-6 ${isDark ? 'bg-[#0F172A] border border-gray-800' : 'bg-gray-100'}`}>
+                <button onClick={() => setAuthMode('login')} className={`flex-1 py-2 text-sm font-bold rounded-lg transition ${authMode === 'login' ? (isDark ? 'bg-[#1E293B] shadow text-white' : 'bg-white shadow text-gray-900') : 'text-gray-500 hover:text-gray-400'}`}>{t.signIn}</button>
+                <button onClick={() => setAuthMode('register')} className={`flex-1 py-2 text-sm font-bold rounded-lg transition ${authMode === 'register' ? (isDark ? 'bg-[#1E293B] shadow text-white' : 'bg-white shadow text-gray-900') : 'text-gray-500 hover:text-gray-400'}`}>{t.register}</button>
               </div>
-              {loginError && <div className="p-3 bg-red-50 text-red-600 border border-red-200 text-xs rounded-lg font-bold mb-4">{loginError}</div>}
+              {loginError && <div className={`p-3 text-xs rounded-lg font-bold mb-4 ${isDark ? 'bg-red-900/30 text-red-400 border border-red-800' : 'bg-red-50 text-red-600 border border-red-200'}`}>{loginError}</div>}
               <form onSubmit={authMode === 'login' ? handleInlineLogin : handleInlineRegister} className="space-y-4">
                 {authMode === 'register' && (
                   <>
-                    <input type="text" required value={registerName} onChange={e => setRegisterName(e.target.value)} className="w-full bg-gray-50 border rounded-xl px-4 py-3 outline-none text-sm" placeholder="Full Name" />
-                    <input type="tel" required value={registerPhone} onChange={e => setRegisterPhone(e.target.value)} className="w-full bg-gray-50 border rounded-xl px-4 py-3 outline-none text-sm" placeholder="Phone Number" />
+                    <input type="text" required value={registerName} onChange={e => setRegisterName(e.target.value)} className={`w-full border rounded-xl px-4 py-3 outline-none text-sm focus:border-[#F2A900] ${isDark ? 'bg-[#0F172A] border-gray-700 text-white placeholder-gray-500' : 'bg-gray-50 border-gray-200'}`} placeholder="Full Name" />
+                    <input type="tel" required value={registerPhone} onChange={e => setRegisterPhone(e.target.value)} className={`w-full border rounded-xl px-4 py-3 outline-none text-sm focus:border-[#F2A900] ${isDark ? 'bg-[#0F172A] border-gray-700 text-white placeholder-gray-500' : 'bg-gray-50 border-gray-200'}`} placeholder="Phone Number" />
                   </>
                 )}
-                <input type="email" required value={loginEmail} onChange={e => setLoginEmail(e.target.value)} className="w-full bg-gray-50 border rounded-xl px-4 py-3 outline-none text-sm" placeholder="Email Address" />
-                <input type="password" required value={loginPassword} onChange={e => setLoginPassword(e.target.value)} className="w-full bg-gray-50 border rounded-xl px-4 py-3 outline-none text-sm" placeholder="Password" />
-                <button type="submit" className="w-full bg-[#0F172A] text-white font-bold py-3.5 rounded-xl text-sm mt-2">{authMode === 'login' ? 'Login to Continue' : 'Register to Continue'}</button>
+                <input type="email" required value={loginEmail} onChange={e => setLoginEmail(e.target.value)} className={`w-full border rounded-xl px-4 py-3 outline-none text-sm focus:border-[#F2A900] ${isDark ? 'bg-[#0F172A] border-gray-700 text-white placeholder-gray-500' : 'bg-gray-50 border-gray-200'}`} placeholder="Email Address" />
+                <input type="password" required value={loginPassword} onChange={e => setLoginPassword(e.target.value)} className={`w-full border rounded-xl px-4 py-3 outline-none text-sm focus:border-[#F2A900] ${isDark ? 'bg-[#0F172A] border-gray-700 text-white placeholder-gray-500' : 'bg-gray-50 border-gray-200'}`} placeholder="Password" />
+                <button type="submit" className="w-full bg-[#F2A900] text-[#0F172A] hover:bg-yellow-500 font-black py-3.5 rounded-xl text-sm mt-2 transition">{authMode === 'login' ? 'Login to Continue' : 'Register to Continue'}</button>
               </form>
             </div>
           </div>
@@ -761,13 +776,13 @@ export default function HomePage() {
 
       {/* CHECKOUT WORKFLOW MODAL */}
       {isWorkflowOpen && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-2 sm:p-4 backdrop-blur-sm pb-16">
-          <div className="bg-white w-full max-w-3xl rounded-2xl shadow-2xl overflow-hidden relative max-h-[90vh] flex flex-col animate-fade-in">
-            <button onClick={() => setIsWorkflowOpen(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-900 z-20"><FiX size={20} /></button>
-            <div className="bg-gray-50 p-6 border-b border-gray-100 flex items-center justify-between sm:justify-center sm:gap-12 relative">
+        <div className={`fixed inset-0 ${isDark ? 'bg-[#0B1120]/80' : 'bg-black/60'} z-50 flex items-center justify-center p-2 sm:p-4 backdrop-blur-md pb-16`}>
+          <div className={`${modalBg} w-full max-w-3xl rounded-2xl shadow-2xl overflow-hidden relative max-h-[90vh] flex flex-col animate-fade-in`}>
+            <button onClick={() => setIsWorkflowOpen(false)} className={`absolute top-4 right-4 z-20 p-2 rounded-full transition ${isDark ? 'text-gray-500 hover:text-white bg-[#0F172A] border border-gray-700' : 'text-gray-400 hover:text-gray-900 bg-gray-100'}`}><FiX size={20} /></button>
+            <div className={`${isDark ? 'bg-[#0F172A] border-gray-800' : 'bg-gray-50 border-gray-100'} p-6 border-b flex items-center justify-between sm:justify-center sm:gap-12 relative`}>
               {['Cart', 'Shipping', 'Payment', 'Done'].map((step, idx) => (
-                <div key={step} className={`flex flex-col items-center z-10 ${workflowStep >= idx + 1 ? 'text-[#0F172A]' : 'text-gray-300'}`}>
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-black mb-2 transition-all ${workflowStep >= idx + 1 ? 'bg-[#F2A900] text-[#0F172A] shadow-md ring-4 ring-yellow-50' : 'bg-gray-200'}`}>
+                <div key={step} className={`flex flex-col items-center z-10 ${workflowStep >= idx + 1 ? (isDark ? 'text-white' : 'text-[#0F172A]') : 'text-gray-500'}`}>
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-black mb-2 transition-all ${workflowStep >= idx + 1 ? 'bg-[#F2A900] text-[#0F172A] shadow-md ring-4 ring-yellow-900/50' : (isDark ? 'bg-gray-800' : 'bg-gray-200')}`}>
                     {workflowStep > idx + 1 ? <FiCheckCircle /> : idx + 1}
                   </div>
                   <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider">{step}</span>
@@ -775,45 +790,45 @@ export default function HomePage() {
               ))}
             </div>
 
-            <div className="p-4 sm:p-8 overflow-y-auto flex-1 bg-white">
+            <div className={`p-4 sm:p-8 overflow-y-auto flex-1 ${modalBg}`}>
                {workflowStep === 1 && (
                   <div className="max-w-xl mx-auto">
-                    <div className="flex justify-between items-center mb-6 border-b border-gray-100 pb-4">
-                      <h3 className="text-xl sm:text-2xl font-black text-gray-900">{t.cart}</h3>
+                    <div className={`flex justify-between items-center mb-6 border-b pb-4 ${isDark ? 'border-gray-800' : 'border-gray-100'}`}>
+                      <h3 className={`text-xl sm:text-2xl font-black ${isDark ? 'text-white' : 'text-gray-900'}`}>{t.cart}</h3>
                       {cart.length > 0 && (
-                        <button onClick={clearCart} className="text-xs font-bold text-red-500 bg-red-50 px-3 py-2 rounded-lg hover:bg-red-100 transition flex items-center gap-2">
+                        <button onClick={clearCart} className={`text-xs font-bold text-red-500 px-3 py-2 rounded-lg transition flex items-center gap-2 ${isDark ? 'bg-red-900/20 border border-red-900/50 hover:bg-red-900/40' : 'bg-red-50 hover:bg-red-100'}`}>
                           <FiTrash2 /> Clear Cart
                         </button>
                       )}
                     </div>
                     {cart.length === 0 ? (
-                      <div className="text-center py-16 text-gray-400">
-                        <FiShoppingCart className="text-6xl mx-auto mb-4 text-gray-200" />
+                      <div className="text-center py-16 text-gray-500">
+                        <FiShoppingCart className="text-6xl mx-auto mb-4 opacity-50" />
                         <p className="font-bold text-lg">{t.emptyCart}</p>
                       </div>
                     ) : (
                       <>
                         <div className="space-y-4 mb-8">
                           {cart.map((item: any) => (
-                            <div key={item.id} className="flex justify-between items-center bg-gray-50 p-4 rounded-xl border border-gray-100">
+                            <div key={item.id} className={`flex justify-between items-center p-4 rounded-xl border ${modalInnerBg}`}>
                               <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 bg-white rounded-lg border border-gray-200 flex items-center justify-center text-xl shadow-sm">
+                                <div className={`w-12 h-12 rounded-lg border flex items-center justify-center text-xl shadow-sm ${isDark ? 'bg-[#1E293B] border-gray-700' : 'bg-white border-gray-200'}`}>
                                   {item.imageUrl ? <img src={`${getApiUrl()}${item.imageUrl}`} className="object-contain w-full h-full" /> : item.imageEmoji || '📦'}
                                 </div>
                                 <div>
-                                  <p className="font-bold text-sm text-gray-900">{item.name}</p>
+                                  <p className={`font-bold text-sm ${isDark ? 'text-gray-200' : 'text-gray-900'}`}>{item.name}</p>
                                   <p className="text-xs text-gray-500">Qty: <span className="font-black text-[#F2A900]">{item.quantity}</span></p>
                                 </div>
                               </div>
-                              <span className="font-black text-[#0F172A]">TZS {(item.price * item.quantity).toLocaleString()}</span>
+                              <span className={`font-black ${isDark ? 'text-white' : 'text-[#0F172A]'}`}>TZS {(item.price * item.quantity).toLocaleString()}</span>
                             </div>
                           ))}
                         </div>
-                        <div className="flex justify-between items-center bg-gray-50 p-4 rounded-xl border border-gray-100 mb-6">
+                        <div className={`flex justify-between items-center p-4 rounded-xl border mb-6 ${modalInnerBg}`}>
                           <span className="text-gray-500 font-bold uppercase text-xs tracking-wider">Subtotal</span>
-                          <span className="text-2xl font-black text-gray-900">TZS {cartTotal.toLocaleString()}</span>
+                          <span className={`text-2xl font-black ${isDark ? 'text-white' : 'text-gray-900'}`}>TZS {cartTotal.toLocaleString()}</span>
                         </div>
-                        <button onClick={handleProceedToLocation} className="w-full bg-[#0F172A] hover:bg-gray-800 text-white font-bold py-4 rounded-xl text-sm transition shadow-lg flex justify-center items-center gap-2">
+                        <button onClick={handleProceedToLocation} className={`w-full font-black py-4 rounded-xl text-sm transition shadow-lg flex justify-center items-center gap-2 ${isDark ? 'bg-[#F2A900] text-[#0F172A] hover:bg-yellow-500' : 'bg-[#0F172A] text-white hover:bg-gray-800'}`}>
                           {t.proceedLocation} <FiChevronRight />
                         </button>
                       </>
@@ -823,34 +838,34 @@ export default function HomePage() {
 
                {workflowStep === 2 && (
                   <div className="max-w-xl mx-auto animate-fade-in">
-                     <h3 className="text-xl sm:text-2xl font-black mb-6 flex items-center gap-3 text-gray-900 border-b border-gray-100 pb-4">
+                     <h3 className={`text-xl sm:text-2xl font-black mb-6 flex items-center gap-3 border-b pb-4 ${isDark ? 'text-white border-gray-800' : 'text-gray-900 border-gray-100'}`}>
                        <FiMapPin className="text-[#F2A900]"/> {t.location}
                      </h3>
                      <div className="space-y-5">
                        <div>
-                         <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">{t.country}</label>
-                         <select value={country} onChange={e => setCountry(e.target.value)} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none text-sm font-medium focus:ring-2 focus:ring-[#F2A900]/50 transition">
+                         <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">{t.country}</label>
+                         <select value={country} onChange={e => setCountry(e.target.value)} className={`w-full rounded-xl px-4 py-3 outline-none text-sm font-medium focus:ring-2 focus:ring-[#F2A900]/50 transition border ${isDark ? 'bg-[#0F172A] border-gray-700 text-white' : 'bg-gray-50 border-gray-200'}`}>
                            <option value="Tanzania">Tanzania</option><option value="Kenya">Kenya</option><option value="Uganda">Uganda</option><option value="Rwanda">Rwanda</option>
                          </select>
                        </div>
                        <div className="grid grid-cols-2 gap-4">
                          <div>
-                           <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">{t.city}</label>
-                           <input type="text" value={city} onChange={e => setCity(e.target.value)} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none text-sm focus:ring-2 focus:ring-[#F2A900]/50 transition" placeholder="e.g. Dar es Salaam" />
+                           <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">{t.city}</label>
+                           <input type="text" value={city} onChange={e => setCity(e.target.value)} className={`w-full rounded-xl px-4 py-3 outline-none text-sm focus:border-[#F2A900] transition border ${isDark ? 'bg-[#0F172A] border-gray-700 text-white' : 'bg-gray-50 border-gray-200'}`} placeholder="e.g. Dar es Salaam" />
                          </div>
                          <div>
-                           <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">{t.zip}</label>
-                           <input type="text" value={zipCode} onChange={e => setZipCode(e.target.value)} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none text-sm focus:ring-2 focus:ring-[#F2A900]/50 transition" placeholder="e.g. 11000" />
+                           <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">{t.zip}</label>
+                           <input type="text" value={zipCode} onChange={e => setZipCode(e.target.value)} className={`w-full rounded-xl px-4 py-3 outline-none text-sm focus:border-[#F2A900] transition border ${isDark ? 'bg-[#0F172A] border-gray-700 text-white' : 'bg-gray-50 border-gray-200'}`} placeholder="e.g. 11000" />
                          </div>
                        </div>
                        <div>
-                         <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">{t.street}</label>
-                         <input type="text" value={streetAddress} onChange={e => setStreetAddress(e.target.value)} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none text-sm focus:ring-2 focus:ring-[#F2A900]/50 transition" placeholder="e.g. Makumbusho, Uhuru Street, House 42" />
+                         <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">{t.street}</label>
+                         <input type="text" value={streetAddress} onChange={e => setStreetAddress(e.target.value)} className={`w-full rounded-xl px-4 py-3 outline-none text-sm focus:border-[#F2A900] transition border ${isDark ? 'bg-[#0F172A] border-gray-700 text-white' : 'bg-gray-50 border-gray-200'}`} placeholder="e.g. Makumbusho, Uhuru Street, House 42" />
                        </div>
                      </div>
                      <div className="mt-8 flex gap-3">
-                       <button onClick={() => setWorkflowStep(1)} className="px-6 py-4 bg-gray-100 text-gray-600 font-bold rounded-xl text-sm hover:bg-gray-200 transition">Back</button>
-                       <button onClick={() => { if(city && streetAddress) setWorkflowStep(3); else alert('Please fill in City and Street Address'); }} className="flex-1 bg-[#0F172A] hover:bg-gray-800 text-white font-bold py-4 rounded-xl text-sm transition shadow-lg flex justify-center items-center gap-2">
+                       <button onClick={() => setWorkflowStep(1)} className={`px-6 py-4 font-bold rounded-xl text-sm transition ${isDark ? 'bg-gray-800 text-gray-300 hover:bg-gray-700' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>Back</button>
+                       <button onClick={() => { if(city && streetAddress) setWorkflowStep(3); else alert('Please fill in City and Street Address'); }} className={`flex-1 font-black py-4 rounded-xl text-sm transition shadow-lg flex justify-center items-center gap-2 ${isDark ? 'bg-[#F2A900] text-[#0F172A] hover:bg-yellow-500' : 'bg-[#0F172A] text-white hover:bg-gray-800'}`}>
                          {t.proceedPayment} <FiChevronRight />
                        </button>
                      </div>
@@ -859,36 +874,36 @@ export default function HomePage() {
 
                {workflowStep === 3 && (
                  <form onSubmit={handlePlaceOrder} className="max-w-xl mx-auto animate-fade-in">
-                   <h3 className="text-xl sm:text-2xl font-black mb-6 flex items-center gap-3 text-gray-900 border-b border-gray-100 pb-4">
+                   <h3 className={`text-xl sm:text-2xl font-black mb-6 flex items-center gap-3 border-b pb-4 ${isDark ? 'text-white border-gray-800' : 'text-gray-900 border-gray-100'}`}>
                      <FiShield className="text-green-500"/> {t.payment}
                    </h3>
                    <div className="grid grid-cols-3 gap-3 mb-8">
-                     <div onClick={() => setPaymentMethod('Card')} className={`border-2 p-4 rounded-xl cursor-pointer flex flex-col items-center justify-center gap-2 text-center transition-all ${paymentMethod === 'Card' ? 'border-[#0F172A] bg-[#0F172A] text-white shadow-md' : 'border-gray-100 bg-gray-50 hover:border-gray-300 text-gray-600'}`}>
+                     <div onClick={() => setPaymentMethod('Card')} className={`border-2 p-4 rounded-xl cursor-pointer flex flex-col items-center justify-center gap-2 text-center transition-all ${paymentMethod === 'Card' ? (isDark ? 'border-[#F2A900] bg-[#F2A900] text-[#0F172A] shadow-md' : 'border-[#0F172A] bg-[#0F172A] text-white shadow-md') : (isDark ? 'border-gray-800 bg-[#0F172A] hover:border-gray-600 text-gray-400' : 'border-gray-100 bg-gray-50 hover:border-gray-300 text-gray-600')}`}>
                        <FiCreditCard className="text-2xl" /><span className="font-bold text-[10px] sm:text-xs uppercase tracking-wider">Card</span>
                      </div>
-                     <div onClick={() => setPaymentMethod('M-Pesa')} className={`border-2 p-4 rounded-xl cursor-pointer flex flex-col items-center justify-center gap-2 text-center transition-all ${paymentMethod === 'M-Pesa' ? 'border-red-600 bg-red-600 text-white shadow-md' : 'border-gray-100 bg-gray-50 hover:border-gray-300 text-gray-600'}`}>
+                     <div onClick={() => setPaymentMethod('M-Pesa')} className={`border-2 p-4 rounded-xl cursor-pointer flex flex-col items-center justify-center gap-2 text-center transition-all ${paymentMethod === 'M-Pesa' ? 'border-red-500 bg-red-600 text-white shadow-md' : (isDark ? 'border-gray-800 bg-[#0F172A] hover:border-gray-600 text-gray-400' : 'border-gray-100 bg-gray-50 hover:border-gray-300 text-gray-600')}`}>
                        <FiSmartphone className="text-2xl" /><span className="font-bold text-[10px] sm:text-xs uppercase tracking-wider">M-Pesa</span>
                      </div>
-                     <div onClick={() => setPaymentMethod('Raha')} className={`border-2 p-4 rounded-xl cursor-pointer flex flex-col items-center justify-center gap-2 text-center transition-all ${paymentMethod === 'Raha' ? 'border-[#F2A900] bg-[#F2A900] text-[#0F172A] shadow-md' : 'border-gray-100 bg-gray-50 hover:border-gray-300 text-gray-600'}`}>
+                     <div onClick={() => setPaymentMethod('Raha')} className={`border-2 p-4 rounded-xl cursor-pointer flex flex-col items-center justify-center gap-2 text-center transition-all ${paymentMethod === 'Raha' ? 'border-blue-500 bg-blue-600 text-white shadow-md' : (isDark ? 'border-gray-800 bg-[#0F172A] hover:border-gray-600 text-gray-400' : 'border-gray-100 bg-gray-50 hover:border-gray-300 text-gray-600')}`}>
                        <FiGlobe className="text-2xl" /><span className="font-bold text-[10px] sm:text-xs uppercase tracking-wider">Raha</span>
                      </div>
                    </div>
-                   <div className="bg-gray-50 p-6 rounded-2xl border border-gray-200 mb-8 space-y-3">
-                     <div className="flex justify-between text-sm text-gray-600 font-medium"><span>Subtotal</span><span>TZS {cartTotal.toLocaleString()}</span></div>
-                     <div className="flex justify-between text-sm text-gray-600 font-medium"><span>{t.deliveryFee}</span><span>TZS {shippingFee.toLocaleString()}</span></div>
+                   <div className={`p-6 rounded-2xl border mb-8 space-y-3 ${modalInnerBg}`}>
+                     <div className={`flex justify-between text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-600'}`}><span>Subtotal</span><span className={isDark ? 'text-gray-200' : 'text-gray-800'}>TZS {cartTotal.toLocaleString()}</span></div>
+                     <div className={`flex justify-between text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-600'}`}><span>{t.deliveryFee}</span><span className={isDark ? 'text-gray-200' : 'text-gray-800'}>TZS {shippingFee.toLocaleString()}</span></div>
                      {upfrontPayment > 0 && (
-                       <div className="flex justify-between text-xs text-red-500 font-bold bg-red-50 p-2 rounded-lg mt-2">
+                       <div className={`flex justify-between text-xs font-bold p-2 rounded-lg mt-2 ${isDark ? 'text-red-400 bg-red-900/20 border border-red-900/50' : 'text-red-500 bg-red-50 border border-red-100'}`}>
                          <span>{t.upfront} (20%)</span><span>TZS {upfrontPayment.toLocaleString()}</span>
                        </div>
                      )}
-                     <div className="border-t border-gray-200 pt-3 mt-3 flex justify-between items-center">
+                     <div className={`border-t pt-3 mt-3 flex justify-between items-center ${isDark ? 'border-gray-800' : 'border-gray-200'}`}>
                        <span className="text-sm font-bold text-gray-500 uppercase tracking-wider">{t.grandTotal}</span>
-                       <span className="text-2xl font-black text-[#0F172A]">TZS {grandTotal.toLocaleString()}</span>
+                       <span className={`text-2xl font-black ${isDark ? 'text-white' : 'text-[#0F172A]'}`}>TZS {grandTotal.toLocaleString()}</span>
                      </div>
                    </div>
                    <div className="flex gap-3">
-                     <button type="button" onClick={() => setWorkflowStep(2)} className="px-6 py-4 bg-gray-100 text-gray-600 font-bold rounded-xl text-sm hover:bg-gray-200 transition">Back</button>
-                     <button type="submit" disabled={checkoutLoading} className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-4 rounded-xl text-sm transition shadow-lg flex justify-center items-center gap-2">
+                     <button type="button" onClick={() => setWorkflowStep(2)} className={`px-6 py-4 font-bold rounded-xl text-sm transition ${isDark ? 'bg-gray-800 text-gray-300 hover:bg-gray-700' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>Back</button>
+                     <button type="submit" disabled={checkoutLoading} className="flex-1 bg-green-600 hover:bg-green-500 text-white font-black py-4 rounded-xl text-sm transition shadow-lg flex justify-center items-center gap-2">
                        {checkoutLoading ? 'Processing...' : <><FiLock /> {t.confirmOrder}</>}
                      </button>
                    </div>
@@ -897,10 +912,10 @@ export default function HomePage() {
 
                {workflowStep === 4 && (
                  <div className="text-center py-12 px-4 animate-fade-in max-w-md mx-auto">
-                   <div className="w-24 h-24 bg-green-100 text-green-500 rounded-full flex items-center justify-center text-5xl mx-auto mb-6 shadow-inner ring-8 ring-green-50"><FiCheckCircle /></div>
-                   <h3 className="text-2xl sm:text-3xl font-black text-gray-900 mb-4">Order Successful!</h3>
-                   <p className="text-gray-500 mb-8 text-sm leading-relaxed">{t.successMsg}</p>
-                   <button onClick={() => { setIsWorkflowOpen(false); router.push('/profile'); }} className="w-full bg-[#0F172A] hover:bg-gray-800 text-white font-bold py-4 rounded-xl text-sm transition shadow-lg">
+                   <div className={`w-24 h-24 text-green-500 rounded-full flex items-center justify-center text-5xl mx-auto mb-6 shadow-inner ring-8 ${isDark ? 'bg-green-900/30 ring-green-900/20' : 'bg-green-100 ring-green-50'}`}><FiCheckCircle /></div>
+                   <h3 className={`text-2xl sm:text-3xl font-black mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>Order Successful!</h3>
+                   <p className={`mb-8 text-sm leading-relaxed ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{t.successMsg}</p>
+                   <button onClick={() => { setIsWorkflowOpen(false); router.push('/profile'); }} className={`w-full font-black py-4 rounded-xl text-sm transition shadow-lg ${isDark ? 'bg-[#F2A900] text-[#0F172A] hover:bg-yellow-500' : 'bg-[#0F172A] text-white hover:bg-gray-800'}`}>
                      View Invoice in Profile
                    </button>
                  </div>
