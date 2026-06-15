@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useCart } from './context/CartContext'; 
 import { 
   FiShoppingCart, FiGlobe, FiX, FiCheckCircle, FiMapPin, FiTruck, FiShield, 
-  FiLock, FiUser, FiTrash2, FiChevronRight, FiSearch, FiHeart, 
+  FiLock, FiUser, FiPhone, FiMail, FiTrash2, FiChevronRight, FiSearch, FiHeart, 
   FiBox, FiAlertCircle, FiCreditCard, FiSmartphone, FiGrid, FiArrowRight, FiArrowLeft,
   FiCpu, FiMic, FiMaximize, FiCamera, FiUploadCloud, FiMoon, FiSun, FiChevronDown
 } from 'react-icons/fi';
@@ -421,7 +421,7 @@ export default function HomePage() {
   const searchBg = isDark ? "bg-[#1E293B] border-gray-700" : "bg-white border-[#F2A900]";
   const searchInputClass = isDark ? "text-white placeholder-gray-500" : "text-gray-900 placeholder-gray-400";
   const cardBg = isDark ? "bg-[#1E293B] border-gray-800" : "bg-white border-gray-100";
-  const cardInnerBg = isDark ? "bg-[#0B1120]" : "bg-white"; // Keep product image bg white/transparent
+  const cardInnerBg = isDark ? "bg-[#0B1120]" : "bg-white"; 
   const textCardTitle = isDark ? "text-gray-200" : "text-gray-800";
   const textPrice = isDark ? "text-white" : "text-[#0F172A]";
   const modalBg = isDark ? "bg-[#1E293B] border-gray-800 text-white" : "bg-white border-gray-100 text-gray-900";
@@ -486,7 +486,6 @@ export default function HomePage() {
 
   return (
     <div className={`min-h-screen ${bgMain} ${textMain} font-sans antialiased pb-20 md:pb-0 transition-colors duration-300`}>
-      {/* <TopTicker /> - Hidden on mobile in reference */}
       <div className="hidden md:block">
         <TopTicker />
       </div>
@@ -513,7 +512,7 @@ export default function HomePage() {
             </div>
         </div>
 
-        {/* DESKTOP HEADER (Unchanged, hidden on mobile) */}
+        {/* DESKTOP HEADER */}
         <div className="hidden md:flex w-full max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 h-16 items-center justify-between">
           <span onClick={() => router.push('/')} className={`text-xl sm:text-2xl font-black ${logoText} tracking-tight cursor-pointer`}>
             J<span className="text-[#F2A900]">tex</span>
@@ -844,23 +843,23 @@ export default function HomePage() {
                       <>
                         <div className="space-y-4 mb-8">
                           {cart.map((item: any) => (
-                            <div key={item.id} className={`flex justify-between items-center p-3 sm:p-4 rounded-xl border ${cardBg}`}>
-                              <div className="flex items-center gap-3 sm:gap-4">
-                                <div className={`w-12 h-12 rounded-lg border flex items-center justify-center text-xl shadow-sm ${cardInnerBg}`}>
-                                  {item.imageUrl ? <img src={`${getApiUrl()}${item.imageUrl}`} className="object-contain w-full h-full mix-blend-multiply" /> : item.imageEmoji || '📦'}
+                            <div key={item.id} className={`flex justify-between items-center p-4 rounded-xl border ${cardBg}`}>
+                              <div className="flex items-center gap-4">
+                                <div className={`w-12 h-12 rounded-lg border flex items-center justify-center text-xl shadow-sm ${isDark ? 'bg-[#1E293B] border-gray-700' : 'bg-white border-gray-200'}`}>
+                                  {item.imageUrl ? <img src={`${getApiUrl()}${item.imageUrl}`} className="object-contain w-full h-full" /> : item.imageEmoji || '📦'}
                                 </div>
                                 <div>
-                                  <p className={`font-bold text-xs sm:text-sm ${textCardTitle} line-clamp-1`}>{item.name}</p>
-                                  <p className="text-xs text-gray-500 mt-1">Qty: <span className="font-black text-[#F2A900]">{item.quantity}</span></p>
+                                  <p className={`font-bold text-sm ${isDark ? 'text-gray-200' : 'text-gray-900'}`}>{item.name}</p>
+                                  <p className="text-xs text-gray-500">Qty: <span className="font-black text-[#F2A900]">{item.quantity}</span></p>
                                 </div>
                               </div>
-                              <span className={`font-black text-sm sm:text-base ${textPrice}`}>TZS {(item.price * item.quantity).toLocaleString()}</span>
+                              <span className={`font-black ${isDark ? 'text-white' : 'text-[#0F172A]'}`}>TZS {(item.price * item.quantity).toLocaleString()}</span>
                             </div>
                           ))}
                         </div>
                         <div className={`flex justify-between items-center p-4 rounded-xl border mb-6 ${cardBg}`}>
                           <span className="text-gray-500 font-bold uppercase text-xs tracking-wider">Subtotal</span>
-                          <span className={`text-xl sm:text-2xl font-black ${textPrice}`}>TZS {cartTotal.toLocaleString()}</span>
+                          <span className={`text-2xl font-black ${isDark ? 'text-white' : 'text-gray-900'}`}>TZS {cartTotal.toLocaleString()}</span>
                         </div>
                         <button onClick={handleProceedToLocation} className={`w-full font-black py-4 rounded-xl text-sm transition shadow-lg flex justify-center items-center gap-2 ${isDark ? 'bg-[#F2A900] text-[#0F172A] hover:bg-yellow-500' : 'bg-[#0F172A] text-white hover:bg-gray-800'}`}>
                           {t.proceedLocation} <FiChevronRight />
@@ -877,24 +876,24 @@ export default function HomePage() {
                      </h3>
                      <div className="space-y-5">
                        <div>
-                         <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">{t.country}</label>
+                         <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">{t.country}</label>
                          <select value={country} onChange={e => setCountry(e.target.value)} className={`w-full rounded-xl px-4 py-3 outline-none text-sm font-medium focus:ring-2 focus:ring-[#F2A900]/50 transition border ${isDark ? 'bg-[#0F172A] border-gray-700 text-white' : 'bg-gray-50 border-gray-200'}`}>
                            <option value="Tanzania">Tanzania</option><option value="Kenya">Kenya</option><option value="Uganda">Uganda</option><option value="Rwanda">Rwanda</option>
                          </select>
                        </div>
                        <div className="grid grid-cols-2 gap-4">
                          <div>
-                           <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">{t.city}</label>
+                           <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">{t.city}</label>
                            <input type="text" value={city} onChange={e => setCity(e.target.value)} className={`w-full rounded-xl px-4 py-3 outline-none text-sm focus:border-[#F2A900] transition border ${isDark ? 'bg-[#0F172A] border-gray-700 text-white' : 'bg-gray-50 border-gray-200'}`} placeholder="e.g. Dar es Salaam" />
                          </div>
                          <div>
-                           <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">{t.zip}</label>
+                           <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">{t.zip}</label>
                            <input type="text" value={zipCode} onChange={e => setZipCode(e.target.value)} className={`w-full rounded-xl px-4 py-3 outline-none text-sm focus:border-[#F2A900] transition border ${isDark ? 'bg-[#0F172A] border-gray-700 text-white' : 'bg-gray-50 border-gray-200'}`} placeholder="e.g. 11000" />
                          </div>
                        </div>
                        <div>
-                         <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">{t.street}</label>
-                         <input type="text" value={streetAddress} onChange={e => setStreetAddress(e.target.value)} className={`w-full rounded-xl px-4 py-3 outline-none text-sm focus:border-[#F2A900] transition border ${isDark ? 'bg-[#0F172A] border-gray-700 text-white' : 'bg-gray-50 border-gray-200'}`} placeholder="e.g. Makumbusho, House 42" />
+                         <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">{t.street}</label>
+                         <input type="text" value={streetAddress} onChange={e => setStreetAddress(e.target.value)} className={`w-full rounded-xl px-4 py-3 outline-none text-sm focus:border-[#F2A900] transition border ${isDark ? 'bg-[#0F172A] border-gray-700 text-white' : 'bg-gray-50 border-gray-200'}`} placeholder="e.g. Makumbusho, Uhuru Street, House 42" />
                        </div>
                      </div>
                      <div className="mt-8 flex gap-3">
@@ -912,19 +911,19 @@ export default function HomePage() {
                      <FiShield className="text-green-500"/> {t.payment}
                    </h3>
                    <div className="grid grid-cols-3 gap-3 mb-8">
-                     <div onClick={() => setPaymentMethod('Card')} className={`border-2 p-3 sm:p-4 rounded-xl cursor-pointer flex flex-col items-center justify-center gap-2 text-center transition-all ${paymentMethod === 'Card' ? (isDark ? 'border-[#F2A900] bg-[#F2A900] text-[#0F172A] shadow-md' : 'border-[#0F172A] bg-[#0F172A] text-white shadow-md') : (isDark ? 'border-gray-800 bg-[#0F172A] hover:border-gray-600 text-gray-400' : 'border-gray-100 bg-gray-50 hover:border-gray-300 text-gray-600')}`}>
-                       <FiCreditCard className="text-xl sm:text-2xl" /><span className="font-bold text-[9px] sm:text-[10px] uppercase tracking-wider">Card</span>
+                     <div onClick={() => setPaymentMethod('Card')} className={`border-2 p-4 rounded-xl cursor-pointer flex flex-col items-center justify-center gap-2 text-center transition-all ${paymentMethod === 'Card' ? (isDark ? 'border-[#F2A900] bg-[#F2A900] text-[#0F172A] shadow-md' : 'border-[#0F172A] bg-[#0F172A] text-white shadow-md') : (isDark ? 'border-gray-800 bg-[#0F172A] hover:border-gray-600 text-gray-400' : 'border-gray-100 bg-gray-50 hover:border-gray-300 text-gray-600')}`}>
+                       <FiCreditCard className="text-2xl" /><span className="font-bold text-[10px] sm:text-xs uppercase tracking-wider">Card</span>
                      </div>
-                     <div onClick={() => setPaymentMethod('M-Pesa')} className={`border-2 p-3 sm:p-4 rounded-xl cursor-pointer flex flex-col items-center justify-center gap-2 text-center transition-all ${paymentMethod === 'M-Pesa' ? 'border-red-500 bg-red-600 text-white shadow-md' : (isDark ? 'border-gray-800 bg-[#0F172A] hover:border-gray-600 text-gray-400' : 'border-gray-100 bg-gray-50 hover:border-gray-300 text-gray-600')}`}>
-                       <FiSmartphone className="text-xl sm:text-2xl" /><span className="font-bold text-[9px] sm:text-[10px] uppercase tracking-wider">M-Pesa</span>
+                     <div onClick={() => setPaymentMethod('M-Pesa')} className={`border-2 p-4 rounded-xl cursor-pointer flex flex-col items-center justify-center gap-2 text-center transition-all ${paymentMethod === 'M-Pesa' ? 'border-red-500 bg-red-600 text-white shadow-md' : (isDark ? 'border-gray-800 bg-[#0F172A] hover:border-gray-600 text-gray-400' : 'border-gray-100 bg-gray-50 hover:border-gray-300 text-gray-600')}`}>
+                       <FiSmartphone className="text-2xl" /><span className="font-bold text-[10px] sm:text-xs uppercase tracking-wider">M-Pesa</span>
                      </div>
-                     <div onClick={() => setPaymentMethod('Raha')} className={`border-2 p-3 sm:p-4 rounded-xl cursor-pointer flex flex-col items-center justify-center gap-2 text-center transition-all ${paymentMethod === 'Raha' ? 'border-blue-500 bg-blue-600 text-white shadow-md' : (isDark ? 'border-gray-800 bg-[#0F172A] hover:border-gray-600 text-gray-400' : 'border-gray-100 bg-gray-50 hover:border-gray-300 text-gray-600')}`}>
-                       <FiGlobe className="text-xl sm:text-2xl" /><span className="font-bold text-[9px] sm:text-[10px] uppercase tracking-wider">Raha</span>
+                     <div onClick={() => setPaymentMethod('Raha')} className={`border-2 p-4 rounded-xl cursor-pointer flex flex-col items-center justify-center gap-2 text-center transition-all ${paymentMethod === 'Raha' ? 'border-blue-500 bg-blue-600 text-white shadow-md' : (isDark ? 'border-gray-800 bg-[#0F172A] hover:border-gray-600 text-gray-400' : 'border-gray-100 bg-gray-50 hover:border-gray-300 text-gray-600')}`}>
+                       <FiGlobe className="text-2xl" /><span className="font-bold text-[10px] sm:text-xs uppercase tracking-wider">Raha</span>
                      </div>
                    </div>
-                   <div className={`p-4 sm:p-6 rounded-2xl border mb-8 space-y-3 ${cardBg}`}>
-                     <div className={`flex justify-between text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-600'}`}><span>Subtotal</span><span className={textPrice}>TZS {cartTotal.toLocaleString()}</span></div>
-                     <div className={`flex justify-between text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-600'}`}><span>{t.deliveryFee}</span><span className={textPrice}>TZS {shippingFee.toLocaleString()}</span></div>
+                   <div className={`p-6 rounded-2xl border mb-8 space-y-3 ${isDark ? 'bg-[#0F172A] border-gray-800' : 'bg-gray-50 border-gray-200'}`}>
+                     <div className={`flex justify-between text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-600'}`}><span>Subtotal</span><span className={isDark ? 'text-gray-200' : 'text-gray-800'}>TZS {cartTotal.toLocaleString()}</span></div>
+                     <div className={`flex justify-between text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-600'}`}><span>{t.deliveryFee}</span><span className={isDark ? 'text-gray-200' : 'text-gray-800'}>TZS {shippingFee.toLocaleString()}</span></div>
                      {upfrontPayment > 0 && (
                        <div className={`flex justify-between text-xs font-bold p-2 rounded-lg mt-2 ${isDark ? 'text-red-400 bg-red-900/20 border border-red-900/50' : 'text-red-500 bg-red-50 border border-red-100'}`}>
                          <span>{t.upfront} (20%)</span><span>TZS {upfrontPayment.toLocaleString()}</span>
@@ -932,7 +931,7 @@ export default function HomePage() {
                      )}
                      <div className={`border-t pt-3 mt-3 flex justify-between items-center ${isDark ? 'border-gray-800' : 'border-gray-200'}`}>
                        <span className="text-sm font-bold text-gray-500 uppercase tracking-wider">{t.grandTotal}</span>
-                       <span className={`text-xl sm:text-2xl font-black ${textPrice}`}>TZS {grandTotal.toLocaleString()}</span>
+                       <span className={`text-2xl font-black ${isDark ? 'text-white' : 'text-[#0F172A]'}`}>TZS {grandTotal.toLocaleString()}</span>
                      </div>
                    </div>
                    <div className="flex gap-3">
