@@ -158,6 +158,7 @@ export default function ShopPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
   const [sortOrder, setSortOrder] = useState('popular');
+  const [wishlist, setWishlist] = useState<string[]>([]);
 
   const [user, setUser] = useState<any>(null);
   const [lang, setLang] = useState<'en' | 'sw'>('en'); 
@@ -287,6 +288,29 @@ export default function ShopPage() {
     setFilteredProducts(result);
   }, [searchQuery, activeCategory, sortOrder, products]);
 
+  // SMART SEARCH FUNCTIONS
+  const startVoiceSearch = () => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) { alert(t.voiceError); return; }
+    const recognition = new SpeechRecognition();
+    recognition.lang = lang === 'en' ? 'en-US' : 'sw-TZ';
+    recognition.start();
+    setIsVoiceListening(true);
+    recognition.onresult = (event: any) => { setSearchQuery(event.results[0][0].transcript); setIsVoiceListening(false); };
+    recognition.onerror = () => setIsVoiceListening(false);
+    recognition.onend = () => setIsVoiceListening(false);
+  };
+
+  const handleAiSimulation = (closeFunc: any) => {
+    setAiActionLoading(true);
+    setTimeout(() => { setAiActionLoading(false); closeFunc(false); setSearchQuery('Smartphone'); }, 2000);
+  };
+
+  const toggleWishlist = (e: React.MouseEvent, productId: string) => {
+    e.stopPropagation();
+    setWishlist(prev => prev.includes(productId) ? prev.filter(id => id !== productId) : [...prev, productId]);
+  };
+
   const toggleLanguage = () => setLang(prev => prev === 'en' ? 'sw' : 'en');
   
   const getTranslatedCategoryName = (catKey: string) => {
@@ -364,11 +388,15 @@ export default function ShopPage() {
 
   // REUSABLE PRODUCT CARD
   const ProductCard = ({ product }: { product: any }) => {
+    const isWishlisted = wishlist.includes(product.id);
     const discount = product.oldPrice ? Math.round(((product.oldPrice - product.price) / product.oldPrice) * 100) : 0;
     return (
       <div className="bg-white rounded-xl p-3 sm:p-4 shadow-sm hover:shadow-md transition border border-gray-100 flex flex-col h-full group cursor-pointer" onClick={() => setSelectedProduct(product)}>
         <div className="relative aspect-square w-full bg-white rounded-lg mb-3 overflow-hidden flex items-center justify-center p-2">
-          {discount > 0 && <span className="absolute top-0 left-0 bg-[#F2A900] text-white text-[10px] font-black px-1.5 py-0.5 rounded shadow-sm z-10">-{discount}%</span>}
+          <button onClick={(e) => toggleWishlist(e, product.id)} className="absolute top-2 right-2 z-20 w-7 h-7 rounded-full flex items-center justify-center text-gray-400 hover:text-red-500 bg-white shadow-sm transition border border-gray-100">
+            <FiHeart className={`text-sm ${isWishlisted ? "fill-red-500 text-red-500" : ""}`} />
+          </button>
+          {discount > 0 && <span className="absolute top-2 left-2 bg-[#F2A900] text-white text-[10px] font-black px-1.5 py-0.5 rounded shadow-sm z-10">-{discount}%</span>}
           {product.imageUrl ? (
             <img src={`http://localhost:5001${product.imageUrl}`} alt={product.name} className="object-contain w-full h-full mix-blend-multiply group-hover:scale-105 transition duration-300" />
           ) : (
