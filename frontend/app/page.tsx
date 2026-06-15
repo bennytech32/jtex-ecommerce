@@ -5,13 +5,14 @@ import { useRouter } from 'next/navigation';
 import { useCart } from './context/CartContext'; 
 import { 
   FiShoppingCart, FiGlobe, FiX, FiCheckCircle, FiMapPin, FiTruck, FiShield, 
-  FiLock, FiUser, FiPhone, FiMail, FiTrash2, FiChevronRight, FiSearch, FiHeart, 
+  FiLock, FiUser, FiPhone, FiTrash2, FiChevronRight, FiSearch, FiHeart, 
   FiBox, FiAlertCircle, FiCreditCard, FiSmartphone, FiGrid, FiArrowRight, FiArrowLeft,
   FiCpu, FiMic, FiMaximize, FiCamera, FiUploadCloud, FiChevronDown, FiZap, FiMessageCircle,
-  FiHome, FiTag, FiPackage, FiHeadphones, FiMenu
+  FiHome, FiTag, FiPackage, FiHeadphones
 } from 'react-icons/fi';
 
 import Footer from './components/common/Footer';
+import FloatingWhatsApp from './components/common/FloatingWhatsApp';
 
 const translations = {
   en: {
@@ -33,6 +34,7 @@ const translations = {
     viewAllBrands: "View All Brands",
     bigDealsTitle: "Big Deals on Top Brands",
     bigDealsSub: "Up to 40% Off",
+    catAll: "All Categories",
     catElectronics: "Electronics",
     catComputers: "Computers",
     catPhones: "Phones",
@@ -55,7 +57,25 @@ const translations = {
     barcodeSearchTitle: "Smart Barcode Scanner",
     uploadPrompt: "Drag & drop or click to upload product image",
     barcodePrompt: "Align product barcode inside the scanner frame",
-    simulatingAi: "AI is analyzing the data..."
+    simulatingAi: "AI is analyzing the data...",
+    cart: "Cart Review",
+    location: "Shipping Address",
+    payment: "Payment Method",
+    proceedLocation: "Proceed to Shipping",
+    proceedPayment: "Proceed to Payment",
+    confirmOrder: "Confirm & Place Order",
+    successMsg: "Order placed successfully! SMS/Email sent.",
+    deliveryFee: "Shipping Fee",
+    grandTotal: "Grand Total",
+    upfront: "Required Upfront",
+    signIn: "Sign In",
+    register: "Register",
+    country: "Country",
+    city: "City / State",
+    street: "Street Address",
+    zip: "ZIP / Postal Code",
+    noProducts: "No products available currently.",
+    noCategoryProducts: "No products found in this category.",
   },
   sw: {
     searchPlaceholder: "Tafuta Jtex",
@@ -76,6 +96,7 @@ const translations = {
     viewAllBrands: "Tazama Chapa Zote",
     bigDealsTitle: "Punguzo Kubwa Chapa Bora",
     bigDealsSub: "Hadi 40% Punguzo",
+    catAll: "Kategoria Zote",
     catElectronics: "Elektroniki",
     catComputers: "Kompyuta",
     catPhones: "Simu",
@@ -98,11 +119,48 @@ const translations = {
     barcodeSearchTitle: "Skana Barcode ya Bidhaa",
     uploadPrompt: "Kokota picha au bonyeza hapa kupakia picha ya bidhaa",
     barcodePrompt: "Weka barcode ya bidhaa katikati ya fremu ya skana",
-    simulatingAi: "AI inachuja na kuchambua picha..."
+    simulatingAi: "AI inachuja na kuchambua picha...",
+    cart: "Kikapu Chako",
+    location: "Anwani ya Usafirishaji",
+    payment: "Njia ya Malipo",
+    proceedLocation: "Endelea na Anwani",
+    proceedPayment: "Endelea na Malipo",
+    confirmOrder: "Thibitisha na Lipia",
+    successMsg: "Oda imekamilika! Tumekutumia SMS na Barua Pepe (Email) yenye Risiti na Invoice.",
+    deliveryFee: "Gharama ya Usafiri",
+    grandTotal: "Jumla Kuu",
+    upfront: "Kianzio",
+    signIn: "Ingia",
+    register: "Jisajili",
+    country: "Nchi",
+    city: "Mkoa / Mji",
+    street: "Mtaa / Anwani Kamili",
+    zip: "Postikodi (Zip Code)",
+    noProducts: "Hakuna bidhaa iliyopo kwa sasa.",
+    noCategoryProducts: "Hakuna bidhaa zilizopatikana kwenye kategoria hii.",
   }
 };
 
-const CATEGORY_KEYS = ['Electronics', 'Computers', 'Phones', 'Fashion', 'Home', 'Sports', 'Beauty'];
+const CATEGORY_KEYS = ['All', 'Electronics', 'Computers', 'Phones', 'Fashion', 'Home', 'Sports', 'Beauty'];
+
+const getBanners = (t: any) => [
+  {
+    id: 1,
+    title: t.bannerTitle,
+    subtitle: t.bannerSub,
+    bgColor: "from-[#0F3B4E] to-[#1A5C7A]", 
+    buttonText: t.shopNow,
+    categoryTarget: "Electronics"
+  },
+  {
+    id: 2,
+    title: "New Phones in Town",
+    subtitle: "Order today and get it delivered within 24 hours",
+    bgColor: "from-[#F2A900] to-yellow-600",
+    buttonText: "View Phones",
+    categoryTarget: "Phones"
+  }
+];
 
 export default function HomePage() {
   const router = useRouter();
@@ -111,8 +169,10 @@ export default function HomePage() {
   const [fetchError, setFetchError] = useState<string | null>(null); 
   const [user, setUser] = useState<any>(null);
   const [lang, setLang] = useState<'en' | 'sw'>('en'); 
+  const [isClient, setIsClient] = useState(false); 
   
-  const [activeCategory, setActiveCategory] = useState('Electronics');
+  // Set to 'All' by default to show all products initially
+  const [activeCategory, setActiveCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [wishlist, setWishlist] = useState<string[]>([]);
 
@@ -122,12 +182,19 @@ export default function HomePage() {
   const [isImageSearchOpen, setIsImageSearchOpen] = useState(false);
   const [aiActionLoading, setAiActionLoading] = useState(false);
   
+  const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
+  
+  const categoriesRef = useRef<HTMLDivElement>(null);
+
   const t = translations[lang];
-  const { cart, addToCart } = useCart();
+  const activeBanners = getBanners(t);
+
+  const { cart, addToCart, removeFromCart, clearCart, cartTotal } = useCart();
 
   const getApiUrl = () => 'https://jtex-ecommerce-production.up.railway.app';
 
   useEffect(() => {
+    setIsClient(true);
     const savedUser = localStorage.getItem('jtex_user');
     if (savedUser) setUser(JSON.parse(savedUser));
 
@@ -145,6 +212,14 @@ export default function HomePage() {
       }
     };
     fetchRealProducts();
+
+    const handleOpenCart = () => { setWorkflowStep(1); setIsWorkflowOpen(true); };
+    window.addEventListener('openCart', handleOpenCart);
+    if (window.location.search.includes('cart=open')) handleOpenCart();
+
+    return () => {
+      window.removeEventListener('openCart', handleOpenCart);
+    };
   }, []);
 
   const toggleWishlist = (e: React.MouseEvent, productId: string) => {
@@ -170,8 +245,12 @@ export default function HomePage() {
     setTimeout(() => { setAiActionLoading(false); closeFunc(false); setSearchQuery('Smartphone'); }, 2000);
   };
 
+  const nextBanner = () => setCurrentBannerIndex((prev) => (prev + 1) % activeBanners.length);
+  const prevBanner = () => setCurrentBannerIndex((prev) => (prev - 1 + activeBanners.length) % activeBanners.length);
+
   const getTranslatedCategoryName = (catKey: string) => {
       switch(catKey) {
+          case 'All': return t.catAll;
           case 'Electronics': return t.catElectronics;
           case 'Computers': return t.catComputers;
           case 'Phones': return t.catPhones;
@@ -200,7 +279,7 @@ export default function HomePage() {
     </div>
   );
 
-  const ProductCard = ({ product, badge }: { product: any, badge?: string }) => {
+  const ProductCard = ({ product }: { product: any }) => {
     const isWishlisted = wishlist.includes(product.id);
     const discount = product.oldPrice ? Math.round(((product.oldPrice - product.price) / product.oldPrice) * 100) : 0;
     
@@ -238,6 +317,70 @@ export default function HomePage() {
         </div>
       </div>
     );
+  };
+
+  // --- CHECKOUT/LOGIN STATES ---
+  const [isLoginOpen, setIsLoginOpen] = useState(false);
+  const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
+  const [isWorkflowOpen, setIsWorkflowOpen] = useState(false);
+  const [workflowStep, setWorkflowStep] = useState(1); 
+  const [loginEmail, setLoginEmail] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
+  const [registerName, setRegisterName] = useState('');
+  const [registerPhone, setRegisterPhone] = useState('');
+  const [loginError, setLoginError] = useState('');
+  const [country, setCountry] = useState('Tanzania');
+  const [city, setCity] = useState('');
+  const [streetAddress, setStreetAddress] = useState('');
+  const [zipCode, setZipCode] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState('Card');
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
+
+  const openCartWorkflow = () => { setWorkflowStep(1); setIsWorkflowOpen(true); };
+  const handleProceedToLocation = () => { if (!user) setIsLoginOpen(true); else setWorkflowStep(2); };
+
+  const handleAuthSuccess = (data: any) => {
+    localStorage.setItem('jtex_token', data.token);
+    localStorage.setItem('jtex_user', JSON.stringify(data.user));
+    setUser(data.user);
+    setIsLoginOpen(false);
+    if (isWorkflowOpen) setWorkflowStep(2);
+  };
+
+  const handleInlineLogin = async (e: React.FormEvent) => {
+    e.preventDefault(); setLoginError('');
+    try {
+      const res = await fetch(`${getApiUrl()}/api/login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: loginEmail, password: loginPassword }) });
+      const data = await res.json();
+      if (res.ok) handleAuthSuccess(data); else setLoginError(data.error || 'Kosa la kuingia.');
+    } catch (err: any) { setLoginError(`Tatizo la mtandao au server.`); }
+  };
+
+  const handleInlineRegister = async (e: React.FormEvent) => {
+    e.preventDefault(); setLoginError('');
+    try {
+      const res = await fetch(`${getApiUrl()}/api/register`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: registerName, phone: registerPhone, email: loginEmail, password: loginPassword }) });
+      const data = await res.json();
+      if (res.ok) handleAuthSuccess(data); else setLoginError(data.error || 'Kosa la kusajili.');
+    } catch (err: any) { setLoginError(`Tatizo la mtandao au server.`); }
+  };
+
+  const shippingFee = (city.toLowerCase() === 'dar es salaam' || city.toLowerCase() === 'dar') ? 0 : 10000;
+  const grandTotal = cartTotal + shippingFee;
+  const upfrontPayment = (city.toLowerCase() === 'dar es salaam' || city.toLowerCase() === 'dar') ? 0 : grandTotal * 0.2;
+
+  const handlePlaceOrder = async (e: React.FormEvent) => {
+    e.preventDefault(); setCheckoutLoading(true);
+    const checkoutItems = cart.map((item: any) => ({ productId: item.id, quantity: item.quantity, unitPrice: item.price, subTotal: item.price * item.quantity }));
+    const fullAddress = `${streetAddress}, ${city}, ${zipCode}, ${country}`;
+
+    try {
+      const res = await fetch(`${getApiUrl()}/api/orders`, { 
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, 
+        body: JSON.stringify({ userId: user.id, deliveryRegion: city, address: fullAddress, paymentMethod: paymentMethod, shippingFee, upfrontPayment, items: checkoutItems }) 
+      });
+      if (res.ok) { setWorkflowStep(4); clearCart(); }
+    } catch (err) { console.error(err); } finally { setCheckoutLoading(false); }
   };
 
   return (
@@ -282,14 +425,14 @@ export default function HomePage() {
           </div>
 
           <div className="flex items-center gap-6">
-            <div className="flex items-center gap-2 cursor-pointer hover:text-gray-300 transition text-sm font-bold">
+            <div onClick={() => setLang(lang === 'en' ? 'sw' : 'en')} className="flex items-center gap-2 cursor-pointer hover:text-gray-300 transition text-sm font-bold">
                <FiGlobe className="text-lg text-gray-400"/>
-               <span>TZ <FiChevronDown className="inline"/></span>
+               <span>{lang === 'en' ? 'EN' : 'SW'} <FiChevronDown className="inline"/></span>
             </div>
-            <div className="relative cursor-pointer hover:text-[#F2A900] transition flex flex-col items-center">
+            <div onClick={openCartWorkflow} className="relative cursor-pointer hover:text-[#F2A900] transition flex flex-col items-center">
                <div className="relative border border-gray-700 p-2 rounded-lg bg-gray-800/50">
                  <FiShoppingCart className="text-xl" />
-                 {cart.length > 0 && <span className="absolute -top-2 -right-2 bg-[#F2A900] text-[#0F172A] text-[10px] font-black w-5 h-5 rounded-full flex items-center justify-center border-2 border-[#0B1120]">{cart.length}</span>}
+                 {isClient && cart.length > 0 && <span className="absolute -top-2 -right-2 bg-[#F2A900] text-[#0F172A] text-[10px] font-black w-5 h-5 rounded-full flex items-center justify-center border-2 border-[#0B1120]">{cart.length}</span>}
                </div>
                <span className="text-[10px] mt-1 font-medium">Cart</span>
             </div>
@@ -297,9 +440,9 @@ export default function HomePage() {
                <div className="border border-gray-700 p-2 rounded-lg bg-gray-800/50"><FiPackage className="text-xl" /></div>
                <span className="text-[10px] mt-1 font-medium">{t.trackOrder}</span>
             </div>
-            <div onClick={() => router.push(user ? '/profile' : '/login')} className="flex items-center gap-2 border border-gray-700 p-2 rounded-lg bg-gray-800/50 cursor-pointer hover:bg-gray-800 transition">
+            <div onClick={() => { if(user) router.push('/profile'); else setIsLoginOpen(true); }} className="flex items-center gap-2 border border-gray-700 p-2 rounded-lg bg-gray-800/50 cursor-pointer hover:bg-gray-800 transition">
                <FiUser className="text-lg text-gray-400"/>
-               <span className="text-sm font-bold">{t.myAccount}</span>
+               <span className="text-sm font-bold">{user ? user.name.split(' ')[0] : t.myAccount}</span>
             </div>
           </div>
 
@@ -391,23 +534,35 @@ export default function HomePage() {
               ))}
           </div>
 
-          {/* MAIN HERO BANNER (Matches both mobile and desktop) */}
+          {/* MAIN HERO BANNER (Static - Does not Auto-Slide) */}
           <div className="relative w-full h-[200px] sm:h-[300px] md:rounded-2xl overflow-hidden bg-gradient-to-r from-[#0D384D] to-[#165673] text-white flex flex-col justify-center px-6 sm:px-12 shadow-sm mb-4 md:mb-6">
-             <h1 className="text-2xl sm:text-4xl lg:text-5xl font-black mb-2 sm:mb-4 tracking-tight leading-tight max-w-[70%] lg:max-w-[50%]">{t.bannerTitle}</h1>
-             <p className="text-xs sm:text-base lg:text-lg font-medium mb-4 sm:mb-8 opacity-90 max-w-[80%] lg:max-w-[50%] leading-relaxed">{t.bannerSub}</p>
-             <button className="bg-[#F2A900] text-[#0F172A] font-black px-6 sm:px-8 py-2.5 sm:py-3.5 rounded-lg w-max hover:bg-yellow-500 transition shadow-lg flex items-center gap-2 text-xs sm:text-sm">
-                {t.shopNow} <FiChevronRight />
-             </button>
-             {/* Pagination Dots Simulation */}
-             <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
-                <div className="w-6 h-2 rounded-full bg-[#F2A900]"></div>
-                <div className="w-2 h-2 rounded-full bg-white/50"></div>
-                <div className="w-2 h-2 rounded-full bg-white/50"></div>
-                <div className="w-2 h-2 rounded-full bg-white/50"></div>
+             {activeBanners.map((banner, index) => (
+                <div 
+                  key={banner.id}
+                  className={`absolute inset-0 w-full h-full transition-opacity duration-500 bg-gradient-to-r ${banner.bgColor} flex flex-col justify-center px-6 sm:px-12 md:px-20 text-white
+                  ${index === currentBannerIndex ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'}`}
+                >
+                  <h1 className="text-2xl sm:text-4xl lg:text-5xl font-black mb-2 sm:mb-4 tracking-tight leading-tight max-w-[70%] lg:max-w-[50%]">{banner.title}</h1>
+                  <p className="text-xs sm:text-base lg:text-lg font-medium mb-4 sm:mb-8 opacity-90 max-w-[80%] lg:max-w-[50%] leading-relaxed">{banner.subtitle}</p>
+                  <button onClick={() => { setActiveCategory(banner.categoryTarget); if (categoriesRef.current) categoriesRef.current.scrollIntoView({ behavior: 'smooth' }); }} className="bg-[#F2A900] text-[#0F172A] font-black px-6 sm:px-8 py-2.5 sm:py-3.5 rounded-lg w-max hover:bg-yellow-500 transition shadow-lg flex items-center gap-2 text-xs sm:text-sm">
+                      {banner.buttonText} <FiChevronRight />
+                  </button>
+                </div>
+             ))}
+             
+             {/* Manual Nav Arrows */}
+             <button onClick={prevBanner} className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 bg-black/20 hover:bg-black/40 text-white p-2 rounded-full backdrop-blur-sm z-20 transition"><FiArrowLeft size={20} /></button>
+             <button onClick={nextBanner} className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 bg-black/20 hover:bg-black/40 text-white p-2 rounded-full backdrop-blur-sm z-20 transition"><FiArrowRight size={20} /></button>
+             
+             {/* Pagination Dots */}
+             <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-20">
+                {activeBanners.map((_, idx) => (
+                  <div key={idx} onClick={() => setCurrentBannerIndex(idx)} className={`h-2 rounded-full cursor-pointer transition-all ${idx === currentBannerIndex ? 'w-6 bg-[#F2A900]' : 'w-2 bg-white/50'}`}></div>
+                ))}
              </div>
           </div>
 
-          {/* TRUST BADGES (Desktop Row, Mobile handles this differently but let's place standard desktop here) */}
+          {/* TRUST BADGES (Desktop Row) */}
           <div className="hidden md:flex justify-between items-center bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
               <div className="flex items-center gap-3"><FiTruck className="text-3xl text-gray-700"/><div className="flex flex-col"><span className="text-sm font-black text-gray-900">FREE Delivery</span><span className="text-xs text-gray-500">on orders over TZS 50,000</span></div></div>
               <div className="w-px h-10 bg-gray-100"></div>
@@ -419,8 +574,8 @@ export default function HomePage() {
           </div>
 
           {/* FLASH SALES SECTION (Exact mockup layout) */}
-          <div className="bg-white md:rounded-2xl md:shadow-sm md:border border-gray-100 p-0 md:p-6 mb-6 pt-4 md:pt-6">
-             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 px-4 md:px-0">
+          <div ref={categoriesRef} className="bg-white md:rounded-2xl md:shadow-sm md:border border-gray-100 p-0 md:p-6 mb-6 pt-4 md:pt-6">
+             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 px-4 md:px-0 border-b border-gray-100 md:border-0 pb-3 md:pb-0">
                 <div className="flex items-center gap-3">
                    <FiZap className="text-[#F2A900] text-2xl fill-[#F2A900]" />
                    <h2 className="text-lg sm:text-xl font-black text-gray-900">{t.flashSales}</h2>
@@ -439,16 +594,22 @@ export default function HomePage() {
                 </div>
              </div>
 
-             {/* Products Grid / Horizontal Scroll */}
+             {/* Products Grid */}
              {fetchError ? (
                <div className="p-6 bg-red-50 text-red-600 rounded-xl text-center"><FiAlertCircle className="mx-auto text-2xl mb-2"/>{fetchError}</div>
              ) : isLoading ? (
-               <div className="flex overflow-x-auto gap-4 px-4 md:px-0 pb-4"><SkeletonCard/><SkeletonCard/><SkeletonCard/></div>
-             ) : displayedProducts.length === 0 ? (
-               <div className="p-12 text-center text-gray-400 font-bold border border-dashed rounded-xl m-4 md:m-0">No items available.</div>
-             ) : (
                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 px-4 md:px-0">
-                  {displayedProducts.slice(0, 8).map(product => <ProductCard key={product.id} product={product} />)}
+                  <SkeletonCard/><SkeletonCard/><SkeletonCard/><SkeletonCard/>
+               </div>
+             ) : displayedProducts.length === 0 ? (
+               <div className="p-12 text-center text-gray-400 font-bold border border-dashed rounded-xl m-4 md:m-0">
+                  <FiBox className="text-5xl mx-auto mb-3 text-gray-300"/>
+                  {activeCategory === 'All' ? t.noProducts : t.noCategoryProducts}
+                  {activeCategory !== 'All' && <button onClick={() => setActiveCategory('All')} className="mt-3 text-[#0F8A99] underline">View All Products</button>}
+               </div>
+             ) : (
+               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 px-4 md:px-0 animate-fade-in">
+                  {displayedProducts.map(product => <ProductCard key={product.id} product={product} />)}
                </div>
              )}
           </div>
@@ -489,40 +650,41 @@ export default function HomePage() {
       </main>
       
       <Footer />
+      <FloatingWhatsApp />
       
-      {/* MOBILE BOTTOM NAVIGATION (Matches Mockup) */}
+      {/* MOBILE BOTTOM NAVIGATION (Matches Mockup without loading old mockups) */}
       <div className="md:hidden fixed bottom-0 left-0 w-full bg-white border-t border-gray-100 flex justify-around items-center h-16 px-2 pb-1 z-50">
         <button className="flex flex-col items-center gap-1 w-16 text-[#F2A900]">
           <FiHome className="text-xl" />
           <span className="text-[9px] font-bold">Home</span>
         </button>
-        <button className="flex flex-col items-center gap-1 w-16 text-gray-400 hover:text-gray-900">
+        <button onClick={() => { if(categoriesRef.current) categoriesRef.current.scrollIntoView({ behavior: 'smooth' }); }} className="flex flex-col items-center gap-1 w-16 text-gray-400 hover:text-gray-900">
           <FiGrid className="text-xl" />
           <span className="text-[9px] font-bold">Categories</span>
         </button>
         
         {/* CENTER BIG BUTTON */}
         <div className="relative -top-5">
-           <div className="w-14 h-14 bg-[#0F3B4E] rounded-full flex items-center justify-center text-white shadow-lg border-4 border-white cursor-pointer hover:bg-[#0D3040] transition">
+           <div className="w-14 h-14 bg-[#0F8A99] rounded-full flex items-center justify-center text-white shadow-lg border-4 border-white cursor-pointer hover:bg-[#0D707C] transition">
               <FiMessageCircle className="text-2xl" />
            </div>
            <span className="absolute -bottom-4 left-1/2 -translate-x-1/2 text-[9px] font-bold text-gray-600">Message</span>
         </div>
 
-        <button onClick={() => router.push('/cart')} className="flex flex-col items-center gap-1 w-16 text-gray-400 hover:text-gray-900 relative">
+        <button onClick={openCartWorkflow} className="flex flex-col items-center gap-1 w-16 text-gray-400 hover:text-gray-900 relative">
           <div className="relative">
              <FiShoppingCart className="text-xl" />
-             {cart.length > 0 && <span className="absolute -top-1.5 -right-2 bg-[#F2A900] text-[#0F172A] text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center">{cart.length}</span>}
+             {isClient && cart.length > 0 && <span className="absolute -top-1.5 -right-2 bg-[#F2A900] text-[#0F172A] text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center">{cart.length}</span>}
           </div>
           <span className="text-[9px] font-bold">Cart</span>
         </button>
-        <button onClick={() => router.push('/profile')} className="flex flex-col items-center gap-1 w-16 text-gray-400 hover:text-gray-900">
+        <button onClick={() => { if(user) router.push('/profile'); else setIsLoginOpen(true); }} className="flex flex-col items-center gap-1 w-16 text-gray-400 hover:text-gray-900">
           <FiUser className="text-xl" />
           <span className="text-[9px] font-bold">My Jtex</span>
         </button>
       </div>
 
-      {/* --- MODALS (Voice, Barcode, Image) Remain Unchanged from Previous Version --- */}
+      {/* --- MODALS (Voice, Barcode, Image) Remain Unchanged --- */}
       {isVoiceListening && (
         <div className="fixed inset-0 bg-black/80 text-white z-50 flex flex-col items-center justify-center p-4 backdrop-blur-md">
            <div className="w-24 h-24 bg-red-600 text-white rounded-full flex items-center justify-center text-4xl animate-ping opacity-75 mb-8 shadow-[0_0_40px_rgba(220,38,38,0.6)]">
@@ -572,6 +734,190 @@ export default function HomePage() {
            </div>
         </div>
       )}
+
+      {/* LOGIN POPUP WORKFLOW */}
+      {isLoginOpen && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+          <div className="bg-white w-full max-w-4xl rounded-2xl shadow-2xl relative flex overflow-hidden min-h-[500px] animate-fade-in border border-gray-100">
+            <button onClick={() => setIsLoginOpen(false)} className="absolute top-4 right-4 text-gray-500 hover:text-gray-900 bg-gray-100 p-2 rounded-full z-20 transition"><FiX size={20} /></button>
+            <div className="hidden md:flex md:w-1/2 bg-[#0F172A] text-white flex-col justify-center p-12 relative overflow-hidden">
+               <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#F2A900] to-yellow-600"></div>
+               <h2 className="text-5xl font-black mb-4">J<span className="text-[#F2A900]">tex</span></h2>
+               <p className="text-lg font-medium text-gray-400 mb-8">{t.signIn} and Checkout seamlessly.</p>
+            </div>
+            <div className="w-full md:w-1/2 p-8 md:p-12 flex flex-col justify-center bg-white">
+              <div className="flex bg-gray-100 border border-gray-200 p-1 rounded-xl mb-6">
+                <button onClick={() => setAuthMode('login')} className={`flex-1 py-2 text-sm font-bold rounded-lg transition ${authMode === 'login' ? 'bg-white shadow text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}>{t.signIn}</button>
+                <button onClick={() => setAuthMode('register')} className={`flex-1 py-2 text-sm font-bold rounded-lg transition ${authMode === 'register' ? 'bg-white shadow text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}>{t.register}</button>
+              </div>
+              {loginError && <div className="p-3 bg-red-50 text-red-600 border border-red-200 text-xs rounded-lg font-bold mb-4">{loginError}</div>}
+              <form onSubmit={authMode === 'login' ? handleInlineLogin : handleInlineRegister} className="space-y-4">
+                {authMode === 'register' && (
+                  <>
+                    <input type="text" required value={registerName} onChange={e => setRegisterName(e.target.value)} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none text-sm text-gray-900 focus:border-[#F2A900]" placeholder="Full Name" />
+                    <input type="tel" required value={registerPhone} onChange={e => setRegisterPhone(e.target.value)} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none text-sm text-gray-900 focus:border-[#F2A900]" placeholder="Phone Number" />
+                  </>
+                )}
+                <input type="email" required value={loginEmail} onChange={e => setLoginEmail(e.target.value)} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none text-sm text-gray-900 focus:border-[#F2A900]" placeholder="Email Address" />
+                <input type="password" required value={loginPassword} onChange={e => setLoginPassword(e.target.value)} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none text-sm text-gray-900 focus:border-[#F2A900]" placeholder="Password" />
+                <button type="submit" className="w-full bg-[#F2A900] text-[#0F172A] hover:bg-yellow-500 font-black py-3.5 rounded-xl text-sm mt-2 transition">{authMode === 'login' ? 'Login to Continue' : 'Register to Continue'}</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* CHECKOUT WORKFLOW MODAL */}
+      {isWorkflowOpen && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-2 sm:p-4 backdrop-blur-sm pb-16">
+          <div className="bg-white w-full max-w-3xl rounded-2xl shadow-2xl overflow-hidden relative max-h-[90vh] flex flex-col animate-fade-in border border-gray-200">
+            <button onClick={() => setIsWorkflowOpen(false)} className="absolute top-4 right-4 z-20 p-2 rounded-full transition text-gray-500 hover:text-gray-900 bg-gray-100"><FiX size={20} /></button>
+            <div className="bg-gray-50 p-6 border-b border-gray-200 flex items-center justify-between sm:justify-center sm:gap-12 relative">
+              {['Cart', 'Shipping', 'Payment', 'Done'].map((step, idx) => (
+                <div key={step} className={`flex flex-col items-center z-10 ${workflowStep >= idx + 1 ? 'text-[#0F172A]' : 'text-gray-400'}`}>
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-black mb-2 transition-all ${workflowStep >= idx + 1 ? 'bg-[#F2A900] text-[#0F172A] shadow-md ring-4 ring-yellow-100' : 'bg-gray-200'}`}>
+                    {workflowStep > idx + 1 ? <FiCheckCircle /> : idx + 1}
+                  </div>
+                  <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider">{step}</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="p-4 sm:p-8 overflow-y-auto flex-1 bg-white">
+               {workflowStep === 1 && (
+                  <div className="max-w-xl mx-auto">
+                    <div className="flex justify-between items-center mb-6 border-b border-gray-100 pb-4">
+                      <h3 className="text-xl sm:text-2xl font-black text-gray-900">{t.cart}</h3>
+                      {cart.length > 0 && (
+                        <button onClick={clearCart} className="text-xs font-bold text-red-500 bg-red-50 px-3 py-2 rounded-lg hover:bg-red-100 transition flex items-center gap-2">
+                          <FiTrash2 /> Clear Cart
+                        </button>
+                      )}
+                    </div>
+                    {cart.length === 0 ? (
+                      <div className="text-center py-16 text-gray-400">
+                        <FiShoppingCart className="text-6xl mx-auto mb-4 opacity-50" />
+                        <p className="font-bold text-lg">{t.emptyCart}</p>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="space-y-4 mb-8">
+                          {cart.map((item: any) => (
+                            <div key={item.id} className="flex justify-between items-center p-3 sm:p-4 rounded-xl border border-gray-100 bg-gray-50">
+                              <div className="flex items-center gap-3 sm:gap-4">
+                                <div className="w-12 h-12 rounded-lg border bg-white border-gray-200 flex items-center justify-center text-xl shadow-sm">
+                                  {item.imageUrl ? <img src={`${getApiUrl()}${item.imageUrl}`} className="object-contain w-full h-full mix-blend-multiply" /> : item.imageEmoji || '📦'}
+                                </div>
+                                <div>
+                                  <p className="font-bold text-xs sm:text-sm text-gray-900 line-clamp-1">{item.name}</p>
+                                  <p className="text-xs text-gray-500 mt-1">Qty: <span className="font-black text-[#F2A900]">{item.quantity}</span></p>
+                                </div>
+                              </div>
+                              <span className="font-black text-sm sm:text-base text-[#0F172A]">TZS {(item.price * item.quantity).toLocaleString()}</span>
+                            </div>
+                          ))}
+                        </div>
+                        <div className="flex justify-between items-center p-4 rounded-xl border border-gray-100 mb-6 bg-gray-50">
+                          <span className="text-gray-500 font-bold uppercase text-xs tracking-wider">Subtotal</span>
+                          <span className="text-xl sm:text-2xl font-black text-[#0F172A]">TZS {cartTotal.toLocaleString()}</span>
+                        </div>
+                        <button onClick={handleProceedToLocation} className="w-full bg-[#0F172A] hover:bg-gray-800 text-white font-black py-4 rounded-xl text-sm transition shadow-lg flex justify-center items-center gap-2">
+                          {t.proceedLocation} <FiChevronRight />
+                        </button>
+                      </>
+                    )}
+                  </div>
+               )}
+
+               {workflowStep === 2 && (
+                  <div className="max-w-xl mx-auto animate-fade-in">
+                     <h3 className="text-xl sm:text-2xl font-black mb-6 flex items-center gap-3 text-gray-900 border-b border-gray-100 pb-4">
+                       <FiMapPin className="text-[#F2A900]"/> {t.location}
+                     </h3>
+                     <div className="space-y-5">
+                       <div>
+                         <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">{t.country}</label>
+                         <select value={country} onChange={e => setCountry(e.target.value)} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none text-sm font-medium focus:ring-2 focus:ring-[#F2A900]/50 transition">
+                           <option value="Tanzania">Tanzania</option><option value="Kenya">Kenya</option><option value="Uganda">Uganda</option><option value="Rwanda">Rwanda</option>
+                         </select>
+                       </div>
+                       <div className="grid grid-cols-2 gap-4">
+                         <div>
+                           <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">{t.city}</label>
+                           <input type="text" value={city} onChange={e => setCity(e.target.value)} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none text-sm focus:border-[#F2A900] transition" placeholder="e.g. Dar es Salaam" />
+                         </div>
+                         <div>
+                           <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">{t.zip}</label>
+                           <input type="text" value={zipCode} onChange={e => setZipCode(e.target.value)} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none text-sm focus:border-[#F2A900] transition" placeholder="e.g. 11000" />
+                         </div>
+                       </div>
+                       <div>
+                         <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">{t.street}</label>
+                         <input type="text" value={streetAddress} onChange={e => setStreetAddress(e.target.value)} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none text-sm focus:border-[#F2A900] transition" placeholder="e.g. Makumbusho, House 42" />
+                       </div>
+                     </div>
+                     <div className="mt-8 flex gap-3">
+                       <button onClick={() => setWorkflowStep(1)} className="px-6 py-4 bg-gray-100 text-gray-600 font-bold rounded-xl text-sm hover:bg-gray-200 transition">Back</button>
+                       <button onClick={() => { if(city && streetAddress) setWorkflowStep(3); else alert('Please fill in City and Street Address'); }} className="flex-1 bg-[#0F172A] hover:bg-gray-800 text-white font-black py-4 rounded-xl text-sm transition shadow-lg flex justify-center items-center gap-2">
+                         {t.proceedPayment} <FiChevronRight />
+                       </button>
+                     </div>
+                  </div>
+               )}
+
+               {workflowStep === 3 && (
+                 <form onSubmit={handlePlaceOrder} className="max-w-xl mx-auto animate-fade-in">
+                   <h3 className="text-xl sm:text-2xl font-black mb-6 flex items-center gap-3 text-gray-900 border-b border-gray-100 pb-4">
+                     <FiShield className="text-green-500"/> {t.payment}
+                   </h3>
+                   <div className="grid grid-cols-3 gap-3 mb-8">
+                     <div onClick={() => setPaymentMethod('Card')} className={`border-2 p-3 sm:p-4 rounded-xl cursor-pointer flex flex-col items-center justify-center gap-2 text-center transition-all ${paymentMethod === 'Card' ? 'border-[#0F172A] bg-[#0F172A] text-white shadow-md' : 'border-gray-200 bg-gray-50 hover:border-gray-300 text-gray-600'}`}>
+                       <FiCreditCard className="text-xl sm:text-2xl" /><span className="font-bold text-[9px] sm:text-[10px] uppercase tracking-wider">Card</span>
+                     </div>
+                     <div onClick={() => setPaymentMethod('M-Pesa')} className={`border-2 p-3 sm:p-4 rounded-xl cursor-pointer flex flex-col items-center justify-center gap-2 text-center transition-all ${paymentMethod === 'M-Pesa' ? 'border-red-600 bg-red-600 text-white shadow-md' : 'border-gray-200 bg-gray-50 hover:border-gray-300 text-gray-600'}`}>
+                       <FiSmartphone className="text-xl sm:text-2xl" /><span className="font-bold text-[9px] sm:text-[10px] uppercase tracking-wider">M-Pesa</span>
+                     </div>
+                     <div onClick={() => setPaymentMethod('Raha')} className={`border-2 p-3 sm:p-4 rounded-xl cursor-pointer flex flex-col items-center justify-center gap-2 text-center transition-all ${paymentMethod === 'Raha' ? 'border-[#F2A900] bg-[#F2A900] text-[#0F172A] shadow-md' : 'border-gray-200 bg-gray-50 hover:border-gray-300 text-gray-600'}`}>
+                       <FiGlobe className="text-xl sm:text-2xl" /><span className="font-bold text-[9px] sm:text-[10px] uppercase tracking-wider">Raha</span>
+                     </div>
+                   </div>
+                   <div className="bg-gray-50 p-6 rounded-2xl border border-gray-200 mb-8 space-y-3">
+                     <div className="flex justify-between text-sm font-medium text-gray-500"><span>Subtotal</span><span className="text-gray-800">TZS {cartTotal.toLocaleString()}</span></div>
+                     <div className="flex justify-between text-sm font-medium text-gray-500"><span>{t.deliveryFee}</span><span className="text-gray-800">TZS {shippingFee.toLocaleString()}</span></div>
+                     {upfrontPayment > 0 && (
+                       <div className="flex justify-between text-xs font-bold p-2 rounded-lg mt-2 text-red-600 bg-red-50 border border-red-100">
+                         <span>{t.upfront} (20%)</span><span>TZS {upfrontPayment.toLocaleString()}</span>
+                       </div>
+                     )}
+                     <div className="border-t border-gray-200 pt-3 mt-3 flex justify-between items-center">
+                       <span className="text-sm font-bold text-gray-500 uppercase tracking-wider">{t.grandTotal}</span>
+                       <span className="text-2xl font-black text-[#0F172A]">TZS {grandTotal.toLocaleString()}</span>
+                     </div>
+                   </div>
+                   <div className="flex gap-3">
+                     <button type="button" onClick={() => setWorkflowStep(2)} className="px-6 py-4 bg-gray-100 text-gray-600 font-bold rounded-xl text-sm hover:bg-gray-200 transition">Back</button>
+                     <button type="submit" disabled={checkoutLoading} className="flex-1 bg-green-600 hover:bg-green-700 text-white font-black py-4 rounded-xl text-sm transition shadow-lg flex justify-center items-center gap-2">
+                       {checkoutLoading ? 'Processing...' : <><FiLock /> {t.confirmOrder}</>}
+                     </button>
+                   </div>
+                 </form>
+               )}
+
+               {workflowStep === 4 && (
+                 <div className="text-center py-12 px-4 animate-fade-in max-w-md mx-auto">
+                   <div className="w-24 h-24 text-green-500 rounded-full flex items-center justify-center text-5xl mx-auto mb-6 shadow-inner ring-8 bg-green-50 ring-green-50/50"><FiCheckCircle /></div>
+                   <h3 className="text-2xl sm:text-3xl font-black text-gray-900 mb-4">Order Successful!</h3>
+                   <p className="text-gray-500 mb-8 text-sm leading-relaxed">{t.successMsg}</p>
+                   <button onClick={() => { setIsWorkflowOpen(false); router.push('/profile'); }} className="w-full bg-[#0F172A] text-white hover:bg-gray-800 font-black py-4 rounded-xl text-sm transition shadow-lg">
+                     View Invoice in Profile
+                   </button>
+                 </div>
+               )}
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
