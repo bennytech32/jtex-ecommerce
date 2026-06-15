@@ -3,31 +3,33 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCart } from '../context/CartContext'; 
-import { FiShoppingCart, FiSearch, FiFilter, FiGlobe, FiX, FiCheckCircle, FiMapPin, FiTruck, FiShield, FiLock, FiMail, FiUser, FiPhone, FiTrash2, FiChevronRight, FiSmartphone } from 'react-icons/fi';
+import { 
+  FiShoppingCart, FiSearch, FiFilter, FiGlobe, FiX, FiCheckCircle, FiMapPin, 
+  FiTruck, FiShield, FiLock, FiMail, FiUser, FiPhone, FiTrash2, FiChevronRight, 
+  FiSmartphone, FiArrowLeft, FiMoreHorizontal, FiSliders, FiList, FiGrid
+} from 'react-icons/fi';
 
-// ==========================================
-// IMPORTS SAHIHI KWA AJILI YA SHOP PAGE (Zinatumia ../)
-// ==========================================
 import TopTicker from '../components/navigation/TopTicker';
 import NavbarLinks from '../components/navigation/NavbarLinks';
 import SidebarCategories from '../components/navigation/SidebarCategories';
 import Footer from '../components/common/Footer';
+import MobileBottomNav from '../components/navigation/MobileBottomNav';
 
 const translations = {
   en: {
     shop: "All Products",
-    search: "Search products...",
-    filter: "Filter by Category",
+    search: "Search products, categories or brands...",
+    filter: "Filters",
     all: "All Categories",
     loading: "Loading store...",
     noProducts: "No products match your search.",
     addToCart: "Add to Cart",
     buyNow: "Buy Now",
     switchLang: "Badili Kiswahili",
-    sort: "Sort by Price",
+    sort: "Sort by:",
+    popular: "Popular",
     lowToHigh: "Low to High",
     highToLow: "High to Low",
-    // Workflow Translations
     cart: "Cart Review",
     location: "Location",
     payment: "Payment",
@@ -35,29 +37,38 @@ const translations = {
     proceedLocation: "Proceed to Location",
     proceedPayment: "Proceed to Payment",
     confirmOrder: "Confirm & Place Order",
-    successMsg: "Order placed successfully! We've sent an SMS and Email to your phone with the Invoice and Receipt.",
+    successMsg: "Order placed successfully! We've sent an SMS and Email.",
     viewProfile: "View Invoice in My Profile",
     remove: "Remove",
     deliveryFee: "Shipping Fee",
     grandTotal: "Grand Total",
     upfront: "Required Upfront (20%)",
     signIn: "Sign In",
-    register: "Create Account"
+    register: "Create Account",
+    clearAll: "Clear All",
+    priceRange: "Price Range",
+    brand: "Brand",
+    itemsFound: "items found",
+    browseAll: "Browse all product categories",
+    shopByBrand: "Shop by Brand",
+    shopByPrice: "Shop by Price",
+    topPicks: "Top Picks",
+    viewAll: "View All"
   },
   sw: {
     shop: "Bidhaa Zote",
-    search: "Tafuta bidhaa...",
-    filter: "Chuja kwa Kategoria",
+    search: "Tafuta bidhaa, kategoria au chapa...",
+    filter: "Chujio",
     all: "Kategoria Zote",
     loading: "Inafungua duka...",
     noProducts: "Hakuna bidhaa inayofanana na utafutaji wako.",
     addToCart: "Weka Kikapuni",
     buyNow: "Nunua Sasa",
     switchLang: "Switch to English",
-    sort: "Panga kwa Bei",
+    sort: "Panga kwa:",
+    popular: "Maarufu",
     lowToHigh: "Kuanzia Chini",
     highToLow: "Kuanzia Juu",
-    // Workflow Translations
     cart: "Kikapu Chako",
     location: "Mahali",
     payment: "Malipo",
@@ -65,16 +76,56 @@ const translations = {
     proceedLocation: "Endelea na Mahali",
     proceedPayment: "Endelea na Malipo",
     confirmOrder: "Thibitisha na Lipia",
-    successMsg: "Oda imekamilika! Tumekutumia SMS na Barua Pepe (Email) yenye Risiti na Invoice.",
+    successMsg: "Oda imekamilika! Tumekutumia SMS na Barua Pepe.",
     viewProfile: "Tazama Risiti Kwenye Profaili",
     remove: "Ondoa",
     deliveryFee: "Gharama ya Usafiri",
     grandTotal: "Jumla Kuu",
     upfront: "Kianzio cha Kulipia (20%)",
     signIn: "Ingia Akauntini",
-    register: "Jisajili Sasa"
+    register: "Jisajili Sasa",
+    clearAll: "Futa Zote",
+    priceRange: "Kiwango cha Bei",
+    brand: "Chapa (Brand)",
+    itemsFound: "zimepatikana",
+    browseAll: "Vinjari kategoria zote za bidhaa",
+    shopByBrand: "Nunua kwa Chapa",
+    shopByPrice: "Nunua kwa Bei",
+    topPicks: "Chaguo Bora",
+    viewAll: "Tazama Zote"
   }
 };
+
+// Mock data for UI visual representation based on mockups
+const CATEGORY_UI_MOCKS = [
+  { name: 'Electronics', count: '1,248 items', icon: '🎧' },
+  { name: 'Computers', count: '856 items', icon: '💻' },
+  { name: 'Phones', count: '1,562 items', icon: '📱' },
+  { name: 'Fashion', count: '945 items', icon: '👕' },
+  { name: 'Home & Kitchen', count: '1,120 items', icon: '🍳' },
+  { name: 'Beauty & Health', count: '632 items', icon: '🧴' },
+  { name: 'Sports & Outdoors', count: '412 items', icon: '⚽' },
+  { name: 'Toys & Games', count: '385 items', icon: '🧸' },
+  { name: 'Automotive', count: '678 items', icon: '🚗' },
+];
+
+const SUB_CATEGORIES: any = {
+  'Computers': [
+    { name: 'All Computers', count: '856 items', icon: '💻' },
+    { name: 'Laptops', count: '532 items', icon: '💻' },
+    { name: 'Desktops', count: '142 items', icon: '🖥️' },
+    { name: 'Monitors', count: '86 items', icon: '📺' },
+    { name: 'Accessories', count: '96 items', icon: '⌨️' },
+  ],
+  'Phones': [
+    { name: 'All Phones', count: '1,562 items', icon: '📱' },
+    { name: 'Smartphones', count: '1,256 items', icon: '📱' },
+    { name: 'Feature Phones', count: '128 items', icon: '☎️' },
+    { name: 'Phone Accessories', count: '178 items', icon: '🔌' },
+  ]
+};
+
+const MOCK_BRANDS = ['SAMSUNG', 'Apple', 'MI', 'Infinix', 'TECNO'];
 
 export default function ShopPage() {
   const router = useRouter();
@@ -85,21 +136,21 @@ export default function ShopPage() {
   
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
-  const [sortOrder, setSortOrder] = useState('default');
+  const [sortOrder, setSortOrder] = useState('popular');
 
   const [user, setUser] = useState<any>(null);
-  const [lang, setLang] = useState<'en' | 'sw'>('en'); // Default ni English
+  const [lang, setLang] = useState<'en' | 'sw'>('en'); 
   
   // MODAL STATES 
   const [selectedProduct, setSelectedProduct] = useState<any | null>(null);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
 
-  // WORKFLOW STATES (Cart -> Location -> Payment -> Success)
+  // WORKFLOW STATES
   const [isWorkflowOpen, setIsWorkflowOpen] = useState(false);
   const [workflowStep, setWorkflowStep] = useState(1); 
 
-  // FORM STATES (Login & Checkout)
+  // FORM STATES
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [registerName, setRegisterName] = useState('');
@@ -139,17 +190,25 @@ export default function ShopPage() {
 
   useEffect(() => {
     let result = products;
-    if (activeCategory !== 'All') result = result.filter(p => p.category === activeCategory);
+    if (activeCategory !== 'All') {
+      result = result.filter(p => {
+        const pCat = p.category ? p.category.toLowerCase() : '';
+        const tCat = activeCategory.toLowerCase();
+        return pCat.includes(tCat) || tCat.includes(pCat);
+      });
+    }
     if (searchQuery) result = result.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()));
+    
     if (sortOrder === 'low') result = [...result].sort((a, b) => a.price - b.price);
     else if (sortOrder === 'high') result = [...result].sort((a, b) => b.price - a.price);
+    
     setFilteredProducts(result);
   }, [searchQuery, activeCategory, sortOrder, products]);
 
   const toggleLanguage = () => setLang(prev => prev === 'en' ? 'sw' : 'en');
 
   // =====================================
-  // INLINE AUTH LOGIC
+  // INLINE AUTH & WORKFLOW LOGIC
   // =====================================
   const handleAuthSuccess = (data: any) => {
     localStorage.setItem('jtex_token', data.token);
@@ -183,9 +242,6 @@ export default function ShopPage() {
     } catch (err) { setLoginError('Kosa la kimtandao.'); }
   };
 
-  // =====================================
-  // WORKFLOW ACTIONS
-  // =====================================
   const openCartWorkflow = () => {
     setSelectedProduct(null);
     setWorkflowStep(1);
@@ -204,20 +260,13 @@ export default function ShopPage() {
   const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
     setCheckoutLoading(true);
-    
-    const checkoutItems = cart.map(item => ({ 
-      productId: item.id, quantity: item.quantity, unitPrice: item.price, subTotal: item.price * item.quantity 
-    }));
-
+    const checkoutItems = cart.map(item => ({ productId: item.id, quantity: item.quantity, unitPrice: item.price, subTotal: item.price * item.quantity }));
     try {
       const res = await fetch('http://localhost:5001/api/orders', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: user.id, deliveryRegion: region, address, paymentMethod: 'COD', shippingFee, upfrontPayment, items: checkoutItems })
       });
-      if (res.ok) {
-        setWorkflowStep(4); 
-        clearCart(); 
-      }
+      if (res.ok) { setWorkflowStep(4); clearCart(); }
     } catch (err) { console.error(err); } finally { setCheckoutLoading(false); }
   };
 
@@ -228,122 +277,393 @@ export default function ShopPage() {
     setIsWorkflowOpen(true);
   };
 
+  // REUSABLE PRODUCT CARD
+  const ProductCard = ({ product }: { product: any }) => {
+    const discount = product.oldPrice ? Math.round(((product.oldPrice - product.price) / product.oldPrice) * 100) : 0;
+    return (
+      <div className="bg-white rounded-xl p-3 sm:p-4 shadow-sm hover:shadow-md transition border border-gray-100 flex flex-col h-full group cursor-pointer" onClick={() => setSelectedProduct(product)}>
+        <div className="relative aspect-square w-full bg-white rounded-lg mb-3 overflow-hidden flex items-center justify-center p-2">
+          {discount > 0 && <span className="absolute top-0 left-0 bg-[#F2A900] text-white text-[10px] font-black px-1.5 py-0.5 rounded shadow-sm z-10">-{discount}%</span>}
+          {product.imageUrl ? (
+            <img src={`http://localhost:5001${product.imageUrl}`} alt={product.name} className="object-contain w-full h-full mix-blend-multiply group-hover:scale-105 transition duration-300" />
+          ) : (
+            <span className="text-6xl group-hover:scale-110 transition duration-300">{product.imageEmoji || '📦'}</span>
+          )}
+        </div>
+        <div className="flex-1 flex flex-col">
+          <h3 className="text-xs sm:text-sm font-bold text-gray-800 leading-snug mb-1 line-clamp-2 h-8 group-hover:text-blue-600 transition">{product.name}</h3>
+          <p className="text-[10px] text-gray-500 mb-1 line-clamp-1">{product.specifications || 'Standard specifications'}</p>
+          <div className="mt-auto pt-2 flex flex-col">
+            <span className="text-sm sm:text-base font-black text-[#0F172A]">TZS {product.price.toLocaleString()}</span>
+            {product.oldPrice && <div className="flex items-center gap-1 mt-0.5"><span className="text-[10px] text-gray-400 line-through">TZS {product.oldPrice.toLocaleString()}</span></div>}
+            <div className="flex items-center text-[#F2A900] text-[10px] mt-1">
+              ★★★★★ <span className="text-gray-400 ml-1 font-medium">(24)</span>
+            </div>
+            <div className="flex gap-2 mt-3 opacity-0 group-hover:opacity-100 transition-opacity">
+               <button onClick={(e) => { e.stopPropagation(); addToCart(product); }} className="flex-1 border border-gray-200 hover:border-[#F2A900] text-gray-600 hover:text-[#F2A900] text-xs font-bold py-1.5 rounded flex items-center justify-center transition"><FiShoppingCart/></button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
-    <div className="min-h-screen bg-[#F3F4F6] text-gray-900 font-sans antialiased">
-      <TopTicker />
+    <div className="min-h-screen bg-[#F8FAFC] text-gray-900 font-sans antialiased">
       
-      {/* HEADER YENYE CART POPUP */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-40 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <span onClick={() => router.push('/')} className="text-2xl font-black text-gray-900 tracking-tight cursor-pointer">
+      {/* ========================================================= */}
+      {/* DESKTOP HEADER (Source 3 style)                           */}
+      {/* ========================================================= */}
+      <header className="hidden md:flex bg-white border-b border-gray-200 sticky top-0 z-40 shadow-sm h-16 items-center px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center gap-6 w-[240px]">
+          <span onClick={() => router.push('/')} className="text-2xl font-black text-[#0F172A] tracking-tight cursor-pointer">
             J<span className="text-[#F2A900]">tex</span>
           </span>
-          <div className="flex items-center gap-6">
-            <button onClick={openCartWorkflow} className="relative text-gray-700 hover:text-[#F2A900] transition p-2">
-              <FiShoppingCart className="text-2xl" />
-              {cart.length > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center">
-                  {cart.length}
-                </span>
-              )}
+        </div>
+        <div className="flex-1 flex justify-center px-8">
+          <div className="w-full max-w-3xl flex border-2 border-[#0F3B4E] rounded-full overflow-hidden bg-white h-11 transition-all shadow-sm">
+            <div className="bg-[#0F3B4E] text-white px-4 py-2 text-xs font-bold flex items-center gap-2">
+               ✨ AI Search <span className="font-normal opacity-80 text-[10px] hidden lg:inline">Search smarter</span>
+            </div>
+            <input 
+              type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} 
+              placeholder={t.search} className="flex-1 px-4 text-sm outline-none text-gray-900 placeholder-gray-400" 
+            />
+            <div className="flex items-center px-2 text-gray-400 gap-2">
+               <FiCamera className="hover:text-blue-500 cursor-pointer"/>
+            </div>
+            <button className="bg-[#F2A900] px-6 flex items-center justify-center text-white hover:bg-yellow-500 transition">
+              <FiSearch className="text-lg" />
             </button>
-            {user ? (
-              <div className="flex items-center gap-2 bg-gray-100 px-3 py-1.5 rounded-full cursor-pointer hover:bg-gray-200" onClick={() => router.push('/profile')}>
-                <div className="w-6 h-6 bg-[#0F172A] text-white rounded-full flex items-center justify-center font-bold text-xs">{user.name.charAt(0)}</div>
-                <span className="text-xs font-bold">{user.name.split(' ')[0]}</span>
-              </div>
-            ) : (
-              <button onClick={() => setIsLoginOpen(true)} className="text-xs font-bold bg-[#0F172A] text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition">
-                {t.signIn}
-              </button>
-            )}
           </div>
+        </div>
+        <div className="flex items-center gap-4 justify-end">
+          <button onClick={toggleLanguage} className="flex items-center gap-1 text-xs font-bold border border-gray-200 px-3 py-1.5 rounded-full hover:bg-gray-50">
+            <img src="https://flagcdn.com/w20/tz.png" className="w-4 rounded-sm" /> TZS <FiChevronDown/>
+          </button>
+          <button onClick={openCartWorkflow} className="relative text-gray-700 hover:text-[#F2A900] transition">
+            <FiShoppingCart className="text-xl" />
+            {cart.length > 0 && <span className="absolute -top-2 -right-2 bg-[#F2A900] text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center">{cart.length}</span>}
+          </button>
+          {user ? (
+            <div className="w-8 h-8 bg-[#0F3B4E] text-white rounded-full flex items-center justify-center font-bold text-xs cursor-pointer shadow-sm" onClick={() => router.push('/profile')}>
+              {user.name.charAt(0)}
+            </div>
+          ) : (
+            <button onClick={() => setIsLoginOpen(true)} className="text-xs font-bold bg-[#0F3B4E] text-white px-4 py-2 rounded-full hover:bg-gray-800 transition">
+              {t.signIn}
+            </button>
+          )}
         </div>
       </header>
 
-      <NavbarLinks />
-
-      <main className="max-w-[1400px] mx-auto p-4 md:p-6 flex flex-col lg:flex-row gap-8 mt-4">
-        
-        {/* ========================================================== */}
-        {/* SIDEBAR YA KUCHUJA (FILTERING) NA ORIGINAL CATEGORIES      */}
-        {/* ========================================================== */}
-        <div className="w-full lg:w-[280px] lg:min-w-[280px] flex-shrink-0 flex flex-col gap-6">
-          
-          {/* ORIGINAL SIDEBAR YAKO YA CATEGORIES */}
-          <SidebarCategories />
-
-          {/* FILTER YA REAL DATA INAKAA CHINI YAKE */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 sticky top-24">
-            <h3 className="font-black text-gray-900 mb-4 flex items-center gap-2 border-b pb-2"><FiFilter className="text-[#F2A900]" /> {t.filter}</h3>
-            <ul className="space-y-2 text-sm">
-              <li><button onClick={() => setActiveCategory('All')} className={`w-full text-left px-3 py-2 rounded-lg font-bold transition ${activeCategory === 'All' ? 'bg-[#0F172A] text-white' : 'text-gray-600 hover:bg-gray-100'}`}>{t.all}</button></li>
-              {categories.map(category => (
-                <li key={category}><button onClick={() => setActiveCategory(category)} className={`w-full text-left px-3 py-2 rounded-lg font-bold transition ${activeCategory === category ? 'bg-[#0F172A] text-white' : 'text-gray-600 hover:bg-gray-100'}`}>{category}</button></li>
-              ))}
-            </ul>
-            <div className="mt-8">
-               <h3 className="font-black text-gray-900 mb-3 text-sm">{t.sort}</h3>
-               <select value={sortOrder} onChange={(e) => setSortOrder(e.target.value)} className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none font-medium">
-                 <option value="default">Default</option>
-                 <option value="low">{t.lowToHigh}</option>
-                 <option value="high">{t.highToLow}</option>
-               </select>
-            </div>
+      {/* ========================================================= */}
+      {/* MOBILE HEADER (Source 4 style)                            */}
+      {/* ========================================================= */}
+      <header className="md:hidden bg-white sticky top-0 z-40 shadow-sm">
+        <div className="flex items-center justify-between px-4 py-2">
+          <span onClick={() => router.push('/')} className="text-xl font-black text-[#0F172A] tracking-tight">
+            J<span className="text-[#F2A900]">tex</span>
+          </span>
+          <div className="flex items-center gap-3">
+             <button onClick={toggleLanguage} className="flex items-center gap-1 text-[10px] font-bold border border-gray-200 px-2 py-1 rounded-full">
+                <img src="https://flagcdn.com/w20/tz.png" className="w-3 rounded-sm" /> TZS
+             </button>
+             <div className="relative">
+                <FiSearch className="text-xl text-gray-700" />
+             </div>
+             {user ? (
+                <div className="w-6 h-6 bg-[#0F3B4E] text-white rounded-full flex items-center justify-center font-bold text-[10px]">{user.name.charAt(0)}</div>
+             ) : (
+                <FiUser className="text-xl text-gray-700" onClick={() => setIsLoginOpen(true)} />
+             )}
           </div>
         </div>
-
-        {/* ========================================================== */}
-        {/* ENEO LA BIDHAA LINALO BADILIKA (MAIN SHOP AREA)            */}
-        {/* ========================================================== */}
-        <div className="flex-1">
-          <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 mb-6 flex flex-col md:flex-row justify-between items-center gap-4">
-            <h1 className="text-2xl font-black text-gray-900">{activeCategory === 'All' ? t.shop : activeCategory}</h1>
-            <div className="flex w-full md:w-auto items-center gap-4">
-              <div className="relative w-full md:w-64">
-                <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder={t.search} className="w-full bg-gray-50 border border-gray-200 rounded-full pl-10 pr-4 py-2 text-sm outline-none focus:border-[#F2A900] transition" />
+        
+        {/* Mobile Search Bar inside header if activeCategory is specific */}
+        {activeCategory !== 'All' && (
+          <div className="px-4 pb-3">
+            <div className="w-full flex border-2 border-[#0F3B4E] rounded-full overflow-hidden bg-white transition-all shadow-sm">
+              <div className="bg-[#0F3B4E] text-white px-2 py-1.5 text-[10px] font-bold flex items-center gap-1">
+                 ✨ AI Search
               </div>
-              <button onClick={toggleLanguage} className="bg-gray-100 p-2 rounded-full hover:bg-gray-200 transition">
-                <FiGlobe className="text-[#0F172A]" />
-              </button>
+              <input 
+                type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} 
+                placeholder={`Search in ${activeCategory}...`} className="flex-1 px-3 text-xs outline-none text-gray-900" 
+              />
+              <div className="flex items-center px-2 text-gray-400">
+                 <FiCamera size={14}/>
+              </div>
+              <button className="bg-[#F2A900] px-3 flex items-center justify-center text-white"><FiSearch size={14}/></button>
             </div>
           </div>
+        )}
+      </header>
 
-          {isLoading ? (
-            <div className="text-center py-20 font-bold text-gray-500 animate-pulse text-lg">{t.loading}</div>
-          ) : filteredProducts.length === 0 ? (
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-20 text-center text-gray-500 font-medium">{t.noProducts}</div>
-          ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {filteredProducts.map((product) => (
-                <div key={product.id} className="bg-white rounded-2xl p-4 shadow-sm hover:shadow-lg transition border border-gray-100 flex flex-col h-full group">
-                  <div onClick={() => setSelectedProduct(product)} className="relative aspect-square w-full bg-gray-50 rounded-xl mb-4 overflow-hidden flex items-center justify-center cursor-pointer">
-                    {product.imageUrl ? (
-                      <img src={`http://localhost:5001${product.imageUrl}`} alt={product.name} className="object-cover w-full h-full group-hover:scale-105 transition duration-300" />
-                    ) : (
-                      <span className="text-6xl group-hover:scale-110 transition duration-300">{product.imageEmoji}</span>
-                    )}
-                  </div>
-                  <div className="flex-1 flex flex-col">
-                    <span className="text-[10px] uppercase tracking-wider font-bold text-gray-400 mb-1">{product.category}</span>
-                    <h3 onClick={() => setSelectedProduct(product)} className="text-sm font-bold text-gray-800 leading-tight mb-2 line-clamp-2 cursor-pointer hover:text-[#F2A900]">{product.name}</h3>
-                    <div className="mt-auto space-y-2">
-                      <span className="text-base font-black text-[#0F172A]">TZS {product.price.toLocaleString()}</span>
-                      <div className="grid grid-cols-2 gap-2 mt-2">
-                        <button onClick={() => addToCart(product)} className="bg-gray-100 hover:bg-gray-200 text-gray-800 text-[11px] font-bold py-2 rounded-lg transition">{t.addToCart}</button>
-                        <button onClick={() => handleBuyNow(product)} className="bg-[#F2A900] hover:bg-yellow-500 text-[#0F172A] text-[11px] font-bold py-2 rounded-lg transition">{t.buyNow}</button>
-                      </div>
+
+      <main className="max-w-[1920px] mx-auto flex flex-col md:flex-row pb-20 md:pb-6 md:pt-6">
+        
+        {/* ========================================================= */}
+        {/* DESKTOP SIDEBAR (GLOBAL APP NAVIGATION) Source 3          */}
+        {/* ========================================================= */}
+        <div className="hidden md:flex w-[240px] flex-shrink-0 flex-col pl-4 sm:pl-6 lg:pl-8">
+           <nav className="flex flex-col gap-1 text-sm font-medium text-gray-600 pr-6">
+              <button onClick={() => router.push('/')} className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition"><FiHome className="text-lg"/> Home</button>
+              <button className="flex items-center gap-3 px-4 py-3 rounded-lg bg-[#F2A900] text-white font-bold shadow-sm transition"><FiGrid className="text-lg"/> Categories</button>
+              <button className="flex items-center justify-between px-4 py-3 rounded-lg hover:bg-gray-100 transition">
+                 <div className="flex items-center gap-3"><FiTag className="text-lg"/> Deals</div>
+                 <span className="bg-red-500 text-white text-[9px] px-1.5 py-0.5 rounded font-black">Hot</span>
+              </button>
+              <button onClick={() => router.push('/profile')} className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition"><FiShoppingCart className="text-lg"/> Orders</button>
+              <button className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition"><FiHeart className="text-lg"/> Wishlist</button>
+              
+              <div className="border-t border-gray-200 my-4"></div>
+              
+              <button onClick={openCartWorkflow} className="flex items-center justify-between px-4 py-3 rounded-lg hover:bg-gray-100 transition">
+                 <div className="flex items-center gap-3"><FiShoppingCart className="text-lg"/> Cart</div>
+                 {cart.length > 0 && <span className="bg-[#F2A900] text-white text-[10px] px-2 py-0.5 rounded-full font-black">{cart.length}</span>}
+              </button>
+              <button onClick={() => router.push('/profile')} className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition"><FiUser className="text-lg"/> Account</button>
+              <button className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition"><FiSliders className="text-lg"/> Settings</button>
+              <button className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition"><FiPhone className="text-lg"/> Help & Support</button>
+           </nav>
+
+           <div className="mt-auto pr-6 pt-6">
+              <div className="bg-[#0F3B4E] rounded-xl p-5 text-white relative overflow-hidden shadow-lg">
+                <p className="text-[10px] text-gray-300 font-bold mb-1">Special Offers</p>
+                <h4 className="text-xl font-black mb-1">Up to <span className="text-[#F2A900]">40% Off</span></h4>
+                <p className="text-[10px] text-gray-300 mb-4">On selected items</p>
+                <button className="bg-[#F2A900] text-[#0F172A] text-[10px] font-bold px-3 py-1.5 rounded hover:bg-yellow-500 transition w-max flex items-center gap-1">Shop Now <FiChevronRight/></button>
+                <div className="absolute -bottom-4 -right-4 text-6xl opacity-50">🎁</div>
+              </div>
+           </div>
+        </div>
+
+        {/* ========================================================= */}
+        {/* MAIN CONTENT AREA (DYNAMIC MOBILE & DESKTOP VIEWS)        */}
+        {/* ========================================================= */}
+        <div className="flex-1 w-full bg-white md:bg-transparent md:pr-4 lg:pr-8">
+           
+           {/* MOBILE VIEW: "ALL CATEGORIES" GRID (Source 4 Left) */}
+           <div className={`md:hidden ${activeCategory !== 'All' ? 'hidden' : 'block'}`}>
+              <div className="px-4 py-3">
+                 <div className="w-full flex border-2 border-[#0F3B4E] rounded-full overflow-hidden bg-white shadow-sm mb-6">
+                    <div className="bg-[#0F3B4E] text-white px-3 py-2 text-xs font-bold flex items-center gap-1">✨ AI Search</div>
+                    <input type="text" placeholder="Search products, categories..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="flex-1 px-3 text-xs outline-none" />
+                    <button className="bg-[#F2A900] px-4 flex items-center justify-center text-white"><FiSearch/></button>
+                 </div>
+                 
+                 <h2 className="text-xl font-black text-gray-900 mb-1">Categories</h2>
+                 <p className="text-xs text-gray-500 mb-4">{t.browseAll}</p>
+
+                 <div className="grid grid-cols-3 gap-3 mb-6">
+                    {CATEGORY_UI_MOCKS.map(cat => (
+                       <div key={cat.name} onClick={() => setActiveCategory(cat.name)} className="flex flex-col items-center justify-center p-3 border border-gray-100 rounded-xl shadow-sm hover:border-[#F2A900] transition cursor-pointer">
+                          <span className="text-3xl mb-2">{cat.icon}</span>
+                          <span className="text-[10px] font-bold text-gray-900 text-center leading-tight">{getTranslatedCategoryName(cat.name)}</span>
+                          <span className="text-[8px] text-gray-400 mt-1">{cat.count}</span>
+                       </div>
+                    ))}
+                    <div className="flex flex-col items-center justify-center p-3 border border-gray-100 rounded-xl shadow-sm bg-[#0F3B4E] text-white cursor-pointer">
+                        <FiMoreHorizontal className="text-2xl mb-2" />
+                        <span className="text-[10px] font-bold text-center leading-tight">More Categories</span>
                     </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+                 </div>
+
+                 {/* Promotional Banner inside mobile categories view */}
+                 <div className="bg-[#0F3B4E] rounded-xl p-5 flex flex-row items-center justify-between text-white relative overflow-hidden mb-6">
+                    <div className="z-10">
+                        <h4 className="font-bold text-sm">Top Brands, Top Quality</h4>
+                        <h3 className="text-lg font-black text-[#F2A900] mb-2">Up to 40% off</h3>
+                        <button className="bg-[#F2A900] text-[#0F172A] text-[10px] font-black px-4 py-1.5 rounded-full shadow-md">Shop Now <FiChevronRight className="inline"/></button>
+                    </div>
+                    <div className="z-10 text-5xl">💻</div>
+                 </div>
+              </div>
+           </div>
+
+           {/* DESKTOP & MOBILE VIEW: SPECIFIC CATEGORY DETAILED VIEW (Source 3 & Source 4 Right) */}
+           <div className={`w-full ${activeCategory === 'All' ? 'hidden md:block' : 'block'}`}>
+              
+              {/* Desktop Breadcrumb & Header */}
+              <div className="hidden md:block mb-6">
+                 <div className="text-xs text-gray-500 flex items-center gap-2 mb-3">
+                    <span className="cursor-pointer hover:underline" onClick={() => setActiveCategory('All')}>Home</span> <FiChevronRight size={10}/> 
+                    <span className="cursor-pointer hover:underline" onClick={() => setActiveCategory('All')}>Categories</span> <FiChevronRight size={10}/> 
+                    <span className="text-gray-900 font-bold">{activeCategory}</span>
+                 </div>
+                 <div className="flex items-center justify-between">
+                    <div>
+                       <h1 className="text-3xl font-black text-gray-900 mb-1">{activeCategory === 'All' ? t.all : activeCategory}</h1>
+                       <p className="text-sm text-gray-500">Discover high performance items for work, study, and lifestyle.</p>
+                    </div>
+                    <div className="text-right">
+                       <span className="text-2xl font-black text-gray-900">{filteredProducts.length}</span>
+                       <p className="text-xs text-gray-500 uppercase font-bold">{t.itemsFound}</p>
+                    </div>
+                 </div>
+              </div>
+
+              {/* Mobile Specific Category Header (Back button) */}
+              <div className="md:hidden flex items-center gap-3 px-4 py-3 border-b border-gray-100 bg-white sticky top-[104px] z-30">
+                 <button onClick={() => setActiveCategory('All')} className="p-1"><FiArrowLeft className="text-xl text-gray-800"/></button>
+                 <h1 className="text-lg font-black text-gray-900 flex-1">{activeCategory}</h1>
+                 <span className="text-xs font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded">{filteredProducts.length} items</span>
+              </div>
+
+              {/* Subcategories Horizontal Scroll (Both Desktop & Mobile) */}
+              {SUB_CATEGORIES[activeCategory] && (
+                 <div className="flex overflow-x-auto gap-3 pb-4 md:mb-6 px-4 md:px-0 hide-scrollbar mt-4 md:mt-6">
+                    {SUB_CATEGORIES[activeCategory].map((sub: any, idx: number) => (
+                       <div key={idx} className={`flex flex-col items-center p-3 md:p-4 min-w-[90px] md:min-w-[120px] rounded-xl border cursor-pointer transition ${idx === 0 ? 'border-[#F2A900] bg-yellow-50/30' : 'border-gray-200 bg-white hover:border-[#F2A900]'}`}>
+                          <span className="text-2xl md:text-3xl mb-1 md:mb-2">{sub.icon}</span>
+                          <span className="text-[10px] md:text-xs font-bold text-gray-900 text-center whitespace-nowrap">{sub.name}</span>
+                          <span className="text-[8px] md:text-[10px] text-gray-500 hidden md:block">{sub.count}</span>
+                       </div>
+                    ))}
+                 </div>
+              )}
+
+              {/* Mobile Only Features (Shop by Brand, Price, Features) */}
+              <div className="md:hidden px-4 space-y-6 mt-4">
+                 <div>
+                    <div className="flex justify-between items-center mb-3">
+                       <h3 className="font-bold text-sm text-gray-900">{t.shopByBrand}</h3>
+                       <span className="text-[10px] text-gray-500">{t.viewAll}</span>
+                    </div>
+                    <div className="flex overflow-x-auto gap-3 pb-2 hide-scrollbar">
+                       {MOCK_BRANDS.map((brand, idx) => (
+                          <div key={idx} className="flex-shrink-0 w-16 h-10 border border-gray-200 rounded-lg flex items-center justify-center bg-white shadow-sm font-black text-[10px] tracking-tighter text-blue-900">
+                             {brand}
+                          </div>
+                       ))}
+                    </div>
+                 </div>
+
+                 <div>
+                    <h3 className="font-bold text-sm text-gray-900 mb-3">{t.shopByPrice}</h3>
+                    <div className="flex flex-wrap gap-2">
+                       <button className="border border-gray-200 rounded-full px-3 py-1.5 text-[10px] font-medium text-gray-700 bg-white">Under TZS 100,000</button>
+                       <button className="border border-gray-200 rounded-full px-3 py-1.5 text-[10px] font-medium text-gray-700 bg-white">TZS 100,000 - 300,000</button>
+                       <button className="border border-gray-200 rounded-full px-3 py-1.5 text-[10px] font-medium text-gray-700 bg-white">TZS 300,000 - 700,000</button>
+                       <button className="border border-gray-200 rounded-full px-3 py-1.5 text-[10px] font-medium text-gray-700 bg-white">Above TZS 700,000</button>
+                    </div>
+                 </div>
+              </div>
+
+              {/* Layout Split for Desktop (Filters Left, Products Right) */}
+              <div className="flex flex-col lg:flex-row mt-6 md:mt-0 px-4 md:px-0 gap-6">
+                 
+                 {/* Desktop Filters Sidebar (Source 3) */}
+                 <div className="hidden lg:block w-[220px] flex-shrink-0">
+                    <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm sticky top-24">
+                       <div className="flex justify-between items-center mb-6">
+                          <h3 className="font-black text-gray-900">{t.filter}</h3>
+                          <button onClick={() => {}} className="text-xs text-blue-600 hover:underline">{t.clearAll}</button>
+                       </div>
+                       
+                       {/* Mock Filter Sections */}
+                       <div className="space-y-6">
+                          <div>
+                             <div className="flex justify-between items-center mb-3 cursor-pointer text-sm font-bold text-gray-800">
+                                {t.priceRange} <FiChevronDown/>
+                             </div>
+                             <div className="px-2">
+                               <div className="w-full h-1 bg-gray-200 rounded-full relative mb-4 mt-2">
+                                  <div className="absolute left-[20%] right-[30%] h-full bg-[#F2A900] rounded-full"></div>
+                                  <div className="absolute left-[20%] top-1/2 -translate-y-1/2 w-3 h-3 bg-white border-2 border-[#F2A900] rounded-full shadow"></div>
+                                  <div className="absolute right-[30%] top-1/2 -translate-y-1/2 w-3 h-3 bg-white border-2 border-[#F2A900] rounded-full shadow"></div>
+                               </div>
+                               <div className="flex justify-between text-[10px] font-medium text-gray-500">
+                                  <span>TZS 100,000</span>
+                                  <span>TZS 5,000,000+</span>
+                               </div>
+                             </div>
+                          </div>
+                          {['Brand', 'Processor', 'RAM', 'Storage', 'Screen Size', 'Condition'].map(filter => (
+                             <div key={filter} className="flex justify-between items-center pb-3 border-b border-gray-100 cursor-pointer text-sm font-bold text-gray-800 hover:text-[#F2A900] transition">
+                                {filter} <FiChevronDown/>
+                             </div>
+                          ))}
+                          <button className="w-full py-2.5 mt-4 border border-gray-200 text-gray-700 text-xs font-bold rounded-lg hover:bg-gray-50 flex items-center justify-center gap-2">
+                             🔄 Reset Filters
+                          </button>
+                       </div>
+                    </div>
+                 </div>
+
+                 {/* Products Grid Area */}
+                 <div className="flex-1 w-full">
+                    {/* Toolbar (Desktop) / Title (Mobile) */}
+                    <div className="flex justify-between items-center mb-4 md:mb-6">
+                       <h3 className="font-black text-lg text-gray-900">{t.topPicks}</h3>
+                       <div className="hidden md:flex items-center gap-4">
+                          <span className="text-xs text-gray-500 font-bold">{t.sort}</span>
+                          <select value={sortOrder} onChange={(e) => setSortOrder(e.target.value)} className="bg-white border border-gray-200 rounded-md px-3 py-1.5 text-xs font-bold text-gray-800 outline-none cursor-pointer">
+                             <option value="popular">{t.popular}</option>
+                             <option value="low">{t.lowToHigh}</option>
+                             <option value="high">{t.highToLow}</option>
+                          </select>
+                          <div className="flex bg-white border border-gray-200 rounded-md p-0.5">
+                             <button className="p-1.5 bg-orange-50 text-[#F2A900] rounded shadow-sm"><FiGrid size={14}/></button>
+                             <button className="p-1.5 text-gray-400 hover:text-gray-700"><FiList size={14}/></button>
+                          </div>
+                       </div>
+                       <button className="md:hidden text-xs font-bold text-gray-500 hover:text-gray-900">{t.viewAll} &gt;</button>
+                    </div>
+
+                    {isLoading ? (
+                       <div className="text-center py-20 font-bold text-gray-500 animate-pulse text-lg">{t.loading}</div>
+                    ) : filteredProducts.length === 0 ? (
+                       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-20 text-center text-gray-500 font-medium">{t.noProducts}</div>
+                    ) : (
+                       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4 pb-10">
+                          {filteredProducts.map((product) => (
+                             <ProductCard key={product.id} product={product} />
+                          ))}
+                       </div>
+                    )}
+                 </div>
+              </div>
+           </div>
         </div>
       </main>
       
-      <Footer />
+      <div className="hidden md:block">
+         <Footer />
+      </div>
+
+      {/* MOBILE BOTTOM NAVIGATION (Matches Mockup Source 1) */}
+      <div className="md:hidden fixed bottom-0 left-0 w-full bg-white border-t border-gray-100 flex justify-around items-center h-[60px] px-2 z-50">
+        <button onClick={() => router.push('/')} className={`flex flex-col items-center gap-1 w-16 ${activeCategory === 'All' ? 'text-[#F2A900]' : 'text-gray-400 hover:text-gray-900'}`}>
+          <FiHome className="text-xl" />
+          <span className="text-[9px] font-bold">Home</span>
+        </button>
+        <button onClick={() => { setActiveCategory('All'); window.scrollTo(0,0); }} className={`flex flex-col items-center gap-1 w-16 ${activeCategory !== 'All' ? 'text-[#F2A900]' : 'text-gray-400 hover:text-gray-900'}`}>
+          <FiGrid className="text-xl" />
+          <span className="text-[9px] font-bold">Categories</span>
+        </button>
+        
+        {/* CENTER BIG BUTTON */}
+        <div className="relative -top-5">
+           <div className="w-14 h-14 bg-[#0F3B4E] rounded-full flex items-center justify-center text-white shadow-lg border-4 border-white cursor-pointer hover:bg-[#0D3040] transition">
+              <FiMessageCircle className="text-2xl" />
+           </div>
+           <span className="absolute -bottom-4 left-1/2 -translate-x-1/2 text-[9px] font-bold text-gray-600">Message</span>
+        </div>
+
+        <button onClick={openCartWorkflow} className="flex flex-col items-center gap-1 w-16 text-gray-400 hover:text-gray-900 relative">
+          <div className="relative">
+             <FiShoppingCart className="text-xl" />
+             {cart.length > 0 && <span className="absolute -top-1 -right-2 bg-[#F2A900] text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center">{cart.length}</span>}
+          </div>
+          <span className="text-[9px] font-bold">Cart</span>
+        </button>
+        <button onClick={() => { if(user) router.push('/profile'); else setIsLoginOpen(true); }} className="flex flex-col items-center gap-1 w-16 text-gray-400 hover:text-gray-900">
+          <FiUser className="text-xl" />
+          <span className="text-[9px] font-bold">Account</span>
+        </button>
+      </div>
 
       {/* ======================================================== */}
       {/* 1. AMAZON-STYLE PRODUCT VIEW MODAL (INLINE VIEW)         */}
@@ -354,15 +674,16 @@ export default function ShopPage() {
             <button onClick={() => setSelectedProduct(null)} className="absolute top-4 right-4 text-gray-500 hover:text-gray-900 bg-gray-100 p-2 rounded-full z-10 transition"><FiX size={24} /></button>
             <div className="flex flex-col lg:flex-row gap-8 p-6 lg:p-8">
               <div className="w-full lg:w-1/3 flex flex-col gap-4">
-                <div className="bg-gray-50 aspect-square rounded-xl border border-gray-200 flex items-center justify-center overflow-hidden p-8">
-                  {selectedProduct.imageUrl ? ( <img src={`http://localhost:5001${selectedProduct.imageUrl}`} alt={selectedProduct.name} className="object-contain w-full h-full" /> ) : ( <span className="text-8xl">{selectedProduct.imageEmoji}</span> )}
+                <div className="bg-gray-50 aspect-square rounded-xl border border-gray-200 flex items-center justify-center overflow-hidden p-8 relative">
+                  {selectedProduct.oldPrice && <span className="absolute top-4 left-4 bg-red-500 text-white text-xs font-black px-2 py-1 rounded shadow-sm z-10">-{Math.round(((selectedProduct.oldPrice - selectedProduct.price) / selectedProduct.oldPrice) * 100)}%</span>}
+                  {selectedProduct.imageUrl ? ( <img src={`http://localhost:5001${selectedProduct.imageUrl}`} alt={selectedProduct.name} className="object-contain w-full h-full mix-blend-multiply" /> ) : ( <span className="text-8xl">{selectedProduct.imageEmoji}</span> )}
                 </div>
               </div>
               <div className="w-full lg:w-1/3 flex flex-col">
                 <span className="text-sm text-blue-600 font-bold hover:underline cursor-pointer">{selectedProduct.brand || 'Jtex Authentic'}</span>
                 <h1 className="text-2xl font-bold text-gray-900 mt-1">{selectedProduct.name}</h1>
                 <div className="flex items-center gap-2 mt-2 border-b border-gray-100 pb-3">
-                   <span className="text-[#F2A900] text-sm">⭐⭐⭐⭐⭐</span>
+                   <span className="text-[#F2A900] text-sm">★★★★★</span>
                    <span className="text-blue-600 text-xs">Customer Reviews</span>
                 </div>
                 <div className="mt-4 space-y-3">
@@ -382,8 +703,8 @@ export default function ShopPage() {
                    {selectedProduct.oldPrice && <p className="text-sm text-gray-400 line-through mb-2">Was: TZS {selectedProduct.oldPrice.toLocaleString()}</p>}
                    <h3 className="text-lg font-bold text-green-600 mb-5">{selectedProduct.stockQuantity > 0 ? 'In Stock' : 'Out of Stock'}</h3>
                    <div className="space-y-3">
-                     <button onClick={() => { addToCart(selectedProduct); setSelectedProduct(null); openCartWorkflow(); }} className="w-full bg-[#FFD814] hover:bg-[#F7CA00] text-black font-bold py-3 rounded-full text-sm transition">Add to Cart</button>
-                     <button onClick={() => handleBuyNow(selectedProduct)} className="w-full bg-[#FFA41C] hover:bg-[#FA8900] text-black font-bold py-3 rounded-full text-sm transition">Buy Now</button>
+                     <button onClick={() => { addToCart(selectedProduct); setSelectedProduct(null); openCartWorkflow(); }} className="w-full bg-[#FFD814] hover:bg-[#F7CA00] text-black font-bold py-3 rounded-full text-sm transition shadow-sm border border-[#FCD200]">Add to Cart</button>
+                     <button onClick={() => handleBuyNow(selectedProduct)} className="w-full bg-[#FFA41C] hover:bg-[#FA8900] text-black font-bold py-3 rounded-full text-sm transition shadow-sm border border-[#FF8F00]">Buy Now</button>
                    </div>
                    <div className="mt-5 text-xs text-gray-500 space-y-2 border-t pt-4 border-gray-100">
                       <div className="flex justify-between"><span>Ships From</span> <span className="font-bold text-gray-700">Jtex Warehouse</span></div>
@@ -403,9 +724,9 @@ export default function ShopPage() {
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
           <div className="bg-white w-full max-w-4xl rounded-2xl shadow-2xl relative flex overflow-hidden min-h-[500px] animate-fade-in">
             <button onClick={() => setIsLoginOpen(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-900 bg-gray-100 p-2 rounded-full z-20 transition"><FiX size={20} /></button>
-            <div className="hidden md:flex md:w-1/2 bg-[#0F172A] text-white flex-col justify-center p-12">
+            <div className="hidden md:flex md:w-1/2 bg-[#0F3B4E] text-white flex-col justify-center p-12">
                <h2 className="text-5xl font-black mb-4">J<span className="text-[#F2A900]">tex</span></h2>
-               <p className="text-lg font-medium text-gray-300 mb-8">{t.signIn} and Checkout seamlessly.</p>
+               <p className="text-lg font-medium text-blue-100 mb-8">{t.signIn} and Checkout seamlessly.</p>
             </div>
             <div className="w-full md:w-1/2 p-8 md:p-12 flex flex-col justify-center bg-white">
               <div className="flex bg-gray-100 p-1 rounded-xl mb-6">
@@ -416,13 +737,13 @@ export default function ShopPage() {
               <form onSubmit={authMode === 'login' ? handleInlineLogin : handleInlineRegister} className="space-y-4">
                 {authMode === 'register' && (
                   <>
-                    <input type="text" required value={registerName} onChange={e => setRegisterName(e.target.value)} className="w-full bg-gray-50 border rounded-xl px-4 py-3 outline-none text-sm focus:border-[#F2A900]" placeholder="Full Name" />
-                    <input type="tel" required value={registerPhone} onChange={e => setRegisterPhone(e.target.value)} className="w-full bg-gray-50 border rounded-xl px-4 py-3 outline-none text-sm focus:border-[#F2A900]" placeholder="Phone Number" />
+                    <input type="text" required value={registerName} onChange={e => setRegisterName(e.target.value)} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none text-sm focus:border-[#F2A900]" placeholder="Full Name" />
+                    <input type="tel" required value={registerPhone} onChange={e => setRegisterPhone(e.target.value)} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none text-sm focus:border-[#F2A900]" placeholder="Phone Number" />
                   </>
                 )}
-                <input type="email" required value={loginEmail} onChange={e => setLoginEmail(e.target.value)} className="w-full bg-gray-50 border rounded-xl px-4 py-3 outline-none text-sm focus:border-[#F2A900]" placeholder="Email Address" />
-                <input type="password" required value={loginPassword} onChange={e => setLoginPassword(e.target.value)} className="w-full bg-gray-50 border rounded-xl px-4 py-3 outline-none text-sm focus:border-[#F2A900]" placeholder="Password" />
-                <button type="submit" className="w-full bg-[#0F172A] text-white font-bold py-3.5 rounded-xl text-sm mt-2 hover:bg-gray-800">{authMode === 'login' ? 'Login to Continue' : 'Register to Continue'}</button>
+                <input type="email" required value={loginEmail} onChange={e => setLoginEmail(e.target.value)} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none text-sm focus:border-[#F2A900]" placeholder="Email Address" />
+                <input type="password" required value={loginPassword} onChange={e => setLoginPassword(e.target.value)} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none text-sm focus:border-[#F2A900]" placeholder="Password" />
+                <button type="submit" className="w-full bg-[#0F3B4E] text-white font-bold py-3.5 rounded-xl text-sm mt-2 hover:bg-[#0A2633] transition">{authMode === 'login' ? 'Login to Continue' : 'Register to Continue'}</button>
               </form>
             </div>
           </div>
@@ -433,54 +754,60 @@ export default function ShopPage() {
       {/* 3. MULTI-STEP WORKFLOW MODAL (Cart -> Location -> Pay)   */}
       {/* ======================================================== */}
       {isWorkflowOpen && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-          <div className="bg-white w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden relative max-h-[95vh] flex flex-col animate-fade-in">
-            <button onClick={() => setIsWorkflowOpen(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-900 z-10"><FiX size={24} /></button>
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-2 md:p-4 backdrop-blur-sm pb-20 md:pb-4">
+          <div className="bg-white w-full max-w-3xl rounded-2xl shadow-2xl overflow-hidden relative max-h-[90vh] flex flex-col animate-fade-in">
+            <button onClick={() => setIsWorkflowOpen(false)} className="absolute top-4 right-4 text-gray-500 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 p-2 rounded-full z-20 transition"><FiX size={20} /></button>
             
-            <div className="bg-gray-50 border-b border-gray-200 p-6 pt-8 flex items-center justify-between">
-               <div className={`flex flex-col items-center flex-1 ${workflowStep >= 1 ? 'text-[#0F172A]' : 'text-gray-300'}`}>
-                 <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold mb-1 ${workflowStep >= 1 ? 'bg-[#F2A900] text-black' : 'bg-gray-200'}`}>1</div>
-                 <span className="text-[10px] font-bold uppercase">{t.cart}</span>
-               </div>
-               <FiChevronRight className="text-gray-300" />
-               <div className={`flex flex-col items-center flex-1 ${workflowStep >= 2 ? 'text-[#0F172A]' : 'text-gray-300'}`}>
-                 <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold mb-1 ${workflowStep >= 2 ? 'bg-[#F2A900] text-black' : 'bg-gray-200'}`}>2</div>
-                 <span className="text-[10px] font-bold uppercase">{t.location}</span>
-               </div>
-               <FiChevronRight className="text-gray-300" />
-               <div className={`flex flex-col items-center flex-1 ${workflowStep >= 3 ? 'text-[#0F172A]' : 'text-gray-300'}`}>
-                 <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold mb-1 ${workflowStep >= 3 ? 'bg-[#F2A900] text-black' : 'bg-gray-200'}`}>3</div>
-                 <span className="text-[10px] font-bold uppercase">{t.payment}</span>
-               </div>
+            <div className="bg-gray-50 border-b border-gray-200 p-6 flex items-center justify-between sm:justify-center sm:gap-12 relative">
+               {['Cart', 'Shipping', 'Payment', 'Done'].map((step, idx) => (
+                 <div key={step} className={`flex flex-col items-center flex-1 sm:flex-none z-10 ${workflowStep >= idx + 1 ? 'text-[#0F172A]' : 'text-gray-400'}`}>
+                   <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold mb-1 transition-all ${workflowStep >= idx + 1 ? 'bg-[#F2A900] text-black shadow-md ring-4 ring-yellow-50' : 'bg-gray-200'}`}>
+                     {workflowStep > idx + 1 ? <FiCheckCircle /> : idx + 1}
+                   </div>
+                   <span className="text-[10px] sm:text-xs font-bold uppercase">{step}</span>
+                 </div>
+               ))}
             </div>
 
-            <div className="p-6 overflow-y-auto flex-1 bg-white">
+            <div className="p-4 sm:p-8 overflow-y-auto flex-1 bg-white">
               
               {workflowStep === 1 && (
-                <div>
-                  <h3 className="text-xl font-black text-gray-900 mb-4">{t.cart}</h3>
+                <div className="max-w-xl mx-auto">
+                  <div className="flex justify-between items-center mb-6 border-b border-gray-100 pb-4">
+                     <h3 className="text-xl sm:text-2xl font-black text-gray-900">{t.cart}</h3>
+                     {cart.length > 0 && (
+                        <button onClick={clearCart} className="text-xs font-bold text-red-500 bg-red-50 hover:bg-red-100 px-3 py-2 rounded-lg transition flex items-center gap-2">
+                          <FiTrash2 /> Clear Cart
+                        </button>
+                     )}
+                  </div>
                   {cart.length === 0 ? (
-                    <div className="text-center py-10 text-gray-400 font-bold">{t.emptyCart}</div>
+                    <div className="text-center py-16 text-gray-400 font-bold">
+                       <FiShoppingCart className="text-6xl mx-auto mb-4 opacity-50" />
+                       <p>{t.emptyCart}</p>
+                    </div>
                   ) : (
                     <div className="space-y-4">
                       {cart.map(item => (
-                        <div key={item.id} className="flex items-center gap-4 p-3 border border-gray-100 rounded-xl hover:bg-gray-50">
-                          <div className="w-16 h-16 bg-gray-50 border border-gray-100 rounded-lg flex items-center justify-center">
-                            {item.imageUrl ? <img src={`http://localhost:5001${item.imageUrl}`} className="object-contain w-full h-full p-1" /> : <span className="text-2xl">{item.imageEmoji}</span>}
+                        <div key={item.id} className="flex items-center gap-3 sm:gap-4 p-3 border border-gray-100 rounded-xl bg-gray-50 hover:border-gray-200 transition">
+                          <div className="w-14 h-14 bg-white border border-gray-100 rounded-lg flex items-center justify-center p-1">
+                            {item.imageUrl ? <img src={`http://localhost:5001${item.imageUrl}`} className="object-contain w-full h-full mix-blend-multiply" /> : <span className="text-2xl">{item.imageEmoji}</span>}
                           </div>
                           <div className="flex-1">
-                            <h4 className="text-sm font-bold text-gray-800">{item.name}</h4>
-                            <p className="text-xs text-gray-500">Qty: {item.quantity}</p>
-                            <p className="text-sm font-black text-[#0F172A] mt-1">TZS {(item.price * item.quantity).toLocaleString()}</p>
+                            <h4 className="text-sm font-bold text-gray-800 line-clamp-1">{item.name}</h4>
+                            <p className="text-xs text-gray-500 mt-0.5">Qty: <span className="font-black text-[#F2A900]">{item.quantity}</span></p>
                           </div>
-                          <button onClick={() => removeFromCart(item.id)} className="text-red-500 hover:bg-red-50 p-2 rounded-full"><FiTrash2 /></button>
+                          <div className="text-right">
+                             <p className="text-sm font-black text-[#0F172A]">TZS {(item.price * item.quantity).toLocaleString()}</p>
+                             <button onClick={() => removeFromCart(item.id)} className="text-[10px] font-bold text-red-500 mt-1 uppercase hover:underline">{t.remove}</button>
+                          </div>
                         </div>
                       ))}
-                      <div className="border-t pt-4 mt-4 flex justify-between items-center">
-                        <span className="text-sm font-bold text-gray-500">Subtotal:</span>
-                        <span className="text-2xl font-black text-gray-900">TZS {cartTotal.toLocaleString()}</span>
+                      <div className="border border-gray-100 bg-gray-50 p-4 rounded-xl mt-6 flex justify-between items-center">
+                        <span className="text-sm font-bold text-gray-500 uppercase tracking-wider">Subtotal:</span>
+                        <span className="text-xl sm:text-2xl font-black text-gray-900">TZS {cartTotal.toLocaleString()}</span>
                       </div>
-                      <button onClick={handleProceedToLocation} className="w-full bg-[#0F172A] text-white font-bold py-4 rounded-xl mt-4 flex items-center justify-center gap-2 hover:bg-gray-800 transition">
+                      <button onClick={handleProceedToLocation} className="w-full bg-[#0F3B4E] hover:bg-[#0A2633] text-white font-black py-4 rounded-xl mt-4 flex items-center justify-center gap-2 transition shadow-lg">
                          {t.proceedLocation} <FiChevronRight />
                       </button>
                     </div>
@@ -489,8 +816,8 @@ export default function ShopPage() {
               )}
 
               {workflowStep === 2 && (
-                <div>
-                  <h3 className="text-xl font-black text-gray-900 mb-4 flex items-center gap-2"><FiMapPin className="text-[#F2A900]"/> {t.location}</h3>
+                <div className="max-w-xl mx-auto animate-fade-in">
+                  <h3 className="text-xl sm:text-2xl font-black text-gray-900 mb-6 flex items-center gap-2 border-b border-gray-100 pb-4"><FiMapPin className="text-[#F2A900]"/> {t.location}</h3>
                   <div className="space-y-4">
                     <div>
                       <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">Region</label>
@@ -504,46 +831,49 @@ export default function ShopPage() {
                       <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">Full Address</label>
                       <input type="text" required value={address} onChange={e => setAddress(e.target.value)} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-[#F2A900]" placeholder="Example: Kinondoni, Mkwajuni" />
                     </div>
-                    <button onClick={() => setWorkflowStep(3)} disabled={!address} className="w-full bg-[#0F172A] disabled:bg-gray-300 text-white font-bold py-4 rounded-xl mt-4 flex items-center justify-center gap-2 transition">
-                       {t.proceedPayment} <FiChevronRight />
-                    </button>
+                    <div className="flex gap-3 pt-4">
+                       <button onClick={() => setWorkflowStep(1)} className="px-6 py-4 bg-gray-100 text-gray-600 font-bold rounded-xl text-sm hover:bg-gray-200 transition">Back</button>
+                       <button onClick={() => { if(city && streetAddress) setWorkflowStep(3); else alert('Please fill in City and Street Address'); }} disabled={!address} className="flex-1 bg-[#0F3B4E] disabled:bg-gray-300 text-white font-black py-4 rounded-xl flex items-center justify-center gap-2 transition shadow-lg">
+                          {t.proceedPayment} <FiChevronRight />
+                       </button>
+                    </div>
                   </div>
                 </div>
               )}
 
               {workflowStep === 3 && (
-                <form onSubmit={handlePlaceOrder}>
-                  <h3 className="text-xl font-black text-gray-900 mb-4 flex items-center gap-2"><FiShield className="text-green-500"/> {t.payment}</h3>
+                <form onSubmit={handlePlaceOrder} className="max-w-xl mx-auto animate-fade-in">
+                  <h3 className="text-xl sm:text-2xl font-black text-gray-900 mb-6 flex items-center gap-2 border-b border-gray-100 pb-4"><FiShield className="text-green-500"/> {t.payment}</h3>
                   <div className="bg-[#F2A900]/10 border border-[#F2A900] rounded-xl p-4 mb-6">
                      <p className="font-bold text-gray-900 text-sm">Pay On Delivery (COD)</p>
                      <p className="text-xs text-gray-600 mt-1">Pay when you receive the product.</p>
                   </div>
-                  <div className="border-t border-gray-100 pt-4 space-y-3 text-sm">
-                    <div className="flex justify-between text-gray-600"><span>Subtotal</span><span className="font-bold">TZS {cartTotal.toLocaleString()}</span></div>
-                    <div className="flex justify-between text-gray-600"><span>{t.deliveryFee}</span><span className="font-bold">TZS {shippingFee.toLocaleString()}</span></div>
-                    <div className="flex justify-between text-lg font-black text-gray-900 border-t border-gray-200 pt-3"><span>{t.grandTotal}</span><span>TZS {grandTotal.toLocaleString()}</span></div>
+                  <div className="border border-gray-200 bg-gray-50 rounded-xl p-5 space-y-3 text-sm">
+                    <div className="flex justify-between text-gray-600 font-medium"><span>Subtotal</span><span>TZS {cartTotal.toLocaleString()}</span></div>
+                    <div className="flex justify-between text-gray-600 font-medium"><span>{t.deliveryFee}</span><span>TZS {shippingFee.toLocaleString()}</span></div>
+                    <div className="flex justify-between text-lg sm:text-xl font-black text-gray-900 border-t border-gray-200 pt-3"><span>{t.grandTotal}</span><span>TZS {grandTotal.toLocaleString()}</span></div>
                     {upfrontPayment > 0 && (
-                      <div className="bg-red-50 p-4 rounded-xl border border-red-200 flex justify-between items-center mt-4">
+                      <div className="bg-red-50 p-3 rounded-lg border border-red-100 flex justify-between items-center mt-4">
                         <span className="block text-xs font-black text-red-600 uppercase">{t.upfront}</span>
-                        <span className="font-black text-red-600 text-lg">TZS {upfrontPayment.toLocaleString()}</span>
+                        <span className="font-black text-red-600 text-base">TZS {upfrontPayment.toLocaleString()}</span>
                       </div>
                     )}
                   </div>
-                  <button type="submit" disabled={checkoutLoading} className="w-full bg-green-600 text-white font-bold py-4 rounded-xl mt-6 transition hover:bg-green-700 shadow-lg">
-                    {checkoutLoading ? 'Processing...' : t.confirmOrder}
-                  </button>
+                  <div className="flex gap-3 mt-6">
+                     <button type="button" onClick={() => setWorkflowStep(2)} className="px-6 py-4 bg-gray-100 text-gray-600 font-bold rounded-xl text-sm hover:bg-gray-200 transition">Back</button>
+                     <button type="submit" disabled={checkoutLoading} className="flex-1 bg-green-600 hover:bg-green-700 text-white font-black py-4 rounded-xl transition shadow-lg flex items-center justify-center gap-2">
+                       {checkoutLoading ? 'Processing...' : <><FiLock /> {t.confirmOrder}</>}
+                     </button>
+                  </div>
                 </form>
               )}
 
               {workflowStep === 4 && (
-                <div className="text-center py-8">
-                  <FiCheckCircle className="text-7xl text-green-500 mx-auto mb-4 animate-bounce" />
-                  <h3 className="text-2xl font-black text-gray-900 mb-2">Order Successful!</h3>
-                  <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 mt-4 mb-6 flex items-start gap-3 text-left">
-                    <FiSmartphone className="text-blue-600 text-3xl flex-shrink-0" />
-                    <p className="text-sm text-blue-800 font-medium">{t.successMsg}</p>
-                  </div>
-                  <button onClick={() => router.push('/profile')} className="w-full bg-[#0F172A] text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-gray-800 transition">
+                <div className="text-center py-8 animate-fade-in">
+                  <div className="w-24 h-24 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-6"><FiCheckCircle className="text-6xl text-green-500 animate-bounce" /></div>
+                  <h3 className="text-2xl sm:text-3xl font-black text-gray-900 mb-4">Order Successful!</h3>
+                  <p className="text-sm text-gray-500 mb-8 max-w-sm mx-auto leading-relaxed">{t.successMsg}</p>
+                  <button onClick={() => router.push('/profile')} className="w-full max-w-sm mx-auto bg-[#0F3B4E] hover:bg-[#0A2633] text-white font-black py-4 rounded-xl flex items-center justify-center gap-2 transition shadow-lg">
                     <FiUser /> {t.viewProfile}
                   </button>
                 </div>
