@@ -158,7 +158,6 @@ export default function ShopPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
   const [sortOrder, setSortOrder] = useState('popular');
-  const [wishlist, setWishlist] = useState<string[]>([]);
 
   const [user, setUser] = useState<any>(null);
   const [lang, setLang] = useState<'en' | 'sw'>('en'); 
@@ -396,7 +395,7 @@ export default function ShopPage() {
           <button onClick={(e) => toggleWishlist(e, product.id)} className="absolute top-2 right-2 z-20 w-7 h-7 rounded-full flex items-center justify-center text-gray-400 hover:text-red-500 bg-white shadow-sm transition border border-gray-100">
             <FiHeart className={`text-sm ${isWishlisted ? "fill-red-500 text-red-500" : ""}`} />
           </button>
-          {discount > 0 && <span className="absolute top-2 left-2 bg-[#F2A900] text-white text-[10px] font-black px-1.5 py-0.5 rounded shadow-sm z-10">-{discount}%</span>}
+          {discount > 0 && <span className="absolute top-0 left-0 bg-[#F2A900] text-white text-[10px] font-black px-1.5 py-0.5 rounded shadow-sm z-10">-{discount}%</span>}
           {product.imageUrl ? (
             <img src={`http://localhost:5001${product.imageUrl}`} alt={product.name} className="object-contain w-full h-full mix-blend-multiply group-hover:scale-105 transition duration-300" />
           ) : (
@@ -958,7 +957,7 @@ export default function ShopPage() {
                     </div>
                     <div className="flex gap-3 pt-4">
                        <button onClick={() => setWorkflowStep(1)} className="px-6 py-4 bg-gray-100 text-gray-600 font-bold rounded-xl text-sm hover:bg-gray-200 transition">Back</button>
-                       <button onClick={() => { if(city && streetAddress) setWorkflowStep(3); else alert('Please fill in City and Street Address'); }} disabled={!address} className="flex-1 bg-[#0F3B4E] disabled:bg-gray-300 text-white font-black py-4 rounded-xl flex items-center justify-center gap-2 transition shadow-lg">
+                       <button onClick={() => { if(region && address) setWorkflowStep(3); else alert('Please fill in Region and Full Address'); }} disabled={!address} className="flex-1 bg-[#0F3B4E] disabled:bg-gray-300 text-white font-black py-4 rounded-xl flex items-center justify-center gap-2 transition shadow-lg">
                           {t.proceedPayment} <FiChevronRight />
                        </button>
                     </div>
