@@ -158,6 +158,7 @@ export default function ShopPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
   const [sortOrder, setSortOrder] = useState('popular');
+  const [wishlist, setWishlist] = useState<string[]>([]);
 
   const [user, setUser] = useState<any>(null);
   const [lang, setLang] = useState<'en' | 'sw'>('en'); 
