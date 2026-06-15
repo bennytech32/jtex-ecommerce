@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { useCart } from '../context/CartContext'; 
+import { useCart } from './context/CartContext'; 
 import { 
   FiShoppingCart, FiSearch, FiFilter, FiGlobe, FiX, FiCheckCircle, FiMapPin, 
   FiTruck, FiShield, FiLock, FiMail, FiUser, FiPhone, FiTrash2, FiChevronRight, 
@@ -11,10 +11,10 @@ import {
   FiHome, FiTag, FiPackage, FiHeadphones, FiHeart
 } from 'react-icons/fi';
 
-import TopTicker from '../components/navigation/TopTicker';
-import NavbarLinks from '../components/navigation/NavbarLinks';
-import SidebarCategories from '../components/navigation/SidebarCategories';
-import Footer from '../components/common/Footer';
+import TopTicker from './components/navigation/TopTicker';
+import NavbarLinks from './components/navigation/NavbarLinks';
+import SidebarCategories from './components/navigation/SidebarCategories';
+import Footer from './components/common/Footer';
 
 const translations = {
   en: {
@@ -71,8 +71,8 @@ const translations = {
     catPhones: "Phones",
     catFashion: "Fashion",
     catHome: "Home & Kitchen",
-    catSports: "Sports",
-    catBeauty: "Beauty"
+    catSports: "Sports & Outdoors",
+    catBeauty: "Beauty & Health"
   },
   sw: {
     shop: "Bidhaa Zote",
@@ -126,10 +126,10 @@ const translations = {
     catElectronics: "Elektroniki",
     catComputers: "Kompyuta",
     catPhones: "Simu",
-    catFashion: "Nguo",
+    catFashion: "Nguo na Fesheni",
     catHome: "Vyombo vya Ndani",
-    catSports: "Michezo",
-    catBeauty: "Urembo"
+    catSports: "Michezo na Nje",
+    catBeauty: "Urembo na Afya"
   }
 };
 
@@ -148,7 +148,7 @@ const CATEGORY_UI_MOCKS = [
 const CATEGORY_KEYS = ['All', 'Electronics', 'Computers', 'Phones', 'Fashion', 'Home', 'Sports', 'Beauty'];
 const MOCK_BRANDS = ['SAMSUNG', 'Apple', 'MI', 'Infinix', 'TECNO'];
 
-export default function ShopPage() {
+export default function HomePage() {
   const router = useRouter();
   const [products, setProducts] = useState<any[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<any[]>([]);
@@ -197,6 +197,8 @@ export default function ShopPage() {
   const { cart, addToCart, removeFromCart, clearCart, cartTotal } = useCart();
   const t = translations[lang];
 
+  const getApiUrl = () => 'https://jtex-ecommerce-production.up.railway.app';
+
   const activeBanners = [
     { id: 1, title: lang === 'en' ? "Best Quality, Best Prices" : "Ubora Bora, Bei Bora", subtitle: "Shop the latest gadgets and electronics.", bgColor: "from-[#0F3B4E] to-[#1A5C7A]", buttonText: t.buyNow, categoryTarget: "Electronics" },
     { id: 2, title: "New Phones in Town", subtitle: "Order today and get it delivered fast.", bgColor: "from-[#F2A900] to-yellow-600", buttonText: "View Phones", categoryTarget: "Phones" }
@@ -242,7 +244,7 @@ export default function ShopPage() {
 
     const fetchRealProducts = async () => {
       try {
-        const res = await fetch('http://localhost:5001/api/products');
+        const res = await fetch(`${getApiUrl()}/api/products`);
         const data = await res.json();
         const availableProducts = data.filter((p: any) => p.stockQuantity > 0);
         
@@ -288,7 +290,31 @@ export default function ShopPage() {
     setFilteredProducts(result);
   }, [searchQuery, activeCategory, sortOrder, products]);
 
+  // SMART SEARCH FUNCTIONS
+  const startVoiceSearch = () => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) { alert(t.voiceError); return; }
+    const recognition = new SpeechRecognition();
+    recognition.lang = lang === 'en' ? 'en-US' : 'sw-TZ';
+    recognition.start();
+    setIsVoiceListening(true);
+    recognition.onresult = (event: any) => { setSearchQuery(event.results[0][0].transcript); setIsVoiceListening(false); };
+    recognition.onerror = () => setIsVoiceListening(false);
+    recognition.onend = () => setIsVoiceListening(false);
+  };
+
+  const handleAiSimulation = (closeFunc: any) => {
+    setAiActionLoading(true);
+    setTimeout(() => { setAiActionLoading(false); closeFunc(false); setSearchQuery('Smartphone'); }, 2000);
+  };
+
+  const toggleWishlist = (e: React.MouseEvent, productId: string) => {
+    e.stopPropagation();
+    setWishlist(prev => prev.includes(productId) ? prev.filter(id => id !== productId) : [...prev, productId]);
+  };
+
   const toggleLanguage = () => setLang(prev => prev === 'en' ? 'sw' : 'en');
+  
   const getTranslatedCategoryName = (catKey: string) => {
       switch(catKey) {
           case 'All': return t.all;
@@ -314,7 +340,7 @@ export default function ShopPage() {
   const handleInlineLogin = async (e: React.FormEvent) => {
     e.preventDefault(); setLoginError('');
     try {
-      const res = await fetch('http://localhost:5001/api/login', {
+      const res = await fetch(`${getApiUrl()}/api/login`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: loginEmail, password: loginPassword })
       });
@@ -326,7 +352,7 @@ export default function ShopPage() {
   const handleInlineRegister = async (e: React.FormEvent) => {
     e.preventDefault(); setLoginError('');
     try {
-      const res = await fetch('http://localhost:5001/api/register', {
+      const res = await fetch(`${getApiUrl()}/api/register`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: registerName, phone: registerPhone, email: loginEmail, password: loginPassword })
       });
@@ -347,7 +373,7 @@ export default function ShopPage() {
     setCheckoutLoading(true);
     const checkoutItems = cart.map(item => ({ productId: item.id, quantity: item.quantity, unitPrice: item.price, subTotal: item.price * item.quantity }));
     try {
-      const res = await fetch('http://localhost:5001/api/orders', {
+      const res = await fetch(`${getApiUrl()}/api/orders`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: user.id, deliveryRegion: region, address, paymentMethod: 'COD', shippingFee, upfrontPayment, items: checkoutItems })
       });
@@ -362,28 +388,10 @@ export default function ShopPage() {
     setIsWorkflowOpen(true);
   };
 
-  // SMART SEARCH FUNCTIONS
-  const startVoiceSearch = () => {
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SpeechRecognition) { alert(t.voiceError); return; }
-    const recognition = new SpeechRecognition();
-    recognition.lang = lang === 'en' ? 'en-US' : 'sw-TZ';
-    recognition.start();
-    setIsVoiceListening(true);
-    recognition.onresult = (event: any) => { setSearchQuery(event.results[0][0].transcript); setIsVoiceListening(false); };
-    recognition.onerror = () => setIsVoiceListening(false);
-    recognition.onend = () => setIsVoiceListening(false);
-  };
-
-  const toggleWishlist = (e: React.MouseEvent, productId: string) => {
-    e.stopPropagation();
-    setWishlist(prev => prev.includes(productId) ? prev.filter(id => id !== productId) : [...prev, productId]);
-  };
-
   // REUSABLE PRODUCT CARD YENYE FIX YA MANENO KUKATWA
   const ProductCard = ({ product }: { product: any }) => {
-    const discount = product.oldPrice ? Math.round(((product.oldPrice - product.price) / product.oldPrice) * 100) : 0;
     const isWishlisted = wishlist.includes(product.id);
+    const discount = product.oldPrice ? Math.round(((product.oldPrice - product.price) / product.oldPrice) * 100) : 0;
     return (
       <div className="bg-white rounded-xl p-3 sm:p-4 shadow-sm hover:shadow-md transition border border-gray-100 flex flex-col h-full group cursor-pointer" onClick={() => setSelectedProduct(product)}>
         <div className="relative aspect-square w-full bg-white rounded-lg mb-3 overflow-hidden flex items-center justify-center p-2">
@@ -392,14 +400,14 @@ export default function ShopPage() {
           </button>
           {discount > 0 && <span className="absolute top-0 left-0 bg-[#F2A900] text-white text-[10px] font-black px-1.5 py-0.5 rounded shadow-sm z-10">-{discount}%</span>}
           {product.imageUrl ? (
-            <img src={`http://localhost:5001${product.imageUrl}`} alt={product.name} className="object-contain w-full h-full mix-blend-multiply group-hover:scale-105 transition duration-300" />
+            <img src={`${getApiUrl()}${product.imageUrl}`} alt={product.name} className="object-contain w-full h-full mix-blend-multiply group-hover:scale-105 transition duration-300" />
           ) : (
             <span className="text-6xl group-hover:scale-110 transition duration-300">{product.imageEmoji || '📦'}</span>
           )}
         </div>
         <div className="flex-1 flex flex-col">
-          {/* FIX: h-8 imeondolewa, min-h imewekwa kuzuia jina kukatwa nusu nusu */}
-          <h3 className="text-xs sm:text-sm font-bold text-gray-800 leading-normal mb-2 line-clamp-2 min-h-[36px] pb-1 group-hover:text-blue-600 transition">{product.name}</h3>
+          {/* FIX: line-clamp-2 with min-h-[36px] prevents text cutoff at the bottom */}
+          <h3 className="text-xs sm:text-sm font-bold text-gray-800 leading-snug mb-2 line-clamp-2 min-h-[36px] pb-1 group-hover:text-blue-600 transition">{product.name}</h3>
           <div className="mt-auto pt-2 flex flex-col">
             <span className="text-sm sm:text-base font-black text-[#0F172A]">TZS {product.price.toLocaleString()}</span>
             {product.oldPrice && <div className="flex items-center gap-1 mt-0.5"><span className="text-[10px] text-gray-400 line-through">TZS {product.oldPrice.toLocaleString()}</span></div>}
@@ -796,7 +804,7 @@ export default function ShopPage() {
               <div className="w-full lg:w-1/3 flex flex-col gap-4">
                 <div className="bg-gray-50 aspect-square rounded-xl border border-gray-200 flex items-center justify-center overflow-hidden p-8 relative">
                   {selectedProduct.oldPrice && <span className="absolute top-4 left-4 bg-red-500 text-white text-xs font-black px-2 py-1 rounded shadow-sm z-10">-{Math.round(((selectedProduct.oldPrice - selectedProduct.price) / selectedProduct.oldPrice) * 100)}%</span>}
-                  {selectedProduct.imageUrl ? ( <img src={`http://localhost:5001${selectedProduct.imageUrl}`} alt={selectedProduct.name} className="object-contain w-full h-full mix-blend-multiply" /> ) : ( <span className="text-8xl">{selectedProduct.imageEmoji}</span> )}
+                  {selectedProduct.imageUrl ? ( <img src={`${getApiUrl()}${selectedProduct.imageUrl}`} alt={selectedProduct.name} className="object-contain w-full h-full mix-blend-multiply" /> ) : ( <span className="text-8xl">{selectedProduct.imageEmoji}</span> )}
                 </div>
               </div>
               <div className="w-full lg:w-1/3 flex flex-col">
@@ -911,7 +919,7 @@ export default function ShopPage() {
                       {cart.map(item => (
                         <div key={item.id} className="flex items-center gap-3 sm:gap-4 p-3 border border-gray-100 rounded-xl bg-gray-50 hover:border-gray-200 transition">
                           <div className="w-14 h-14 bg-white border border-gray-100 rounded-lg flex items-center justify-center p-1">
-                            {item.imageUrl ? <img src={`http://localhost:5001${item.imageUrl}`} className="object-contain w-full h-full mix-blend-multiply" /> : <span className="text-2xl">{item.imageEmoji}</span>}
+                            {item.imageUrl ? <img src={`${getApiUrl()}${item.imageUrl}`} className="object-contain w-full h-full mix-blend-multiply" /> : <span className="text-2xl">{item.imageEmoji}</span>}
                           </div>
                           <div className="flex-1">
                             <h4 className="text-sm font-bold text-gray-800 line-clamp-1">{item.name}</h4>
