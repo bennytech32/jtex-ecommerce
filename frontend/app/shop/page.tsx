@@ -1,19 +1,20 @@
 'use client'; 
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCart } from '../context/CartContext'; 
 import { 
   FiShoppingCart, FiSearch, FiFilter, FiGlobe, FiX, FiCheckCircle, FiMapPin, 
   FiTruck, FiShield, FiLock, FiMail, FiUser, FiPhone, FiTrash2, FiChevronRight, 
-  FiSmartphone, FiArrowLeft, FiMoreHorizontal, FiSliders, FiList, FiGrid
+  FiSmartphone, FiArrowLeft, FiMoreHorizontal, FiSliders, FiList, FiGrid,
+  FiCamera, FiMic, FiMaximize, FiUploadCloud, FiChevronDown, FiZap, FiMessageCircle,
+  FiHome, FiTag, FiPackage, FiHeadphones, FiHeart
 } from 'react-icons/fi';
 
 import TopTicker from '../components/navigation/TopTicker';
 import NavbarLinks from '../components/navigation/NavbarLinks';
 import SidebarCategories from '../components/navigation/SidebarCategories';
 import Footer from '../components/common/Footer';
-import MobileBottomNav from '../components/navigation/MobileBottomNav';
 
 const translations = {
   en: {
@@ -53,7 +54,18 @@ const translations = {
     shopByBrand: "Shop by Brand",
     shopByPrice: "Shop by Price",
     topPicks: "Top Picks",
-    viewAll: "View All"
+    viewAll: "View All",
+    deliverTo: "Deliver to",
+    flashSales: "Flash Sales",
+    limitedOffers: "Limited time offers - Don't miss out!",
+    endsIn: "Ends in:",
+    voiceListening: "Listening... Speak now",
+    voiceError: "Voice search not supported or microphone denied.",
+    imageSearchTitle: "AI Image Search",
+    barcodeSearchTitle: "Smart Barcode Scanner",
+    uploadPrompt: "Drag & drop or click to upload product image",
+    barcodePrompt: "Align product barcode inside the scanner frame",
+    simulatingAi: "AI is analyzing the data..."
   },
   sw: {
     shop: "Bidhaa Zote",
@@ -92,11 +104,21 @@ const translations = {
     shopByBrand: "Nunua kwa Chapa",
     shopByPrice: "Nunua kwa Bei",
     topPicks: "Chaguo Bora",
-    viewAll: "Tazama Zote"
+    viewAll: "Tazama Zote",
+    deliverTo: "Fikisha",
+    flashSales: "Mauzo ya Haraka",
+    limitedOffers: "Muda maalumu - Usikose!",
+    endsIn: "Inaisha:",
+    voiceListening: "Inasikiliza... Ongea sasa",
+    voiceError: "Mfumo wa sauti haukubaliwi kwenye kivinjari hiki.",
+    imageSearchTitle: "Tafuta kwa Picha (AI)",
+    barcodeSearchTitle: "Skana Barcode ya Bidhaa",
+    uploadPrompt: "Kokota picha au bonyeza hapa kupakia picha ya bidhaa",
+    barcodePrompt: "Weka barcode ya bidhaa katikati ya fremu ya skana",
+    simulatingAi: "AI inachuja na kuchambua picha..."
   }
 };
 
-// Mock data for UI visual representation based on mockups
 const CATEGORY_UI_MOCKS = [
   { name: 'Electronics', count: '1,248 items', icon: '🎧' },
   { name: 'Computers', count: '856 items', icon: '💻' },
@@ -109,22 +131,7 @@ const CATEGORY_UI_MOCKS = [
   { name: 'Automotive', count: '678 items', icon: '🚗' },
 ];
 
-const SUB_CATEGORIES: any = {
-  'Computers': [
-    { name: 'All Computers', count: '856 items', icon: '💻' },
-    { name: 'Laptops', count: '532 items', icon: '💻' },
-    { name: 'Desktops', count: '142 items', icon: '🖥️' },
-    { name: 'Monitors', count: '86 items', icon: '📺' },
-    { name: 'Accessories', count: '96 items', icon: '⌨️' },
-  ],
-  'Phones': [
-    { name: 'All Phones', count: '1,562 items', icon: '📱' },
-    { name: 'Smartphones', count: '1,256 items', icon: '📱' },
-    { name: 'Feature Phones', count: '128 items', icon: '☎️' },
-    { name: 'Phone Accessories', count: '178 items', icon: '🔌' },
-  ]
-};
-
+const CATEGORY_KEYS = ['All', 'Electronics', 'Computers', 'Phones', 'Fashion', 'Home', 'Sports', 'Beauty'];
 const MOCK_BRANDS = ['SAMSUNG', 'Apple', 'MI', 'Infinix', 'TECNO'];
 
 export default function ShopPage() {
@@ -140,11 +147,22 @@ export default function ShopPage() {
 
   const [user, setUser] = useState<any>(null);
   const [lang, setLang] = useState<'en' | 'sw'>('en'); 
+  const [deliverLocation, setDeliverLocation] = useState('Tanzania, United Republic');
   
+  // LIVE COUNTDOWN TIMER STATE
+  const [timeLeft, setTimeLeft] = useState({ h: '00', m: '00', s: '00' });
+
+  // BANNERS STATE
+  const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
+
   // MODAL STATES 
   const [selectedProduct, setSelectedProduct] = useState<any | null>(null);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
+  const [isVoiceListening, setIsVoiceListening] = useState(false);
+  const [isBarcodeOpen, setIsBarcodeOpen] = useState(false);
+  const [isImageSearchOpen, setIsImageSearchOpen] = useState(false);
+  const [aiActionLoading, setAiActionLoading] = useState(false);
 
   // WORKFLOW STATES
   const [isWorkflowOpen, setIsWorkflowOpen] = useState(false);
@@ -164,6 +182,45 @@ export default function ShopPage() {
   const { cart, addToCart, removeFromCart, clearCart, cartTotal } = useCart();
   const t = translations[lang];
 
+  const activeBanners = [
+    { id: 1, title: lang === 'en' ? "Best Quality, Best Prices" : "Ubora Bora, Bei Bora", subtitle: "Shop the latest gadgets and electronics.", bgColor: "from-[#0F3B4E] to-[#1A5C7A]", buttonText: t.buyNow, categoryTarget: "Electronics" },
+    { id: 2, title: "New Phones in Town", subtitle: "Order today and get it delivered fast.", bgColor: "from-[#F2A900] to-yellow-600", buttonText: "View Phones", categoryTarget: "Phones" }
+  ];
+
+  // 1. AUTO-SLIDE BANNERS EFFECT
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentBannerIndex((prev) => (prev + 1) % activeBanners.length);
+    }, 4000);
+    return () => clearInterval(timer);
+  }, [activeBanners.length]);
+
+  // 2. FETCH REAL LOCATION EFFECT
+  useEffect(() => {
+    fetch('https://ipapi.co/json/')
+      .then(res => res.json())
+      .then(data => { if(data.country_name) setDeliverLocation(data.country_name); })
+      .catch(() => {});
+  }, []);
+
+  // 3. LIVE FLASH SALE COUNTDOWN EFFECT
+  useEffect(() => {
+    const calculateTimeLeft = () => {
+      const now = new Date();
+      const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1); // Reset at midnight
+      const diff = tomorrow.getTime() - now.getTime();
+      return {
+        h: String(Math.floor((diff / (1000 * 60 * 60)) % 24)).padStart(2, '0'),
+        m: String(Math.floor((diff / 1000 / 60) % 60)).padStart(2, '0'),
+        s: String(Math.floor((diff / 1000) % 60)).padStart(2, '0')
+      };
+    };
+    setTimeLeft(calculateTimeLeft());
+    const timer = setInterval(() => setTimeLeft(calculateTimeLeft()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // 4. FETCH PRODUCTS EFFECT
   useEffect(() => {
     const savedUser = localStorage.getItem('jtex_user');
     if (savedUser) setUser(JSON.parse(savedUser));
@@ -186,8 +243,19 @@ export default function ShopPage() {
       }
     };
     fetchRealProducts();
+
+    // CUSTOM EVENT: Kupokea amri kutoka SidebarCategories
+    const handleCategorySelect = (e: any) => {
+        if(e.detail && e.detail.category) {
+            setActiveCategory(e.detail.category);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    };
+    window.addEventListener('selectCategory', handleCategorySelect);
+    return () => window.removeEventListener('selectCategory', handleCategorySelect);
   }, []);
 
+  // FILTERING EFFECT
   useEffect(() => {
     let result = products;
     if (activeCategory !== 'All') {
@@ -206,10 +274,20 @@ export default function ShopPage() {
   }, [searchQuery, activeCategory, sortOrder, products]);
 
   const toggleLanguage = () => setLang(prev => prev === 'en' ? 'sw' : 'en');
+  const getTranslatedCategoryName = (catKey: string) => {
+      switch(catKey) {
+          case 'All': return t.all;
+          case 'Electronics': return t.catElectronics;
+          case 'Computers': return t.catComputers;
+          case 'Phones': return t.catPhones;
+          case 'Fashion': return t.catFashion;
+          case 'Home': return t.catHome;
+          case 'Sports': return t.catSports;
+          case 'Beauty': return t.catBeauty;
+          default: return catKey;
+      }
+  };
 
-  // =====================================
-  // INLINE AUTH & WORKFLOW LOGIC
-  // =====================================
   const handleAuthSuccess = (data: any) => {
     localStorage.setItem('jtex_token', data.token);
     localStorage.setItem('jtex_user', JSON.stringify(data.user));
@@ -242,16 +320,8 @@ export default function ShopPage() {
     } catch (err) { setLoginError('Kosa la kimtandao.'); }
   };
 
-  const openCartWorkflow = () => {
-    setSelectedProduct(null);
-    setWorkflowStep(1);
-    setIsWorkflowOpen(true);
-  };
-
-  const handleProceedToLocation = () => {
-    if (!user) setIsLoginOpen(true); 
-    else setWorkflowStep(2); 
-  };
+  const openCartWorkflow = () => { setSelectedProduct(null); setWorkflowStep(1); setIsWorkflowOpen(true); };
+  const handleProceedToLocation = () => { if (!user) setIsLoginOpen(true); else setWorkflowStep(2); };
 
   const shippingFee = region === 'Dar es Salaam' ? 0 : 10000;
   const grandTotal = cartTotal + shippingFee;
@@ -291,8 +361,7 @@ export default function ShopPage() {
           )}
         </div>
         <div className="flex-1 flex flex-col">
-          <h3 className="text-xs sm:text-sm font-bold text-gray-800 leading-snug mb-1 line-clamp-2 h-8 group-hover:text-blue-600 transition">{product.name}</h3>
-          <p className="text-[10px] text-gray-500 mb-1 line-clamp-1">{product.specifications || 'Standard specifications'}</p>
+          <h3 className="text-xs sm:text-sm font-bold text-gray-800 leading-normal mb-2 line-clamp-2 min-h-[36px] group-hover:text-blue-600 transition">{product.name}</h3>
           <div className="mt-auto pt-2 flex flex-col">
             <span className="text-sm sm:text-base font-black text-[#0F172A]">TZS {product.price.toLocaleString()}</span>
             {product.oldPrice && <div className="flex items-center gap-1 mt-0.5"><span className="text-[10px] text-gray-400 line-through">TZS {product.oldPrice.toLocaleString()}</span></div>}
@@ -312,7 +381,7 @@ export default function ShopPage() {
     <div className="min-h-screen bg-[#F8FAFC] text-gray-900 font-sans antialiased">
       
       {/* ========================================================= */}
-      {/* DESKTOP HEADER (Source 3 style)                           */}
+      {/* DESKTOP HEADER */}
       {/* ========================================================= */}
       <header className="hidden md:flex bg-white border-b border-gray-200 sticky top-0 z-40 shadow-sm h-16 items-center px-4 sm:px-6 lg:px-8">
         <div className="flex items-center gap-6 w-[240px]">
@@ -330,7 +399,9 @@ export default function ShopPage() {
               placeholder={t.search} className="flex-1 px-4 text-sm outline-none text-gray-900 placeholder-gray-400" 
             />
             <div className="flex items-center px-2 text-gray-400 gap-2">
-               <FiCamera className="hover:text-blue-500 cursor-pointer"/>
+               <FiCamera onClick={() => setIsImageSearchOpen(true)} className="hover:text-blue-500 cursor-pointer"/>
+               <FiMic onClick={startVoiceSearch} className="hover:text-blue-500 cursor-pointer"/>
+               <FiMaximize onClick={() => setIsBarcodeOpen(true)} className="hover:text-blue-500 cursor-pointer"/>
             </div>
             <button className="bg-[#F2A900] px-6 flex items-center justify-center text-white hover:bg-yellow-500 transition">
               <FiSearch className="text-lg" />
@@ -358,7 +429,7 @@ export default function ShopPage() {
       </header>
 
       {/* ========================================================= */}
-      {/* MOBILE HEADER (Source 4 style)                            */}
+      {/* MOBILE HEADER */}
       {/* ========================================================= */}
       <header className="md:hidden bg-white sticky top-0 z-40 shadow-sm">
         <div className="flex items-center justify-between px-4 py-2">
@@ -391,8 +462,9 @@ export default function ShopPage() {
                 type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} 
                 placeholder={`Search in ${activeCategory}...`} className="flex-1 px-3 text-xs outline-none text-gray-900" 
               />
-              <div className="flex items-center px-2 text-gray-400">
-                 <FiCamera size={14}/>
+              <div className="flex items-center px-2 text-gray-400 gap-2">
+                 <button onClick={startVoiceSearch}><FiMic size={14}/></button>
+                 <button onClick={() => setIsImageSearchOpen(true)}><FiCamera size={14}/></button>
               </div>
               <button className="bg-[#F2A900] px-3 flex items-center justify-center text-white"><FiSearch size={14}/></button>
             </div>
@@ -400,11 +472,18 @@ export default function ShopPage() {
         )}
       </header>
 
+      {/* DYNAMIC DELIVERY BAR (Inasoma Nchi Kupitia API) */}
+      <div className="px-4 py-2 flex items-center gap-2 text-xs font-medium border-b bg-[#F5F8FA] border-gray-200 text-gray-600">
+          <FiMapPin className="text-gray-400"/>
+          <span className="truncate">{t.deliverTo} {deliverLocation}</span>
+          <FiChevronDown className="ml-auto text-gray-400"/>
+      </div>
+
 
       <main className="max-w-[1920px] mx-auto flex flex-col md:flex-row pb-20 md:pb-6 md:pt-6">
         
         {/* ========================================================= */}
-        {/* DESKTOP SIDEBAR (GLOBAL APP NAVIGATION) Source 3          */}
+        {/* DESKTOP SIDEBAR (GLOBAL APP NAVIGATION) */}
         {/* ========================================================= */}
         <div className="hidden md:flex w-[240px] flex-shrink-0 flex-col pl-4 sm:pl-6 lg:pl-8">
            <nav className="flex flex-col gap-1 text-sm font-medium text-gray-600 pr-6">
@@ -444,7 +523,7 @@ export default function ShopPage() {
         {/* ========================================================= */}
         <div className="flex-1 w-full bg-white md:bg-transparent md:pr-4 lg:pr-8">
            
-           {/* MOBILE VIEW: "ALL CATEGORIES" GRID (Source 4 Left) */}
+           {/* MOBILE VIEW: "ALL CATEGORIES" GRID */}
            <div className={`md:hidden ${activeCategory !== 'All' ? 'hidden' : 'block'}`}>
               <div className="px-4 py-3">
                  <div className="w-full flex border-2 border-[#0F3B4E] rounded-full overflow-hidden bg-white shadow-sm mb-6">
@@ -482,7 +561,7 @@ export default function ShopPage() {
               </div>
            </div>
 
-           {/* DESKTOP & MOBILE VIEW: SPECIFIC CATEGORY DETAILED VIEW (Source 3 & Source 4 Right) */}
+           {/* DESKTOP & MOBILE VIEW: SPECIFIC CATEGORY DETAILED VIEW */}
            <div className={`w-full ${activeCategory === 'All' ? 'hidden md:block' : 'block'}`}>
               
               {/* Desktop Breadcrumb & Header */}
@@ -512,17 +591,15 @@ export default function ShopPage() {
               </div>
 
               {/* Subcategories Horizontal Scroll (Both Desktop & Mobile) */}
-              {SUB_CATEGORIES[activeCategory] && (
-                 <div className="flex overflow-x-auto gap-3 pb-4 md:mb-6 px-4 md:px-0 hide-scrollbar mt-4 md:mt-6">
-                    {SUB_CATEGORIES[activeCategory].map((sub: any, idx: number) => (
-                       <div key={idx} className={`flex flex-col items-center p-3 md:p-4 min-w-[90px] md:min-w-[120px] rounded-xl border cursor-pointer transition ${idx === 0 ? 'border-[#F2A900] bg-yellow-50/30' : 'border-gray-200 bg-white hover:border-[#F2A900]'}`}>
-                          <span className="text-2xl md:text-3xl mb-1 md:mb-2">{sub.icon}</span>
-                          <span className="text-[10px] md:text-xs font-bold text-gray-900 text-center whitespace-nowrap">{sub.name}</span>
-                          <span className="text-[8px] md:text-[10px] text-gray-500 hidden md:block">{sub.count}</span>
-                       </div>
-                    ))}
-                 </div>
-              )}
+              <div className="flex overflow-x-auto gap-3 pb-4 md:mb-6 px-4 md:px-0 hide-scrollbar mt-4 md:mt-6">
+                 {CATEGORY_UI_MOCKS.map((sub: any, idx: number) => (
+                    <div key={idx} onClick={() => setActiveCategory(sub.name)} className={`flex flex-col items-center p-3 md:p-4 min-w-[90px] md:min-w-[120px] rounded-xl border cursor-pointer transition ${activeCategory === sub.name ? 'border-[#F2A900] bg-yellow-50/30' : 'border-gray-200 bg-white hover:border-[#F2A900]'}`}>
+                       <span className="text-2xl md:text-3xl mb-1 md:mb-2">{sub.icon}</span>
+                       <span className="text-[10px] md:text-xs font-bold text-gray-900 text-center whitespace-nowrap">{sub.name}</span>
+                       <span className="text-[8px] md:text-[10px] text-gray-500 hidden md:block">{sub.count}</span>
+                    </div>
+                 ))}
+              </div>
 
               {/* Mobile Only Features (Shop by Brand, Price, Features) */}
               <div className="md:hidden px-4 space-y-6 mt-4">
@@ -554,7 +631,7 @@ export default function ShopPage() {
               {/* Layout Split for Desktop (Filters Left, Products Right) */}
               <div className="flex flex-col lg:flex-row mt-6 md:mt-0 px-4 md:px-0 gap-6">
                  
-                 {/* Desktop Filters Sidebar (Source 3) */}
+                 {/* Desktop Filters Sidebar */}
                  <div className="hidden lg:block w-[220px] flex-shrink-0">
                     <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm sticky top-24">
                        <div className="flex justify-between items-center mb-6">
@@ -595,7 +672,7 @@ export default function ShopPage() {
                  {/* Products Grid Area */}
                  <div className="flex-1 w-full">
                     {/* Toolbar (Desktop) / Title (Mobile) */}
-                    <div className="flex justify-between items-center mb-4 md:mb-6">
+                    <div className="flex justify-between items-center mb-4 md:mb-6 mt-4 md:mt-0">
                        <h3 className="font-black text-lg text-gray-900">{t.topPicks}</h3>
                        <div className="hidden md:flex items-center gap-4">
                           <span className="text-xs text-gray-500 font-bold">{t.sort}</span>
@@ -633,13 +710,13 @@ export default function ShopPage() {
          <Footer />
       </div>
 
-      {/* MOBILE BOTTOM NAVIGATION (Matches Mockup Source 1) */}
+      {/* MOBILE BOTTOM NAVIGATION */}
       <div className="md:hidden fixed bottom-0 left-0 w-full bg-white border-t border-gray-100 flex justify-around items-center h-[60px] px-2 z-50">
-        <button onClick={() => router.push('/')} className={`flex flex-col items-center gap-1 w-16 ${activeCategory === 'All' ? 'text-[#F2A900]' : 'text-gray-400 hover:text-gray-900'}`}>
+        <button onClick={() => router.push('/')} className={`flex flex-col items-center gap-1 w-16 text-gray-400 hover:text-gray-900`}>
           <FiHome className="text-xl" />
           <span className="text-[9px] font-bold">Home</span>
         </button>
-        <button onClick={() => { setActiveCategory('All'); window.scrollTo(0,0); }} className={`flex flex-col items-center gap-1 w-16 ${activeCategory !== 'All' ? 'text-[#F2A900]' : 'text-gray-400 hover:text-gray-900'}`}>
+        <button onClick={() => { setActiveCategory('All'); window.scrollTo(0,0); }} className={`flex flex-col items-center gap-1 w-16 text-[#F2A900]`}>
           <FiGrid className="text-xl" />
           <span className="text-[9px] font-bold">Categories</span>
         </button>
@@ -666,7 +743,7 @@ export default function ShopPage() {
       </div>
 
       {/* ======================================================== */}
-      {/* 1. AMAZON-STYLE PRODUCT VIEW MODAL (INLINE VIEW)         */}
+      {/* 1. PRODUCT VIEW MODAL                                    */}
       {/* ======================================================== */}
       {selectedProduct && !isWorkflowOpen && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-2 md:p-4 backdrop-blur-sm">
@@ -755,7 +832,7 @@ export default function ShopPage() {
       {/* ======================================================== */}
       {isWorkflowOpen && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-2 md:p-4 backdrop-blur-sm pb-20 md:pb-4">
-          <div className="bg-white w-full max-w-3xl rounded-2xl shadow-2xl overflow-hidden relative max-h-[90vh] flex flex-col animate-fade-in">
+          <div className="bg-white w-full max-w-3xl rounded-2xl shadow-2xl overflow-hidden relative max-h-[90vh] flex flex-col animate-fade-in border border-gray-200">
             <button onClick={() => setIsWorkflowOpen(false)} className="absolute top-4 right-4 text-gray-500 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 p-2 rounded-full z-20 transition"><FiX size={20} /></button>
             
             <div className="bg-gray-50 border-b border-gray-200 p-6 flex items-center justify-between sm:justify-center sm:gap-12 relative">
