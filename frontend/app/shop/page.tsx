@@ -65,7 +65,14 @@ const translations = {
     barcodeSearchTitle: "Smart Barcode Scanner",
     uploadPrompt: "Drag & drop or click to upload product image",
     barcodePrompt: "Align product barcode inside the scanner frame",
-    simulatingAi: "AI is analyzing the data..."
+    simulatingAi: "AI is analyzing the data...",
+    catElectronics: "Electronics",
+    catComputers: "Computers",
+    catPhones: "Phones",
+    catFashion: "Fashion",
+    catHome: "Home & Kitchen",
+    catSports: "Sports & Outdoors",
+    catBeauty: "Beauty & Health"
   },
   sw: {
     shop: "Bidhaa Zote",
@@ -115,7 +122,14 @@ const translations = {
     barcodeSearchTitle: "Skana Barcode ya Bidhaa",
     uploadPrompt: "Kokota picha au bonyeza hapa kupakia picha ya bidhaa",
     barcodePrompt: "Weka barcode ya bidhaa katikati ya fremu ya skana",
-    simulatingAi: "AI inachuja na kuchambua picha..."
+    simulatingAi: "AI inachuja na kuchambua picha...",
+    catElectronics: "Elektroniki",
+    catComputers: "Kompyuta",
+    catPhones: "Simu",
+    catFashion: "Nguo na Fesheni",
+    catHome: "Vyombo vya Ndani",
+    catSports: "Michezo na Nje",
+    catBeauty: "Urembo na Afya"
   }
 };
 
@@ -274,6 +288,7 @@ export default function ShopPage() {
   }, [searchQuery, activeCategory, sortOrder, products]);
 
   const toggleLanguage = () => setLang(prev => prev === 'en' ? 'sw' : 'en');
+  
   const getTranslatedCategoryName = (catKey: string) => {
       switch(catKey) {
           case 'All': return t.all;
@@ -519,7 +534,7 @@ export default function ShopPage() {
         </div>
 
         {/* ========================================================= */}
-        {/* MAIN CONTENT AREA (DYNAMIC MOBILE & DESKTOP VIEWS)        */}
+        {/* MAIN CONTENT AREA */}
         {/* ========================================================= */}
         <div className="flex-1 w-full bg-white md:bg-transparent md:pr-4 lg:pr-8">
            
@@ -549,14 +564,20 @@ export default function ShopPage() {
                     </div>
                  </div>
 
-                 {/* Promotional Banner inside mobile categories view */}
-                 <div className="bg-[#0F3B4E] rounded-xl p-5 flex flex-row items-center justify-between text-white relative overflow-hidden mb-6">
-                    <div className="z-10">
-                        <h4 className="font-bold text-sm">Top Brands, Top Quality</h4>
-                        <h3 className="text-lg font-black text-[#F2A900] mb-2">Up to 40% off</h3>
-                        <button className="bg-[#F2A900] text-[#0F172A] text-[10px] font-black px-4 py-1.5 rounded-full shadow-md">Shop Now <FiChevronRight className="inline"/></button>
-                    </div>
-                    <div className="z-10 text-5xl">💻</div>
+                 {/* SLIDING BANNERS INSIDE MOBILE VIEW */}
+                 <div className="relative w-full h-[180px] rounded-xl overflow-hidden shadow-sm mb-6">
+                   {activeBanners.map((banner, index) => (
+                     <div key={banner.id} className={`absolute inset-0 w-full h-full transition-opacity duration-500 bg-gradient-to-r ${banner.bgColor} flex flex-col justify-center px-6 text-white ${index === currentBannerIndex ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'}`}>
+                        <h4 className="font-bold text-sm mb-1">{banner.title}</h4>
+                        <h3 className="text-lg font-black text-[#F2A900] mb-3">{banner.subtitle}</h3>
+                        <button onClick={() => setActiveCategory(banner.categoryTarget)} className="bg-[#F2A900] text-[#0F172A] text-[10px] font-black px-4 py-1.5 rounded-full shadow-md w-max">Shop Now <FiChevronRight className="inline"/></button>
+                     </div>
+                   ))}
+                   <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1 z-20">
+                      {activeBanners.map((_, idx) => (
+                        <div key={idx} onClick={() => setCurrentBannerIndex(idx)} className={`h-1.5 rounded-full cursor-pointer transition-all ${idx === currentBannerIndex ? 'w-4 bg-[#F2A900]' : 'w-1.5 bg-white/50'}`}></div>
+                      ))}
+                   </div>
                  </div>
               </div>
            </div>
@@ -581,6 +602,26 @@ export default function ShopPage() {
                        <p className="text-xs text-gray-500 uppercase font-bold">{t.itemsFound}</p>
                     </div>
                  </div>
+
+                 {/* DESKTOP BANNERS */}
+                 {activeCategory === 'All' && (
+                   <div className="relative w-full h-[200px] mt-6 rounded-2xl overflow-hidden shadow-sm group border border-gray-100">
+                     {activeBanners.map((banner, index) => (
+                       <div key={banner.id} className={`absolute inset-0 w-full h-full transition-opacity duration-500 bg-gradient-to-r ${banner.bgColor} flex flex-col justify-center px-12 text-white ${index === currentBannerIndex ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'}`}>
+                          <h1 className="text-4xl font-black mb-2 tracking-tight">{banner.title}</h1>
+                          <p className="text-lg font-medium mb-6 opacity-90">{banner.subtitle}</p>
+                          <button onClick={() => setActiveCategory(banner.categoryTarget)} className="bg-[#F2A900] text-[#0F172A] font-black px-6 py-3 rounded-lg w-max hover:bg-yellow-500 transition shadow-lg flex items-center gap-2 text-sm">
+                              {banner.buttonText} <FiChevronRight />
+                          </button>
+                       </div>
+                     ))}
+                     <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-20">
+                        {activeBanners.map((_, idx) => (
+                          <div key={idx} onClick={() => setCurrentBannerIndex(idx)} className={`h-2 rounded-full cursor-pointer transition-all ${idx === currentBannerIndex ? 'w-6 bg-[#F2A900]' : 'w-2 bg-white/50'}`}></div>
+                        ))}
+                     </div>
+                   </div>
+                 )}
               </div>
 
               {/* Mobile Specific Category Header (Back button) */}
@@ -590,46 +631,27 @@ export default function ShopPage() {
                  <span className="text-xs font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded">{filteredProducts.length} items</span>
               </div>
 
-              {/* Subcategories Horizontal Scroll (Both Desktop & Mobile) */}
-              <div className="flex overflow-x-auto gap-3 pb-4 md:mb-6 px-4 md:px-0 hide-scrollbar mt-4 md:mt-6">
-                 {CATEGORY_UI_MOCKS.map((sub: any, idx: number) => (
-                    <div key={idx} onClick={() => setActiveCategory(sub.name)} className={`flex flex-col items-center p-3 md:p-4 min-w-[90px] md:min-w-[120px] rounded-xl border cursor-pointer transition ${activeCategory === sub.name ? 'border-[#F2A900] bg-yellow-50/30' : 'border-gray-200 bg-white hover:border-[#F2A900]'}`}>
-                       <span className="text-2xl md:text-3xl mb-1 md:mb-2">{sub.icon}</span>
-                       <span className="text-[10px] md:text-xs font-bold text-gray-900 text-center whitespace-nowrap">{sub.name}</span>
-                       <span className="text-[8px] md:text-[10px] text-gray-500 hidden md:block">{sub.count}</span>
-                    </div>
-                 ))}
-              </div>
-
-              {/* Mobile Only Features (Shop by Brand, Price, Features) */}
-              <div className="md:hidden px-4 space-y-6 mt-4">
-                 <div>
-                    <div className="flex justify-between items-center mb-3">
-                       <h3 className="font-bold text-sm text-gray-900">{t.shopByBrand}</h3>
-                       <span className="text-[10px] text-gray-500">{t.viewAll}</span>
-                    </div>
-                    <div className="flex overflow-x-auto gap-3 pb-2 hide-scrollbar">
-                       {MOCK_BRANDS.map((brand, idx) => (
-                          <div key={idx} className="flex-shrink-0 w-16 h-10 border border-gray-200 rounded-lg flex items-center justify-center bg-white shadow-sm font-black text-[10px] tracking-tighter text-blue-900">
-                             {brand}
-                          </div>
-                       ))}
-                    </div>
+              {/* Flash Sales Section (Live Countdown) */}
+              <div className="px-4 md:px-0 mt-4 md:mt-6 mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                 <div className="flex items-center gap-3">
+                    <FiZap className="text-[#F2A900] text-2xl fill-[#F2A900]" />
+                    <h2 className="text-lg sm:text-xl font-black text-gray-900">{t.flashSales}</h2>
+                    <span className="text-xs text-gray-500 hidden sm:block font-medium ml-2">{t.limitedOffers}</span>
                  </div>
-
-                 <div>
-                    <h3 className="font-bold text-sm text-gray-900 mb-3">{t.shopByPrice}</h3>
-                    <div className="flex flex-wrap gap-2">
-                       <button className="border border-gray-200 rounded-full px-3 py-1.5 text-[10px] font-medium text-gray-700 bg-white">Under TZS 100,000</button>
-                       <button className="border border-gray-200 rounded-full px-3 py-1.5 text-[10px] font-medium text-gray-700 bg-white">TZS 100,000 - 300,000</button>
-                       <button className="border border-gray-200 rounded-full px-3 py-1.5 text-[10px] font-medium text-gray-700 bg-white">TZS 300,000 - 700,000</button>
-                       <button className="border border-gray-200 rounded-full px-3 py-1.5 text-[10px] font-medium text-gray-700 bg-white">Above TZS 700,000</button>
+                 <div className="flex items-center justify-between sm:justify-end w-full sm:w-auto gap-4">
+                    <div className="flex items-center gap-2 text-xs font-bold">
+                       <span className="text-gray-500">{t.endsIn}</span>
+                       <div className="flex gap-1">
+                          <span className="bg-[#0F172A] text-white px-2 py-1 rounded">{timeLeft.h}</span><span className="text-gray-400">:</span>
+                          <span className="bg-[#0F172A] text-white px-2 py-1 rounded">{timeLeft.m}</span><span className="text-gray-400">:</span>
+                          <span className="bg-[#0F172A] text-white px-2 py-1 rounded">{timeLeft.s}</span>
+                       </div>
                     </div>
                  </div>
               </div>
 
               {/* Layout Split for Desktop (Filters Left, Products Right) */}
-              <div className="flex flex-col lg:flex-row mt-6 md:mt-0 px-4 md:px-0 gap-6">
+              <div className="flex flex-col lg:flex-row mt-2 md:mt-4 px-4 md:px-0 gap-6">
                  
                  {/* Desktop Filters Sidebar */}
                  <div className="hidden lg:block w-[220px] flex-shrink-0">
@@ -639,7 +661,6 @@ export default function ShopPage() {
                           <button onClick={() => {}} className="text-xs text-blue-600 hover:underline">{t.clearAll}</button>
                        </div>
                        
-                       {/* Mock Filter Sections */}
                        <div className="space-y-6">
                           <div>
                              <div className="flex justify-between items-center mb-3 cursor-pointer text-sm font-bold text-gray-800">
@@ -657,7 +678,7 @@ export default function ShopPage() {
                                </div>
                              </div>
                           </div>
-                          {['Brand', 'Processor', 'RAM', 'Storage', 'Screen Size', 'Condition'].map(filter => (
+                          {['Brand', 'Processor', 'RAM', 'Storage', 'Condition'].map(filter => (
                              <div key={filter} className="flex justify-between items-center pb-3 border-b border-gray-100 cursor-pointer text-sm font-bold text-gray-800 hover:text-[#F2A900] transition">
                                 {filter} <FiChevronDown/>
                              </div>
@@ -671,10 +692,10 @@ export default function ShopPage() {
 
                  {/* Products Grid Area */}
                  <div className="flex-1 w-full">
-                    {/* Toolbar (Desktop) / Title (Mobile) */}
-                    <div className="flex justify-between items-center mb-4 md:mb-6 mt-4 md:mt-0">
+                    {/* Toolbar (Desktop) */}
+                    <div className="hidden md:flex justify-between items-center mb-4 md:mb-6">
                        <h3 className="font-black text-lg text-gray-900">{t.topPicks}</h3>
-                       <div className="hidden md:flex items-center gap-4">
+                       <div className="flex items-center gap-4">
                           <span className="text-xs text-gray-500 font-bold">{t.sort}</span>
                           <select value={sortOrder} onChange={(e) => setSortOrder(e.target.value)} className="bg-white border border-gray-200 rounded-md px-3 py-1.5 text-xs font-bold text-gray-800 outline-none cursor-pointer">
                              <option value="popular">{t.popular}</option>
@@ -686,7 +707,6 @@ export default function ShopPage() {
                              <button className="p-1.5 text-gray-400 hover:text-gray-700"><FiList size={14}/></button>
                           </div>
                        </div>
-                       <button className="md:hidden text-xs font-bold text-gray-500 hover:text-gray-900">{t.viewAll} &gt;</button>
                     </div>
 
                     {isLoading ? (
