@@ -9,7 +9,7 @@ import {
   FiSmartphone, FiArrowLeft, FiMoreHorizontal, FiSliders, FiList, FiGrid,
   FiCamera, FiMic, FiMaximize, FiUploadCloud, FiChevronDown, FiZap, FiMessageCircle,
   FiHome, FiTag, FiPackage, FiHeadphones, FiHeart, FiArrowRight, FiClock,
-  FiEyeOff, FiEye, FiCalendar, FiStar
+  FiEyeOff, FiEye, FiCalendar, FiStar, FiCreditCard
 } from 'react-icons/fi';
 
 import Footer from './components/common/Footer';
@@ -423,7 +423,6 @@ export default function HomePage() {
       {/* MOBILE TOP HEADER (KWA VIEW ZOTE) */}
       {/* ========================================================= */}
       <header className={`md:hidden sticky top-0 z-40 px-4 py-3 shadow-sm pb-0 ${viewMode === 'deals' ? 'bg-[#0A101D] border-b border-gray-800' : 'bg-white'}`}>
-        
         {viewMode === 'deals' ? (
            <div className="flex items-center gap-3 pb-3 pt-1">
              <button onClick={() => setViewMode('home')} className="text-gray-400 hover:text-white p-1"><FiArrowLeft size={22}/></button>
@@ -431,7 +430,6 @@ export default function HomePage() {
            </div>
         ) : (
            <>
-             {/* Search Bar Row */}
              <div className="flex items-center gap-3">
                <div className="flex-1 flex border border-gray-200 rounded-xl overflow-hidden bg-gray-50 h-11 focus-within:border-[#F2A900] transition-colors">
                  <div className="pl-3 flex items-center text-gray-400"><FiSearch size={16}/></div>
@@ -446,15 +444,10 @@ export default function HomePage() {
                  <button className="bg-[#F2A900] px-4 flex items-center justify-center text-white font-bold"><FiSearch size={18}/></button>
                </div>
              </div>
-
-             {/* Categories Horizontal Scroll */}
              <div className="flex items-center gap-6 mt-3 text-xs font-bold text-gray-500 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                 <button onClick={() => setActiveCategory('All')} className={`whitespace-nowrap pb-2 border-b-2 transition-all ${activeCategory === 'All' ? 'border-[#0F3B4E] text-[#0F3B4E]' : 'border-transparent hover:text-gray-900'}`}>All</button>
                 {CATEGORY_KEYS.map((cat) => (
-                   <button key={cat} onClick={() => setActiveCategory(cat)} 
-                   className={`whitespace-nowrap pb-2 border-b-2 transition-all ${activeCategory === cat ? 'border-[#0F3B4E] text-[#0F3B4E]' : 'border-transparent hover:text-gray-900'}`}>
-                      {cat}
-                   </button>
+                   <button key={cat} onClick={() => setActiveCategory(cat)} className={`whitespace-nowrap pb-2 border-b-2 transition-all ${activeCategory === cat ? 'border-[#0F3B4E] text-[#0F3B4E]' : 'border-transparent hover:text-gray-900'}`}>{cat}</button>
                 ))}
              </div>
            </>
@@ -512,7 +505,7 @@ export default function HomePage() {
                     <div className="flex items-center gap-3"><FiZap className={`text-lg ${viewMode === 'deals' ? 'fill-current' : 'text-gray-400'}`}/> Flash Sales</div>
                     <span className="bg-[#F2A900] text-[#0A101D] text-[9px] px-1.5 py-0.5 rounded font-black">HOT</span>
                  </button>
-                 <button onClick={() => { setViewMode('home'); setActiveCategory('All'); }} className={`flex items-center gap-3 px-4 py-3 rounded-lg transition ${viewMode === 'deals' ? 'hover:bg-gray-800 hover:text-white' : 'hover:bg-gray-50'}`}><FiGrid className="text-lg text-gray-400"/> Categories</button>
+                 <button onClick={() => router.push('/shop')} className={`flex items-center gap-3 px-4 py-3 rounded-lg transition ${viewMode === 'deals' ? 'hover:bg-gray-800 hover:text-white' : 'hover:bg-gray-50'}`}><FiGrid className="text-lg text-gray-400"/> Categories</button>
                  <button onClick={() => router.push('/profile')} className={`flex items-center gap-3 px-4 py-3 rounded-lg transition ${viewMode === 'deals' ? 'hover:bg-gray-800 hover:text-white' : 'hover:bg-gray-50'}`}><FiPackage className="text-lg text-gray-400"/> Orders</button>
                  <button className={`flex items-center gap-3 px-4 py-3 rounded-lg transition ${viewMode === 'deals' ? 'hover:bg-gray-800 hover:text-white' : 'hover:bg-gray-50'}`}><FiHeart className="text-lg text-gray-400"/> Wishlist</button>
                  <div className={`border-t my-2 mx-2 ${viewMode === 'deals' ? 'border-gray-800' : 'border-gray-100'}`}></div>
@@ -746,19 +739,14 @@ export default function HomePage() {
                 {/* Filter and Sort */}
                 <div className="flex justify-between items-center mb-6">
                    <button className="text-gray-400 text-xs font-bold flex items-center gap-2 bg-[#0A101D] px-3 py-1.5 rounded-lg border border-gray-800"><FiFilter/> Filter</button>
-                   <div className="text-gray-400 text-xs font-bold flex items-center gap-2">
-                      Sort: <span className="text-white">Best Match</span> <FiChevronDown/>
-                   </div>
+                   <div className="text-gray-400 text-xs font-bold flex items-center gap-2">Sort: <span className="text-white">Best Match</span> <FiChevronDown/></div>
                 </div>
 
                 {/* Deals Grid */}
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4 pb-12">
                    {filteredProducts.length === 0 && <div className="text-gray-500 text-sm col-span-full py-10 text-center">No deals available at the moment.</div>}
-                   {filteredProducts.map((product) => (
-                      <DealsProductCard key={product.id} product={product} />
-                   ))}
+                   {filteredProducts.map((product) => (<DealsProductCard key={product.id} product={product} />))}
                 </div>
-
              </div>
            )}
 
@@ -1158,40 +1146,4 @@ export default function HomePage() {
                       <input type="text" required value={address} onChange={e => setAddress(e.target.value)} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-[#F2A900]" placeholder="Example: Kinondoni, Mkwajuni" />
                     </div>
                     <div className="flex gap-3 pt-4">
-                       <button onClick={() => setWorkflowStep(1)} className="px-6 py-4 bg-gray-100 text-gray-600 font-bold rounded-xl text-sm hover:bg-gray-200 transition">Back</button>
-                       <button onClick={() => { if(region && address) setWorkflowStep(3); else alert('Please fill in Region and Full Address'); }} disabled={!address} className="flex-1 bg-[#0A101D] disabled:bg-gray-300 text-white font-black py-4 rounded-xl flex items-center justify-center gap-2 transition shadow-lg">{t.proceedPayment} <FiChevronRight /></button>
-                    </div>
-                  </div>
-                </div>
-              )}
-              {workflowStep === 3 && (
-                <form onSubmit={handlePlaceOrder} className="max-w-xl mx-auto animate-fade-in">
-                  <h3 className="text-xl sm:text-2xl font-black text-gray-900 mb-6 flex items-center gap-2 border-b border-gray-100 pb-4"><FiShield className="text-green-500"/> {t.payment}</h3>
-                  <div className="bg-[#F2A900]/10 border border-[#F2A900] rounded-xl p-4 mb-6"><p className="font-bold text-gray-900 text-sm">Pay On Delivery (COD)</p><p className="text-xs text-gray-600 mt-1">Pay when you receive the product.</p></div>
-                  <div className="border border-gray-200 bg-gray-50 rounded-xl p-5 space-y-3 text-sm">
-                    <div className="flex justify-between text-gray-600 font-medium"><span>Subtotal</span><span>TZS {cartTotal.toLocaleString()}</span></div>
-                    <div className="flex justify-between text-gray-600 font-medium"><span>{t.deliveryFee}</span><span>TZS {shippingFee.toLocaleString()}</span></div>
-                    <div className="flex justify-between text-lg sm:text-xl font-black text-gray-900 border-t border-gray-200 pt-3"><span>{t.grandTotal}</span><span>TZS {grandTotal.toLocaleString()}</span></div>
-                    {upfrontPayment > 0 && (<div className="bg-red-50 p-3 rounded-lg border border-red-100 flex justify-between items-center mt-4"><span className="block text-xs font-black text-red-600 uppercase">{t.upfront}</span><span className="font-black text-red-600 text-base">TZS {upfrontPayment.toLocaleString()}</span></div>)}
-                  </div>
-                  <div className="flex gap-3 mt-6">
-                     <button type="button" onClick={() => setWorkflowStep(2)} className="px-6 py-4 bg-gray-100 text-gray-600 font-bold rounded-xl text-sm hover:bg-gray-200 transition">Back</button>
-                     <button type="submit" disabled={checkoutLoading} className="flex-1 bg-green-600 hover:bg-green-700 text-white font-black py-4 rounded-xl transition shadow-lg flex items-center justify-center gap-2">{checkoutLoading ? 'Processing...' : <><FiLock /> {t.confirmOrder}</>}</button>
-                  </div>
-                </form>
-              )}
-              {workflowStep === 4 && (
-                <div className="text-center py-8 animate-fade-in">
-                  <div className="w-24 h-24 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-6"><FiCheckCircle className="text-6xl text-green-500 animate-bounce" /></div>
-                  <h3 className="text-2xl sm:text-3xl font-black text-gray-900 mb-4">Order Successful!</h3>
-                  <p className="text-sm text-gray-500 mb-8 max-w-sm mx-auto leading-relaxed">{t.successMsg}</p>
-                  <button onClick={() => router.push('/profile')} className="w-full max-w-sm mx-auto bg-[#0A101D] hover:bg-gray-800 text-white font-black py-4 rounded-xl flex items-center justify-center gap-2 transition shadow-lg"><FiUser /> {t.viewProfile}</button>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
+                       <button onClick={()
