@@ -8,7 +8,8 @@ import {
   FiTruck, FiShield, FiLock, FiMail, FiUser, FiPhone, FiTrash2, FiChevronRight, 
   FiSmartphone, FiArrowLeft, FiMoreHorizontal, FiSliders, FiList, FiGrid,
   FiCamera, FiMic, FiMaximize, FiUploadCloud, FiChevronDown, FiZap, FiMessageCircle,
-  FiHome, FiTag, FiPackage, FiHeadphones, FiHeart, FiArrowRight, FiClock
+  FiHome, FiTag, FiPackage, FiHeadphones, FiHeart, FiArrowRight, FiClock,
+  FiEyeOff, FiEye, FiCalendar
 } from 'react-icons/fi';
 
 import Footer from './components/common/Footer';
@@ -115,7 +116,6 @@ export default function HomePage() {
   const [categories, setCategories] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
-  // View State: 'home' au 'deals'
   const [viewMode, setViewMode] = useState<'home' | 'deals'>('home');
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -127,28 +127,26 @@ export default function HomePage() {
   const [lang, setLang] = useState<'en' | 'sw'>('en'); 
   const [deliverLocation, setDeliverLocation] = useState('Tanzania, United Republic');
   
-  // LIVE COUNTDOWN TIMER STATE (Sasa ina siku)
   const [timeLeft, setTimeLeft] = useState({ d: '00', h: '00', m: '00', s: '00' });
-
-  // BANNERS STATE
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
 
-  // MODAL STATES 
+  // ================= MODAL STATES =================
   const [selectedProduct, setSelectedProduct] = useState<any | null>(null);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
+  const [showPassword, setShowPassword] = useState(false);
   const [isVoiceListening, setIsVoiceListening] = useState(false);
   const [isBarcodeOpen, setIsBarcodeOpen] = useState(false);
   const [isImageSearchOpen, setIsImageSearchOpen] = useState(false);
-
-  // WORKFLOW STATES
+  
   const [isWorkflowOpen, setIsWorkflowOpen] = useState(false);
   const [workflowStep, setWorkflowStep] = useState(1); 
 
-  // FORM STATES
+  // ================= AUTH FORM STATES =================
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
-  const [registerName, setRegisterName] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [registerPhone, setRegisterPhone] = useState('');
   const [loginError, setLoginError] = useState('');
   
@@ -162,7 +160,6 @@ export default function HomePage() {
 
   const getApiUrl = () => 'https://jtex-ecommerce-production.up.railway.app';
 
-  // BANNERS 3 KAMILI NA ZINAZOONEKANA VIZURI
   const activeBanners = [
     { id: 1, title: "Best Quality,\nBest Prices,\nOnly on Jtex", subtitle: "Shop the latest gadgets, electronics,\nfashion and more at unbeatable prices.", bgColor: "from-[#0A101D] via-[#0F3B4E] to-[#1E5673]", buttonText: t.buyNow, action: () => { setViewMode('home'); setActiveCategory('All'); } },
     { id: 2, title: "New Phones\nIn Town", subtitle: "Order today and get it delivered fast.", bgColor: "from-[#F2A900] to-[#C98A00]", buttonText: "View Phones", action: () => { setViewMode('home'); setActiveCategory('Phones'); } },
@@ -185,7 +182,6 @@ export default function HomePage() {
   }, []);
 
   useEffect(() => {
-    // Mega sale timer (siku 2 mbele)
     const targetDate = new Date();
     targetDate.setDate(targetDate.getDate() + 2);
     targetDate.setHours(23, 59, 59, 999);
@@ -229,7 +225,6 @@ export default function HomePage() {
     fetchRealProducts();
   }, []);
 
-  // KUCHUJA BIDHAA NA KUFANYA FALLBACK KAMA HAKUNA (Soft Filter)
   useEffect(() => {
     let result = products;
     if (activeCategory !== 'All') {
@@ -238,12 +233,8 @@ export default function HomePage() {
         const tCat = activeCategory.toLowerCase();
         return pCat.includes(tCat) || tCat.includes(pCat);
       });
-      // Kama hakuna bidhaa kwenye kategoria husika, onyesha zote (Fallback)
-      if (catFiltered.length > 0) {
-        result = catFiltered;
-      } else {
-        result = products;
-      }
+      if (catFiltered.length > 0) result = catFiltered;
+      else result = products;
     }
     
     if (searchQuery) result = result.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()));
@@ -277,10 +268,11 @@ export default function HomePage() {
 
   const handleInlineRegister = async (e: React.FormEvent) => {
     e.preventDefault(); setLoginError('');
+    const fullName = `${firstName} ${lastName}`.trim();
     try {
       const res = await fetch(`${getApiUrl()}/api/register`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: registerName, phone: registerPhone, email: loginEmail, password: loginPassword })
+        body: JSON.stringify({ name: fullName, phone: registerPhone, email: loginEmail, password: loginPassword })
       });
       const data = await res.json();
       if (res.ok) handleAuthSuccess(data); else setLoginError(data.error);
@@ -370,9 +362,7 @@ export default function HomePage() {
   // REUSABLE DEALS PRODUCT CARD (Kama kwenye picha ya Flash Sales)
   const DealsProductCard = ({ product }: { product: any }) => {
     const isWishlisted = wishlist.includes(product.id);
-    const discount = product.oldPrice ? Math.round(((product.oldPrice - product.price) / product.oldPrice) * 100) : 25; // Default faux discount for UI
-    
-    // Faux logic kuonyesha sold percentage kulingana na ID
+    const discount = product.oldPrice ? Math.round(((product.oldPrice - product.price) / product.oldPrice) * 100) : 25;
     const soldAmount = Math.max(15, 100 - (product.stockQuantity || 0) * 2);
     const soldPercentage = Math.min(95, soldAmount);
 
@@ -405,7 +395,6 @@ export default function HomePage() {
             <span className="text-sm font-black text-white">TZS {product.price.toLocaleString()}</span>
             <span className="text-[10px] text-gray-500 line-through mt-0.5">TZS {product.oldPrice ? product.oldPrice.toLocaleString() : (product.price * 1.3).toLocaleString()}</span>
             
-            {/* Sold Progress Bar */}
             <div className="mt-3 mb-3">
                <div className="flex justify-between text-[9px] mb-1 text-gray-400">
                   <span>{soldAmount} sold</span>
@@ -434,7 +423,6 @@ export default function HomePage() {
       {/* MOBILE TOP HEADER (KWA VIEW ZOTE) */}
       {/* ========================================================= */}
       <header className={`md:hidden sticky top-0 z-40 px-4 py-3 shadow-sm pb-0 ${viewMode === 'deals' ? 'bg-[#0A101D] border-b border-gray-800' : 'bg-white'}`}>
-        
         {viewMode === 'deals' ? (
            <div className="flex items-center gap-3 pb-3 pt-1">
              <button onClick={() => setViewMode('home')} className="text-gray-400 hover:text-white p-1"><FiArrowLeft size={22}/></button>
@@ -442,7 +430,6 @@ export default function HomePage() {
            </div>
         ) : (
            <>
-             {/* Search Bar Row */}
              <div className="flex items-center gap-3">
                <div className="flex-1 flex border border-gray-200 rounded-xl overflow-hidden bg-gray-50 h-11 focus-within:border-[#F2A900] transition-colors">
                  <div className="pl-3 flex items-center text-gray-400"><FiSearch size={16}/></div>
@@ -457,15 +444,10 @@ export default function HomePage() {
                  <button className="bg-[#F2A900] px-4 flex items-center justify-center text-white font-bold"><FiSearch size={18}/></button>
                </div>
              </div>
-
-             {/* Categories Horizontal Scroll */}
              <div className="flex items-center gap-6 mt-3 text-xs font-bold text-gray-500 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                 <button onClick={() => setActiveCategory('All')} className={`whitespace-nowrap pb-2 border-b-2 transition-all ${activeCategory === 'All' ? 'border-[#0F3B4E] text-[#0F3B4E]' : 'border-transparent hover:text-gray-900'}`}>All</button>
                 {CATEGORY_KEYS.map((cat) => (
-                   <button key={cat} onClick={() => setActiveCategory(cat)} 
-                   className={`whitespace-nowrap pb-2 border-b-2 transition-all ${activeCategory === cat ? 'border-[#0F3B4E] text-[#0F3B4E]' : 'border-transparent hover:text-gray-900'}`}>
-                      {cat}
-                   </button>
+                   <button key={cat} onClick={() => setActiveCategory(cat)} className={`whitespace-nowrap pb-2 border-b-2 transition-all ${activeCategory === cat ? 'border-[#0F3B4E] text-[#0F3B4E]' : 'border-transparent hover:text-gray-900'}`}>{cat}</button>
                 ))}
              </div>
            </>
@@ -523,7 +505,7 @@ export default function HomePage() {
                     <div className="flex items-center gap-3"><FiZap className={`text-lg ${viewMode === 'deals' ? 'fill-current' : 'text-gray-400'}`}/> Flash Sales</div>
                     <span className="bg-[#F2A900] text-[#0A101D] text-[9px] px-1.5 py-0.5 rounded font-black">HOT</span>
                  </button>
-                 <button onClick={() => { setViewMode('home'); setActiveCategory('All'); }} className={`flex items-center gap-3 px-4 py-3 rounded-lg transition ${viewMode === 'deals' ? 'hover:bg-gray-800 hover:text-white' : 'hover:bg-gray-50'}`}><FiGrid className="text-lg text-gray-400"/> Categories</button>
+                 <button onClick={() => router.push('/shop')} className={`flex items-center gap-3 px-4 py-3 rounded-lg transition ${viewMode === 'deals' ? 'hover:bg-gray-800 hover:text-white' : 'hover:bg-gray-50'}`}><FiGrid className="text-lg text-gray-400"/> Categories</button>
                  <button onClick={() => router.push('/profile')} className={`flex items-center gap-3 px-4 py-3 rounded-lg transition ${viewMode === 'deals' ? 'hover:bg-gray-800 hover:text-white' : 'hover:bg-gray-50'}`}><FiPackage className="text-lg text-gray-400"/> Orders</button>
                  <button className={`flex items-center gap-3 px-4 py-3 rounded-lg transition ${viewMode === 'deals' ? 'hover:bg-gray-800 hover:text-white' : 'hover:bg-gray-50'}`}><FiHeart className="text-lg text-gray-400"/> Wishlist</button>
                  <div className={`border-t my-2 mx-2 ${viewMode === 'deals' ? 'border-gray-800' : 'border-gray-100'}`}></div>
@@ -540,14 +522,14 @@ export default function HomePage() {
            {/* ======================================================= */}
            {viewMode === 'home' && (
              <div className="animate-fade-in px-4 md:px-0">
-               {/* Delivery Pill (Mobile Only) */}
+               {/* Delivery Pill (Mobile) */}
                <div className="md:hidden flex items-center gap-2 text-[10px] font-bold bg-[#F8FAFC] border border-gray-100 p-2.5 rounded-xl text-gray-600 mb-4 mt-2">
                    <FiMapPin className="text-gray-400 text-sm"/>
                    <span className="truncate flex-1">Deliver to {deliverLocation}...</span>
                    <FiChevronDown className="text-gray-400"/>
                </div>
 
-               {/* Top Trust Badges (Pre-Banner - Mobile Only) */}
+               {/* Trust Badges (Pre-Banner - Mobile) */}
                <div className="md:hidden flex gap-2 mb-4">
                   <div className="flex-1 bg-white p-2.5 rounded-xl border border-gray-100 shadow-sm flex items-center gap-2">
                      <div className="bg-[#0F3B4E] text-white p-1.5 rounded-md"><FiTruck size={14}/></div>
@@ -559,7 +541,7 @@ export default function HomePage() {
                   </div>
                </div>
 
-               {/* Mobile Hero Banner */}
+               {/* Hero Banner */}
                <div className="relative w-full h-[170px] md:h-[340px] rounded-xl overflow-hidden shadow-sm mb-4 bg-[#0A101D]">
                  {activeBanners.map((banner, index) => (
                    <div key={banner.id} className={`absolute inset-0 w-full h-full transition-opacity duration-1000 bg-gradient-to-r ${banner.bgColor} flex flex-col justify-center px-5 md:px-16 text-white ${index === currentBannerIndex ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'}`}>
@@ -578,7 +560,7 @@ export default function HomePage() {
                  </div>
                </div>
 
-               {/* Trust Features (Post Banner Grid - Mobile) */}
+               {/* Trust Features Mobile vs Desktop */}
                <div className="md:hidden flex justify-between items-start pt-2 pb-4 mb-2 border-b border-gray-50">
                   <div className="flex flex-col items-center text-center w-1/4"><FiTruck className="text-gray-600 text-lg mb-1.5"/><span className="text-[8px] font-black text-gray-800 leading-tight">Free Delivery<br/><span className="text-[7px] text-gray-500 font-normal">On orders over TZS 50,000</span></span></div>
                   <div className="flex flex-col items-center text-center w-1/4"><FiShield className="text-gray-600 text-lg mb-1.5"/><span className="text-[8px] font-black text-gray-800 leading-tight">Secure Payment<br/><span className="text-[7px] text-gray-500 font-normal">100% secure payments</span></span></div>
@@ -586,7 +568,6 @@ export default function HomePage() {
                   <div className="flex flex-col items-center text-center w-1/4"><FiHeadphones className="text-gray-600 text-lg mb-1.5"/><span className="text-[8px] font-black text-gray-800 leading-tight">24/7 Support<br/><span className="text-[7px] text-gray-500 font-normal">We are here to help</span></span></div>
                </div>
 
-               {/* Trust Badges Desktop */}
                <div className="hidden md:flex justify-between items-center bg-white rounded-2xl shadow-sm border border-gray-100 px-8 py-6 mb-8">
                    <div className="flex items-center gap-4"><FiTruck className="text-4xl text-gray-700"/><div className="flex flex-col leading-tight"><span className="text-sm font-black text-gray-900">FREE Delivery</span><span className="text-xs text-gray-500 mt-1">on orders over TZS 50,000</span></div></div>
                    <div className="w-px h-10 bg-gray-100"></div>
@@ -602,7 +583,7 @@ export default function HomePage() {
                   <div className="flex items-center gap-1.5 md:gap-3">
                      <FiZap className="text-[#F2A900] text-lg md:text-3xl fill-[#F2A900]" />
                      <h2 className="text-sm md:text-2xl font-black text-gray-900">{t.flashSales}</h2>
-                     <span className="text-[8px] md:text-sm text-gray-500 font-medium ml-1 md:ml-2 leading-tight">Limited time offers - Don't miss out!</span>
+                     <span className="text-[8px] md:text-sm text-gray-500 font-bold ml-1 md:ml-2 leading-tight">Limited time offers - Don't miss out!</span>
                   </div>
                   <div className="flex items-center gap-2 md:gap-6">
                      <div className="flex items-center gap-1.5 md:gap-3 text-[9px] md:text-xs font-bold text-gray-600">
@@ -619,7 +600,7 @@ export default function HomePage() {
                   </div>
                </div>
 
-               {/* Products (Horizontal on Mobile, Grid on PC) */}
+               {/* Products */}
                <div className="md:hidden flex overflow-x-auto hide-scrollbar gap-3 pb-4 -mx-4 px-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                    {filteredProducts.length === 0 && <div className="text-xs text-gray-500">No products found.</div>}
                    {filteredProducts.slice(0,6).map((product) => (
@@ -635,7 +616,7 @@ export default function HomePage() {
                   ))}
                </div>
 
-               {/* Secondary Banner: Big Deals */}
+               {/* Big Deals Banner */}
                <div className="bg-[#0F3B4E] md:bg-[#0A101D] rounded-xl md:rounded-2xl p-5 md:p-8 text-white relative overflow-hidden shadow-sm mt-2 mb-6 flex flex-col md:flex-row items-center justify-between">
                   <div className="z-10 relative text-center md:text-left w-full md:w-auto">
                      <h3 className="text-sm md:text-xl font-black mb-1">Big Deals on Top Brands</h3>
@@ -652,7 +633,7 @@ export default function HomePage() {
                   <div className="absolute right-0 md:right-10 top-1/2 -translate-y-1/2 text-7xl md:text-9xl opacity-30 md:opacity-10 transform -rotate-12">🎁</div>
                </div>
 
-               {/* Top Brands Section (Mobile Only) */}
+               {/* Top Brands Mobile */}
                <div className="md:hidden mb-2">
                   <div className="flex justify-between items-end mb-4">
                      <div>
@@ -674,14 +655,11 @@ export default function HomePage() {
              </div>
            )}
 
-
            {/* ======================================================= */}
            {/* CONTENT: DEALS / FLASH SALES VIEW (DARK MODE)           */}
            {/* ======================================================= */}
            {viewMode === 'deals' && (
              <div className="animate-fade-in bg-[#050B14] min-h-screen text-white px-4 md:px-0 rounded-2xl md:p-6 overflow-hidden">
-                
-                {/* Deals Header Section */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8 mt-2 md:mt-0">
                    <div>
                       <h2 className="text-2xl md:text-3xl font-black flex items-center gap-2 mb-1">
@@ -695,42 +673,21 @@ export default function HomePage() {
                    </div>
                 </div>
 
-                {/* Big Timer Banner */}
                 <div className="bg-[#0A101D] border border-gray-800 rounded-2xl p-6 md:p-8 flex flex-col md:flex-row items-center justify-between mb-8 relative overflow-hidden shadow-2xl">
-                   {/* Background Glow */}
                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-blue-600/20 blur-[100px] rounded-full pointer-events-none"></div>
-                   
                    <div className="z-10 text-center md:text-left mb-6 md:mb-0 w-full md:w-auto">
                       <h3 className="text-gray-400 text-sm font-bold uppercase tracking-wider mb-4">Flash Sale Ends In</h3>
                       <div className="flex items-center justify-center md:justify-start gap-3 md:gap-6">
-                         <div className="flex flex-col items-center">
-                            <span className="text-4xl md:text-5xl font-black text-white bg-gray-900 px-3 md:px-4 py-2 md:py-3 rounded-xl border border-gray-700 shadow-inner">{timeLeft.d}</span>
-                            <span className="text-[10px] md:text-xs text-gray-500 mt-2 uppercase font-bold">Days</span>
-                         </div>
-                         <span className="text-2xl md:text-4xl font-black text-gray-600 pb-5">:</span>
-                         <div className="flex flex-col items-center">
-                            <span className="text-4xl md:text-5xl font-black text-white bg-gray-900 px-3 md:px-4 py-2 md:py-3 rounded-xl border border-gray-700 shadow-inner">{timeLeft.h}</span>
-                            <span className="text-[10px] md:text-xs text-gray-500 mt-2 uppercase font-bold">Hrs</span>
-                         </div>
-                         <span className="text-2xl md:text-4xl font-black text-gray-600 pb-5">:</span>
-                         <div className="flex flex-col items-center">
-                            <span className="text-4xl md:text-5xl font-black text-[#F2A900] bg-gray-900 px-3 md:px-4 py-2 md:py-3 rounded-xl border border-gray-700 shadow-inner">{timeLeft.m}</span>
-                            <span className="text-[10px] md:text-xs text-gray-500 mt-2 uppercase font-bold">Mins</span>
-                         </div>
-                         <span className="text-2xl md:text-4xl font-black text-gray-600 pb-5">:</span>
-                         <div className="flex flex-col items-center">
-                            <span className="text-4xl md:text-5xl font-black text-red-500 bg-gray-900 px-3 md:px-4 py-2 md:py-3 rounded-xl border border-gray-700 shadow-inner animate-pulse">{timeLeft.s}</span>
-                            <span className="text-[10px] md:text-xs text-gray-500 mt-2 uppercase font-bold">Secs</span>
-                         </div>
+                         <div className="flex flex-col items-center"><span className="text-4xl md:text-5xl font-black text-white bg-gray-900 px-3 md:px-4 py-2 md:py-3 rounded-xl border border-gray-700 shadow-inner">{timeLeft.d}</span><span className="text-[10px] md:text-xs text-gray-500 mt-2 uppercase font-bold">Days</span></div><span className="text-2xl md:text-4xl font-black text-gray-600 pb-5">:</span>
+                         <div className="flex flex-col items-center"><span className="text-4xl md:text-5xl font-black text-white bg-gray-900 px-3 md:px-4 py-2 md:py-3 rounded-xl border border-gray-700 shadow-inner">{timeLeft.h}</span><span className="text-[10px] md:text-xs text-gray-500 mt-2 uppercase font-bold">Hrs</span></div><span className="text-2xl md:text-4xl font-black text-gray-600 pb-5">:</span>
+                         <div className="flex flex-col items-center"><span className="text-4xl md:text-5xl font-black text-[#F2A900] bg-gray-900 px-3 md:px-4 py-2 md:py-3 rounded-xl border border-gray-700 shadow-inner">{timeLeft.m}</span><span className="text-[10px] md:text-xs text-gray-500 mt-2 uppercase font-bold">Mins</span></div><span className="text-2xl md:text-4xl font-black text-gray-600 pb-5">:</span>
+                         <div className="flex flex-col items-center"><span className="text-4xl md:text-5xl font-black text-red-500 bg-gray-900 px-3 md:px-4 py-2 md:py-3 rounded-xl border border-gray-700 shadow-inner animate-pulse">{timeLeft.s}</span><span className="text-[10px] md:text-xs text-gray-500 mt-2 uppercase font-bold">Secs</span></div>
                       </div>
                       <div className="mt-6">
-                         <div className="w-full bg-gray-800 h-2 rounded-full overflow-hidden mb-2">
-                            <div className="bg-gradient-to-r from-[#F2A900] to-red-500 w-[85%] h-full rounded-full"></div>
-                         </div>
+                         <div className="w-full bg-gray-800 h-2 rounded-full overflow-hidden mb-2"><div className="bg-gradient-to-r from-[#F2A900] to-red-500 w-[85%] h-full rounded-full"></div></div>
                          <p className="text-xs text-[#F2A900] font-bold">Hurry up! Limited time offer. Don't miss out!</p>
                       </div>
                    </div>
-
                    <div className="z-10 flex flex-col items-center justify-center relative">
                       <div className="absolute inset-0 bg-yellow-500/20 blur-[50px] rounded-full"></div>
                       <h2 className="text-5xl md:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-b from-[#F2A900] to-yellow-700 leading-none">75%</h2>
@@ -738,27 +695,13 @@ export default function HomePage() {
                    </div>
                 </div>
 
-                {/* Badges Row */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 mb-8">
-                   <div className="bg-[#0A101D] border border-gray-800 rounded-xl p-3 md:p-4 flex items-center gap-3">
-                      <FiTruck className="text-[#F2A900] text-xl md:text-2xl" />
-                      <div><p className="text-[10px] md:text-xs font-bold text-gray-200">Fast Delivery</p><p className="text-[8px] md:text-[10px] text-gray-500">TZS 100,000+</p></div>
-                   </div>
-                   <div className="bg-[#0A101D] border border-gray-800 rounded-xl p-3 md:p-4 flex items-center gap-3">
-                      <FiCheckCircle className="text-[#F2A900] text-xl md:text-2xl" />
-                      <div><p className="text-[10px] md:text-xs font-bold text-gray-200">Easy Returns</p><p className="text-[8px] md:text-[10px] text-gray-500">7 Days Return</p></div>
-                   </div>
-                   <div className="bg-[#0A101D] border border-gray-800 rounded-xl p-3 md:p-4 flex items-center gap-3">
-                      <FiShield className="text-[#F2A900] text-xl md:text-2xl" />
-                      <div><p className="text-[10px] md:text-xs font-bold text-gray-200">Secure Payment</p><p className="text-[8px] md:text-[10px] text-gray-500">100% Safe</p></div>
-                   </div>
-                   <div className="bg-[#0A101D] border border-gray-800 rounded-xl p-3 md:p-4 flex items-center gap-3">
-                      <FiStar className="text-[#F2A900] text-xl md:text-2xl" />
-                      <div><p className="text-[10px] md:text-xs font-bold text-gray-200">100% Authentic</p><p className="text-[8px] md:text-[10px] text-gray-500">Genuine Products</p></div>
-                   </div>
+                   <div className="bg-[#0A101D] border border-gray-800 rounded-xl p-3 md:p-4 flex items-center gap-3"><FiTruck className="text-[#F2A900] text-xl md:text-2xl" /><div><p className="text-[10px] md:text-xs font-bold text-gray-200">Fast Delivery</p><p className="text-[8px] md:text-[10px] text-gray-500">TZS 100,000+</p></div></div>
+                   <div className="bg-[#0A101D] border border-gray-800 rounded-xl p-3 md:p-4 flex items-center gap-3"><FiCheckCircle className="text-[#F2A900] text-xl md:text-2xl" /><div><p className="text-[10px] md:text-xs font-bold text-gray-200">Easy Returns</p><p className="text-[8px] md:text-[10px] text-gray-500">7 Days Return</p></div></div>
+                   <div className="bg-[#0A101D] border border-gray-800 rounded-xl p-3 md:p-4 flex items-center gap-3"><FiShield className="text-[#F2A900] text-xl md:text-2xl" /><div><p className="text-[10px] md:text-xs font-bold text-gray-200">Secure Payment</p><p className="text-[8px] md:text-[10px] text-gray-500">100% Safe</p></div></div>
+                   <div className="bg-[#0A101D] border border-gray-800 rounded-xl p-3 md:p-4 flex items-center gap-3"><FiStar className="text-[#F2A900] text-xl md:text-2xl" /><div><p className="text-[10px] md:text-xs font-bold text-gray-200">100% Authentic</p><p className="text-[8px] md:text-[10px] text-gray-500">Genuine Products</p></div></div>
                 </div>
 
-                {/* Tabs */}
                 <div className="flex items-center gap-6 border-b border-gray-800 pb-3 mb-6 overflow-x-auto hide-scrollbar">
                    <button className="text-[#F2A900] border-b-2 border-[#F2A900] pb-3 font-bold text-sm whitespace-nowrap">Promo Products</button>
                    <button className="text-gray-500 hover:text-gray-300 pb-3 font-bold text-sm whitespace-nowrap transition">All Deals</button>
@@ -766,47 +709,37 @@ export default function HomePage() {
                    <button className="text-gray-500 hover:text-gray-300 pb-3 font-bold text-sm whitespace-nowrap transition">Upcoming</button>
                 </div>
 
-                {/* Filter and Sort */}
                 <div className="flex justify-between items-center mb-6">
                    <button className="text-gray-400 text-xs font-bold flex items-center gap-2 bg-[#0A101D] px-3 py-1.5 rounded-lg border border-gray-800"><FiFilter/> Filter</button>
-                   <div className="text-gray-400 text-xs font-bold flex items-center gap-2">
-                      Sort: <span className="text-white">Best Match</span> <FiChevronDown/>
-                   </div>
+                   <div className="text-gray-400 text-xs font-bold flex items-center gap-2">Sort: <span className="text-white">Best Match</span> <FiChevronDown/></div>
                 </div>
 
-                {/* Deals Grid */}
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4 pb-12">
                    {filteredProducts.length === 0 && <div className="text-gray-500 text-sm col-span-full py-10 text-center">No deals available at the moment.</div>}
-                   {filteredProducts.map((product) => (
-                      <DealsProductCard key={product.id} product={product} />
-                   ))}
+                   {filteredProducts.map((product) => (<DealsProductCard key={product.id} product={product} />))}
                 </div>
-
              </div>
            )}
 
         </div>
       </main>
 
-      {/* MOBILE BOTTOM NAVIGATION (MOCKUP EXACT REPLICA) */}
+      {/* MOBILE BOTTOM NAV */}
       <div className="md:hidden fixed bottom-0 left-0 w-full bg-white border-t border-gray-100 flex justify-around items-center h-[65px] px-2 z-50 pb-safe shadow-[0_-10px_40px_rgba(0,0,0,0.05)]">
         <button onClick={() => { setViewMode('home'); setActiveCategory('All'); window.scrollTo(0,0); }} className={`flex flex-col items-center gap-1 w-[20%] transition ${viewMode === 'home' ? 'text-[#F2A900]' : 'text-gray-400 hover:text-gray-900'}`}>
           <FiHome className={`text-xl ${viewMode === 'home' ? 'fill-current' : ''}`} />
           <span className="text-[9px] font-bold">Home</span>
         </button>
-        <button onClick={() => { setViewMode('home'); setActiveCategory('All'); }} className={`flex flex-col items-center gap-1 w-[20%] text-gray-400 hover:text-gray-900`}>
+        <button onClick={() => router.push('/shop')} className={`flex flex-col items-center gap-1 w-[20%] text-gray-400 hover:text-gray-900`}>
           <FiGrid className="text-xl" />
           <span className="text-[9px] font-bold">Categories</span>
         </button>
-        
-        {/* CENTER FLASH SALES / DEALS BUTTON */}
         <div className="relative -top-5 w-[20%] flex justify-center" onClick={() => { setViewMode('deals'); window.scrollTo(0,0); }}>
            <div className={`w-[52px] h-[52px] rounded-full flex items-center justify-center text-white shadow-lg border-[3px] border-white cursor-pointer transition ${viewMode === 'deals' ? 'bg-[#F2A900]' : 'bg-[#0F3B4E] hover:bg-[#0D3040]'}`}>
               <FiZap className={`text-[22px] ${viewMode === 'deals' ? 'fill-white' : ''}`} />
            </div>
            <span className={`absolute -bottom-4 text-[9px] font-bold w-full text-center ${viewMode === 'deals' ? 'text-[#F2A900]' : 'text-gray-500'}`}>Flash Sales</span>
         </div>
-
         <button onClick={openCartWorkflow} className="flex flex-col items-center gap-1 w-[20%] text-gray-400 hover:text-gray-900 relative">
           <div className="relative">
              <FiShoppingCart className="text-xl" />
@@ -821,37 +754,307 @@ export default function HomePage() {
       </div>
 
 
-      {/* MODALS YAKO ZIPO HAPA (Login, Checkout, etc) - Code Imebaki asili */}
+      {/* ======================================================== */}
+      {/* INLINE LOGIN & REGISTER MODALS (100% MOCKUP MATCH)         */}
+      {/* ======================================================== */}
       {isLoginOpen && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-          <div className="bg-white w-full max-w-4xl rounded-2xl shadow-2xl relative flex overflow-hidden min-h-[500px] animate-fade-in">
-            <button onClick={() => setIsLoginOpen(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-900 bg-gray-100 p-2 rounded-full z-20 transition"><FiX size={20} /></button>
-            <div className="hidden md:flex md:w-1/2 bg-[#0A101D] text-white flex-col justify-center p-12">
-               <h2 className="text-5xl font-black mb-4">J<span className="text-[#F2A900]">tex</span></h2>
-               <p className="text-lg font-medium text-blue-100 mb-8">{t.signIn} and Checkout seamlessly.</p>
+        <div className="fixed inset-0 bg-[#050B14]/90 z-50 flex items-center justify-center p-0 md:p-6 backdrop-blur-sm">
+          <div className="bg-[#0A101D] w-full max-w-[1000px] h-full md:h-auto md:max-h-[95vh] md:rounded-3xl shadow-2xl relative flex overflow-hidden flex-col md:flex-row border border-gray-800">
+            <button onClick={() => setIsLoginOpen(false)} className="absolute top-4 left-4 md:left-auto md:right-4 z-50 p-2 md:bg-gray-800/50 hover:bg-gray-700 text-gray-300 rounded-full transition">
+               <FiArrowLeft className="md:hidden" size={20} />
+               <FiX className="hidden md:block" size={20} />
+            </button>
+
+            {/* Left Side Graphic (Desktop Only) */}
+            <div className="hidden md:flex w-[45%] bg-[#050B14] relative flex-col justify-center p-10 overflow-hidden border-r border-gray-800">
+               {/* Faux Background Elements */}
+               <div className="absolute inset-0 bg-gradient-to-b from-[#0F3B4E]/30 to-transparent z-0"></div>
+               <div className="absolute top-[-20%] left-[-20%] w-[140%] h-[60%] border-b border-gray-700/30 rounded-[100%] opacity-20 z-0"></div>
+               <div className="absolute top-[10%] left-[20%] w-2 h-2 bg-[#F2A900] rounded-full shadow-[0_0_10px_#F2A900] z-0 animate-ping"></div>
+               <div className="absolute top-[30%] left-[70%] w-1.5 h-1.5 bg-blue-500 rounded-full shadow-[0_0_10px_blue] z-0"></div>
+               
+               <div className="relative z-10">
+                  <h2 className="text-4xl font-black mb-3 text-white">
+                     {authMode === 'login' ? 'Welcome Back!' : 'Create Your\nJtex Account'}
+                  </h2>
+                  <p className="text-sm font-medium text-gray-400 mb-10 leading-relaxed max-w-sm">
+                     {authMode === 'login' 
+                        ? 'Access your orders, track shipments, make payments and enjoy exclusive member benefits.' 
+                        : 'Join thousands of smart customers enjoying a seamless shopping and delivery experience.'}
+                  </p>
+
+                  <div className="grid grid-cols-2 gap-y-8 gap-x-4">
+                     <div className="flex flex-col gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-blue-900/30 text-blue-500 flex items-center justify-center border border-blue-800/30 shadow-inner"><FiShield size={18}/></div>
+                        <div><h4 className="text-xs font-bold text-gray-200 mb-1">{authMode === 'login' ? 'Secure & Safe' : 'Secure & Trusted'}</h4><p className="text-[10px] text-gray-500 leading-tight">Your data is protected with top security</p></div>
+                     </div>
+                     <div className="flex flex-col gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-green-900/30 text-green-500 flex items-center justify-center border border-green-800/30 shadow-inner"><FiTruck size={18}/></div>
+                        <div><h4 className="text-xs font-bold text-gray-200 mb-1">{authMode === 'login' ? 'Track Orders' : 'Fast & Reliable'}</h4><p className="text-[10px] text-gray-500 leading-tight">Real-time updates on every shipment</p></div>
+                     </div>
+                     <div className="flex flex-col gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-yellow-900/30 text-[#F2A900] flex items-center justify-center border border-yellow-800/30 shadow-inner"><FiCreditCard size={18}/></div>
+                        <div><h4 className="text-xs font-bold text-gray-200 mb-1">Easy Payments</h4><p className="text-[10px] text-gray-500 leading-tight">Multiple payment options available</p></div>
+                     </div>
+                     <div className="flex flex-col gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-purple-900/30 text-purple-500 flex items-center justify-center border border-purple-800/30 shadow-inner"><FiStar size={18}/></div>
+                        <div><h4 className="text-xs font-bold text-gray-200 mb-1">{authMode === 'login' ? 'Exclusive Deals' : 'Exclusive Benefits'}</h4><p className="text-[10px] text-gray-500 leading-tight">Special offers for our members</p></div>
+                     </div>
+                  </div>
+               </div>
+               
+               <div className="absolute bottom-6 left-10 right-10 flex justify-between items-center text-[10px] font-bold text-gray-500 border-t border-gray-800 pt-4 z-10">
+                  <span className="flex items-center gap-1"><FiLock/> SSL Encrypted</span>
+                  <span className="flex items-center gap-1"><FiShield/> Privacy Protected</span>
+                  <span className="flex items-center gap-1"><FiCheckCircle/> Trusted by 50K+</span>
+               </div>
             </div>
-            <div className="w-full md:w-1/2 p-8 md:p-12 flex flex-col justify-center bg-white">
-              <div className="flex bg-gray-100 p-1 rounded-xl mb-6">
-                <button onClick={() => setAuthMode('login')} className={`flex-1 py-2 text-sm font-bold rounded-lg transition ${authMode === 'login' ? 'bg-white shadow text-gray-900' : 'text-gray-500'}`}>{t.signIn}</button>
-                <button onClick={() => setAuthMode('register')} className={`flex-1 py-2 text-sm font-bold rounded-lg transition ${authMode === 'register' ? 'bg-white shadow text-gray-900' : 'text-gray-500'}`}>{t.register}</button>
-              </div>
-              {loginError && <div className="p-3 bg-red-50 text-red-600 text-xs rounded-lg font-bold mb-4">{loginError}</div>}
-              <form onSubmit={authMode === 'login' ? handleInlineLogin : handleInlineRegister} className="space-y-4">
-                {authMode === 'register' && (
-                  <>
-                    <input type="text" required value={registerName} onChange={e => setRegisterName(e.target.value)} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none text-sm focus:border-[#F2A900]" placeholder="Full Name" />
-                    <input type="tel" required value={registerPhone} onChange={e => setRegisterPhone(e.target.value)} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none text-sm focus:border-[#F2A900]" placeholder="Phone Number" />
-                  </>
-                )}
-                <input type="email" required value={loginEmail} onChange={e => setLoginEmail(e.target.value)} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none text-sm focus:border-[#F2A900]" placeholder="Email Address" />
-                <input type="password" required value={loginPassword} onChange={e => setLoginPassword(e.target.value)} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none text-sm focus:border-[#F2A900]" placeholder="Password" />
-                <button type="submit" className="w-full bg-[#0A101D] text-white font-bold py-3.5 rounded-xl text-sm mt-2 hover:bg-gray-800 transition">{authMode === 'login' ? 'Login to Continue' : 'Register to Continue'}</button>
+
+            {/* Right Side Form */}
+            <div className="w-full md:w-[55%] p-6 md:p-12 flex flex-col overflow-y-auto custom-scrollbar mt-10 md:mt-0">
+               
+               {/* Mobile Header Logos & Stepper */}
+               <div className="md:hidden flex justify-center mb-8 relative">
+                  <div className="flex text-3xl font-black italic tracking-tighter">
+                    <span className="text-blue-500">J</span><span className="text-[#F2A900]">t</span><span className="text-white">ex</span>
+                  </div>
+                  <div className="absolute right-0 flex items-center gap-1 border border-gray-700 rounded-lg px-2 py-1 text-[10px] text-gray-400">
+                     <FiGlobe/> EN <FiChevronDown/>
+                  </div>
+               </div>
+
+               {authMode === 'register' && (
+                  <div className="md:hidden flex items-center justify-between mb-8 relative px-2">
+                     <div className="absolute top-1/2 left-0 w-full h-[2px] bg-gray-800 -z-10 -translate-y-1/2"></div>
+                     <div className="absolute top-1/2 left-0 w-[15%] h-[2px] bg-[#F2A900] -z-10 -translate-y-1/2"></div>
+                     <div className="flex flex-col items-center gap-2 bg-[#0A101D] px-2">
+                        <div className="w-10 h-10 rounded-full border border-[#F2A900] bg-yellow-900/20 text-[#F2A900] flex items-center justify-center shadow-[0_0_15px_rgba(242,169,0,0.3)]"><FiUser size={18}/></div>
+                        <span className="text-[9px] font-bold text-[#F2A900]">Account</span>
+                     </div>
+                     <div className="flex flex-col items-center gap-2 bg-[#0A101D] px-2">
+                        <div className="w-10 h-10 rounded-full border border-gray-700 bg-gray-800/50 text-gray-500 flex items-center justify-center"><FiMail size={18}/></div>
+                        <span className="text-[9px] font-bold text-gray-500">Verify Email</span>
+                     </div>
+                     <div className="flex flex-col items-center gap-2 bg-[#0A101D] px-2">
+                        <div className="w-10 h-10 rounded-full border border-gray-700 bg-gray-800/50 text-gray-500 flex items-center justify-center"><FiShield size={18}/></div>
+                        <span className="text-[9px] font-bold text-gray-500">Security</span>
+                     </div>
+                     <div className="flex flex-col items-center gap-2 bg-[#0A101D] px-2">
+                        <div className="w-10 h-10 rounded-full border border-gray-700 bg-gray-800/50 text-gray-500 flex items-center justify-center"><FiCheckCircle size={18}/></div>
+                        <span className="text-[9px] font-bold text-gray-500">Complete</span>
+                     </div>
+                  </div>
+               )}
+
+               {/* Form Header (Mobile) or Desktop */}
+               <div className="mb-6 md:mb-8 text-center md:text-left">
+                  <h2 className={`text-2xl md:text-3xl font-black text-white mb-2`}>
+                     {authMode === 'login' ? 'Login to Your Account' : (typeof window !== 'undefined' && window.innerWidth < 768 ? 'Create Your Account' : 'Sign Up')}
+                  </h2>
+                  <p className="text-sm text-gray-400">
+                     {authMode === 'login' ? 'Enter your credentials to continue' : 'Fill in your details to create your account'}
+                  </p>
+               </div>
+
+               {loginError && <div className="p-3 bg-red-900/30 border border-red-800/50 text-red-400 text-xs rounded-xl font-bold mb-6 text-center">{loginError}</div>}
+
+               {/* FORMS */}
+               <form onSubmit={authMode === 'login' ? handleInlineLogin : handleInlineRegister} className="space-y-4 md:space-y-5">
+                 
+                 {/* REGISTER ONLY FIELDS */}
+                 {authMode === 'register' && (
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5">
+                      <div className="relative">
+                         <label className="block text-xs font-bold mb-1.5 text-gray-400">First Name</label>
+                         <div className="relative flex items-center">
+                            <FiUser className="absolute left-4 text-gray-500" />
+                            <input type="text" required value={firstName} onChange={e => setFirstName(e.target.value)} placeholder="Enter your first name" className="w-full bg-transparent border border-[#1E293B] rounded-xl pl-11 pr-4 py-3 text-sm text-white outline-none focus:border-[#F2A900] transition" />
+                         </div>
+                      </div>
+                      <div className="relative">
+                         <label className="block text-xs font-bold mb-1.5 text-gray-400">Last Name</label>
+                         <div className="relative flex items-center">
+                            <FiUser className="absolute left-4 text-gray-500" />
+                            <input type="text" required value={lastName} onChange={e => setLastName(e.target.value)} placeholder="Enter your last name" className="w-full bg-transparent border border-[#1E293B] rounded-xl pl-11 pr-4 py-3 text-sm text-white outline-none focus:border-[#F2A900] transition" />
+                         </div>
+                      </div>
+                      
+                      <div className="relative md:col-span-1">
+                         <label className="block text-xs font-bold mb-1.5 text-gray-400">Email Address</label>
+                         <div className="relative flex items-center">
+                            <FiMail className="absolute left-4 text-gray-500" />
+                            <input type="email" required value={loginEmail} onChange={e => setLoginEmail(e.target.value)} placeholder="Enter your email address" className="w-full bg-transparent border border-[#1E293B] rounded-xl pl-11 pr-4 py-3 text-sm text-white outline-none focus:border-[#F2A900] transition" />
+                         </div>
+                      </div>
+                      <div className="relative md:col-span-1">
+                         <label className="block text-xs font-bold mb-1.5 text-gray-400">Phone Number</label>
+                         <div className="relative flex items-center border border-[#1E293B] rounded-xl overflow-hidden focus-within:border-[#F2A900] transition">
+                            <div className="flex items-center gap-1.5 bg-[#050B14] pl-3 pr-2 py-3 border-r border-[#1E293B]">
+                               <img src="https://flagcdn.com/w20/tz.png" className="w-4 rounded-sm" />
+                               <span className="text-white text-sm font-bold">+255</span>
+                               <FiChevronDown className="text-gray-500 text-xs"/>
+                            </div>
+                            <input type="tel" required value={registerPhone} onChange={e => setRegisterPhone(e.target.value)} placeholder="712 345 678" className="w-full bg-transparent pl-3 pr-4 py-3 text-sm text-white outline-none" />
+                         </div>
+                      </div>
+
+                      <div className="relative">
+                         <label className="block text-xs font-bold mb-1.5 text-gray-400">Password</label>
+                         <div className="relative flex items-center">
+                            <FiLock className="absolute left-4 text-gray-500" />
+                            <input type={showPassword ? "text" : "password"} required value={loginPassword} onChange={e => setLoginPassword(e.target.value)} placeholder="Create a strong password" className="w-full bg-transparent border border-[#1E293B] rounded-xl pl-11 pr-10 py-3 text-sm text-white outline-none focus:border-[#F2A900] transition" />
+                            <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 text-gray-500 hover:text-gray-300">
+                               {showPassword ? <FiEye/> : <FiEyeOff/>}
+                            </button>
+                         </div>
+                      </div>
+                      <div className="relative">
+                         <label className="block text-xs font-bold mb-1.5 text-gray-400">Confirm Password</label>
+                         <div className="relative flex items-center">
+                            <FiLock className="absolute left-4 text-gray-500" />
+                            <input type={showPassword ? "text" : "password"} required placeholder="Confirm your password" className="w-full bg-transparent border border-[#1E293B] rounded-xl pl-11 pr-10 py-3 text-sm text-white outline-none focus:border-[#F2A900] transition" />
+                            <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 text-gray-500 hover:text-gray-300">
+                               {showPassword ? <FiEye/> : <FiEyeOff/>}
+                            </button>
+                         </div>
+                      </div>
+
+                      <div className="relative">
+                         <label className="block text-xs font-bold mb-1.5 text-gray-400">Date of Birth</label>
+                         <div className="relative flex items-center border border-[#1E293B] rounded-xl px-4 py-3 focus-within:border-[#F2A900] transition">
+                            <FiCalendar className="text-gray-500 mr-2" />
+                            <select className="w-full bg-transparent text-sm text-gray-400 outline-none appearance-none cursor-pointer">
+                               <option value="">Select your date of birth</option>
+                               <option value="1990">1990</option><option value="1995">1995</option>
+                            </select>
+                            <FiChevronDown className="absolute right-4 text-gray-500 pointer-events-none"/>
+                         </div>
+                      </div>
+                      <div className="relative">
+                         <label className="block text-xs font-bold mb-1.5 text-gray-400">Gender</label>
+                         <div className="relative flex items-center border border-[#1E293B] rounded-xl px-4 py-3 focus-within:border-[#F2A900] transition">
+                            <FiUser className="text-gray-500 mr-2" />
+                            <select className="w-full bg-transparent text-sm text-gray-400 outline-none appearance-none cursor-pointer">
+                               <option value="">Select your gender</option>
+                               <option value="Male">Male</option><option value="Female">Female</option>
+                            </select>
+                            <FiChevronDown className="absolute right-4 text-gray-500 pointer-events-none"/>
+                         </div>
+                      </div>
+
+                      <div className="relative">
+                         <label className="block text-xs font-bold mb-1.5 text-gray-400">Country</label>
+                         <div className="relative flex items-center border border-[#1E293B] rounded-xl px-4 py-3 focus-within:border-[#F2A900] transition">
+                            <FiGlobe className="text-gray-500 mr-2" />
+                            <select className="w-full bg-transparent text-sm text-white outline-none appearance-none cursor-pointer">
+                               <option value="Tanzania">Tanzania</option>
+                            </select>
+                            <FiChevronDown className="absolute right-4 text-gray-500 pointer-events-none"/>
+                         </div>
+                      </div>
+                      <div className="relative">
+                         <label className="block text-xs font-bold mb-1.5 text-gray-400">City</label>
+                         <div className="relative flex items-center border border-[#1E293B] rounded-xl px-4 py-3 focus-within:border-[#F2A900] transition">
+                            <FiMapPin className="text-gray-500 mr-2" />
+                            <select className="w-full bg-transparent text-sm text-gray-400 outline-none appearance-none cursor-pointer">
+                               <option value="">Select your city</option>
+                               <option value="Dar">Dar es Salaam</option>
+                            </select>
+                            <FiChevronDown className="absolute right-4 text-gray-500 pointer-events-none"/>
+                         </div>
+                      </div>
+                   </div>
+                 )}
+
+                 {/* LOGIN ONLY FIELDS */}
+                 {authMode === 'login' && (
+                    <>
+                      <div className="relative">
+                         <label className="block text-xs font-bold mb-1.5 text-gray-400">Email Address</label>
+                         <div className="relative flex items-center">
+                            <FiMail className="absolute left-4 text-gray-500" />
+                            <input type="email" required value={loginEmail} onChange={e => setLoginEmail(e.target.value)} placeholder="Enter your email address" className="w-full bg-transparent border border-[#1E293B] rounded-xl pl-11 pr-4 py-3 sm:py-3.5 text-sm text-white outline-none focus:border-[#F2A900] transition" />
+                         </div>
+                      </div>
+                      <div className="relative">
+                         <label className="block text-xs font-bold mb-1.5 text-gray-400">Password</label>
+                         <div className="relative flex items-center">
+                            <FiLock className="absolute left-4 text-gray-500" />
+                            <input type={showPassword ? "text" : "password"} required value={loginPassword} onChange={e => setLoginPassword(e.target.value)} placeholder="Enter your password" className="w-full bg-transparent border border-[#1E293B] rounded-xl pl-11 pr-10 py-3 sm:py-3.5 text-sm text-white outline-none focus:border-[#F2A900] transition" />
+                            <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 text-gray-500 hover:text-gray-300">
+                               {showPassword ? <FiEye/> : <FiEyeOff/>}
+                            </button>
+                         </div>
+                      </div>
+                    </>
+                 )}
+
+                 {/* Checkboxes & Extra Actions */}
+                 <div className="flex items-center justify-between text-xs md:text-sm mt-2">
+                    <label className="flex items-center gap-2 cursor-pointer group">
+                       <div className="w-4 h-4 md:w-5 md:h-5 rounded border border-gray-600 group-hover:border-[#F2A900] bg-[#F2A900] flex items-center justify-center transition">
+                          <FiCheckCircle className="text-[#0A101D] text-[10px] md:text-xs" />
+                       </div>
+                       <span className="text-gray-300 font-medium">
+                          {authMode === 'login' ? 'Remember me' : <>I agree to the <span className="text-blue-500 font-bold hover:underline">Terms & Conditions</span> and <span className="text-blue-500 font-bold hover:underline">Privacy Policy</span></>}
+                       </span>
+                    </label>
+                    {authMode === 'login' && <button type="button" className="text-blue-500 font-bold hover:underline">Forgot Password?</button>}
+                 </div>
+
+                 {/* Submit Button */}
+                 <button type="submit" className="w-full bg-gradient-to-r from-[#F2A900] to-yellow-600 text-[#0A101D] font-black py-3.5 sm:py-4 rounded-xl text-sm sm:text-base mt-6 shadow-[0_0_20px_rgba(242,169,0,0.3)] hover:shadow-[0_0_30px_rgba(242,169,0,0.5)] transition flex items-center justify-center gap-2 group">
+                    {authMode === 'login' ? 'Login' : 'Create Account'} 
+                    <FiArrowRight className="group-hover:translate-x-1 transition-transform" />
+                 </button>
+
               </form>
+
+              {/* Social Login Separator */}
+              <div className="flex items-center gap-4 my-6 opacity-60">
+                 <div className="flex-1 h-px bg-gray-700"></div>
+                 <span className="text-xs text-gray-400 font-medium">{authMode === 'login' ? 'Or continue with' : 'Or sign up with'}</span>
+                 <div className="flex-1 h-px bg-gray-700"></div>
+              </div>
+
+              {/* Social Buttons */}
+              <div className="flex gap-3 mb-8">
+                 <button className="flex-1 flex items-center justify-center gap-2 py-3 md:py-3.5 rounded-xl border border-[#1E293B] hover:bg-gray-800 text-xs md:text-sm font-bold text-white transition"><span className="text-red-500 font-black text-lg">G</span> <span className="hidden md:inline">Google</span></button>
+                 <button className="flex-1 flex items-center justify-center gap-2 py-3 md:py-3.5 rounded-xl border border-[#1E293B] hover:bg-gray-800 text-xs md:text-sm font-bold text-white transition"><span className="text-2xl leading-none -mt-1.5"></span> <span className="hidden md:inline">Apple</span></button>
+                 <button className="flex-1 flex items-center justify-center gap-2 py-3 md:py-3.5 rounded-xl border border-[#1E293B] hover:bg-gray-800 text-xs md:text-sm font-bold text-white transition"><span className="text-blue-500 font-black text-lg">f</span> <span className="hidden md:inline">Facebook</span></button>
+              </div>
+
+              {/* Footer Trust Info */}
+              <div className="mt-auto">
+                 <div className="bg-[#050B14] rounded-xl p-4 md:p-5 flex items-center gap-4 border border-gray-800/50 shadow-inner mb-6 md:mb-8">
+                    <div className="w-10 h-10 md:w-12 md:h-12 bg-blue-900/20 rounded-full flex items-center justify-center text-blue-500 border border-blue-900/30 flex-shrink-0">
+                       <FiShield className="text-xl md:text-2xl" />
+                    </div>
+                    <div>
+                       <h4 className="text-xs md:text-sm font-black text-white mb-0.5">Your {authMode === 'login' ? 'security is our priority' : 'information is 100% secure'}</h4>
+                       <p className="text-[10px] md:text-xs text-gray-500 leading-snug">We use {authMode === 'login' ? 'top-level' : 'advanced'} encryption to keep your data safe{authMode === 'register' && ' and will never be shared'}.</p>
+                    </div>
+                 </div>
+
+                 {/* Toggle Mode */}
+                 <div className="text-center">
+                    <span className="text-sm font-medium text-gray-400">
+                       {authMode === 'login' ? "Don't have an account? " : "Already have an account? "}
+                       <button onClick={() => {setAuthMode(authMode === 'login' ? 'register' : 'login'); setLoginError('');}} className="text-[#F2A900] font-black hover:underline transition">
+                          {authMode === 'login' ? 'Sign up now' : 'Login'}
+                       </button>
+                    </span>
+                 </div>
+              </div>
+
             </div>
           </div>
         </div>
       )}
 
+      {/* ======================================================== */}
+      {/* 3. MULTI-STEP WORKFLOW MODAL (Cart -> Location -> Pay)   */}
+      {/* ======================================================== */}
       {isWorkflowOpen && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-2 md:p-4 backdrop-blur-sm pb-20 md:pb-4">
           <div className="bg-white w-full max-w-3xl rounded-2xl shadow-2xl overflow-hidden relative max-h-[90vh] flex flex-col animate-fade-in border border-gray-200">
