@@ -9,7 +9,7 @@ import {
   FiSmartphone, FiArrowLeft, FiMoreHorizontal, FiSliders, FiList, FiGrid,
   FiCamera, FiMic, FiMaximize, FiUploadCloud, FiChevronDown, FiZap, FiMessageCircle,
   FiHome, FiTag, FiPackage, FiHeadphones, FiHeart, FiArrowRight, FiClock,
-  FiEyeOff, FiEye, FiCalendar
+  FiEyeOff, FiEye, FiCalendar, FiStar
 } from 'react-icons/fi';
 
 import Footer from './components/common/Footer';
@@ -423,6 +423,7 @@ export default function HomePage() {
       {/* MOBILE TOP HEADER (KWA VIEW ZOTE) */}
       {/* ========================================================= */}
       <header className={`md:hidden sticky top-0 z-40 px-4 py-3 shadow-sm pb-0 ${viewMode === 'deals' ? 'bg-[#0A101D] border-b border-gray-800' : 'bg-white'}`}>
+        
         {viewMode === 'deals' ? (
            <div className="flex items-center gap-3 pb-3 pt-1">
              <button onClick={() => setViewMode('home')} className="text-gray-400 hover:text-white p-1"><FiArrowLeft size={22}/></button>
@@ -430,6 +431,7 @@ export default function HomePage() {
            </div>
         ) : (
            <>
+             {/* Search Bar Row */}
              <div className="flex items-center gap-3">
                <div className="flex-1 flex border border-gray-200 rounded-xl overflow-hidden bg-gray-50 h-11 focus-within:border-[#F2A900] transition-colors">
                  <div className="pl-3 flex items-center text-gray-400"><FiSearch size={16}/></div>
@@ -444,10 +446,15 @@ export default function HomePage() {
                  <button className="bg-[#F2A900] px-4 flex items-center justify-center text-white font-bold"><FiSearch size={18}/></button>
                </div>
              </div>
+
+             {/* Categories Horizontal Scroll */}
              <div className="flex items-center gap-6 mt-3 text-xs font-bold text-gray-500 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                 <button onClick={() => setActiveCategory('All')} className={`whitespace-nowrap pb-2 border-b-2 transition-all ${activeCategory === 'All' ? 'border-[#0F3B4E] text-[#0F3B4E]' : 'border-transparent hover:text-gray-900'}`}>All</button>
                 {CATEGORY_KEYS.map((cat) => (
-                   <button key={cat} onClick={() => setActiveCategory(cat)} className={`whitespace-nowrap pb-2 border-b-2 transition-all ${activeCategory === cat ? 'border-[#0F3B4E] text-[#0F3B4E]' : 'border-transparent hover:text-gray-900'}`}>{cat}</button>
+                   <button key={cat} onClick={() => setActiveCategory(cat)} 
+                   className={`whitespace-nowrap pb-2 border-b-2 transition-all ${activeCategory === cat ? 'border-[#0F3B4E] text-[#0F3B4E]' : 'border-transparent hover:text-gray-900'}`}>
+                      {cat}
+                   </button>
                 ))}
              </div>
            </>
@@ -505,7 +512,7 @@ export default function HomePage() {
                     <div className="flex items-center gap-3"><FiZap className={`text-lg ${viewMode === 'deals' ? 'fill-current' : 'text-gray-400'}`}/> Flash Sales</div>
                     <span className="bg-[#F2A900] text-[#0A101D] text-[9px] px-1.5 py-0.5 rounded font-black">HOT</span>
                  </button>
-                 <button onClick={() => router.push('/shop')} className={`flex items-center gap-3 px-4 py-3 rounded-lg transition ${viewMode === 'deals' ? 'hover:bg-gray-800 hover:text-white' : 'hover:bg-gray-50'}`}><FiGrid className="text-lg text-gray-400"/> Categories</button>
+                 <button onClick={() => { setViewMode('home'); setActiveCategory('All'); }} className={`flex items-center gap-3 px-4 py-3 rounded-lg transition ${viewMode === 'deals' ? 'hover:bg-gray-800 hover:text-white' : 'hover:bg-gray-50'}`}><FiGrid className="text-lg text-gray-400"/> Categories</button>
                  <button onClick={() => router.push('/profile')} className={`flex items-center gap-3 px-4 py-3 rounded-lg transition ${viewMode === 'deals' ? 'hover:bg-gray-800 hover:text-white' : 'hover:bg-gray-50'}`}><FiPackage className="text-lg text-gray-400"/> Orders</button>
                  <button className={`flex items-center gap-3 px-4 py-3 rounded-lg transition ${viewMode === 'deals' ? 'hover:bg-gray-800 hover:text-white' : 'hover:bg-gray-50'}`}><FiHeart className="text-lg text-gray-400"/> Wishlist</button>
                  <div className={`border-t my-2 mx-2 ${viewMode === 'deals' ? 'border-gray-800' : 'border-gray-100'}`}></div>
@@ -522,14 +529,14 @@ export default function HomePage() {
            {/* ======================================================= */}
            {viewMode === 'home' && (
              <div className="animate-fade-in px-4 md:px-0">
-               {/* Delivery Pill (Mobile) */}
+               {/* Delivery Pill (Mobile Only) */}
                <div className="md:hidden flex items-center gap-2 text-[10px] font-bold bg-[#F8FAFC] border border-gray-100 p-2.5 rounded-xl text-gray-600 mb-4 mt-2">
                    <FiMapPin className="text-gray-400 text-sm"/>
                    <span className="truncate flex-1">Deliver to {deliverLocation}...</span>
                    <FiChevronDown className="text-gray-400"/>
                </div>
 
-               {/* Trust Badges (Pre-Banner - Mobile) */}
+               {/* Top Trust Badges (Pre-Banner - Mobile Only) */}
                <div className="md:hidden flex gap-2 mb-4">
                   <div className="flex-1 bg-white p-2.5 rounded-xl border border-gray-100 shadow-sm flex items-center gap-2">
                      <div className="bg-[#0F3B4E] text-white p-1.5 rounded-md"><FiTruck size={14}/></div>
@@ -541,7 +548,7 @@ export default function HomePage() {
                   </div>
                </div>
 
-               {/* Hero Banner */}
+               {/* Mobile Hero Banner */}
                <div className="relative w-full h-[170px] md:h-[340px] rounded-xl overflow-hidden shadow-sm mb-4 bg-[#0A101D]">
                  {activeBanners.map((banner, index) => (
                    <div key={banner.id} className={`absolute inset-0 w-full h-full transition-opacity duration-1000 bg-gradient-to-r ${banner.bgColor} flex flex-col justify-center px-5 md:px-16 text-white ${index === currentBannerIndex ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'}`}>
@@ -560,7 +567,7 @@ export default function HomePage() {
                  </div>
                </div>
 
-               {/* Trust Features Mobile vs Desktop */}
+               {/* Trust Features (Post Banner Grid - Mobile) */}
                <div className="md:hidden flex justify-between items-start pt-2 pb-4 mb-2 border-b border-gray-50">
                   <div className="flex flex-col items-center text-center w-1/4"><FiTruck className="text-gray-600 text-lg mb-1.5"/><span className="text-[8px] font-black text-gray-800 leading-tight">Free Delivery<br/><span className="text-[7px] text-gray-500 font-normal">On orders over TZS 50,000</span></span></div>
                   <div className="flex flex-col items-center text-center w-1/4"><FiShield className="text-gray-600 text-lg mb-1.5"/><span className="text-[8px] font-black text-gray-800 leading-tight">Secure Payment<br/><span className="text-[7px] text-gray-500 font-normal">100% secure payments</span></span></div>
@@ -568,6 +575,7 @@ export default function HomePage() {
                   <div className="flex flex-col items-center text-center w-1/4"><FiHeadphones className="text-gray-600 text-lg mb-1.5"/><span className="text-[8px] font-black text-gray-800 leading-tight">24/7 Support<br/><span className="text-[7px] text-gray-500 font-normal">We are here to help</span></span></div>
                </div>
 
+               {/* Trust Badges Desktop */}
                <div className="hidden md:flex justify-between items-center bg-white rounded-2xl shadow-sm border border-gray-100 px-8 py-6 mb-8">
                    <div className="flex items-center gap-4"><FiTruck className="text-4xl text-gray-700"/><div className="flex flex-col leading-tight"><span className="text-sm font-black text-gray-900">FREE Delivery</span><span className="text-xs text-gray-500 mt-1">on orders over TZS 50,000</span></div></div>
                    <div className="w-px h-10 bg-gray-100"></div>
@@ -583,7 +591,7 @@ export default function HomePage() {
                   <div className="flex items-center gap-1.5 md:gap-3">
                      <FiZap className="text-[#F2A900] text-lg md:text-3xl fill-[#F2A900]" />
                      <h2 className="text-sm md:text-2xl font-black text-gray-900">{t.flashSales}</h2>
-                     <span className="text-[8px] md:text-sm text-gray-500 font-bold ml-1 md:ml-2 leading-tight">Limited time offers - Don't miss out!</span>
+                     <span className="text-[8px] md:text-sm text-gray-500 font-medium ml-1 md:ml-2 leading-tight">Limited time offers - Don't miss out!</span>
                   </div>
                   <div className="flex items-center gap-2 md:gap-6">
                      <div className="flex items-center gap-1.5 md:gap-3 text-[9px] md:text-xs font-bold text-gray-600">
@@ -600,7 +608,7 @@ export default function HomePage() {
                   </div>
                </div>
 
-               {/* Products */}
+               {/* Products (Horizontal on Mobile, Grid on PC) */}
                <div className="md:hidden flex overflow-x-auto hide-scrollbar gap-3 pb-4 -mx-4 px-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                    {filteredProducts.length === 0 && <div className="text-xs text-gray-500">No products found.</div>}
                    {filteredProducts.slice(0,6).map((product) => (
@@ -616,7 +624,7 @@ export default function HomePage() {
                   ))}
                </div>
 
-               {/* Big Deals Banner */}
+               {/* Secondary Banner: Big Deals */}
                <div className="bg-[#0F3B4E] md:bg-[#0A101D] rounded-xl md:rounded-2xl p-5 md:p-8 text-white relative overflow-hidden shadow-sm mt-2 mb-6 flex flex-col md:flex-row items-center justify-between">
                   <div className="z-10 relative text-center md:text-left w-full md:w-auto">
                      <h3 className="text-sm md:text-xl font-black mb-1">Big Deals on Top Brands</h3>
@@ -655,11 +663,14 @@ export default function HomePage() {
              </div>
            )}
 
+
            {/* ======================================================= */}
            {/* CONTENT: DEALS / FLASH SALES VIEW (DARK MODE)           */}
            {/* ======================================================= */}
            {viewMode === 'deals' && (
              <div className="animate-fade-in bg-[#050B14] min-h-screen text-white px-4 md:px-0 rounded-2xl md:p-6 overflow-hidden">
+                
+                {/* Deals Header Section */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8 mt-2 md:mt-0">
                    <div>
                       <h2 className="text-2xl md:text-3xl font-black flex items-center gap-2 mb-1">
@@ -673,21 +684,42 @@ export default function HomePage() {
                    </div>
                 </div>
 
+                {/* Big Timer Banner */}
                 <div className="bg-[#0A101D] border border-gray-800 rounded-2xl p-6 md:p-8 flex flex-col md:flex-row items-center justify-between mb-8 relative overflow-hidden shadow-2xl">
+                   {/* Background Glow */}
                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-blue-600/20 blur-[100px] rounded-full pointer-events-none"></div>
+                   
                    <div className="z-10 text-center md:text-left mb-6 md:mb-0 w-full md:w-auto">
                       <h3 className="text-gray-400 text-sm font-bold uppercase tracking-wider mb-4">Flash Sale Ends In</h3>
                       <div className="flex items-center justify-center md:justify-start gap-3 md:gap-6">
-                         <div className="flex flex-col items-center"><span className="text-4xl md:text-5xl font-black text-white bg-gray-900 px-3 md:px-4 py-2 md:py-3 rounded-xl border border-gray-700 shadow-inner">{timeLeft.d}</span><span className="text-[10px] md:text-xs text-gray-500 mt-2 uppercase font-bold">Days</span></div><span className="text-2xl md:text-4xl font-black text-gray-600 pb-5">:</span>
-                         <div className="flex flex-col items-center"><span className="text-4xl md:text-5xl font-black text-white bg-gray-900 px-3 md:px-4 py-2 md:py-3 rounded-xl border border-gray-700 shadow-inner">{timeLeft.h}</span><span className="text-[10px] md:text-xs text-gray-500 mt-2 uppercase font-bold">Hrs</span></div><span className="text-2xl md:text-4xl font-black text-gray-600 pb-5">:</span>
-                         <div className="flex flex-col items-center"><span className="text-4xl md:text-5xl font-black text-[#F2A900] bg-gray-900 px-3 md:px-4 py-2 md:py-3 rounded-xl border border-gray-700 shadow-inner">{timeLeft.m}</span><span className="text-[10px] md:text-xs text-gray-500 mt-2 uppercase font-bold">Mins</span></div><span className="text-2xl md:text-4xl font-black text-gray-600 pb-5">:</span>
-                         <div className="flex flex-col items-center"><span className="text-4xl md:text-5xl font-black text-red-500 bg-gray-900 px-3 md:px-4 py-2 md:py-3 rounded-xl border border-gray-700 shadow-inner animate-pulse">{timeLeft.s}</span><span className="text-[10px] md:text-xs text-gray-500 mt-2 uppercase font-bold">Secs</span></div>
+                         <div className="flex flex-col items-center">
+                            <span className="text-4xl md:text-5xl font-black text-white bg-gray-900 px-3 md:px-4 py-2 md:py-3 rounded-xl border border-gray-700 shadow-inner">{timeLeft.d}</span>
+                            <span className="text-[10px] md:text-xs text-gray-500 mt-2 uppercase font-bold">Days</span>
+                         </div>
+                         <span className="text-2xl md:text-4xl font-black text-gray-600 pb-5">:</span>
+                         <div className="flex flex-col items-center">
+                            <span className="text-4xl md:text-5xl font-black text-white bg-gray-900 px-3 md:px-4 py-2 md:py-3 rounded-xl border border-gray-700 shadow-inner">{timeLeft.h}</span>
+                            <span className="text-[10px] md:text-xs text-gray-500 mt-2 uppercase font-bold">Hrs</span>
+                         </div>
+                         <span className="text-2xl md:text-4xl font-black text-gray-600 pb-5">:</span>
+                         <div className="flex flex-col items-center">
+                            <span className="text-4xl md:text-5xl font-black text-[#F2A900] bg-gray-900 px-3 md:px-4 py-2 md:py-3 rounded-xl border border-gray-700 shadow-inner">{timeLeft.m}</span>
+                            <span className="text-[10px] md:text-xs text-gray-500 mt-2 uppercase font-bold">Mins</span>
+                         </div>
+                         <span className="text-2xl md:text-4xl font-black text-gray-600 pb-5">:</span>
+                         <div className="flex flex-col items-center">
+                            <span className="text-4xl md:text-5xl font-black text-red-500 bg-gray-900 px-3 md:px-4 py-2 md:py-3 rounded-xl border border-gray-700 shadow-inner animate-pulse">{timeLeft.s}</span>
+                            <span className="text-[10px] md:text-xs text-gray-500 mt-2 uppercase font-bold">Secs</span>
+                         </div>
                       </div>
                       <div className="mt-6">
-                         <div className="w-full bg-gray-800 h-2 rounded-full overflow-hidden mb-2"><div className="bg-gradient-to-r from-[#F2A900] to-red-500 w-[85%] h-full rounded-full"></div></div>
+                         <div className="w-full bg-gray-800 h-2 rounded-full overflow-hidden mb-2">
+                            <div className="bg-gradient-to-r from-[#F2A900] to-red-500 w-[85%] h-full rounded-full"></div>
+                         </div>
                          <p className="text-xs text-[#F2A900] font-bold">Hurry up! Limited time offer. Don't miss out!</p>
                       </div>
                    </div>
+
                    <div className="z-10 flex flex-col items-center justify-center relative">
                       <div className="absolute inset-0 bg-yellow-500/20 blur-[50px] rounded-full"></div>
                       <h2 className="text-5xl md:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-b from-[#F2A900] to-yellow-700 leading-none">75%</h2>
@@ -695,6 +727,7 @@ export default function HomePage() {
                    </div>
                 </div>
 
+                {/* Badges Row */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 mb-8">
                    <div className="bg-[#0A101D] border border-gray-800 rounded-xl p-3 md:p-4 flex items-center gap-3"><FiTruck className="text-[#F2A900] text-xl md:text-2xl" /><div><p className="text-[10px] md:text-xs font-bold text-gray-200">Fast Delivery</p><p className="text-[8px] md:text-[10px] text-gray-500">TZS 100,000+</p></div></div>
                    <div className="bg-[#0A101D] border border-gray-800 rounded-xl p-3 md:p-4 flex items-center gap-3"><FiCheckCircle className="text-[#F2A900] text-xl md:text-2xl" /><div><p className="text-[10px] md:text-xs font-bold text-gray-200">Easy Returns</p><p className="text-[8px] md:text-[10px] text-gray-500">7 Days Return</p></div></div>
@@ -702,6 +735,7 @@ export default function HomePage() {
                    <div className="bg-[#0A101D] border border-gray-800 rounded-xl p-3 md:p-4 flex items-center gap-3"><FiStar className="text-[#F2A900] text-xl md:text-2xl" /><div><p className="text-[10px] md:text-xs font-bold text-gray-200">100% Authentic</p><p className="text-[8px] md:text-[10px] text-gray-500">Genuine Products</p></div></div>
                 </div>
 
+                {/* Tabs */}
                 <div className="flex items-center gap-6 border-b border-gray-800 pb-3 mb-6 overflow-x-auto hide-scrollbar">
                    <button className="text-[#F2A900] border-b-2 border-[#F2A900] pb-3 font-bold text-sm whitespace-nowrap">Promo Products</button>
                    <button className="text-gray-500 hover:text-gray-300 pb-3 font-bold text-sm whitespace-nowrap transition">All Deals</button>
@@ -709,37 +743,47 @@ export default function HomePage() {
                    <button className="text-gray-500 hover:text-gray-300 pb-3 font-bold text-sm whitespace-nowrap transition">Upcoming</button>
                 </div>
 
+                {/* Filter and Sort */}
                 <div className="flex justify-between items-center mb-6">
                    <button className="text-gray-400 text-xs font-bold flex items-center gap-2 bg-[#0A101D] px-3 py-1.5 rounded-lg border border-gray-800"><FiFilter/> Filter</button>
-                   <div className="text-gray-400 text-xs font-bold flex items-center gap-2">Sort: <span className="text-white">Best Match</span> <FiChevronDown/></div>
+                   <div className="text-gray-400 text-xs font-bold flex items-center gap-2">
+                      Sort: <span className="text-white">Best Match</span> <FiChevronDown/>
+                   </div>
                 </div>
 
+                {/* Deals Grid */}
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4 pb-12">
                    {filteredProducts.length === 0 && <div className="text-gray-500 text-sm col-span-full py-10 text-center">No deals available at the moment.</div>}
-                   {filteredProducts.map((product) => (<DealsProductCard key={product.id} product={product} />))}
+                   {filteredProducts.map((product) => (
+                      <DealsProductCard key={product.id} product={product} />
+                   ))}
                 </div>
+
              </div>
            )}
 
         </div>
       </main>
 
-      {/* MOBILE BOTTOM NAV */}
+      {/* MOBILE BOTTOM NAVIGATION (MOCKUP EXACT REPLICA) */}
       <div className="md:hidden fixed bottom-0 left-0 w-full bg-white border-t border-gray-100 flex justify-around items-center h-[65px] px-2 z-50 pb-safe shadow-[0_-10px_40px_rgba(0,0,0,0.05)]">
         <button onClick={() => { setViewMode('home'); setActiveCategory('All'); window.scrollTo(0,0); }} className={`flex flex-col items-center gap-1 w-[20%] transition ${viewMode === 'home' ? 'text-[#F2A900]' : 'text-gray-400 hover:text-gray-900'}`}>
           <FiHome className={`text-xl ${viewMode === 'home' ? 'fill-current' : ''}`} />
           <span className="text-[9px] font-bold">Home</span>
         </button>
-        <button onClick={() => router.push('/shop')} className={`flex flex-col items-center gap-1 w-[20%] text-gray-400 hover:text-gray-900`}>
+        <button onClick={() => { setViewMode('home'); setActiveCategory('All'); }} className={`flex flex-col items-center gap-1 w-[20%] text-gray-400 hover:text-gray-900`}>
           <FiGrid className="text-xl" />
           <span className="text-[9px] font-bold">Categories</span>
         </button>
+        
+        {/* CENTER FLASH SALES / DEALS BUTTON */}
         <div className="relative -top-5 w-[20%] flex justify-center" onClick={() => { setViewMode('deals'); window.scrollTo(0,0); }}>
            <div className={`w-[52px] h-[52px] rounded-full flex items-center justify-center text-white shadow-lg border-[3px] border-white cursor-pointer transition ${viewMode === 'deals' ? 'bg-[#F2A900]' : 'bg-[#0F3B4E] hover:bg-[#0D3040]'}`}>
               <FiZap className={`text-[22px] ${viewMode === 'deals' ? 'fill-white' : ''}`} />
            </div>
            <span className={`absolute -bottom-4 text-[9px] font-bold w-full text-center ${viewMode === 'deals' ? 'text-[#F2A900]' : 'text-gray-500'}`}>Flash Sales</span>
         </div>
+
         <button onClick={openCartWorkflow} className="flex flex-col items-center gap-1 w-[20%] text-gray-400 hover:text-gray-900 relative">
           <div className="relative">
              <FiShoppingCart className="text-xl" />
