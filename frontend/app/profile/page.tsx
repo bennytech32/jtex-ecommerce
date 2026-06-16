@@ -9,7 +9,7 @@ import {
   FiShoppingCart, FiSearch, FiGlobe, FiTrash2, FiChevronRight, 
   FiMapPin, FiShield, FiTruck, FiSmartphone, FiSettings, FiHeart, 
   FiHelpCircle, FiEdit2, FiPlus, FiMessageCircle, FiBox, FiMoon, FiSun, FiChevronDown,
-  FiBell, FiCalendar, FiClock, FiActivity, FiArrowUpRight, FiArrowDownRight
+  FiBell, FiCalendar, FiClock, FiActivity, FiArrowUpRight, FiArrowDownRight, FiMoreHorizontal
 } from 'react-icons/fi';
 
 import TopTicker from '../components/navigation/TopTicker';
@@ -722,38 +722,6 @@ export default function ProfilePage() {
 
          </div>
       </main>
-
-      {/* MOBILE BOTTOM NAVIGATION (Mockup Accurate) */}
-      <div className={`md:hidden fixed bottom-0 left-0 w-full border-t flex justify-around items-center h-[65px] px-2 z-50 rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.3)] pb-2 ${isDark ? 'bg-[#0A101D] border-gray-800' : 'bg-white border-gray-100'}`}>
-        <button onClick={() => setActiveTab('overview')} className={`flex flex-col items-center gap-1 w-16 pt-2 ${activeTab === 'overview' ? 'text-[#F2A900]' : 'text-gray-500'}`}>
-          <FiHome className="text-xl" />
-          <span className="text-[9px] font-bold">Dashboard</span>
-        </button>
-        <button onClick={() => setActiveTab('orders')} className={`flex flex-col items-center gap-1 w-16 pt-2 ${activeTab === 'orders' ? 'text-[#F2A900]' : 'text-gray-500'}`}>
-          <div className="relative">
-             <FiPackage className="text-xl" />
-             <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[8px] font-black w-3 h-3 rounded-full flex items-center justify-center border border-[#0A101D]">{orders.length}</span>
-          </div>
-          <span className="text-[9px] font-bold">Orders</span>
-        </button>
-        
-        {/* CENTER BIG BUTTON */}
-        <div className="relative -top-5">
-           <div className={`w-14 h-14 rounded-full flex items-center justify-center text-white shadow-lg border-4 cursor-pointer transition ${isDark ? 'bg-[#1E293B] border-[#0A101D] hover:bg-gray-700' : 'bg-[#0F3B4E] border-white hover:bg-[#0D3040]'}`}>
-              <FiMessageCircle className={`text-2xl ${isDark ? 'text-[#F2A900]' : 'text-white'}`} />
-           </div>
-           <span className="absolute -bottom-4 left-1/2 -translate-x-1/2 text-[9px] font-bold text-gray-500">Support</span>
-        </div>
-
-        <button onClick={() => setActiveTab('debts')} className={`flex flex-col items-center gap-1 w-16 pt-2 ${activeTab === 'debts' ? 'text-[#F2A900]' : 'text-gray-500'}`}>
-          <FiFileText className="text-xl" />
-          <span className="text-[9px] font-bold">Debts</span>
-        </button>
-        <button onClick={() => setActiveTab('settings')} className={`flex flex-col items-center gap-1 w-16 pt-2 ${activeTab === 'settings' ? 'text-[#F2A900]' : 'text-gray-500'}`}>
-          <FiUser className="text-xl" />
-          <span className="text-[9px] font-bold">Account</span>
-        </button>
-      </div>
 
       {/* MODAL YA RISITI (RECEIPT) */}
       {selectedOrder && (
