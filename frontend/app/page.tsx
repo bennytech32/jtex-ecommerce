@@ -560,7 +560,7 @@ export default function HomePage() {
                  </div>
                </div>
 
-               {/* Trust Features (Post Banner Grid - Mobile) */}
+               {/* Trust Features Mobile vs Desktop */}
                <div className="md:hidden flex justify-between items-start pt-2 pb-4 mb-2 border-b border-gray-50">
                   <div className="flex flex-col items-center text-center w-1/4"><FiTruck className="text-gray-600 text-lg mb-1.5"/><span className="text-[8px] font-black text-gray-800 leading-tight">Free Delivery<br/><span className="text-[7px] text-gray-500 font-normal">On orders over TZS 50,000</span></span></div>
                   <div className="flex flex-col items-center text-center w-1/4"><FiShield className="text-gray-600 text-lg mb-1.5"/><span className="text-[8px] font-black text-gray-800 leading-tight">Secure Payment<br/><span className="text-[7px] text-gray-500 font-normal">100% secure payments</span></span></div>
@@ -568,7 +568,6 @@ export default function HomePage() {
                   <div className="flex flex-col items-center text-center w-1/4"><FiHeadphones className="text-gray-600 text-lg mb-1.5"/><span className="text-[8px] font-black text-gray-800 leading-tight">24/7 Support<br/><span className="text-[7px] text-gray-500 font-normal">We are here to help</span></span></div>
                </div>
 
-               {/* Trust Badges Desktop */}
                <div className="hidden md:flex justify-between items-center bg-white rounded-2xl shadow-sm border border-gray-100 px-8 py-6 mb-8">
                    <div className="flex items-center gap-4"><FiTruck className="text-4xl text-gray-700"/><div className="flex flex-col leading-tight"><span className="text-sm font-black text-gray-900">FREE Delivery</span><span className="text-xs text-gray-500 mt-1">on orders over TZS 50,000</span></div></div>
                    <div className="w-px h-10 bg-gray-100"></div>
@@ -655,7 +654,6 @@ export default function HomePage() {
                </div>
              </div>
            )}
-
 
            {/* ======================================================= */}
            {/* CONTENT: DEALS / FLASH SALES VIEW (DARK MODE)           */}
@@ -1146,4 +1144,40 @@ export default function HomePage() {
                       <input type="text" required value={address} onChange={e => setAddress(e.target.value)} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-[#F2A900]" placeholder="Example: Kinondoni, Mkwajuni" />
                     </div>
                     <div className="flex gap-3 pt-4">
-                       <button onClick={()
+                       <button onClick={() => setWorkflowStep(1)} className="px-6 py-4 bg-gray-100 text-gray-600 font-bold rounded-xl text-sm hover:bg-gray-200 transition">Back</button>
+                       <button onClick={() => { if(region && address) setWorkflowStep(3); else alert('Please fill in Region and Full Address'); }} disabled={!address} className="flex-1 bg-[#0A101D] disabled:bg-gray-300 text-white font-black py-4 rounded-xl flex items-center justify-center gap-2 transition shadow-lg">{t.proceedPayment} <FiChevronRight /></button>
+                    </div>
+                  </div>
+                </div>
+              )}
+              {workflowStep === 3 && (
+                <form onSubmit={handlePlaceOrder} className="max-w-xl mx-auto animate-fade-in">
+                  <h3 className="text-xl sm:text-2xl font-black text-gray-900 mb-6 flex items-center gap-2 border-b border-gray-100 pb-4"><FiShield className="text-green-500"/> {t.payment}</h3>
+                  <div className="bg-[#F2A900]/10 border border-[#F2A900] rounded-xl p-4 mb-6"><p className="font-bold text-gray-900 text-sm">Pay On Delivery (COD)</p><p className="text-xs text-gray-600 mt-1">Pay when you receive the product.</p></div>
+                  <div className="border border-gray-200 bg-gray-50 rounded-xl p-5 space-y-3 text-sm">
+                    <div className="flex justify-between text-gray-600 font-medium"><span>Subtotal</span><span>TZS {cartTotal.toLocaleString()}</span></div>
+                    <div className="flex justify-between text-gray-600 font-medium"><span>{t.deliveryFee}</span><span>TZS {shippingFee.toLocaleString()}</span></div>
+                    <div className="flex justify-between text-lg sm:text-xl font-black text-gray-900 border-t border-gray-200 pt-3"><span>{t.grandTotal}</span><span>TZS {grandTotal.toLocaleString()}</span></div>
+                    {upfrontPayment > 0 && (<div className="bg-red-50 p-3 rounded-lg border border-red-100 flex justify-between items-center mt-4"><span className="block text-xs font-black text-red-600 uppercase">{t.upfront}</span><span className="font-black text-red-600 text-base">TZS {upfrontPayment.toLocaleString()}</span></div>)}
+                  </div>
+                  <div className="flex gap-3 mt-6">
+                     <button type="button" onClick={() => setWorkflowStep(2)} className="px-6 py-4 bg-gray-100 text-gray-600 font-bold rounded-xl text-sm hover:bg-gray-200 transition">Back</button>
+                     <button type="submit" disabled={checkoutLoading} className="flex-1 bg-green-600 hover:bg-green-700 text-white font-black py-4 rounded-xl transition shadow-lg flex items-center justify-center gap-2">{checkoutLoading ? 'Processing...' : <><FiLock /> {t.confirmOrder}</>}</button>
+                  </div>
+                </form>
+              )}
+              {workflowStep === 4 && (
+                <div className="text-center py-8 animate-fade-in">
+                  <div className="w-24 h-24 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-6"><FiCheckCircle className="text-6xl text-green-500 animate-bounce" /></div>
+                  <h3 className="text-2xl sm:text-3xl font-black text-gray-900 mb-4">Order Successful!</h3>
+                  <p className="text-sm text-gray-500 mb-8 max-w-sm mx-auto leading-relaxed">{t.successMsg}</p>
+                  <button onClick={() => router.push('/profile')} className="w-full max-w-sm mx-auto bg-[#0A101D] hover:bg-gray-800 text-white font-black py-4 rounded-xl flex items-center justify-center gap-2 transition shadow-lg"><FiUser /> {t.viewProfile}</button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
