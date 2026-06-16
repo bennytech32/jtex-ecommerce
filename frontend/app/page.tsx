@@ -2,19 +2,16 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { useCart } from './context/CartContext'; 
+import { useCart } from '../context/CartContext'; 
 import { 
   FiShoppingCart, FiSearch, FiFilter, FiGlobe, FiX, FiCheckCircle, FiMapPin, 
   FiTruck, FiShield, FiLock, FiMail, FiUser, FiPhone, FiTrash2, FiChevronRight, 
   FiSmartphone, FiArrowLeft, FiMoreHorizontal, FiSliders, FiList, FiGrid,
   FiCamera, FiMic, FiMaximize, FiUploadCloud, FiChevronDown, FiZap, FiMessageCircle,
-  FiHome, FiTag, FiPackage, FiHeadphones, FiHeart
+  FiHome, FiTag, FiPackage, FiHeadphones, FiHeart, FiArrowRight
 } from 'react-icons/fi';
 
-import TopTicker from './components/navigation/TopTicker';
-import NavbarLinks from './components/navigation/NavbarLinks';
-import SidebarCategories from './components/navigation/SidebarCategories';
-import Footer from './components/common/Footer';
+import Footer from '../components/common/Footer';
 
 const translations = {
   en: {
@@ -133,20 +130,7 @@ const translations = {
   }
 };
 
-const CATEGORY_UI_MOCKS = [
-  { name: 'Electronics', count: '1,248 items', icon: '🎧' },
-  { name: 'Computers', count: '856 items', icon: '💻' },
-  { name: 'Phones', count: '1,562 items', icon: '📱' },
-  { name: 'Fashion', count: '945 items', icon: '👕' },
-  { name: 'Home & Kitchen', count: '1,120 items', icon: '🍳' },
-  { name: 'Beauty & Health', count: '632 items', icon: '🧴' },
-  { name: 'Sports & Outdoors', count: '412 items', icon: '⚽' },
-  { name: 'Toys & Games', count: '385 items', icon: '🧸' },
-  { name: 'Automotive', count: '678 items', icon: '🚗' },
-];
-
-const CATEGORY_KEYS = ['All', 'Electronics', 'Computers', 'Phones', 'Fashion', 'Home', 'Sports', 'Beauty'];
-const MOCK_BRANDS = ['SAMSUNG', 'Apple', 'MI', 'Infinix', 'TECNO'];
+const CATEGORY_KEYS = ['Electronics', 'Computers', 'Phones', 'Fashion', 'Home & Kitchen', 'Beauty'];
 
 export default function HomePage() {
   const router = useRouter();
@@ -200,15 +184,15 @@ export default function HomePage() {
   const getApiUrl = () => 'https://jtex-ecommerce-production.up.railway.app';
 
   const activeBanners = [
-    { id: 1, title: lang === 'en' ? "Best Quality, Best Prices" : "Ubora Bora, Bei Bora", subtitle: "Shop the latest gadgets and electronics.", bgColor: "from-[#0F3B4E] to-[#1A5C7A]", buttonText: t.buyNow, categoryTarget: "Electronics" },
-    { id: 2, title: "New Phones in Town", subtitle: "Order today and get it delivered fast.", bgColor: "from-[#F2A900] to-yellow-600", buttonText: "View Phones", categoryTarget: "Phones" }
+    { id: 1, title: "Best Quality,\nBest Prices,\nOnly on Jtex", subtitle: "Shop the latest gadgets, electronics,\nfashion and more at unbeatable prices.", bgColor: "from-[#0D2137] to-[#1E3E59]", buttonText: t.buyNow, categoryTarget: "Electronics" },
+    { id: 2, title: "New Phones\nIn Town", subtitle: "Order today and get it delivered fast.", bgColor: "from-[#F2A900] to-[#C98A00]", buttonText: "View Phones", categoryTarget: "Phones" }
   ];
 
   // 1. AUTO-SLIDE BANNERS EFFECT
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentBannerIndex((prev) => (prev + 1) % activeBanners.length);
-    }, 4000);
+    }, 5000);
     return () => clearInterval(timer);
   }, [activeBanners.length]);
 
@@ -224,7 +208,7 @@ export default function HomePage() {
   useEffect(() => {
     const calculateTimeLeft = () => {
       const now = new Date();
-      const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1); // Reset at midnight
+      const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
       const diff = tomorrow.getTime() - now.getTime();
       return {
         h: String(Math.floor((diff / (1000 * 60 * 60)) % 24)).padStart(2, '0'),
@@ -261,7 +245,6 @@ export default function HomePage() {
     };
     fetchRealProducts();
 
-    // CUSTOM EVENT: Kupokea amri kutoka SidebarCategories
     const handleCategorySelect = (e: any) => {
         if(e.detail && e.detail.category) {
             setActiveCategory(e.detail.category);
@@ -290,45 +273,8 @@ export default function HomePage() {
     setFilteredProducts(result);
   }, [searchQuery, activeCategory, sortOrder, products]);
 
-  // SMART SEARCH FUNCTIONS
-  const startVoiceSearch = () => {
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SpeechRecognition) { alert(t.voiceError); return; }
-    const recognition = new SpeechRecognition();
-    recognition.lang = lang === 'en' ? 'en-US' : 'sw-TZ';
-    recognition.start();
-    setIsVoiceListening(true);
-    recognition.onresult = (event: any) => { setSearchQuery(event.results[0][0].transcript); setIsVoiceListening(false); };
-    recognition.onerror = () => setIsVoiceListening(false);
-    recognition.onend = () => setIsVoiceListening(false);
-  };
-
-  const handleAiSimulation = (closeFunc: any) => {
-    setAiActionLoading(true);
-    setTimeout(() => { setAiActionLoading(false); closeFunc(false); setSearchQuery('Smartphone'); }, 2000);
-  };
-
-  const toggleWishlist = (e: React.MouseEvent, productId: string) => {
-    e.stopPropagation();
-    setWishlist(prev => prev.includes(productId) ? prev.filter(id => id !== productId) : [...prev, productId]);
-  };
-
   const toggleLanguage = () => setLang(prev => prev === 'en' ? 'sw' : 'en');
   
-  const getTranslatedCategoryName = (catKey: string) => {
-      switch(catKey) {
-          case 'All': return t.all;
-          case 'Electronics': return t.catElectronics;
-          case 'Computers': return t.catComputers;
-          case 'Phones': return t.catPhones;
-          case 'Fashion': return t.catFashion;
-          case 'Home': return t.catHome;
-          case 'Sports': return t.catSports;
-          case 'Beauty': return t.catBeauty;
-          default: return catKey;
-      }
-  };
-
   const handleAuthSuccess = (data: any) => {
     localStorage.setItem('jtex_token', data.token);
     localStorage.setItem('jtex_user', JSON.stringify(data.user));
@@ -388,17 +334,34 @@ export default function HomePage() {
     setIsWorkflowOpen(true);
   };
 
+  const toggleWishlist = (e: React.MouseEvent, productId: string) => {
+    e.stopPropagation();
+    setWishlist(prev => prev.includes(productId) ? prev.filter(id => id !== productId) : [...prev, productId]);
+  };
+
+  const startVoiceSearch = () => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) { alert(t.voiceError); return; }
+    const recognition = new SpeechRecognition();
+    recognition.lang = lang === 'en' ? 'en-US' : 'sw-TZ';
+    recognition.start();
+    setIsVoiceListening(true);
+    recognition.onresult = (event: any) => { setSearchQuery(event.results[0][0].transcript); setIsVoiceListening(false); };
+    recognition.onerror = () => setIsVoiceListening(false);
+    recognition.onend = () => setIsVoiceListening(false);
+  };
+
   // REUSABLE PRODUCT CARD
   const ProductCard = ({ product }: { product: any }) => {
     const isWishlisted = wishlist.includes(product.id);
     const discount = product.oldPrice ? Math.round(((product.oldPrice - product.price) / product.oldPrice) * 100) : 0;
     return (
       <div className="bg-white rounded-xl p-3 sm:p-4 shadow-sm hover:shadow-md transition border border-gray-100 flex flex-col h-full group cursor-pointer" onClick={() => setSelectedProduct(product)}>
-        <div className="relative aspect-square w-full bg-white rounded-lg mb-3 overflow-hidden flex items-center justify-center p-2">
+        <div className="relative aspect-square w-full bg-[#F5F8FA] rounded-lg mb-3 overflow-hidden flex items-center justify-center p-4">
           <button onClick={(e) => toggleWishlist(e, product.id)} className="absolute top-2 right-2 z-20 w-7 h-7 rounded-full flex items-center justify-center text-gray-400 hover:text-red-500 bg-white shadow-sm transition border border-gray-100">
             <FiHeart className={`text-sm ${isWishlisted ? "fill-red-500 text-red-500" : ""}`} />
           </button>
-          {discount > 0 && <span className="absolute top-0 left-0 bg-[#F2A900] text-white text-[10px] font-black px-1.5 py-0.5 rounded shadow-sm z-10">-{discount}%</span>}
+          {discount > 0 && <span className="absolute top-2 left-2 bg-[#F2A900] text-white text-[10px] font-black px-1.5 py-0.5 rounded shadow-sm z-10">-{discount}%</span>}
           {product.imageUrl ? (
             <img src={`${getApiUrl()}${product.imageUrl}`} alt={product.name} className="object-contain w-full h-full mix-blend-multiply group-hover:scale-105 transition duration-300" />
           ) : (
@@ -414,7 +377,7 @@ export default function HomePage() {
               ★★★★★ <span className="text-gray-400 ml-1 font-medium">(24)</span>
             </div>
             <div className="flex gap-2 mt-3 opacity-0 group-hover:opacity-100 transition-opacity">
-               <button onClick={(e) => { e.stopPropagation(); addToCart(product); }} className="flex-1 border border-gray-200 hover:border-[#F2A900] text-gray-600 hover:text-[#F2A900] text-xs font-bold py-1.5 rounded flex items-center justify-center transition"><FiShoppingCart/></button>
+               <button onClick={(e) => { e.stopPropagation(); addToCart(product); }} className="w-full border border-gray-200 hover:border-[#0F172A] text-gray-600 hover:text-[#0F172A] text-xs font-bold py-1.5 rounded flex items-center justify-center transition"><FiShoppingCart/></button>
             </div>
           </div>
         </div>
@@ -423,53 +386,85 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-gray-900 font-sans antialiased">
+    <div className="min-h-screen bg-[#F5F8FA] text-gray-900 font-sans antialiased">
       
       {/* ========================================================= */}
-      {/* DESKTOP HEADER */}
+      {/* EXACT DESKTOP HEADER FROM MOCKUP */}
       {/* ========================================================= */}
-      <header className="hidden md:flex bg-white border-b border-gray-200 sticky top-0 z-40 shadow-sm h-16 items-center px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center gap-6 w-[240px]">
-          <span onClick={() => router.push('/')} className="text-2xl font-black text-[#0F172A] tracking-tight cursor-pointer">
-            J<span className="text-[#F2A900]">tex</span>
-          </span>
+      <header className="hidden md:flex bg-[#0A101D] text-white h-[72px] items-center px-4 sm:px-6 lg:px-8 sticky top-0 z-50 shadow-md">
+        
+        {/* LOGO */}
+        <div className="flex items-center gap-2 cursor-pointer w-[200px]" onClick={() => router.push('/')}>
+           <div className="flex text-2xl font-black italic tracking-tighter">
+             <span className="text-blue-500">J</span>
+             <span className="text-orange-500">t</span>
+             <span className="text-white">ex</span>
+           </div>
         </div>
+
+        {/* LOCATION SELECTOR */}
+        <div className="flex items-center gap-2 cursor-pointer hover:text-gray-300 transition pl-4 border-l border-gray-800">
+           <FiMapPin className="text-xl text-gray-400" />
+           <div className="flex flex-col leading-none">
+              <span className="text-[10px] text-gray-400">Deliver to</span>
+              <span className="text-xs font-bold flex items-center gap-1 mt-0.5">{deliverLocation} <FiChevronDown className="text-gray-500"/></span>
+           </div>
+        </div>
+
+        {/* CENTRAL SEARCH BAR */}
         <div className="flex-1 flex justify-center px-8">
-          <div className="w-full max-w-3xl flex border-2 border-[#0F3B4E] rounded-full overflow-hidden bg-white h-11 transition-all shadow-sm">
-            <div className="bg-[#0F3B4E] text-white px-4 py-2 text-xs font-bold flex items-center gap-2">
-               ✨ AI Search <span className="font-normal opacity-80 text-[10px] hidden lg:inline">Search smarter</span>
-            </div>
-            <input 
-              type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} 
-              placeholder={t.search} className="flex-1 px-4 text-sm outline-none text-gray-900 placeholder-gray-400" 
-            />
-            <div className="flex items-center px-2 text-gray-400 gap-2">
-               <FiCamera onClick={() => setIsImageSearchOpen(true)} className="hover:text-blue-500 cursor-pointer"/>
-               <FiMic onClick={startVoiceSearch} className="hover:text-blue-500 cursor-pointer"/>
-               <FiMaximize onClick={() => setIsBarcodeOpen(true)} className="hover:text-blue-500 cursor-pointer"/>
-            </div>
-            <button className="bg-[#F2A900] px-6 flex items-center justify-center text-white hover:bg-yellow-500 transition">
-              <FiSearch className="text-lg" />
-            </button>
-          </div>
+           <div className="w-full max-w-2xl flex bg-white rounded-md overflow-hidden h-10 shadow-sm focus-within:ring-2 focus-within:ring-[#F2A900]/50 transition-all">
+              <div className="bg-gray-100 border-r border-gray-200 text-gray-700 px-3 py-2 text-xs font-bold flex items-center gap-1 cursor-pointer hover:bg-gray-200 transition">
+                 All <FiChevronDown/>
+              </div>
+              <input 
+                 type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} 
+                 placeholder="Search products, brands..." className="flex-1 px-4 text-sm outline-none text-gray-900 placeholder-gray-400" 
+              />
+              <div className="flex items-center gap-3 px-3 text-gray-400">
+                 <FiMaximize onClick={() => setIsBarcodeOpen(true)} className="hover:text-blue-500 cursor-pointer text-lg"/>
+                 <FiMic onClick={startVoiceSearch} className="hover:text-blue-500 cursor-pointer text-lg"/>
+                 <FiCamera onClick={() => setIsImageSearchOpen(true)} className="hover:text-blue-500 cursor-pointer text-lg"/>
+              </div>
+              <button className="bg-[#F2A900] px-6 flex items-center justify-center text-[#0A101D] hover:bg-yellow-500 transition">
+                 <FiSearch className="text-xl font-bold" />
+              </button>
+           </div>
         </div>
-        <div className="flex items-center gap-4 justify-end">
-          <button onClick={toggleLanguage} className="flex items-center gap-1 text-xs font-bold border border-gray-200 px-3 py-1.5 rounded-full hover:bg-gray-50">
-            <img src="https://flagcdn.com/w20/tz.png" className="w-4 rounded-sm" /> TZS <FiChevronDown/>
-          </button>
-          <button onClick={openCartWorkflow} className="relative text-gray-700 hover:text-[#F2A900] transition">
-            <FiShoppingCart className="text-xl" />
-            {cart.length > 0 && <span className="absolute -top-2 -right-2 bg-[#F2A900] text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center">{cart.length}</span>}
-          </button>
-          {user ? (
-            <div className="w-8 h-8 bg-[#0F3B4E] text-white rounded-full flex items-center justify-center font-bold text-xs cursor-pointer shadow-sm" onClick={() => router.push('/profile')}>
-              {user.name.charAt(0)}
-            </div>
-          ) : (
-            <button onClick={() => setIsLoginOpen(true)} className="text-xs font-bold bg-[#0F3B4E] text-white px-4 py-2 rounded-full hover:bg-gray-800 transition">
-              {t.signIn}
-            </button>
-          )}
+
+        {/* RIGHT SIDE ACTIONS */}
+        <div className="flex items-center gap-6">
+           {/* Language & Currency */}
+           <div onClick={toggleLanguage} className="flex items-center gap-2 cursor-pointer hover:text-gray-300 transition">
+              <img src="https://flagcdn.com/w20/tz.png" className="w-5 h-3.5 rounded-sm object-cover" />
+              <span className="text-xs font-bold">TZS <FiChevronDown className="inline text-gray-500"/></span>
+           </div>
+           
+           {/* Cart */}
+           <div onClick={openCartWorkflow} className="flex flex-col items-center cursor-pointer hover:text-[#F2A900] transition relative group">
+              <div className="relative border border-gray-700 p-2 rounded-lg bg-gray-800/50 group-hover:border-gray-500 transition">
+                 <FiShoppingCart className="text-xl" />
+                 {cart.length > 0 && <span className="absolute -top-2 -right-2 bg-[#F2A900] text-[#0A101D] text-[10px] font-black w-5 h-5 rounded-full flex items-center justify-center border-2 border-[#0A101D]">{cart.length}</span>}
+              </div>
+              <span className="text-[10px] mt-1 font-bold">Cart</span>
+           </div>
+
+           {/* Track Order */}
+           <div className="flex flex-col items-center cursor-pointer hover:text-gray-300 transition group">
+              <div className="border border-gray-700 p-2 rounded-lg bg-gray-800/50 group-hover:border-gray-500 transition">
+                 <FiPackage className="text-xl" />
+              </div>
+              <span className="text-[10px] mt-1 font-bold">Track Order</span>
+           </div>
+
+           {/* Account */}
+           <div onClick={() => { if(user) router.push('/profile'); else setIsLoginOpen(true); }} className="flex items-center gap-2 cursor-pointer border border-gray-700 py-1.5 px-3 rounded-full hover:bg-gray-800 transition">
+              <FiUser className="text-xl text-gray-400" />
+              <div className="flex flex-col leading-none">
+                 <span className="text-[9px] text-gray-400">{user ? 'Welcome back' : 'Hello, Sign In'}</span>
+                 <span className="text-xs font-bold flex items-center gap-1 mt-0.5">{user ? user.name.split(' ')[0] : 'My Account'} <FiChevronDown className="text-gray-500"/></span>
+              </div>
+           </div>
         </div>
       </header>
 
@@ -477,323 +472,209 @@ export default function HomePage() {
       {/* MOBILE HEADER */}
       {/* ========================================================= */}
       <header className="md:hidden bg-white sticky top-0 z-40 shadow-sm">
-        <div className="flex items-center justify-between px-4 py-2">
-          <span onClick={() => router.push('/')} className="text-xl font-black text-[#0F172A] tracking-tight">
-            J<span className="text-[#F2A900]">tex</span>
+        <div className="flex items-center justify-between px-4 py-2 border-b border-gray-100">
+          <span onClick={() => router.push('/')} className="text-2xl font-black italic tracking-tighter">
+             <span className="text-blue-600">J</span><span className="text-orange-500">t</span><span className="text-[#0A101D]">ex</span>
           </span>
-          <div className="flex items-center gap-3">
-             <button onClick={toggleLanguage} className="flex items-center gap-1 text-[10px] font-bold border border-gray-200 px-2 py-1 rounded-full">
+          <div className="flex items-center gap-4">
+             <div onClick={toggleLanguage} className="flex items-center gap-1 text-[10px] font-bold border border-gray-200 px-2 py-1 rounded-full">
                 <img src="https://flagcdn.com/w20/tz.png" className="w-3 rounded-sm" /> TZS
-             </button>
-             <div className="relative">
-                <FiSearch className="text-xl text-gray-700" />
              </div>
              {user ? (
-                <div className="w-6 h-6 bg-[#0F3B4E] text-white rounded-full flex items-center justify-center font-bold text-[10px]">{user.name.charAt(0)}</div>
+                <div className="w-7 h-7 bg-[#0A101D] text-white rounded-full flex items-center justify-center font-bold text-[10px]">{user.name.charAt(0)}</div>
              ) : (
                 <FiUser className="text-xl text-gray-700" onClick={() => setIsLoginOpen(true)} />
              )}
           </div>
         </div>
         
-        {/* Mobile Search Bar inside header if activeCategory is specific */}
-        {activeCategory !== 'All' && (
-          <div className="px-4 pb-3">
-            <div className="w-full flex border-2 border-[#0F3B4E] rounded-full overflow-hidden bg-white transition-all shadow-sm">
-              <div className="bg-[#0F3B4E] text-white px-2 py-1.5 text-[10px] font-bold flex items-center gap-1">
-                 ✨ AI Search
-              </div>
-              <input 
-                type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} 
-                placeholder={`Search in ${activeCategory}...`} className="flex-1 px-3 text-xs outline-none text-gray-900" 
-              />
-              <div className="flex items-center px-2 text-gray-400 gap-2">
-                 <button onClick={startVoiceSearch}><FiMic size={14}/></button>
-                 <button onClick={() => setIsImageSearchOpen(true)}><FiCamera size={14}/></button>
-              </div>
-              <button className="bg-[#F2A900] px-3 flex items-center justify-center text-white"><FiSearch size={14}/></button>
+        {/* Search Bar */}
+        <div className="px-4 py-3 bg-[#0A101D]">
+          <div className="w-full flex rounded-md overflow-hidden bg-white h-10 shadow-sm">
+            <input 
+              type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} 
+              placeholder="Search Jtex..." className="flex-1 px-4 text-sm outline-none text-gray-900" 
+            />
+            <div className="flex items-center px-2 text-gray-400 gap-2">
+               <button onClick={startVoiceSearch}><FiMic size={16}/></button>
+               <button onClick={() => setIsImageSearchOpen(true)}><FiCamera size={16}/></button>
             </div>
+            <button className="bg-[#F2A900] px-4 flex items-center justify-center text-[#0A101D]"><FiSearch size={18}/></button>
           </div>
-        )}
+        </div>
       </header>
 
-      {/* DYNAMIC DELIVERY BAR (Inasoma Nchi Kupitia API) */}
-      <div className="px-4 py-2 flex items-center gap-2 text-xs font-medium border-b bg-[#F5F8FA] border-gray-200 text-gray-600">
+      {/* MOBILE DELIVERY BAR */}
+      <div className="md:hidden px-4 py-2 flex items-center gap-2 text-xs font-medium border-b bg-[#F8FAFC] border-gray-200 text-gray-600">
           <FiMapPin className="text-gray-400"/>
           <span className="truncate">{t.deliverTo} {deliverLocation}</span>
           <FiChevronDown className="ml-auto text-gray-400"/>
       </div>
 
 
-      <main className="max-w-[1920px] mx-auto flex flex-col md:flex-row pb-20 md:pb-6 md:pt-6">
+      {/* MAIN LAYOUT */}
+      <main className="max-w-[1920px] mx-auto flex flex-col md:flex-row pb-20 md:pb-8 md:pt-6 gap-6 px-0 md:px-6 lg:px-8">
         
         {/* ========================================================= */}
-        {/* DESKTOP SIDEBAR (GLOBAL APP NAVIGATION) */}
+        {/* LEFT SIDEBAR (MOCKUP ACCURATE) */}
         {/* ========================================================= */}
-        <div className="hidden md:flex w-[240px] flex-shrink-0 flex-col pl-4 sm:pl-6 lg:pl-8">
-           <nav className="flex flex-col gap-1 text-sm font-medium text-gray-600 pr-6">
-              <button onClick={() => router.push('/')} className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition"><FiHome className="text-lg"/> Home</button>
-              <button className="flex items-center gap-3 px-4 py-3 rounded-lg bg-[#F2A900] text-white font-bold shadow-sm transition"><FiGrid className="text-lg"/> Categories</button>
-              <button className="flex items-center justify-between px-4 py-3 rounded-lg hover:bg-gray-100 transition">
-                 <div className="flex items-center gap-3"><FiTag className="text-lg"/> Deals</div>
-                 <span className="bg-red-500 text-white text-[9px] px-1.5 py-0.5 rounded font-black">Hot</span>
-              </button>
-              <button onClick={() => router.push('/profile')} className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition"><FiShoppingCart className="text-lg"/> Orders</button>
-              <button className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition"><FiHeart className="text-lg"/> Wishlist</button>
-              
-              <div className="border-t border-gray-200 my-4"></div>
-              
-              <button onClick={openCartWorkflow} className="flex items-center justify-between px-4 py-3 rounded-lg hover:bg-gray-100 transition">
-                 <div className="flex items-center gap-3"><FiShoppingCart className="text-lg"/> Cart</div>
-                 {cart.length > 0 && <span className="bg-[#F2A900] text-white text-[10px] px-2 py-0.5 rounded-full font-black">{cart.length}</span>}
-              </button>
-              <button onClick={() => router.push('/profile')} className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition"><FiUser className="text-lg"/> Account</button>
-              <button className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition"><FiSliders className="text-lg"/> Settings</button>
-              <button className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition"><FiPhone className="text-lg"/> Help & Support</button>
-           </nav>
+        <div className="hidden md:flex w-[240px] flex-shrink-0 flex-col">
+           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-3 mb-6">
+              <nav className="flex flex-col gap-1 text-sm font-bold text-gray-600">
+                 <button onClick={() => router.push('/')} className="flex items-center gap-3 px-4 py-3 rounded-lg bg-gray-50 text-[#0F172A] transition"><FiHome className="text-lg text-gray-900"/> Home</button>
+                 <button className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-50 transition"><FiGrid className="text-lg text-gray-400"/> Categories</button>
+                 <button className="flex items-center justify-between px-4 py-3 rounded-lg hover:bg-gray-50 transition">
+                    <div className="flex items-center gap-3"><FiTag className="text-lg text-gray-400"/> Deals</div>
+                    <span className="bg-[#F2A900] text-white text-[9px] px-1.5 py-0.5 rounded font-black">Hot</span>
+                 </button>
+                 <button onClick={() => router.push('/profile')} className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-50 transition"><FiPackage className="text-lg text-gray-400"/> Orders</button>
+                 <button className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-50 transition"><FiHeart className="text-lg text-gray-400"/> Wishlist</button>
+                 
+                 <div className="border-t border-gray-100 my-2 mx-2"></div>
+                 
+                 <button className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-50 transition"><FiHeadphones className="text-lg text-gray-400"/> Support</button>
+              </nav>
+           </div>
 
-           <div className="mt-auto pr-6 pt-6">
-              <div className="bg-[#0F3B4E] rounded-xl p-5 text-white relative overflow-hidden shadow-lg">
-                <p className="text-[10px] text-gray-300 font-bold mb-1">Special Offers</p>
-                <h4 className="text-xl font-black mb-1">Up to <span className="text-[#F2A900]">40% Off</span></h4>
-                <p className="text-[10px] text-gray-300 mb-4">On selected items</p>
-                <button className="bg-[#F2A900] text-[#0F172A] text-[10px] font-bold px-3 py-1.5 rounded hover:bg-yellow-500 transition w-max flex items-center gap-1">Shop Now <FiChevronRight/></button>
-                <div className="absolute -bottom-4 -right-4 text-6xl opacity-50">🎁</div>
-              </div>
+           {/* Special Offer Card */}
+           <div className="bg-[#0A101D] rounded-xl p-6 text-white relative overflow-hidden shadow-lg mt-auto">
+              <p className="text-[10px] text-gray-400 font-bold mb-1 uppercase tracking-wider">Special Offer</p>
+              <h4 className="text-3xl font-black mb-2 leading-tight">Up to <span className="text-[#F2A900]">40% Off</span></h4>
+              <p className="text-xs text-gray-300 mb-6">On selected items</p>
+              <button className="bg-white text-[#0A101D] text-xs font-black px-5 py-2.5 rounded-full hover:bg-gray-200 transition shadow-md w-max flex items-center gap-2">
+                 Shop Now <FiArrowRight className="text-[#F2A900]"/>
+              </button>
+              <div className="absolute -bottom-6 -right-6 text-7xl opacity-50 transform rotate-12">🎁</div>
            </div>
         </div>
 
         {/* ========================================================= */}
-        {/* MAIN CONTENT AREA */}
+        {/* MAIN CONTENT AREA (MOCKUP ACCURATE) */}
         {/* ========================================================= */}
-        <div className="flex-1 w-full bg-white md:bg-transparent md:pr-4 lg:pr-8">
+        <div className="flex-1 w-full flex flex-col min-w-0">
            
-           {/* MOBILE VIEW: "ALL CATEGORIES" GRID */}
-           <div className={`md:hidden ${activeCategory !== 'All' ? 'hidden' : 'block'}`}>
-              <div className="px-4 py-3">
-                 <div className="w-full flex border-2 border-[#0F3B4E] rounded-full overflow-hidden bg-white shadow-sm mb-6">
-                    <div className="bg-[#0F3B4E] text-white px-3 py-2 text-xs font-bold flex items-center gap-1">✨ AI Search</div>
-                    <input type="text" placeholder="Search products, categories..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="flex-1 px-3 text-xs outline-none" />
-                    <button className="bg-[#F2A900] px-4 flex items-center justify-center text-white"><FiSearch/></button>
-                 </div>
-                 
-                 <h2 className="text-xl font-black text-gray-900 mb-1">Categories</h2>
-                 <p className="text-xs text-gray-500 mb-4">{t.browseAll}</p>
+           {/* HORIZONTAL CATEGORIES TABS (Above Banner) */}
+           <div className="hidden md:flex items-center gap-8 px-2 mb-6 text-sm font-bold text-gray-500 overflow-x-auto hide-scrollbar border-b border-transparent">
+              {CATEGORY_KEYS.map((cat, index) => (
+                 <button key={cat} onClick={() => setActiveCategory(cat === activeCategory ? 'All' : cat)} 
+                 className={`whitespace-nowrap pb-2 border-b-2 transition-all ${activeCategory === cat ? 'border-[#0F172A] text-[#0F172A]' : 'border-transparent hover:text-gray-900'}`}>
+                    {cat}
+                 </button>
+              ))}
+           </div>
 
-                 <div className="grid grid-cols-3 gap-3 mb-6">
-                    {CATEGORY_UI_MOCKS.map(cat => (
-                       <div key={cat.name} onClick={() => setActiveCategory(cat.name)} className="flex flex-col items-center justify-center p-3 border border-gray-100 rounded-xl shadow-sm hover:border-[#F2A900] transition cursor-pointer">
-                          <span className="text-3xl mb-2">{cat.icon}</span>
-                          <span className="text-[10px] font-bold text-gray-900 text-center leading-tight">{getTranslatedCategoryName(cat.name)}</span>
-                          <span className="text-[8px] text-gray-400 mt-1">{cat.count}</span>
-                       </div>
+           {/* HERO BANNER (Auto Sliding) */}
+           <div className="relative w-full h-[200px] sm:h-[300px] md:h-[340px] md:rounded-2xl overflow-hidden shadow-sm group bg-[#0A101D] mb-6">
+             {activeBanners.map((banner, index) => (
+               <div key={banner.id} className={`absolute inset-0 w-full h-full transition-opacity duration-1000 bg-gradient-to-r ${banner.bgColor} flex flex-col justify-center px-6 md:px-16 text-white ${index === currentBannerIndex ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'}`}>
+                  <h1 className="text-3xl md:text-5xl lg:text-6xl font-black mb-3 md:mb-5 tracking-tight leading-[1.1] whitespace-pre-line max-w-[60%]">
+                     {banner.title}
+                  </h1>
+                  <p className="text-xs md:text-base font-medium mb-6 md:mb-8 opacity-90 whitespace-pre-line max-w-[50%]">
+                     {banner.subtitle}
+                  </p>
+                  <button onClick={() => setActiveCategory(banner.categoryTarget)} className="bg-[#F2A900] text-[#0F172A] font-black px-6 md:px-8 py-2.5 md:py-3.5 rounded-full w-max hover:bg-yellow-500 transition shadow-lg flex items-center gap-2 text-xs md:text-sm">
+                      {banner.buttonText} <FiArrowRight className="text-lg" />
+                  </button>
+               </div>
+             ))}
+             {/* Pagination Dots */}
+             <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-20">
+                {activeBanners.map((_, idx) => (
+                  <div key={idx} onClick={() => setCurrentBannerIndex(idx)} className={`h-2 rounded-full cursor-pointer transition-all ${idx === currentBannerIndex ? 'w-6 bg-[#F2A900]' : 'w-2 bg-white/50'}`}></div>
+                ))}
+             </div>
+             {/* Decorative Mockup Visuals for Banner */}
+             <div className="absolute right-0 top-0 h-full w-1/2 bg-contain bg-right bg-no-repeat pointer-events-none opacity-90 hidden md:block" style={{ backgroundImage: "url('/laptop-banner.png')" }}></div>
+           </div>
+
+           {/* TRUST BADGES BAR */}
+           <div className="hidden md:flex justify-between items-center bg-white rounded-2xl shadow-sm border border-gray-100 px-8 py-6 mb-8">
+               <div className="flex items-center gap-4">
+                  <FiTruck className="text-4xl text-gray-700"/>
+                  <div className="flex flex-col leading-tight"><span className="text-sm font-black text-gray-900">FREE Delivery</span><span className="text-xs text-gray-500 mt-1">on orders over TZS 50,000</span></div>
+               </div>
+               <div className="w-px h-10 bg-gray-100"></div>
+               <div className="flex items-center gap-4">
+                  <FiShield className="text-4xl text-[#F2A900]"/>
+                  <div className="flex flex-col leading-tight"><span className="text-sm font-black text-gray-900">Money-back Guarantee</span><span className="text-xs text-gray-500 mt-1">for up to 60 days</span></div>
+               </div>
+               <div className="w-px h-10 bg-gray-100"></div>
+               <div className="flex items-center gap-4">
+                  <FiLock className="text-4xl text-gray-700"/>
+                  <div className="flex flex-col leading-tight"><span className="text-sm font-black text-gray-900">Secure Payment</span><span className="text-xs text-gray-500 mt-1">100% secure payments</span></div>
+               </div>
+               <div className="w-px h-10 bg-gray-100"></div>
+               <div className="flex items-center gap-4">
+                  <FiHeadphones className="text-4xl text-gray-700"/>
+                  <div className="flex flex-col leading-tight"><span className="text-sm font-black text-gray-900">24/7 Support</span><span className="text-xs text-gray-500 mt-1">We are here to help</span></div>
+               </div>
+           </div>
+
+           {/* FLASH SALES SECTION (Live Countdown) */}
+           <div className="px-4 md:px-0 mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                 <FiZap className="text-3xl text-[#0F172A] fill-[#0F172A]" />
+                 <h2 className="text-2xl font-black text-gray-900">{t.flashSales}</h2>
+                 <span className="text-sm text-gray-500 font-bold ml-2 hidden sm:block">{t.limitedOffers}</span>
+              </div>
+              <div className="flex items-center justify-between sm:justify-end w-full sm:w-auto gap-6">
+                 <div className="flex items-center gap-3 text-xs font-bold text-gray-600">
+                    <span>{t.endsIn}</span>
+                    <div className="flex gap-1.5 items-center">
+                       <div className="flex flex-col items-center"><span className="bg-[#0F172A] text-white px-2.5 py-1.5 rounded-lg text-sm">{timeLeft.h}</span><span className="text-[8px] mt-1 uppercase">Hrs</span></div>
+                       <span className="text-xl font-bold pb-4">:</span>
+                       <div className="flex flex-col items-center"><span className="bg-[#0F172A] text-white px-2.5 py-1.5 rounded-lg text-sm">{timeLeft.m}</span><span className="text-[8px] mt-1 uppercase">Mins</span></div>
+                       <span className="text-xl font-bold pb-4">:</span>
+                       <div className="flex flex-col items-center"><span className="bg-[#0F172A] text-white px-2.5 py-1.5 rounded-lg text-sm">{timeLeft.s}</span><span className="text-[8px] mt-1 uppercase">Secs</span></div>
+                    </div>
+                 </div>
+                 <button className="text-blue-600 font-bold text-sm hover:underline flex items-center gap-1">View All <FiChevronRight/></button>
+              </div>
+           </div>
+
+           {/* PRODUCTS GRID */}
+           <div className="px-4 md:px-0">
+              {isLoading ? (
+                 <div className="text-center py-20 font-bold text-gray-500 animate-pulse text-lg">{t.loading}</div>
+              ) : filteredProducts.length === 0 ? (
+                 <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-20 text-center text-gray-500 font-medium">{t.noProducts}</div>
+              ) : (
+                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4 pb-8">
+                    {filteredProducts.slice(0, 10).map((product) => (
+                       <ProductCard key={product.id} product={product} />
                     ))}
-                    <div className="flex flex-col items-center justify-center p-3 border border-gray-100 rounded-xl shadow-sm bg-[#0F3B4E] text-white cursor-pointer">
-                        <FiMoreHorizontal className="text-2xl mb-2" />
-                        <span className="text-[10px] font-bold text-center leading-tight">More Categories</span>
-                    </div>
                  </div>
+              )}
+           </div>
 
-                 {/* SLIDING BANNERS INSIDE MOBILE VIEW */}
-                 <div className="relative w-full h-[180px] rounded-xl overflow-hidden shadow-sm mb-6">
-                   {activeBanners.map((banner, index) => (
-                     <div key={banner.id} className={`absolute inset-0 w-full h-full transition-opacity duration-500 bg-gradient-to-r ${banner.bgColor} flex flex-col justify-center px-6 text-white ${index === currentBannerIndex ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'}`}>
-                        <h4 className="font-bold text-sm mb-1">{banner.title}</h4>
-                        <h3 className="text-lg font-black text-[#F2A900] mb-3">{banner.subtitle}</h3>
-                        <button onClick={() => setActiveCategory(banner.categoryTarget)} className="bg-[#F2A900] text-[#0F172A] text-[10px] font-black px-4 py-1.5 rounded-full shadow-md w-max">Shop Now <FiChevronRight className="inline"/></button>
-                     </div>
-                   ))}
-                   <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1 z-20">
-                      {activeBanners.map((_, idx) => (
-                        <div key={idx} onClick={() => setCurrentBannerIndex(idx)} className={`h-1.5 rounded-full cursor-pointer transition-all ${idx === currentBannerIndex ? 'w-4 bg-[#F2A900]' : 'w-1.5 bg-white/50'}`}></div>
-                      ))}
-                   </div>
-                 </div>
+           {/* TOP BRANDS DARK BAR */}
+           <div className="bg-[#0A101D] rounded-2xl p-6 md:p-8 flex flex-col md:flex-row items-center justify-between text-white shadow-xl mx-4 md:mx-0 mb-10">
+              <div className="text-center md:text-left mb-6 md:mb-0">
+                 <h3 className="text-xl font-black mb-1">Top Brands, Top Quality</h3>
+                 <p className="text-sm text-gray-400 mb-4">Shop your favorite brands</p>
+                 <button className="bg-[#F2A900] text-[#0F172A] font-black px-5 py-2.5 rounded-lg flex items-center gap-2 text-xs md:text-sm shadow-md hover:bg-yellow-500 transition mx-auto md:mx-0">
+                    View All Brands <FiArrowRight/>
+                 </button>
+              </div>
+              <div className="flex items-center gap-6 md:gap-10 flex-wrap justify-center opacity-80 border-t md:border-t-0 md:border-l border-gray-800 pt-6 md:pt-0 md:pl-10">
+                 <span className="font-black text-2xl tracking-tighter bg-white text-black px-2 rounded">MI</span>
+                 <span className="font-black text-xl tracking-widest">SAMSUNG</span>
+                 <span className="font-black text-3xl"></span>
+                 <span className="font-black text-3xl italic bg-white text-blue-900 rounded-full w-10 h-10 flex items-center justify-center">hp</span>
+                 <span className="font-black text-xl tracking-widest">SONY</span>
+                 <span className="font-black text-xl font-sans">Lenovo</span>
+                 <span className="font-black text-lg border-2 border-white rounded-full px-2 py-1">DELL</span>
               </div>
            </div>
 
-           {/* DESKTOP & MOBILE VIEW: SPECIFIC CATEGORY DETAILED VIEW */}
-           <div className={`w-full ${activeCategory === 'All' ? 'hidden md:block' : 'block'}`}>
-              
-              {/* Desktop Breadcrumb & Header */}
-              <div className="hidden md:block mb-6">
-                 <div className="text-xs text-gray-500 flex items-center gap-2 mb-3">
-                    <span className="cursor-pointer hover:underline" onClick={() => setActiveCategory('All')}>Home</span> <FiChevronRight size={10}/> 
-                    <span className="cursor-pointer hover:underline" onClick={() => setActiveCategory('All')}>Categories</span> <FiChevronRight size={10}/> 
-                    <span className="text-gray-900 font-bold">{activeCategory}</span>
-                 </div>
-                 <div className="flex items-center justify-between">
-                    <div>
-                       <h1 className="text-3xl font-black text-gray-900 mb-1">{activeCategory === 'All' ? t.all : activeCategory}</h1>
-                       <p className="text-sm text-gray-500">Discover high performance items for work, study, and lifestyle.</p>
-                    </div>
-                    <div className="text-right">
-                       <span className="text-2xl font-black text-gray-900">{filteredProducts.length}</span>
-                       <p className="text-xs text-gray-500 uppercase font-bold">{t.itemsFound}</p>
-                    </div>
-                 </div>
-
-                 {/* DESKTOP BANNERS */}
-                 {activeCategory === 'All' && (
-                   <div className="relative w-full h-[200px] mt-6 rounded-2xl overflow-hidden shadow-sm group border border-gray-100">
-                     {activeBanners.map((banner, index) => (
-                       <div key={banner.id} className={`absolute inset-0 w-full h-full transition-opacity duration-500 bg-gradient-to-r ${banner.bgColor} flex flex-col justify-center px-12 text-white ${index === currentBannerIndex ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'}`}>
-                          <h1 className="text-4xl font-black mb-2 tracking-tight">{banner.title}</h1>
-                          <p className="text-lg font-medium mb-6 opacity-90">{banner.subtitle}</p>
-                          <button onClick={() => setActiveCategory(banner.categoryTarget)} className="bg-[#F2A900] text-[#0F172A] font-black px-6 py-3 rounded-lg w-max hover:bg-yellow-500 transition shadow-lg flex items-center gap-2 text-sm">
-                              {banner.buttonText} <FiChevronRight />
-                          </button>
-                       </div>
-                     ))}
-                     <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-20">
-                        {activeBanners.map((_, idx) => (
-                          <div key={idx} onClick={() => setCurrentBannerIndex(idx)} className={`h-2 rounded-full cursor-pointer transition-all ${idx === currentBannerIndex ? 'w-6 bg-[#F2A900]' : 'w-2 bg-white/50'}`}></div>
-                        ))}
-                     </div>
-                   </div>
-                 )}
-              </div>
-
-              {/* Mobile Specific Category Header (Back button) */}
-              <div className="md:hidden flex items-center gap-3 px-4 py-3 border-b border-gray-100 bg-white sticky top-[104px] z-30">
-                 <button onClick={() => setActiveCategory('All')} className="p-1"><FiArrowLeft className="text-xl text-gray-800"/></button>
-                 <h1 className="text-lg font-black text-gray-900 flex-1">{activeCategory}</h1>
-                 <span className="text-xs font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded">{filteredProducts.length} items</span>
-              </div>
-
-              {/* Flash Sales Section (Live Countdown) */}
-              <div className="px-4 md:px-0 mt-4 md:mt-6 mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                 <div className="flex items-center gap-3">
-                    <FiZap className="text-[#F2A900] text-2xl fill-[#F2A900]" />
-                    <h2 className="text-lg sm:text-xl font-black text-gray-900">{t.flashSales}</h2>
-                    <span className="text-xs text-gray-500 hidden sm:block font-medium ml-2">{t.limitedOffers}</span>
-                 </div>
-                 <div className="flex items-center justify-between sm:justify-end w-full sm:w-auto gap-4">
-                    <div className="flex items-center gap-2 text-xs font-bold">
-                       <span className="text-gray-500">{t.endsIn}</span>
-                       <div className="flex gap-1">
-                          <span className="bg-[#0F172A] text-white px-2 py-1 rounded">{timeLeft.h}</span><span className="text-gray-400">:</span>
-                          <span className="bg-[#0F172A] text-white px-2 py-1 rounded">{timeLeft.m}</span><span className="text-gray-400">:</span>
-                          <span className="bg-[#0F172A] text-white px-2 py-1 rounded">{timeLeft.s}</span>
-                       </div>
-                    </div>
-                 </div>
-              </div>
-
-              {/* Layout Split for Desktop (Filters Left, Products Right) */}
-              <div className="flex flex-col lg:flex-row mt-2 md:mt-4 px-4 md:px-0 gap-6">
-                 
-                 {/* Desktop Filters Sidebar */}
-                 <div className="hidden lg:block w-[220px] flex-shrink-0">
-                    <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm sticky top-24">
-                       <div className="flex justify-between items-center mb-6">
-                          <h3 className="font-black text-gray-900">{t.filter}</h3>
-                          <button onClick={() => {}} className="text-xs text-blue-600 hover:underline">{t.clearAll}</button>
-                       </div>
-                       
-                       <div className="space-y-6">
-                          <div>
-                             <div className="flex justify-between items-center mb-3 cursor-pointer text-sm font-bold text-gray-800">
-                                {t.priceRange} <FiChevronDown/>
-                             </div>
-                             <div className="px-2">
-                               <div className="w-full h-1 bg-gray-200 rounded-full relative mb-4 mt-2">
-                                  <div className="absolute left-[20%] right-[30%] h-full bg-[#F2A900] rounded-full"></div>
-                                  <div className="absolute left-[20%] top-1/2 -translate-y-1/2 w-3 h-3 bg-white border-2 border-[#F2A900] rounded-full shadow"></div>
-                                  <div className="absolute right-[30%] top-1/2 -translate-y-1/2 w-3 h-3 bg-white border-2 border-[#F2A900] rounded-full shadow"></div>
-                               </div>
-                               <div className="flex justify-between text-[10px] font-medium text-gray-500">
-                                  <span>TZS 100,000</span>
-                                  <span>TZS 5,000,000+</span>
-                               </div>
-                             </div>
-                          </div>
-                          {['Brand', 'Processor', 'RAM', 'Storage', 'Condition'].map(filter => (
-                             <div key={filter} className="flex justify-between items-center pb-3 border-b border-gray-100 cursor-pointer text-sm font-bold text-gray-800 hover:text-[#F2A900] transition">
-                                {filter} <FiChevronDown/>
-                             </div>
-                          ))}
-                          <button className="w-full py-2.5 mt-4 border border-gray-200 text-gray-700 text-xs font-bold rounded-lg hover:bg-gray-50 flex items-center justify-center gap-2">
-                             🔄 Reset Filters
-                          </button>
-                       </div>
-                    </div>
-                 </div>
-
-                 {/* Products Grid Area */}
-                 <div className="flex-1 w-full">
-                    {/* Toolbar (Desktop) */}
-                    <div className="hidden md:flex justify-between items-center mb-4 md:mb-6">
-                       <h3 className="font-black text-lg text-gray-900">{t.topPicks}</h3>
-                       <div className="flex items-center gap-4">
-                          <span className="text-xs text-gray-500 font-bold">{t.sort}</span>
-                          <select value={sortOrder} onChange={(e) => setSortOrder(e.target.value)} className="bg-white border border-gray-200 rounded-md px-3 py-1.5 text-xs font-bold text-gray-800 outline-none cursor-pointer">
-                             <option value="popular">{t.popular}</option>
-                             <option value="low">{t.lowToHigh}</option>
-                             <option value="high">{t.highToLow}</option>
-                          </select>
-                          <div className="flex bg-white border border-gray-200 rounded-md p-0.5">
-                             <button className="p-1.5 bg-orange-50 text-[#F2A900] rounded shadow-sm"><FiGrid size={14}/></button>
-                             <button className="p-1.5 text-gray-400 hover:text-gray-700"><FiList size={14}/></button>
-                          </div>
-                       </div>
-                    </div>
-
-                    {isLoading ? (
-                       <div className="text-center py-20 font-bold text-gray-500 animate-pulse text-lg">{t.loading}</div>
-                    ) : filteredProducts.length === 0 ? (
-                       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-20 text-center text-gray-500 font-medium">{t.noProducts}</div>
-                    ) : (
-                       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4 pb-10">
-                          {filteredProducts.map((product) => (
-                             <ProductCard key={product.id} product={product} />
-                          ))}
-                       </div>
-                    )}
-                 </div>
-              </div>
-           </div>
         </div>
       </main>
       
-      <div className="hidden md:block">
-         <Footer />
-      </div>
-
-      {/* MOBILE BOTTOM NAVIGATION */}
-      <div className="md:hidden fixed bottom-0 left-0 w-full bg-white border-t border-gray-100 flex justify-around items-center h-[60px] px-2 z-50">
-        <button onClick={() => router.push('/')} className={`flex flex-col items-center gap-1 w-16 text-gray-400 hover:text-gray-900`}>
-          <FiHome className="text-xl" />
-          <span className="text-[9px] font-bold">Home</span>
-        </button>
-        <button onClick={() => { setActiveCategory('All'); window.scrollTo(0,0); }} className={`flex flex-col items-center gap-1 w-16 text-[#F2A900]`}>
-          <FiGrid className="text-xl" />
-          <span className="text-[9px] font-bold">Categories</span>
-        </button>
-        
-        {/* CENTER BIG BUTTON */}
-        <div className="relative -top-5">
-           <div className="w-14 h-14 bg-[#0F3B4E] rounded-full flex items-center justify-center text-white shadow-lg border-4 border-white cursor-pointer hover:bg-[#0D3040] transition">
-              <FiMessageCircle className="text-2xl" />
-           </div>
-           <span className="absolute -bottom-4 left-1/2 -translate-x-1/2 text-[9px] font-bold text-gray-600">Message</span>
-        </div>
-
-        <button onClick={openCartWorkflow} className="flex flex-col items-center gap-1 w-16 text-gray-400 hover:text-gray-900 relative">
-          <div className="relative">
-             <FiShoppingCart className="text-xl" />
-             {cart.length > 0 && <span className="absolute -top-1 -right-2 bg-[#F2A900] text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center">{cart.length}</span>}
-          </div>
-          <span className="text-[9px] font-bold">Cart</span>
-        </button>
-        <button onClick={() => { if(user) router.push('/profile'); else setIsLoginOpen(true); }} className="flex flex-col items-center gap-1 w-16 text-gray-400 hover:text-gray-900">
-          <FiUser className="text-xl" />
-          <span className="text-[9px] font-bold">Account</span>
-        </button>
-      </div>
+      <Footer />
 
       {/* ======================================================== */}
-      {/* 1. PRODUCT VIEW MODAL                                    */}
+      {/* MODALS (Product View, Login, Workflow)                   */}
       {/* ======================================================== */}
       {selectedProduct && !isWorkflowOpen && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-2 md:p-4 backdrop-blur-sm">
@@ -844,14 +725,11 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* ======================================================== */}
-      {/* 2. INLINE LOGIN & REGISTER MODAL                         */}
-      {/* ======================================================== */}
       {isLoginOpen && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
           <div className="bg-white w-full max-w-4xl rounded-2xl shadow-2xl relative flex overflow-hidden min-h-[500px] animate-fade-in">
             <button onClick={() => setIsLoginOpen(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-900 bg-gray-100 p-2 rounded-full z-20 transition"><FiX size={20} /></button>
-            <div className="hidden md:flex md:w-1/2 bg-[#0F3B4E] text-white flex-col justify-center p-12">
+            <div className="hidden md:flex md:w-1/2 bg-[#0A101D] text-white flex-col justify-center p-12">
                <h2 className="text-5xl font-black mb-4">J<span className="text-[#F2A900]">tex</span></h2>
                <p className="text-lg font-medium text-blue-100 mb-8">{t.signIn} and Checkout seamlessly.</p>
             </div>
@@ -870,16 +748,13 @@ export default function HomePage() {
                 )}
                 <input type="email" required value={loginEmail} onChange={e => setLoginEmail(e.target.value)} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none text-sm focus:border-[#F2A900]" placeholder="Email Address" />
                 <input type="password" required value={loginPassword} onChange={e => setLoginPassword(e.target.value)} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none text-sm focus:border-[#F2A900]" placeholder="Password" />
-                <button type="submit" className="w-full bg-[#0F3B4E] text-white font-bold py-3.5 rounded-xl text-sm mt-2 hover:bg-[#0A2633] transition">{authMode === 'login' ? 'Login to Continue' : 'Register to Continue'}</button>
+                <button type="submit" className="w-full bg-[#0A101D] text-white font-bold py-3.5 rounded-xl text-sm mt-2 hover:bg-gray-800 transition">{authMode === 'login' ? 'Login to Continue' : 'Register to Continue'}</button>
               </form>
             </div>
           </div>
         </div>
       )}
 
-      {/* ======================================================== */}
-      {/* 3. MULTI-STEP WORKFLOW MODAL (Cart -> Location -> Pay)   */}
-      {/* ======================================================== */}
       {isWorkflowOpen && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-2 md:p-4 backdrop-blur-sm pb-20 md:pb-4">
           <div className="bg-white w-full max-w-3xl rounded-2xl shadow-2xl overflow-hidden relative max-h-[90vh] flex flex-col animate-fade-in border border-gray-200">
@@ -934,7 +809,7 @@ export default function HomePage() {
                         <span className="text-sm font-bold text-gray-500 uppercase tracking-wider">Subtotal:</span>
                         <span className="text-xl sm:text-2xl font-black text-gray-900">TZS {cartTotal.toLocaleString()}</span>
                       </div>
-                      <button onClick={handleProceedToLocation} className="w-full bg-[#0F3B4E] hover:bg-[#0A2633] text-white font-black py-4 rounded-xl mt-4 flex items-center justify-center gap-2 transition shadow-lg">
+                      <button onClick={handleProceedToLocation} className="w-full bg-[#0A101D] hover:bg-gray-800 text-white font-black py-4 rounded-xl mt-4 flex items-center justify-center gap-2 transition shadow-lg">
                          {t.proceedLocation} <FiChevronRight />
                       </button>
                     </div>
@@ -960,7 +835,7 @@ export default function HomePage() {
                     </div>
                     <div className="flex gap-3 pt-4">
                        <button onClick={() => setWorkflowStep(1)} className="px-6 py-4 bg-gray-100 text-gray-600 font-bold rounded-xl text-sm hover:bg-gray-200 transition">Back</button>
-                       <button onClick={() => { if(region && address) setWorkflowStep(3); else alert('Please fill in Region and Full Address'); }} disabled={!address} className="flex-1 bg-[#0F3B4E] disabled:bg-gray-300 text-white font-black py-4 rounded-xl flex items-center justify-center gap-2 transition shadow-lg">
+                       <button onClick={() => { if(region && address) setWorkflowStep(3); else alert('Please fill in Region and Full Address'); }} disabled={!address} className="flex-1 bg-[#0A101D] disabled:bg-gray-300 text-white font-black py-4 rounded-xl flex items-center justify-center gap-2 transition shadow-lg">
                           {t.proceedPayment} <FiChevronRight />
                        </button>
                     </div>
@@ -1000,7 +875,7 @@ export default function HomePage() {
                   <div className="w-24 h-24 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-6"><FiCheckCircle className="text-6xl text-green-500 animate-bounce" /></div>
                   <h3 className="text-2xl sm:text-3xl font-black text-gray-900 mb-4">Order Successful!</h3>
                   <p className="text-sm text-gray-500 mb-8 max-w-sm mx-auto leading-relaxed">{t.successMsg}</p>
-                  <button onClick={() => router.push('/profile')} className="w-full max-w-sm mx-auto bg-[#0F3B4E] hover:bg-[#0A2633] text-white font-black py-4 rounded-xl flex items-center justify-center gap-2 transition shadow-lg">
+                  <button onClick={() => router.push('/profile')} className="w-full max-w-sm mx-auto bg-[#0A101D] hover:bg-gray-800 text-white font-black py-4 rounded-xl flex items-center justify-center gap-2 transition shadow-lg">
                     <FiUser /> {t.viewProfile}
                   </button>
                 </div>
