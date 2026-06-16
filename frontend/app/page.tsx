@@ -8,7 +8,7 @@ import {
   FiTruck, FiShield, FiLock, FiMail, FiUser, FiPhone, FiTrash2, FiChevronRight, 
   FiSmartphone, FiArrowLeft, FiMoreHorizontal, FiSliders, FiList, FiGrid,
   FiCamera, FiMic, FiMaximize, FiUploadCloud, FiChevronDown, FiZap, FiMessageCircle,
-  FiHome, FiTag, FiPackage, FiHeadphones, FiHeart, FiArrowRight
+  FiHome, FiTag, FiPackage, FiHeadphones, FiHeart, FiArrowRight, FiClock
 } from 'react-icons/fi';
 
 import Footer from './components/common/Footer';
@@ -115,8 +115,11 @@ export default function HomePage() {
   const [categories, setCategories] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
+  // View State: 'home' au 'deals'
+  const [viewMode, setViewMode] = useState<'home' | 'deals'>('home');
+
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeCategory, setActiveCategory] = useState('Electronics');
+  const [activeCategory, setActiveCategory] = useState('All');
   const [sortOrder, setSortOrder] = useState('popular');
   const [wishlist, setWishlist] = useState<string[]>([]);
 
@@ -124,8 +127,8 @@ export default function HomePage() {
   const [lang, setLang] = useState<'en' | 'sw'>('en'); 
   const [deliverLocation, setDeliverLocation] = useState('Tanzania, United Republic');
   
-  // LIVE COUNTDOWN TIMER STATE
-  const [timeLeft, setTimeLeft] = useState({ h: '00', m: '00', s: '00' });
+  // LIVE COUNTDOWN TIMER STATE (Sasa ina siku)
+  const [timeLeft, setTimeLeft] = useState({ d: '00', h: '00', m: '00', s: '00' });
 
   // BANNERS STATE
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
@@ -159,9 +162,11 @@ export default function HomePage() {
 
   const getApiUrl = () => 'https://jtex-ecommerce-production.up.railway.app';
 
+  // BANNERS 3 KAMILI NA ZINAZOONEKANA VIZURI
   const activeBanners = [
-    { id: 1, title: "Best Quality,\nBest Prices,\nOnly on Jtex", subtitle: "Shop the latest gadgets, electronics,\nfashion and more at unbeatable prices.", bgColor: "from-[#0F3B4E] to-[#1E5673]", buttonText: t.buyNow, categoryTarget: "Electronics" },
-    { id: 2, title: "New Phones\nIn Town", subtitle: "Order today and get it delivered fast.", bgColor: "from-[#F2A900] to-[#C98A00]", buttonText: "View Phones", categoryTarget: "Phones" }
+    { id: 1, title: "Best Quality,\nBest Prices,\nOnly on Jtex", subtitle: "Shop the latest gadgets, electronics,\nfashion and more at unbeatable prices.", bgColor: "from-[#0A101D] via-[#0F3B4E] to-[#1E5673]", buttonText: t.buyNow, action: () => { setViewMode('home'); setActiveCategory('All'); } },
+    { id: 2, title: "New Phones\nIn Town", subtitle: "Order today and get it delivered fast.", bgColor: "from-[#F2A900] to-[#C98A00]", buttonText: "View Phones", action: () => { setViewMode('home'); setActiveCategory('Phones'); } },
+    { id: 3, title: "Mega Flash Sale\nUp to 75% OFF", subtitle: "Limited time offer. Don't miss out on amazing deals.", bgColor: "from-purple-900 to-indigo-900", buttonText: "View Deals", action: () => { setViewMode('deals'); } }
   ];
 
   useEffect(() => {
@@ -180,11 +185,16 @@ export default function HomePage() {
   }, []);
 
   useEffect(() => {
+    // Mega sale timer (siku 2 mbele)
+    const targetDate = new Date();
+    targetDate.setDate(targetDate.getDate() + 2);
+    targetDate.setHours(23, 59, 59, 999);
+
     const calculateTimeLeft = () => {
-      const now = new Date();
-      const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
-      const diff = tomorrow.getTime() - now.getTime();
+      const diff = targetDate.getTime() - new Date().getTime();
+      if(diff <= 0) return { d: '00', h: '00', m: '00', s: '00' };
       return {
+        d: String(Math.floor(diff / (1000 * 60 * 60 * 24))).padStart(2, '0'),
         h: String(Math.floor((diff / (1000 * 60 * 60)) % 24)).padStart(2, '0'),
         m: String(Math.floor((diff / 1000 / 60) % 60)).padStart(2, '0'),
         s: String(Math.floor((diff / 1000) % 60)).padStart(2, '0')
@@ -217,26 +227,25 @@ export default function HomePage() {
       }
     };
     fetchRealProducts();
-
-    const handleCategorySelect = (e: any) => {
-        if(e.detail && e.detail.category) {
-            setActiveCategory(e.detail.category);
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-    };
-    window.addEventListener('selectCategory', handleCategorySelect);
-    return () => window.removeEventListener('selectCategory', handleCategorySelect);
   }, []);
 
+  // KUCHUJA BIDHAA NA KUFANYA FALLBACK KAMA HAKUNA (Soft Filter)
   useEffect(() => {
     let result = products;
     if (activeCategory !== 'All') {
-      result = result.filter(p => {
+      const catFiltered = result.filter(p => {
         const pCat = p.category ? p.category.toLowerCase() : '';
         const tCat = activeCategory.toLowerCase();
         return pCat.includes(tCat) || tCat.includes(pCat);
       });
+      // Kama hakuna bidhaa kwenye kategoria husika, onyesha zote (Fallback)
+      if (catFiltered.length > 0) {
+        result = catFiltered;
+      } else {
+        result = products;
+      }
     }
+    
     if (searchQuery) result = result.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()));
     if (sortOrder === 'low') result = [...result].sort((a, b) => a.price - b.price);
     else if (sortOrder === 'high') result = [...result].sort((a, b) => b.price - a.price);
@@ -322,7 +331,7 @@ export default function HomePage() {
     recognition.onend = () => setIsVoiceListening(false);
   };
 
-  // REUSABLE PRODUCT CARD
+  // REUSABLE PRODUCT CARD (Kawaida - Home)
   const ProductCard = ({ product }: { product: any }) => {
     const isWishlisted = wishlist.includes(product.id);
     const discount = product.oldPrice ? Math.round(((product.oldPrice - product.price) / product.oldPrice) * 100) : 0;
@@ -358,183 +367,444 @@ export default function HomePage() {
     );
   };
 
-  return (
-    <div className="min-h-screen bg-white text-gray-900 font-sans antialiased">
-      
-      {/* ========================================================= */}
-      {/* MOBILE SPECIFIC LAYOUT (MOCKUP REPLICA)                     */}
-      {/* ========================================================= */}
-      
-      {/* Mobile Top Header */}
-      <header className="md:hidden bg-white sticky top-0 z-40 px-4 py-3 shadow-sm pb-0">
+  // REUSABLE DEALS PRODUCT CARD (Kama kwenye picha ya Flash Sales)
+  const DealsProductCard = ({ product }: { product: any }) => {
+    const isWishlisted = wishlist.includes(product.id);
+    const discount = product.oldPrice ? Math.round(((product.oldPrice - product.price) / product.oldPrice) * 100) : 25; // Default faux discount for UI
+    
+    // Faux logic kuonyesha sold percentage kulingana na ID
+    const soldAmount = Math.max(15, 100 - (product.stockQuantity || 0) * 2);
+    const soldPercentage = Math.min(95, soldAmount);
+
+    return (
+      <div className="bg-[#0A101D] rounded-xl p-3 border border-gray-800 flex flex-col h-full cursor-pointer relative" onClick={() => setSelectedProduct(product)}>
+        <button onClick={(e) => toggleWishlist(e, product.id)} className="absolute top-3 right-3 z-20 text-gray-500 hover:text-red-500">
+          <FiHeart className={`text-sm ${isWishlisted ? "fill-red-500 text-red-500" : ""}`} />
+        </button>
+        <div className="flex items-center gap-2 absolute top-3 left-3 z-10">
+           <span className="bg-[#F2A900] text-[#0A101D] text-[9px] font-black px-1.5 py-0.5 rounded">-{discount}%</span>
+           {soldPercentage > 80 && <span className="bg-green-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded">Best Seller</span>}
+        </div>
         
-        {/* Search Bar Row */}
-        <div className="flex items-center gap-3">
-          <div className="flex-1 flex border border-gray-200 rounded-xl overflow-hidden bg-gray-50 h-11 focus-within:border-[#F2A900] transition-colors">
-            <div className="pl-3 flex items-center text-gray-400"><FiSearch size={16}/></div>
-            <input 
-              type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} 
-              placeholder="Search Jtex" className="flex-1 px-2 text-sm bg-transparent outline-none text-gray-900 placeholder-gray-400" 
-            />
-            <div className="flex items-center pr-2 gap-2 text-gray-400">
-               <button onClick={startVoiceSearch}><FiMic size={16}/></button>
-               <button onClick={() => setIsImageSearchOpen(true)}><FiCamera size={16}/></button>
+        <div className="w-full aspect-square bg-[#0F172A] rounded-lg mb-3 overflow-hidden flex items-center justify-center p-4 mt-6">
+          {product.imageUrl ? (
+            <img src={`${getApiUrl()}${product.imageUrl}`} alt={product.name} className="object-contain w-full h-full" />
+          ) : (
+            <span className="text-4xl">{product.imageEmoji || '📦'}</span>
+          )}
+        </div>
+        
+        <div className="flex-1 flex flex-col">
+          <h3 className="text-xs font-bold text-gray-200 leading-tight mb-1 line-clamp-2 min-h-[34px]">{product.name}</h3>
+          <p className="text-[10px] text-gray-500 mb-1">{product.brand || 'Jtex Authentic'}</p>
+          <div className="flex items-center text-[#F2A900] text-[10px] mb-2">
+            ★★★★★ <span className="text-gray-500 ml-1 font-medium">(2,456)</span>
+          </div>
+          
+          <div className="mt-auto flex flex-col">
+            <span className="text-sm font-black text-white">TZS {product.price.toLocaleString()}</span>
+            <span className="text-[10px] text-gray-500 line-through mt-0.5">TZS {product.oldPrice ? product.oldPrice.toLocaleString() : (product.price * 1.3).toLocaleString()}</span>
+            
+            {/* Sold Progress Bar */}
+            <div className="mt-3 mb-3">
+               <div className="flex justify-between text-[9px] mb-1 text-gray-400">
+                  <span>{soldAmount} sold</span>
+               </div>
+               <div className="w-full h-1.5 bg-gray-800 rounded-full overflow-hidden">
+                  <div className="h-full bg-gradient-to-r from-yellow-600 to-[#F2A900] rounded-full" style={{ width: `${soldPercentage}%` }}></div>
+               </div>
             </div>
-            <button className="bg-[#F2A900] px-4 flex items-center justify-center text-white font-bold"><FiSearch size={18}/></button>
+
+            <div className="flex items-center justify-between border-t border-gray-800 pt-3">
+               <div className="text-[10px] font-mono text-gray-400 tracking-wider">
+                 {timeLeft.d} : {timeLeft.h} : {timeLeft.m} : {timeLeft.s}
+               </div>
+               <button onClick={(e) => { e.stopPropagation(); addToCart(product); }} className="w-7 h-7 bg-[#1E293B] hover:bg-[#F2A900] hover:text-[#0A101D] text-gray-300 rounded flex items-center justify-center transition"><FiShoppingCart size={12}/></button>
+            </div>
           </div>
         </div>
+      </div>
+    );
+  };
 
-        {/* Categories Horizontal Scroll */}
-        <div className="flex items-center gap-6 mt-3 text-xs font-bold text-gray-500 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-           {CATEGORY_KEYS.map((cat) => (
-              <button key={cat} onClick={() => setActiveCategory(cat)} 
-              className={`whitespace-nowrap pb-2 border-b-2 transition-all ${activeCategory === cat ? 'border-[#0F3B4E] text-[#0F3B4E]' : 'border-transparent hover:text-gray-900'}`}>
-                 {cat}
-              </button>
-           ))}
-        </div>
+  return (
+    <div className={`min-h-screen ${viewMode === 'deals' ? 'bg-[#050B14]' : 'bg-white'} font-sans antialiased transition-colors duration-300`}>
+      
+      {/* ========================================================= */}
+      {/* MOBILE TOP HEADER (KWA VIEW ZOTE) */}
+      {/* ========================================================= */}
+      <header className={`md:hidden sticky top-0 z-40 px-4 py-3 shadow-sm pb-0 ${viewMode === 'deals' ? 'bg-[#0A101D] border-b border-gray-800' : 'bg-white'}`}>
+        
+        {viewMode === 'deals' ? (
+           <div className="flex items-center gap-3 pb-3 pt-1">
+             <button onClick={() => setViewMode('home')} className="text-gray-400 hover:text-white p-1"><FiArrowLeft size={22}/></button>
+             <h1 className="text-xl font-black text-white tracking-wide">Flash Sales</h1>
+           </div>
+        ) : (
+           <>
+             {/* Search Bar Row */}
+             <div className="flex items-center gap-3">
+               <div className="flex-1 flex border border-gray-200 rounded-xl overflow-hidden bg-gray-50 h-11 focus-within:border-[#F2A900] transition-colors">
+                 <div className="pl-3 flex items-center text-gray-400"><FiSearch size={16}/></div>
+                 <input 
+                   type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} 
+                   placeholder="Search Jtex" className="flex-1 px-2 text-sm bg-transparent outline-none text-gray-900 placeholder-gray-400" 
+                 />
+                 <div className="flex items-center pr-2 gap-2 text-gray-400">
+                    <button onClick={startVoiceSearch}><FiMic size={16}/></button>
+                    <button onClick={() => setIsImageSearchOpen(true)}><FiCamera size={16}/></button>
+                 </div>
+                 <button className="bg-[#F2A900] px-4 flex items-center justify-center text-white font-bold"><FiSearch size={18}/></button>
+               </div>
+             </div>
+
+             {/* Categories Horizontal Scroll */}
+             <div className="flex items-center gap-6 mt-3 text-xs font-bold text-gray-500 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                <button onClick={() => setActiveCategory('All')} className={`whitespace-nowrap pb-2 border-b-2 transition-all ${activeCategory === 'All' ? 'border-[#0F3B4E] text-[#0F3B4E]' : 'border-transparent hover:text-gray-900'}`}>All</button>
+                {CATEGORY_KEYS.map((cat) => (
+                   <button key={cat} onClick={() => setActiveCategory(cat)} 
+                   className={`whitespace-nowrap pb-2 border-b-2 transition-all ${activeCategory === cat ? 'border-[#0F3B4E] text-[#0F3B4E]' : 'border-transparent hover:text-gray-900'}`}>
+                      {cat}
+                   </button>
+                ))}
+             </div>
+           </>
+        )}
       </header>
 
-      {/* Mobile Main Content */}
-      <div className="md:hidden px-4 pb-24 flex flex-col mt-3">
-         
-         {/* Delivery Pill */}
-         <div className="flex items-center gap-2 text-[10px] font-bold bg-[#F8FAFC] border border-gray-100 p-2.5 rounded-xl text-gray-600 mb-4">
-             <FiMapPin className="text-gray-400 text-sm"/>
-             <span className="truncate flex-1">Deliver to {deliverLocation}...</span>
-             <FiChevronDown className="text-gray-400"/>
-         </div>
-
-         {/* Top Trust Badges (Pre-Banner) */}
-         <div className="flex gap-2 mb-4">
-            <div className="flex-1 bg-white p-2.5 rounded-xl border border-gray-100 shadow-sm flex items-center gap-2">
-               <div className="bg-[#0F3B4E] text-white p-1.5 rounded-md"><FiTruck size={14}/></div>
-               <p className="text-[8px] font-black leading-tight text-gray-800">FREE shipping<br/><span className="text-gray-500 font-normal">on your first order</span></p>
-            </div>
-            <div className="flex-1 bg-white p-2.5 rounded-xl border border-gray-100 shadow-sm flex items-center gap-2">
-               <div className="bg-[#F2A900] text-white p-1.5 rounded-md"><FiShield size={14}/></div>
-               <p className="text-[8px] font-black leading-tight text-gray-800">Money-back protection<br/><span className="text-gray-500 font-normal">for up to 60 days</span></p>
-            </div>
-         </div>
-
-         {/* Mobile Hero Banner */}
-         <div className="relative w-full h-[170px] rounded-xl overflow-hidden shadow-sm mb-4">
-           {activeBanners.map((banner, index) => (
-             <div key={banner.id} className={`absolute inset-0 w-full h-full transition-opacity duration-500 bg-gradient-to-r ${banner.bgColor} flex flex-col justify-center px-5 text-white ${index === currentBannerIndex ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'}`}>
-                <h2 className="text-[22px] font-black mb-1 leading-tight whitespace-pre-line max-w-[70%] tracking-tight">{banner.title}</h2>
-                <div className="text-3xl font-black italic tracking-tighter mb-2">
-                   <span className="text-blue-400">J</span><span className="text-white">tex</span>
-                </div>
-                <p className="text-[8px] font-medium mb-3 opacity-90 whitespace-pre-line max-w-[60%]">{banner.subtitle}</p>
-                <button onClick={() => setActiveCategory(banner.categoryTarget)} className="bg-[#F2A900] text-[#0F172A] text-[10px] font-black px-4 py-1.5 rounded-full shadow-md w-max flex items-center gap-1">Shop Now <FiChevronRight size={10}/></button>
-             </div>
-           ))}
-           <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1 z-20">
-              {activeBanners.map((_, idx) => (
-                <div key={idx} onClick={() => setCurrentBannerIndex(idx)} className={`h-1.5 rounded-full cursor-pointer transition-all ${idx === currentBannerIndex ? 'w-4 bg-[#F2A900]' : 'w-1.5 bg-white/50'}`}></div>
-              ))}
+      {/* ========================================================= */}
+      {/* DESKTOP HEADER (KWA VIEW ZOTE) */}
+      {/* ========================================================= */}
+      <div className="hidden md:flex flex-col">
+         <header className="bg-[#0A101D] text-white h-[72px] items-center px-8 sticky top-0 z-50 shadow-md flex">
+           <div className="flex items-center gap-2 cursor-pointer w-[200px]" onClick={() => { setViewMode('home'); router.push('/'); }}>
+              <div className="flex text-2xl font-black italic tracking-tighter">
+                <span className="text-blue-500">J</span><span className="text-orange-500">t</span><span className="text-white">ex</span>
+              </div>
            </div>
-         </div>
-
-         {/* Trust Features (Post Banner Grid) */}
-         <div className="flex justify-between items-start pt-2 pb-4 mb-2 border-b border-gray-50">
-            <div className="flex flex-col items-center text-center w-1/4">
-               <FiTruck className="text-gray-600 text-lg mb-1.5"/>
-               <span className="text-[8px] font-black text-gray-800 leading-tight">Free Delivery<br/><span className="text-[7px] text-gray-500 font-normal">On orders over TZS 50,000</span></span>
-            </div>
-            <div className="flex flex-col items-center text-center w-1/4">
-               <FiShield className="text-gray-600 text-lg mb-1.5"/>
-               <span className="text-[8px] font-black text-gray-800 leading-tight">Secure Payment<br/><span className="text-[7px] text-gray-500 font-normal">100% secure payments</span></span>
-            </div>
-            <div className="flex flex-col items-center text-center w-1/4">
-               <FiCheckCircle className="text-gray-600 text-lg mb-1.5"/>
-               <span className="text-[8px] font-black text-gray-800 leading-tight">Easy Returns<br/><span className="text-[7px] text-gray-500 font-normal">7 days return policy</span></span>
-            </div>
-            <div className="flex flex-col items-center text-center w-1/4">
-               <FiHeadphones className="text-gray-600 text-lg mb-1.5"/>
-               <span className="text-[8px] font-black text-gray-800 leading-tight">24/7 Support<br/><span className="text-[7px] text-gray-500 font-normal">We are here to help</span></span>
-            </div>
-         </div>
-
-         {/* Flash Sales Header */}
-         <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-1.5">
-               <FiZap className="text-[#F2A900] text-lg fill-[#F2A900]" />
-               <h2 className="text-sm font-black text-gray-900">Flash Sales</h2>
-               <span className="text-[8px] text-gray-500 font-medium ml-1 w-16 leading-tight">Limited time offers - Don't miss out!</span>
-            </div>
-            <div className="flex items-center gap-2">
-               <span className="text-[9px] text-gray-600 font-bold">Ends in:</span>
-               <div className="flex gap-1 items-center">
-                  <div className="flex flex-col items-center"><span className="bg-[#0F3B4E] text-white text-[10px] font-bold px-1.5 py-1 rounded">{timeLeft.h}</span><span className="text-[6px] text-gray-500 mt-0.5">Hrs</span></div>
-                  <span className="text-xs font-bold pb-2 text-gray-400">:</span>
-                  <div className="flex flex-col items-center"><span className="bg-[#0F3B4E] text-white text-[10px] font-bold px-1.5 py-1 rounded">{timeLeft.m}</span><span className="text-[6px] text-gray-500 mt-0.5">Mins</span></div>
-                  <span className="text-xs font-bold pb-2 text-gray-400">:</span>
-                  <div className="flex flex-col items-center"><span className="bg-[#0F3B4E] text-white text-[10px] font-bold px-1.5 py-1 rounded">{timeLeft.s}</span><span className="text-[6px] text-gray-500 mt-0.5">Secs</span></div>
-               </div>
-               <span className="text-[10px] font-bold text-blue-600 flex items-center ml-1">View All <FiChevronRight size={10}/></span>
-            </div>
-         </div>
-
-         {/* Horizontal Products Scroll */}
-         <div className="flex overflow-x-auto hide-scrollbar gap-3 pb-4 -mx-4 px-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-             {filteredProducts.length === 0 && <div className="text-xs text-gray-500">No products found.</div>}
-             {filteredProducts.slice(0,6).map((product) => (
-               <div key={product.id} className="min-w-[140px] max-w-[140px]">
-                 <ProductCard product={product} />
-               </div>
-             ))}
-         </div>
-
-         {/* Secondary Banner: Big Deals */}
-         <div className="bg-[#0F3B4E] rounded-xl p-5 text-white relative overflow-hidden shadow-sm mt-2 mb-6 flex items-center">
-            <div className="z-10 relative">
-               <h3 className="text-sm font-black mb-1">Big Deals on Top Brands</h3>
-               <p className="text-lg font-black text-[#F2A900] mb-3">Up to 40% Off</p>
-               <button className="bg-[#F2A900] text-[#0F172A] text-[10px] font-black px-4 py-2 rounded-lg shadow-md w-max flex items-center gap-1">Shop Now <FiChevronRight size={10}/></button>
-            </div>
-            <div className="absolute right-0 top-1/2 -translate-y-1/2 text-7xl opacity-50 transform -rotate-12">🎁</div>
-         </div>
-
-         {/* Top Brands Section */}
-         <div className="mb-2">
-            <div className="flex justify-between items-end mb-4">
-               <div>
-                 <h3 className="font-black text-gray-900 text-sm">Top Brands, Top Quality</h3>
-                 <p className="text-[9px] text-gray-500">Shop your favorite brands</p>
-               </div>
-               <button className="bg-[#0F3B4E] text-white text-[9px] font-bold px-3 py-1.5 rounded-lg flex items-center gap-1">View All Brands <FiChevronRight size={10}/></button>
-            </div>
-            <div className="flex items-center gap-5 overflow-x-auto hide-scrollbar pb-2 pt-1 opacity-90 text-gray-800 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-               <span className="font-black text-2xl tracking-tighter bg-gray-900 text-white px-2 rounded-sm leading-none">MI</span>
-               <span className="font-black text-xl tracking-widest leading-none">SAMSUNG</span>
-               <span className="font-black text-3xl leading-none"></span>
-               <span className="font-black text-2xl italic bg-gray-900 text-white rounded-full w-10 h-10 flex items-center justify-center leading-none flex-shrink-0">hp</span>
-               <span className="font-black text-xl tracking-widest leading-none">SONY</span>
-               <span className="font-black text-xl font-sans leading-none">Lenovo</span>
-               <span className="font-black text-xs border-2 border-gray-900 rounded-full px-2 py-1 leading-none">DELL</span>
-            </div>
-         </div>
-
+           
+           <div className="flex-1 flex justify-center px-8">
+              <div className="w-full max-w-2xl flex bg-white rounded-md overflow-hidden h-10 shadow-sm focus-within:ring-2 focus-within:ring-[#F2A900]/50 transition-all">
+                 <div className="bg-gray-100 border-r border-gray-200 text-gray-700 px-3 py-2 text-xs font-bold flex items-center gap-1 cursor-pointer hover:bg-gray-200 transition">All <FiChevronDown/></div>
+                 <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search products, brands..." className="flex-1 px-4 text-sm outline-none text-gray-900 placeholder-gray-400" />
+                 <button className="bg-[#F2A900] px-6 flex items-center justify-center text-[#0A101D] hover:bg-yellow-500 transition"><FiSearch className="text-xl font-bold" /></button>
+              </div>
+           </div>
+           
+           <div className="flex items-center gap-6">
+              <div onClick={openCartWorkflow} className="flex flex-col items-center cursor-pointer hover:text-[#F2A900] transition relative group">
+                 <div className="relative border border-gray-700 p-2 rounded-lg bg-gray-800/50 group-hover:border-gray-500 transition">
+                    <FiShoppingCart className="text-xl" />
+                    {cart.length > 0 && <span className="absolute -top-2 -right-2 bg-[#F2A900] text-[#0A101D] text-[10px] font-black w-5 h-5 rounded-full flex items-center justify-center border-2 border-[#0A101D]">{cart.length}</span>}
+                 </div>
+                 <span className="text-[10px] mt-1 font-bold">Cart</span>
+              </div>
+              <div onClick={() => { if(user) router.push('/profile'); else setIsLoginOpen(true); }} className="flex items-center gap-2 cursor-pointer border border-gray-700 py-1.5 px-3 rounded-full hover:bg-gray-800 transition">
+                 <FiUser className="text-xl text-gray-400" />
+                 <div className="flex flex-col leading-none">
+                    <span className="text-[9px] text-gray-400">{user ? 'Welcome back' : 'Hello, Sign In'}</span>
+                    <span className="text-xs font-bold flex items-center gap-1 mt-0.5">{user ? user.name.split(' ')[0] : 'My Account'} <FiChevronDown className="text-gray-500"/></span>
+                 </div>
+              </div>
+           </div>
+         </header>
       </div>
 
+      <main className="max-w-[1920px] mx-auto flex flex-col md:flex-row pb-20 md:pb-8 md:pt-6 gap-6 px-0 md:px-6 lg:px-8">
+        
+        {/* DESKTOP SIDEBAR */}
+        <div className="hidden md:flex w-[240px] flex-shrink-0 flex-col">
+           <div className={`rounded-xl shadow-sm border p-3 mb-6 ${viewMode === 'deals' ? 'bg-[#0A101D] border-gray-800' : 'bg-white border-gray-100'}`}>
+              <nav className={`flex flex-col gap-1 text-sm font-bold ${viewMode === 'deals' ? 'text-gray-400' : 'text-gray-600'}`}>
+                 <button onClick={() => { setViewMode('home'); setActiveCategory('All'); }} className={`flex items-center gap-3 px-4 py-3 rounded-lg transition ${viewMode === 'home' ? 'bg-gray-50 text-[#0F172A]' : 'hover:bg-gray-800 hover:text-white'}`}>
+                    <FiHome className={`text-lg ${viewMode === 'home' ? 'text-gray-900' : ''}`}/> Home
+                 </button>
+                 <button onClick={() => setViewMode('deals')} className={`flex items-center justify-between px-4 py-3 rounded-lg transition ${viewMode === 'deals' ? 'bg-gradient-to-r from-purple-900/40 to-transparent text-purple-400 border-l-4 border-purple-500' : 'hover:bg-gray-50'}`}>
+                    <div className="flex items-center gap-3"><FiZap className={`text-lg ${viewMode === 'deals' ? 'fill-current' : 'text-gray-400'}`}/> Flash Sales</div>
+                    <span className="bg-[#F2A900] text-[#0A101D] text-[9px] px-1.5 py-0.5 rounded font-black">HOT</span>
+                 </button>
+                 <button onClick={() => { setViewMode('home'); setActiveCategory('All'); }} className={`flex items-center gap-3 px-4 py-3 rounded-lg transition ${viewMode === 'deals' ? 'hover:bg-gray-800 hover:text-white' : 'hover:bg-gray-50'}`}><FiGrid className="text-lg text-gray-400"/> Categories</button>
+                 <button onClick={() => router.push('/profile')} className={`flex items-center gap-3 px-4 py-3 rounded-lg transition ${viewMode === 'deals' ? 'hover:bg-gray-800 hover:text-white' : 'hover:bg-gray-50'}`}><FiPackage className="text-lg text-gray-400"/> Orders</button>
+                 <button className={`flex items-center gap-3 px-4 py-3 rounded-lg transition ${viewMode === 'deals' ? 'hover:bg-gray-800 hover:text-white' : 'hover:bg-gray-50'}`}><FiHeart className="text-lg text-gray-400"/> Wishlist</button>
+                 <div className={`border-t my-2 mx-2 ${viewMode === 'deals' ? 'border-gray-800' : 'border-gray-100'}`}></div>
+                 <button className={`flex items-center gap-3 px-4 py-3 rounded-lg transition ${viewMode === 'deals' ? 'hover:bg-gray-800 hover:text-white' : 'hover:bg-gray-50'}`}><FiHeadphones className="text-lg text-gray-400"/> Support</button>
+              </nav>
+           </div>
+        </div>
+
+        {/* MAIN CONTENT DIVIDER */}
+        <div className="flex-1 w-full flex flex-col min-w-0">
+           
+           {/* ======================================================= */}
+           {/* CONTENT: HOME VIEW                                      */}
+           {/* ======================================================= */}
+           {viewMode === 'home' && (
+             <div className="animate-fade-in px-4 md:px-0">
+               {/* Delivery Pill (Mobile Only) */}
+               <div className="md:hidden flex items-center gap-2 text-[10px] font-bold bg-[#F8FAFC] border border-gray-100 p-2.5 rounded-xl text-gray-600 mb-4 mt-2">
+                   <FiMapPin className="text-gray-400 text-sm"/>
+                   <span className="truncate flex-1">Deliver to {deliverLocation}...</span>
+                   <FiChevronDown className="text-gray-400"/>
+               </div>
+
+               {/* Top Trust Badges (Pre-Banner - Mobile Only) */}
+               <div className="md:hidden flex gap-2 mb-4">
+                  <div className="flex-1 bg-white p-2.5 rounded-xl border border-gray-100 shadow-sm flex items-center gap-2">
+                     <div className="bg-[#0F3B4E] text-white p-1.5 rounded-md"><FiTruck size={14}/></div>
+                     <p className="text-[8px] font-black leading-tight text-gray-800">FREE shipping<br/><span className="text-gray-500 font-normal">on your first order</span></p>
+                  </div>
+                  <div className="flex-1 bg-white p-2.5 rounded-xl border border-gray-100 shadow-sm flex items-center gap-2">
+                     <div className="bg-[#F2A900] text-white p-1.5 rounded-md"><FiShield size={14}/></div>
+                     <p className="text-[8px] font-black leading-tight text-gray-800">Money-back protection<br/><span className="text-gray-500 font-normal">for up to 60 days</span></p>
+                  </div>
+               </div>
+
+               {/* Mobile Hero Banner */}
+               <div className="relative w-full h-[170px] md:h-[340px] rounded-xl overflow-hidden shadow-sm mb-4 bg-[#0A101D]">
+                 {activeBanners.map((banner, index) => (
+                   <div key={banner.id} className={`absolute inset-0 w-full h-full transition-opacity duration-1000 bg-gradient-to-r ${banner.bgColor} flex flex-col justify-center px-5 md:px-16 text-white ${index === currentBannerIndex ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'}`}>
+                      <h2 className="text-[22px] md:text-5xl font-black mb-1 md:mb-4 leading-tight whitespace-pre-line max-w-[70%] tracking-tight">{banner.title}</h2>
+                      <div className="text-3xl md:text-5xl font-black italic tracking-tighter mb-2 hidden md:block">
+                         <span className="text-blue-400">J</span><span className="text-white">tex</span>
+                      </div>
+                      <p className="text-[8px] md:text-base font-medium mb-3 md:mb-6 opacity-90 whitespace-pre-line max-w-[60%]">{banner.subtitle}</p>
+                      <button onClick={banner.action} className="bg-[#F2A900] text-[#0F172A] text-[10px] md:text-sm font-black px-4 md:px-8 py-1.5 md:py-3.5 rounded-full shadow-md w-max flex items-center gap-1 hover:bg-yellow-500 transition">{banner.buttonText} <FiArrowRight size={14} className="hidden md:inline"/><FiChevronRight size={10} className="md:hidden"/></button>
+                   </div>
+                 ))}
+                 <div className="absolute bottom-2 md:bottom-4 left-1/2 -translate-x-1/2 flex gap-1 md:gap-2 z-20">
+                    {activeBanners.map((_, idx) => (
+                      <div key={idx} onClick={() => setCurrentBannerIndex(idx)} className={`h-1.5 md:h-2 rounded-full cursor-pointer transition-all ${idx === currentBannerIndex ? 'w-4 md:w-6 bg-[#F2A900]' : 'w-1.5 md:w-2 bg-white/50'}`}></div>
+                    ))}
+                 </div>
+               </div>
+
+               {/* Trust Features (Post Banner Grid - Mobile) */}
+               <div className="md:hidden flex justify-between items-start pt-2 pb-4 mb-2 border-b border-gray-50">
+                  <div className="flex flex-col items-center text-center w-1/4"><FiTruck className="text-gray-600 text-lg mb-1.5"/><span className="text-[8px] font-black text-gray-800 leading-tight">Free Delivery<br/><span className="text-[7px] text-gray-500 font-normal">On orders over TZS 50,000</span></span></div>
+                  <div className="flex flex-col items-center text-center w-1/4"><FiShield className="text-gray-600 text-lg mb-1.5"/><span className="text-[8px] font-black text-gray-800 leading-tight">Secure Payment<br/><span className="text-[7px] text-gray-500 font-normal">100% secure payments</span></span></div>
+                  <div className="flex flex-col items-center text-center w-1/4"><FiCheckCircle className="text-gray-600 text-lg mb-1.5"/><span className="text-[8px] font-black text-gray-800 leading-tight">Easy Returns<br/><span className="text-[7px] text-gray-500 font-normal">7 days return policy</span></span></div>
+                  <div className="flex flex-col items-center text-center w-1/4"><FiHeadphones className="text-gray-600 text-lg mb-1.5"/><span className="text-[8px] font-black text-gray-800 leading-tight">24/7 Support<br/><span className="text-[7px] text-gray-500 font-normal">We are here to help</span></span></div>
+               </div>
+
+               {/* Trust Badges Desktop */}
+               <div className="hidden md:flex justify-between items-center bg-white rounded-2xl shadow-sm border border-gray-100 px-8 py-6 mb-8">
+                   <div className="flex items-center gap-4"><FiTruck className="text-4xl text-gray-700"/><div className="flex flex-col leading-tight"><span className="text-sm font-black text-gray-900">FREE Delivery</span><span className="text-xs text-gray-500 mt-1">on orders over TZS 50,000</span></div></div>
+                   <div className="w-px h-10 bg-gray-100"></div>
+                   <div className="flex items-center gap-4"><FiShield className="text-4xl text-[#F2A900]"/><div className="flex flex-col leading-tight"><span className="text-sm font-black text-gray-900">Money-back Guarantee</span><span className="text-xs text-gray-500 mt-1">for up to 60 days</span></div></div>
+                   <div className="w-px h-10 bg-gray-100"></div>
+                   <div className="flex items-center gap-4"><FiLock className="text-4xl text-gray-700"/><div className="flex flex-col leading-tight"><span className="text-sm font-black text-gray-900">Secure Payment</span><span className="text-xs text-gray-500 mt-1">100% secure payments</span></div></div>
+                   <div className="w-px h-10 bg-gray-100"></div>
+                   <div className="flex items-center gap-4"><FiHeadphones className="text-4xl text-gray-700"/><div className="flex flex-col leading-tight"><span className="text-sm font-black text-gray-900">24/7 Support</span><span className="text-xs text-gray-500 mt-1">We are here to help</span></div></div>
+               </div>
+
+               {/* Flash Sales Header */}
+               <div className="flex items-center justify-between mb-3 md:mb-6">
+                  <div className="flex items-center gap-1.5 md:gap-3">
+                     <FiZap className="text-[#F2A900] text-lg md:text-3xl fill-[#F2A900]" />
+                     <h2 className="text-sm md:text-2xl font-black text-gray-900">{t.flashSales}</h2>
+                     <span className="text-[8px] md:text-sm text-gray-500 font-medium ml-1 md:ml-2 leading-tight">Limited time offers - Don't miss out!</span>
+                  </div>
+                  <div className="flex items-center gap-2 md:gap-6">
+                     <div className="flex items-center gap-1.5 md:gap-3 text-[9px] md:text-xs font-bold text-gray-600">
+                        <span>{t.endsIn}</span>
+                        <div className="flex gap-1 md:gap-1.5 items-center">
+                           <div className="flex flex-col items-center"><span className="bg-[#0F3B4E] md:bg-[#0F172A] text-white text-[10px] md:text-sm font-bold px-1.5 md:px-2.5 py-1 md:py-1.5 rounded">{timeLeft.h}</span><span className="text-[6px] md:text-[8px] text-gray-500 mt-0.5 uppercase">Hrs</span></div>
+                           <span className="text-xs md:text-xl font-bold pb-2 text-gray-400 md:text-gray-900">:</span>
+                           <div className="flex flex-col items-center"><span className="bg-[#0F3B4E] md:bg-[#0F172A] text-white text-[10px] md:text-sm font-bold px-1.5 md:px-2.5 py-1 md:py-1.5 rounded">{timeLeft.m}</span><span className="text-[6px] md:text-[8px] text-gray-500 mt-0.5 uppercase">Mins</span></div>
+                           <span className="text-xs md:text-xl font-bold pb-2 text-gray-400 md:text-gray-900">:</span>
+                           <div className="flex flex-col items-center"><span className="bg-[#0F3B4E] md:bg-[#0F172A] text-white text-[10px] md:text-sm font-bold px-1.5 md:px-2.5 py-1 md:py-1.5 rounded">{timeLeft.s}</span><span className="text-[6px] md:text-[8px] text-gray-500 mt-0.5 uppercase">Secs</span></div>
+                        </div>
+                     </div>
+                     <button onClick={() => setViewMode('deals')} className="text-blue-600 font-bold text-[10px] md:text-sm hover:underline flex items-center gap-1">View All <FiChevronRight size={12}/></button>
+                  </div>
+               </div>
+
+               {/* Products (Horizontal on Mobile, Grid on PC) */}
+               <div className="md:hidden flex overflow-x-auto hide-scrollbar gap-3 pb-4 -mx-4 px-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                   {filteredProducts.length === 0 && <div className="text-xs text-gray-500">No products found.</div>}
+                   {filteredProducts.slice(0,6).map((product) => (
+                     <div key={product.id} className="min-w-[140px] max-w-[140px]">
+                       <ProductCard product={product} />
+                     </div>
+                   ))}
+               </div>
+               <div className="hidden md:grid grid-cols-4 xl:grid-cols-5 gap-4 pb-8">
+                  {filteredProducts.length === 0 && <div className="text-sm text-gray-500 col-span-full">No products found.</div>}
+                  {filteredProducts.slice(0,10).map((product) => (
+                     <ProductCard key={product.id} product={product} />
+                  ))}
+               </div>
+
+               {/* Secondary Banner: Big Deals */}
+               <div className="bg-[#0F3B4E] md:bg-[#0A101D] rounded-xl md:rounded-2xl p-5 md:p-8 text-white relative overflow-hidden shadow-sm mt-2 mb-6 flex flex-col md:flex-row items-center justify-between">
+                  <div className="z-10 relative text-center md:text-left w-full md:w-auto">
+                     <h3 className="text-sm md:text-xl font-black mb-1">Big Deals on Top Brands</h3>
+                     <p className="text-lg md:text-xl font-black text-[#F2A900] mb-3 md:mb-0">Up to 40% Off</p>
+                     <button className="bg-[#F2A900] text-[#0F172A] text-[10px] md:text-sm font-black px-4 md:px-5 py-2 md:py-2.5 rounded-lg shadow-md w-max flex items-center gap-1 mx-auto md:mx-0 hover:bg-yellow-500 transition">Shop Now <FiChevronRight className="md:hidden" size={10}/><FiArrowRight className="hidden md:inline"/></button>
+                  </div>
+                  <div className="hidden md:flex items-center gap-6 md:gap-10 flex-wrap justify-center opacity-80 border-l border-gray-800 pl-10 z-10">
+                     <span className="font-black text-2xl bg-white text-black px-2 rounded">MI</span>
+                     <span className="font-black text-xl tracking-widest">SAMSUNG</span>
+                     <span className="font-black text-3xl"></span>
+                     <span className="font-black text-3xl italic bg-white text-blue-900 rounded-full w-10 h-10 flex items-center justify-center">hp</span>
+                     <span className="font-black text-xl tracking-widest">SONY</span>
+                  </div>
+                  <div className="absolute right-0 md:right-10 top-1/2 -translate-y-1/2 text-7xl md:text-9xl opacity-30 md:opacity-10 transform -rotate-12">🎁</div>
+               </div>
+
+               {/* Top Brands Section (Mobile Only) */}
+               <div className="md:hidden mb-2">
+                  <div className="flex justify-between items-end mb-4">
+                     <div>
+                       <h3 className="font-black text-gray-900 text-sm">Top Brands, Top Quality</h3>
+                       <p className="text-[9px] text-gray-500">Shop your favorite brands</p>
+                     </div>
+                     <button className="bg-[#0F3B4E] text-white text-[9px] font-bold px-3 py-1.5 rounded-lg flex items-center gap-1">View All Brands <FiChevronRight size={10}/></button>
+                  </div>
+                  <div className="flex items-center gap-5 overflow-x-auto hide-scrollbar pb-2 pt-1 opacity-90 text-gray-800 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                     <span className="font-black text-2xl tracking-tighter bg-gray-900 text-white px-2 rounded-sm leading-none">MI</span>
+                     <span className="font-black text-xl tracking-widest leading-none">SAMSUNG</span>
+                     <span className="font-black text-3xl leading-none"></span>
+                     <span className="font-black text-2xl italic bg-gray-900 text-white rounded-full w-10 h-10 flex items-center justify-center leading-none flex-shrink-0">hp</span>
+                     <span className="font-black text-xl tracking-widest leading-none">SONY</span>
+                     <span className="font-black text-xl font-sans leading-none">Lenovo</span>
+                     <span className="font-black text-xs border-2 border-gray-900 rounded-full px-2 py-1 leading-none">DELL</span>
+                  </div>
+               </div>
+             </div>
+           )}
+
+
+           {/* ======================================================= */}
+           {/* CONTENT: DEALS / FLASH SALES VIEW (DARK MODE)           */}
+           {/* ======================================================= */}
+           {viewMode === 'deals' && (
+             <div className="animate-fade-in bg-[#050B14] min-h-screen text-white px-4 md:px-0 rounded-2xl md:p-6 overflow-hidden">
+                
+                {/* Deals Header Section */}
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8 mt-2 md:mt-0">
+                   <div>
+                      <h2 className="text-2xl md:text-3xl font-black flex items-center gap-2 mb-1">
+                         Mega Flash Sale <span className="bg-[#F2A900] text-[#0A101D] text-xs px-2 py-0.5 rounded-full font-black uppercase shadow-md">Limited</span>
+                      </h2>
+                      <p className="text-gray-400 text-sm">Limited time. Unbeatable deals!</p>
+                   </div>
+                   <div className="flex items-center gap-4">
+                      <button className="text-gray-400 hover:text-white transition"><FiSearch size={20}/></button>
+                      <button className="text-gray-400 hover:text-white transition"><FiFilter size={20}/></button>
+                   </div>
+                </div>
+
+                {/* Big Timer Banner */}
+                <div className="bg-[#0A101D] border border-gray-800 rounded-2xl p-6 md:p-8 flex flex-col md:flex-row items-center justify-between mb-8 relative overflow-hidden shadow-2xl">
+                   {/* Background Glow */}
+                   <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-blue-600/20 blur-[100px] rounded-full pointer-events-none"></div>
+                   
+                   <div className="z-10 text-center md:text-left mb-6 md:mb-0 w-full md:w-auto">
+                      <h3 className="text-gray-400 text-sm font-bold uppercase tracking-wider mb-4">Flash Sale Ends In</h3>
+                      <div className="flex items-center justify-center md:justify-start gap-3 md:gap-6">
+                         <div className="flex flex-col items-center">
+                            <span className="text-4xl md:text-5xl font-black text-white bg-gray-900 px-3 md:px-4 py-2 md:py-3 rounded-xl border border-gray-700 shadow-inner">{timeLeft.d}</span>
+                            <span className="text-[10px] md:text-xs text-gray-500 mt-2 uppercase font-bold">Days</span>
+                         </div>
+                         <span className="text-2xl md:text-4xl font-black text-gray-600 pb-5">:</span>
+                         <div className="flex flex-col items-center">
+                            <span className="text-4xl md:text-5xl font-black text-white bg-gray-900 px-3 md:px-4 py-2 md:py-3 rounded-xl border border-gray-700 shadow-inner">{timeLeft.h}</span>
+                            <span className="text-[10px] md:text-xs text-gray-500 mt-2 uppercase font-bold">Hrs</span>
+                         </div>
+                         <span className="text-2xl md:text-4xl font-black text-gray-600 pb-5">:</span>
+                         <div className="flex flex-col items-center">
+                            <span className="text-4xl md:text-5xl font-black text-[#F2A900] bg-gray-900 px-3 md:px-4 py-2 md:py-3 rounded-xl border border-gray-700 shadow-inner">{timeLeft.m}</span>
+                            <span className="text-[10px] md:text-xs text-gray-500 mt-2 uppercase font-bold">Mins</span>
+                         </div>
+                         <span className="text-2xl md:text-4xl font-black text-gray-600 pb-5">:</span>
+                         <div className="flex flex-col items-center">
+                            <span className="text-4xl md:text-5xl font-black text-red-500 bg-gray-900 px-3 md:px-4 py-2 md:py-3 rounded-xl border border-gray-700 shadow-inner animate-pulse">{timeLeft.s}</span>
+                            <span className="text-[10px] md:text-xs text-gray-500 mt-2 uppercase font-bold">Secs</span>
+                         </div>
+                      </div>
+                      <div className="mt-6">
+                         <div className="w-full bg-gray-800 h-2 rounded-full overflow-hidden mb-2">
+                            <div className="bg-gradient-to-r from-[#F2A900] to-red-500 w-[85%] h-full rounded-full"></div>
+                         </div>
+                         <p className="text-xs text-[#F2A900] font-bold">Hurry up! Limited time offer. Don't miss out!</p>
+                      </div>
+                   </div>
+
+                   <div className="z-10 flex flex-col items-center justify-center relative">
+                      <div className="absolute inset-0 bg-yellow-500/20 blur-[50px] rounded-full"></div>
+                      <h2 className="text-5xl md:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-b from-[#F2A900] to-yellow-700 leading-none">75%</h2>
+                      <p className="text-2xl md:text-3xl font-black tracking-widest text-white mt-[-5px]">OFF</p>
+                   </div>
+                </div>
+
+                {/* Badges Row */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 mb-8">
+                   <div className="bg-[#0A101D] border border-gray-800 rounded-xl p-3 md:p-4 flex items-center gap-3">
+                      <FiTruck className="text-[#F2A900] text-xl md:text-2xl" />
+                      <div><p className="text-[10px] md:text-xs font-bold text-gray-200">Fast Delivery</p><p className="text-[8px] md:text-[10px] text-gray-500">TZS 100,000+</p></div>
+                   </div>
+                   <div className="bg-[#0A101D] border border-gray-800 rounded-xl p-3 md:p-4 flex items-center gap-3">
+                      <FiCheckCircle className="text-[#F2A900] text-xl md:text-2xl" />
+                      <div><p className="text-[10px] md:text-xs font-bold text-gray-200">Easy Returns</p><p className="text-[8px] md:text-[10px] text-gray-500">7 Days Return</p></div>
+                   </div>
+                   <div className="bg-[#0A101D] border border-gray-800 rounded-xl p-3 md:p-4 flex items-center gap-3">
+                      <FiShield className="text-[#F2A900] text-xl md:text-2xl" />
+                      <div><p className="text-[10px] md:text-xs font-bold text-gray-200">Secure Payment</p><p className="text-[8px] md:text-[10px] text-gray-500">100% Safe</p></div>
+                   </div>
+                   <div className="bg-[#0A101D] border border-gray-800 rounded-xl p-3 md:p-4 flex items-center gap-3">
+                      <FiStar className="text-[#F2A900] text-xl md:text-2xl" />
+                      <div><p className="text-[10px] md:text-xs font-bold text-gray-200">100% Authentic</p><p className="text-[8px] md:text-[10px] text-gray-500">Genuine Products</p></div>
+                   </div>
+                </div>
+
+                {/* Tabs */}
+                <div className="flex items-center gap-6 border-b border-gray-800 pb-3 mb-6 overflow-x-auto hide-scrollbar">
+                   <button className="text-[#F2A900] border-b-2 border-[#F2A900] pb-3 font-bold text-sm whitespace-nowrap">Promo Products</button>
+                   <button className="text-gray-500 hover:text-gray-300 pb-3 font-bold text-sm whitespace-nowrap transition">All Deals</button>
+                   <button className="text-gray-500 hover:text-gray-300 pb-3 font-bold text-sm whitespace-nowrap transition">Top Deals</button>
+                   <button className="text-gray-500 hover:text-gray-300 pb-3 font-bold text-sm whitespace-nowrap transition">Upcoming</button>
+                </div>
+
+                {/* Filter and Sort */}
+                <div className="flex justify-between items-center mb-6">
+                   <button className="text-gray-400 text-xs font-bold flex items-center gap-2 bg-[#0A101D] px-3 py-1.5 rounded-lg border border-gray-800"><FiFilter/> Filter</button>
+                   <div className="text-gray-400 text-xs font-bold flex items-center gap-2">
+                      Sort: <span className="text-white">Best Match</span> <FiChevronDown/>
+                   </div>
+                </div>
+
+                {/* Deals Grid */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4 pb-12">
+                   {filteredProducts.length === 0 && <div className="text-gray-500 text-sm col-span-full py-10 text-center">No deals available at the moment.</div>}
+                   {filteredProducts.map((product) => (
+                      <DealsProductCard key={product.id} product={product} />
+                   ))}
+                </div>
+
+             </div>
+           )}
+
+        </div>
+      </main>
+
       {/* MOBILE BOTTOM NAVIGATION (MOCKUP EXACT REPLICA) */}
-      <div className="md:hidden fixed bottom-0 left-0 w-full bg-white border-t border-gray-100 flex justify-around items-center h-[65px] px-2 z-50 pb-safe">
-        <button onClick={() => { setActiveCategory('Electronics'); window.scrollTo(0,0); }} className={`flex flex-col items-center gap-1 w-[20%] text-gray-400 hover:text-gray-900`}>
-          <FiHome className="text-xl fill-current" />
+      <div className="md:hidden fixed bottom-0 left-0 w-full bg-white border-t border-gray-100 flex justify-around items-center h-[65px] px-2 z-50 pb-safe shadow-[0_-10px_40px_rgba(0,0,0,0.05)]">
+        <button onClick={() => { setViewMode('home'); setActiveCategory('All'); window.scrollTo(0,0); }} className={`flex flex-col items-center gap-1 w-[20%] transition ${viewMode === 'home' ? 'text-[#F2A900]' : 'text-gray-400 hover:text-gray-900'}`}>
+          <FiHome className={`text-xl ${viewMode === 'home' ? 'fill-current' : ''}`} />
           <span className="text-[9px] font-bold">Home</span>
         </button>
-        <button onClick={() => router.push('/shop')} className={`flex flex-col items-center gap-1 w-[20%] text-gray-400 hover:text-gray-900`}>
+        <button onClick={() => { setViewMode('home'); setActiveCategory('All'); }} className={`flex flex-col items-center gap-1 w-[20%] text-gray-400 hover:text-gray-900`}>
           <FiGrid className="text-xl" />
           <span className="text-[9px] font-bold">Categories</span>
         </button>
         
-        {/* CENTER MESSAGE BUTTON */}
-        <div className="relative -top-5 w-[20%] flex justify-center">
-           <div className="w-[52px] h-[52px] bg-[#0F3B4E] rounded-full flex items-center justify-center text-white shadow-lg border-[3px] border-white cursor-pointer transition">
-              <FiMessageCircle className="text-[22px]" />
+        {/* CENTER FLASH SALES / DEALS BUTTON */}
+        <div className="relative -top-5 w-[20%] flex justify-center" onClick={() => { setViewMode('deals'); window.scrollTo(0,0); }}>
+           <div className={`w-[52px] h-[52px] rounded-full flex items-center justify-center text-white shadow-lg border-[3px] border-white cursor-pointer transition ${viewMode === 'deals' ? 'bg-[#F2A900]' : 'bg-[#0F3B4E] hover:bg-[#0D3040]'}`}>
+              <FiZap className={`text-[22px] ${viewMode === 'deals' ? 'fill-white' : ''}`} />
            </div>
-           <span className="absolute -bottom-4 text-[9px] font-bold text-gray-500 w-full text-center">Message</span>
+           <span className={`absolute -bottom-4 text-[9px] font-bold w-full text-center ${viewMode === 'deals' ? 'text-[#F2A900]' : 'text-gray-500'}`}>Flash Sales</span>
         </div>
 
         <button onClick={openCartWorkflow} className="flex flex-col items-center gap-1 w-[20%] text-gray-400 hover:text-gray-900 relative">
@@ -550,135 +820,6 @@ export default function HomePage() {
         </button>
       </div>
 
-
-      {/* ========================================================= */}
-      {/* DESKTOP CONTENT (HIDDEN ON MOBILE)                        */}
-      {/* ========================================================= */}
-      <div className="hidden md:flex flex-col min-h-screen">
-         <header className="bg-[#0A101D] text-white h-[72px] items-center px-8 sticky top-0 z-50 shadow-md flex">
-           <div className="flex items-center gap-2 cursor-pointer w-[200px]" onClick={() => router.push('/')}>
-              <div className="flex text-2xl font-black italic tracking-tighter">
-                <span className="text-blue-500">J</span><span className="text-orange-500">t</span><span className="text-white">ex</span>
-              </div>
-           </div>
-           <div className="flex items-center gap-2 cursor-pointer hover:text-gray-300 transition pl-4 border-l border-gray-800">
-              <FiMapPin className="text-xl text-gray-400" />
-              <div className="flex flex-col leading-none">
-                 <span className="text-[10px] text-gray-400">Deliver to</span>
-                 <span className="text-xs font-bold flex items-center gap-1 mt-0.5">{deliverLocation} <FiChevronDown className="text-gray-500"/></span>
-              </div>
-           </div>
-           <div className="flex-1 flex justify-center px-8">
-              <div className="w-full max-w-2xl flex bg-white rounded-md overflow-hidden h-10 shadow-sm focus-within:ring-2 focus-within:ring-[#F2A900]/50 transition-all">
-                 <div className="bg-gray-100 border-r border-gray-200 text-gray-700 px-3 py-2 text-xs font-bold flex items-center gap-1 cursor-pointer hover:bg-gray-200 transition">All <FiChevronDown/></div>
-                 <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search products, brands..." className="flex-1 px-4 text-sm outline-none text-gray-900 placeholder-gray-400" />
-                 <div className="flex items-center gap-3 px-3 text-gray-400">
-                    <FiMaximize onClick={() => setIsBarcodeOpen(true)} className="hover:text-blue-500 cursor-pointer text-lg"/>
-                    <FiMic onClick={startVoiceSearch} className="hover:text-blue-500 cursor-pointer text-lg"/>
-                    <FiCamera onClick={() => setIsImageSearchOpen(true)} className="hover:text-blue-500 cursor-pointer text-lg"/>
-                 </div>
-                 <button className="bg-[#F2A900] px-6 flex items-center justify-center text-[#0A101D] hover:bg-yellow-500 transition"><FiSearch className="text-xl font-bold" /></button>
-              </div>
-           </div>
-           <div className="flex items-center gap-6">
-              <div onClick={toggleLanguage} className="flex items-center gap-2 cursor-pointer hover:text-gray-300 transition">
-                 <img src="https://flagcdn.com/w20/tz.png" className="w-5 h-3.5 rounded-sm object-cover" /><span className="text-xs font-bold">TZS <FiChevronDown className="inline text-gray-500"/></span>
-              </div>
-              <div onClick={openCartWorkflow} className="flex flex-col items-center cursor-pointer hover:text-[#F2A900] transition relative group">
-                 <div className="relative border border-gray-700 p-2 rounded-lg bg-gray-800/50 group-hover:border-gray-500 transition">
-                    <FiShoppingCart className="text-xl" />
-                    {cart.length > 0 && <span className="absolute -top-2 -right-2 bg-[#F2A900] text-[#0A101D] text-[10px] font-black w-5 h-5 rounded-full flex items-center justify-center border-2 border-[#0A101D]">{cart.length}</span>}
-                 </div>
-                 <span className="text-[10px] mt-1 font-bold">Cart</span>
-              </div>
-              <div className="flex flex-col items-center cursor-pointer hover:text-gray-300 transition group">
-                 <div className="border border-gray-700 p-2 rounded-lg bg-gray-800/50 group-hover:border-gray-500 transition"><FiPackage className="text-xl" /></div>
-                 <span className="text-[10px] mt-1 font-bold">Track Order</span>
-              </div>
-              <div onClick={() => { if(user) router.push('/profile'); else setIsLoginOpen(true); }} className="flex items-center gap-2 cursor-pointer border border-gray-700 py-1.5 px-3 rounded-full hover:bg-gray-800 transition">
-                 <FiUser className="text-xl text-gray-400" />
-                 <div className="flex flex-col leading-none">
-                    <span className="text-[9px] text-gray-400">{user ? 'Welcome back' : 'Hello, Sign In'}</span>
-                    <span className="text-xs font-bold flex items-center gap-1 mt-0.5">{user ? user.name.split(' ')[0] : 'My Account'} <FiChevronDown className="text-gray-500"/></span>
-                 </div>
-              </div>
-           </div>
-         </header>
-         <main className="max-w-[1920px] mx-auto flex gap-6 px-8 py-6 w-full">
-            <div className="w-[240px] flex-shrink-0 flex-col">
-               <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-3 mb-6">
-                  <nav className="flex flex-col gap-1 text-sm font-bold text-gray-600">
-                     <button onClick={() => router.push('/')} className="flex items-center gap-3 px-4 py-3 rounded-lg bg-gray-50 text-[#0F172A] transition"><FiHome className="text-lg text-gray-900"/> Home</button>
-                     <button onClick={() => router.push('/shop')} className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-50 transition"><FiGrid className="text-lg text-gray-400"/> Categories</button>
-                     <button className="flex items-center justify-between px-4 py-3 rounded-lg hover:bg-gray-50 transition"><div className="flex items-center gap-3"><FiTag className="text-lg text-gray-400"/> Deals</div><span className="bg-[#F2A900] text-white text-[9px] px-1.5 py-0.5 rounded font-black">Hot</span></button>
-                     <button onClick={() => router.push('/profile')} className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-50 transition"><FiPackage className="text-lg text-gray-400"/> Orders</button>
-                     <button className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-50 transition"><FiHeart className="text-lg text-gray-400"/> Wishlist</button>
-                     <div className="border-t border-gray-100 my-2 mx-2"></div>
-                     <button className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-50 transition"><FiHeadphones className="text-lg text-gray-400"/> Support</button>
-                  </nav>
-               </div>
-               <div className="bg-[#0A101D] rounded-xl p-6 text-white relative overflow-hidden shadow-lg mt-auto">
-                  <p className="text-[10px] text-gray-400 font-bold mb-1 uppercase tracking-wider">Special Offer</p>
-                  <h4 className="text-3xl font-black mb-2 leading-tight">Up to <span className="text-[#F2A900]">40% Off</span></h4>
-                  <p className="text-xs text-gray-300 mb-6">On selected items</p>
-                  <button className="bg-white text-[#0A101D] text-xs font-black px-5 py-2.5 rounded-full hover:bg-gray-200 transition shadow-md w-max flex items-center gap-2">Shop Now <FiArrowRight className="text-[#F2A900]"/></button>
-                  <div className="absolute -bottom-6 -right-6 text-7xl opacity-50 transform rotate-12">🎁</div>
-               </div>
-            </div>
-            <div className="flex-1 w-full flex flex-col min-w-0">
-               <div className="flex items-center gap-8 px-2 mb-6 text-sm font-bold text-gray-500 overflow-x-auto hide-scrollbar border-b border-transparent">
-                  {CATEGORY_KEYS.map((cat) => (
-                     <button key={cat} onClick={() => setActiveCategory(cat === activeCategory ? 'All' : cat)} className={`whitespace-nowrap pb-2 border-b-2 transition-all ${activeCategory === cat ? 'border-[#0F172A] text-[#0F172A]' : 'border-transparent hover:text-gray-900'}`}>{cat}</button>
-                  ))}
-               </div>
-               <div className="relative w-full h-[340px] rounded-2xl overflow-hidden shadow-sm group bg-[#0A101D] mb-6">
-                 {activeBanners.map((banner, index) => (
-                   <div key={banner.id} className={`absolute inset-0 w-full h-full transition-opacity duration-1000 bg-gradient-to-r ${banner.bgColor} flex flex-col justify-center px-16 text-white ${index === currentBannerIndex ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'}`}>
-                      <h1 className="text-6xl font-black mb-5 tracking-tight leading-[1.1] whitespace-pre-line max-w-[60%]">{banner.title}</h1>
-                      <p className="text-base font-medium mb-8 opacity-90 whitespace-pre-line max-w-[50%]">{banner.subtitle}</p>
-                      <button onClick={() => setActiveCategory(banner.categoryTarget)} className="bg-[#F2A900] text-[#0F172A] font-black px-8 py-3.5 rounded-full w-max hover:bg-yellow-500 transition shadow-lg flex items-center gap-2 text-sm">{banner.buttonText} <FiArrowRight className="text-lg" /></button>
-                   </div>
-                 ))}
-                 <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-20">
-                    {activeBanners.map((_, idx) => (
-                      <div key={idx} onClick={() => setCurrentBannerIndex(idx)} className={`h-2 rounded-full cursor-pointer transition-all ${idx === currentBannerIndex ? 'w-6 bg-[#F2A900]' : 'w-2 bg-white/50'}`}></div>
-                    ))}
-                 </div>
-               </div>
-               <div className="flex justify-between items-center bg-white rounded-2xl shadow-sm border border-gray-100 px-8 py-6 mb-8">
-                   <div className="flex items-center gap-4"><FiTruck className="text-4xl text-gray-700"/><div className="flex flex-col leading-tight"><span className="text-sm font-black text-gray-900">FREE Delivery</span><span className="text-xs text-gray-500 mt-1">on orders over TZS 50,000</span></div></div>
-                   <div className="w-px h-10 bg-gray-100"></div>
-                   <div className="flex items-center gap-4"><FiShield className="text-4xl text-[#F2A900]"/><div className="flex flex-col leading-tight"><span className="text-sm font-black text-gray-900">Money-back Guarantee</span><span className="text-xs text-gray-500 mt-1">for up to 60 days</span></div></div>
-                   <div className="w-px h-10 bg-gray-100"></div>
-                   <div className="flex items-center gap-4"><FiLock className="text-4xl text-gray-700"/><div className="flex flex-col leading-tight"><span className="text-sm font-black text-gray-900">Secure Payment</span><span className="text-xs text-gray-500 mt-1">100% secure payments</span></div></div>
-                   <div className="w-px h-10 bg-gray-100"></div>
-                   <div className="flex items-center gap-4"><FiHeadphones className="text-4xl text-gray-700"/><div className="flex flex-col leading-tight"><span className="text-sm font-black text-gray-900">24/7 Support</span><span className="text-xs text-gray-500 mt-1">We are here to help</span></div></div>
-               </div>
-               <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  <div className="flex items-center gap-3">
-                     <FiZap className="text-3xl text-[#0F172A] fill-[#0F172A]" />
-                     <h2 className="text-2xl font-black text-gray-900">{t.flashSales}</h2>
-                     <span className="text-sm text-gray-500 font-bold ml-2 hidden sm:block">{t.limitedOffers}</span>
-                  </div>
-                  <div className="flex items-center gap-6">
-                     <div className="flex items-center gap-3 text-xs font-bold text-gray-600">
-                        <span>{t.endsIn}</span>
-                        <div className="flex gap-1.5 items-center">
-                           <div className="flex flex-col items-center"><span className="bg-[#0F3B4E] text-white px-2.5 py-1.5 rounded-lg text-sm">{timeLeft.h}</span><span className="text-[8px] mt-1 uppercase">Hrs</span></div><span className="text-xl font-bold pb-4">:</span>
-                           <div className="flex flex-col items-center"><span className="bg-[#0F3B4E] text-white px-2.5 py-1.5 rounded-lg text-sm">{timeLeft.m}</span><span className="text-[8px] mt-1 uppercase">Mins</span></div><span className="text-xl font-bold pb-4">:</span>
-                           <div className="flex flex-col items-center"><span className="bg-[#0F3B4E] text-white px-2.5 py-1.5 rounded-lg text-sm">{timeLeft.s}</span><span className="text-[8px] mt-1 uppercase">Secs</span></div>
-                        </div>
-                     </div>
-                     <button className="text-blue-600 font-bold text-sm hover:underline flex items-center gap-1">View All <FiChevronRight/></button>
-                  </div>
-               </div>
-               <div className="grid grid-cols-4 xl:grid-cols-5 gap-4 pb-8">
-                  {filteredProducts.slice(0, 10).map((product) => (<ProductCard key={product.id} product={product} />))}
-               </div>
-            </div>
-         </main>
-         <Footer />
-      </div>
 
       {/* MODALS YAKO ZIPO HAPA (Login, Checkout, etc) - Code Imebaki asili */}
       {isLoginOpen && (
