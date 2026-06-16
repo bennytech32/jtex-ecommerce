@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { useCart } from '../context/CartContext'; 
+import { useCart } from './context/CartContext'; 
 import { 
   FiShoppingCart, FiSearch, FiFilter, FiGlobe, FiX, FiCheckCircle, FiMapPin, 
   FiTruck, FiShield, FiLock, FiMail, FiUser, FiPhone, FiTrash2, FiChevronRight, 
@@ -11,7 +11,7 @@ import {
   FiHome, FiTag, FiPackage, FiHeadphones, FiHeart, FiArrowRight
 } from 'react-icons/fi';
 
-import Footer from '../components/common/Footer';
+import Footer from './components/common/Footer';
 
 const translations = {
   en: {
@@ -584,8 +584,6 @@ export default function HomePage() {
                   <div key={idx} onClick={() => setCurrentBannerIndex(idx)} className={`h-2 rounded-full cursor-pointer transition-all ${idx === currentBannerIndex ? 'w-6 bg-[#F2A900]' : 'w-2 bg-white/50'}`}></div>
                 ))}
              </div>
-             {/* Decorative Mockup Visuals for Banner */}
-             <div className="absolute right-0 top-0 h-full w-1/2 bg-contain bg-right bg-no-repeat pointer-events-none opacity-90 hidden md:block" style={{ backgroundImage: "url('/laptop-banner.png')" }}></div>
            </div>
 
            {/* TRUST BADGES BAR */}
