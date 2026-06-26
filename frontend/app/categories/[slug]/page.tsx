@@ -10,7 +10,7 @@ import {
   FiArrowRight, FiShield, FiTruck, FiRefreshCw, FiMic, FiCamera, 
   FiHome, FiZap, FiChevronRight, FiMail, FiPhone, FiFacebook, 
   FiTwitter, FiInstagram, FiLinkedin, FiSend, FiMessageCircle, 
-  FiBell, FiSettings, FiFilter, FiChevronLeft
+  FiBell, FiSettings, FiFilter, FiChevronLeft, FiBox
 } from 'react-icons/fi';
 
 export default function CategoryPage({ params }: { params: { slug: string } }) {
@@ -23,7 +23,6 @@ export default function CategoryPage({ params }: { params: { slug: string } }) {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   
   // Undo URL slug formatting (e.g. 'home-kitchen' -> 'Home & Kitchen')
-  // We'll rely on the API to match this correctly later
   const categoryNameStr = params.slug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
 
   const getApiUrl = () => {
@@ -46,16 +45,16 @@ export default function CategoryPage({ params }: { params: { slug: string } }) {
         // Fetch Real Products
         const prodRes = await fetch(`${getApiUrl()}/api/products`);
         if (prodRes.ok) {
-          const data = await res.json();
+          const data = await prodRes.json(); // <-- Hapa ndipo kosa lilipokuwa (res badala ya prodRes)
+          
           // Filter products by the current category slug
-          // Assumes product.category is saved exactly as we expect, or we do a loose check
           const filtered = data.filter((p: any) => 
              p.category?.toLowerCase() === params.slug.toLowerCase().replace(/-/g, ' ') ||
              p.category?.toLowerCase().replace(/ & /g, '-') === params.slug.toLowerCase()
           );
-          setProducts(filtered.length > 0 ? filtered : data); // fallback to all if empty for testing
+          setProducts(filtered.length > 0 ? filtered : data); // fallback to all if empty
           
-          // Dynamically extract categories from DB if we don't have a dedicated category endpoint
+          // Dynamically extract categories from DB
           const uniqueCats = Array.from(new Set(data.map((p: any) => p.category))).filter(Boolean);
           setAllCategories(uniqueCats.map((c: any) => ({ name: c, slug: c.toLowerCase().replace(/ & /g, '-') })));
         }
@@ -150,6 +149,10 @@ export default function CategoryPage({ params }: { params: { slug: string } }) {
               <span className="text-[10px] font-bold mt-1">Cart</span>
               {cartCount > 0 && <span className="absolute top-0 right-1 bg-[#F2A900] text-black text-[10px] font-black w-4 h-4 flex items-center justify-center rounded-full">{cartCount}</span>}
             </button>
+            <button onClick={() => router.push('/profile')} className="flex flex-col items-center hover:bg-gray-800/50 p-2 rounded-lg transition">
+              <FiPackage size={22} className="text-gray-300"/>
+              <span className="text-[10px] font-bold mt-1">Track Order</span>
+            </button>
             <button onClick={() => router.push('/profile')} className="flex items-center gap-2 border border-gray-700 bg-gray-800/50 hover:bg-gray-700 px-4 py-2 rounded-full transition">
               <FiUser size={18}/>
               <span className="text-xs font-bold">My Account</span>
@@ -231,7 +234,7 @@ export default function CategoryPage({ params }: { params: { slug: string } }) {
               </div>
            </div>
 
-           {/* Horizontal Sub-categories (Mock visually based on your image) */}
+           {/* Horizontal Sub-categories */}
            <div className="flex overflow-x-auto hide-scrollbar gap-4 px-4 lg:px-0 mb-8 pb-2">
               <div className="bg-yellow-50 border-2 border-[#F2A900] rounded-xl p-4 flex flex-col items-center justify-center min-w-[120px] cursor-pointer">
                  <FiMonitor size={32} className="text-[#F2A900] mb-2"/>
@@ -261,7 +264,6 @@ export default function CategoryPage({ params }: { params: { slug: string } }) {
                        <button className="text-[10px] font-bold text-blue-600 hover:underline">Clear All</button>
                     </div>
                     
-                    {/* Dummy Filters Matching UI */}
                     <div className="space-y-4">
                        <div>
                           <div className="flex justify-between items-center cursor-pointer mb-2">
@@ -352,7 +354,7 @@ export default function CategoryPage({ params }: { params: { slug: string } }) {
                                   {product.imageUrl ? <img src={getImageUrl(product.imageUrl)} alt={product.name} className="object-contain w-full h-full mix-blend-multiply group-hover:scale-105 transition-transform duration-300" /> : <span className="text-5xl">📦</span>}
                               </div>
                               <h4 className="font-bold text-xs lg:text-sm text-gray-800 mb-1 line-clamp-2 leading-tight">{product.name}</h4>
-                              <p className="text-[9px] text-gray-500 mb-2">i5 • 8GB RAM • 512GB SSD</p> {/* Mock spec for visual */}
+                              <p className="text-[9px] text-gray-500 mb-2">i5 • 8GB RAM • 512GB SSD</p>
                               <div className="flex flex-col lg:flex-row lg:items-center gap-1 lg:gap-2 mb-2 mt-auto">
                                   <span className="font-black text-sm lg:text-base text-gray-900">TZS {product.price.toLocaleString()}</span>
                                   <span className="text-[10px] text-gray-400 line-through">TZS {oldPrice.toLocaleString()}</span>
