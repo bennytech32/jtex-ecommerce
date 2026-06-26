@@ -23,11 +23,31 @@ const PAYMENT_METHODS = [
   { id: 'store', name: 'Pay at Store', desc: 'Pay when you visit Jtex store', icon: '🏪' }
 ];
 
+// === MIKOA YA TANZANIA ===
+const TANZANIA_REGIONS = [
+  "Arusha", "Dar es Salaam", "Dodoma", "Geita", "Iringa", "Kagera", "Katavi", 
+  "Kigoma", "Kilimanjaro", "Lindi", "Manyara", "Mara", "Mbeya", "Morogoro", 
+  "Mtwara", "Mwanza", "Njombe", "Pemba Kaskazini", "Pemba Kusini", "Pwani", 
+  "Rukwa", "Ruvuma", "Shinyanga", "Simiyu", "Singida", "Songwe", "Tabora", 
+  "Tanga", "Zanzibar Kaskazini", "Zanzibar Kusini", "Zanzibar Mjini Magharibi"
+];
+
+const ISLAND_REGIONS = [
+  "Pemba Kaskazini", "Pemba Kusini", "Zanzibar Kaskazini", 
+  "Zanzibar Kusini", "Zanzibar Mjini Magharibi"
+];
+
 export default function CheckoutSystem() {
   const router = useRouter();
-  
-  // Tumeondoa updateQuantity hapa ili kuepuka Type Error
   const { cart, removeFromCart, cartTotal, clearCart } = useCart();
+  
+  const getApiUrl = () => 'https://jtex-ecommerce-production.up.railway.app';
+  
+  // Function ya kufix link za picha
+  const getImageUrl = (url: string) => {
+    if (!url) return '';
+    return url.startsWith('http') ? url : `${getApiUrl()}${url}`;
+  };
   
   // States
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1);
@@ -38,19 +58,25 @@ export default function CheckoutSystem() {
     fullName: '',
     phone: '',
     country: 'Tanzania',
-    region: 'Dar es Salaam',
-    district: '',
+    region: 'Dar es Salaam', // Default Region
     address: ''
   });
 
-  // Dynamic Shipping Methods based on Region
-  const availableShippingMethods = formData.region === 'Dar es Salaam' 
-    ? ALL_SHIPPING_METHODS 
-    : ALL_SHIPPING_METHODS.filter(method => method.id !== 'bodaboda');
+  // Logiki ya Usafiri kulingana na Mkoa (Region)
+  const isDarEsSalaam = formData.region === 'Dar es Salaam';
+  const isIsland = ISLAND_REGIONS.includes(formData.region);
+
+  const availableShippingMethods = ALL_SHIPPING_METHODS.filter(method => {
+    if (method.id === 'bodaboda') return isDarEsSalaam;
+    if (method.id === 'boat') return isIsland;
+    if (method.id === 'bus') return !isIsland; // Mabasi hayaendi visiwani
+    if (method.id === 'aeroplane') return true; // Ndege zinaenda kote
+    return true;
+  });
 
   const [selectedShipping, setSelectedShipping] = useState(availableShippingMethods[0]);
 
-  // Update selected shipping if the current one becomes unavailable due to region change
+  // Hakikisha usafiri uliopo unabadilika kama mkoa ukibadilika na usafiri ule kutoendelea kuwepo
   useEffect(() => {
     if (!availableShippingMethods.find(m => m.id === selectedShipping.id)) {
       setSelectedShipping(availableShippingMethods[0]);
@@ -77,20 +103,21 @@ export default function CheckoutSystem() {
   // Mahesabu
   const subtotal = cartTotal || 0; 
   const discount = 0; 
-  const deliveryFee = currentStep > 1 ? selectedShipping.price : 0;
+  const deliveryFee = currentStep > 1 && selectedShipping ? selectedShipping.price : 0;
   const totalAmount = subtotal - discount + deliveryFee;
-  const advancePayment = selectedPayment.id === 'cod' ? totalAmount * 0.2 : totalAmount; // 20% advance for COD
+  const advancePayment = selectedPayment.id === 'cod' ? totalAmount * 0.2 : totalAmount;
   const remainingBalance = totalAmount - advancePayment;
 
   // Handle Proceed to Step 2 (Check Authentication)
   const handleProceedToShipping = () => {
     const savedUser = localStorage.getItem('jtex_user');
     if (!savedUser) {
-      alert("Please login to proceed with checkout.");
+      alert("Lazima uingie kwenye akaunti yako (Login) ili uweze kuendelea na malipo.");
+      router.push('/'); // Mpeleke nyumbani afanye login (au weka path ya login page)
       return;
     }
     if (cart.length === 0) {
-      alert("Your cart is empty.");
+      alert("Kikapu chako kipo wazi.");
       return;
     }
     setCurrentStep(2);
@@ -174,10 +201,10 @@ export default function CheckoutSystem() {
                 <div className="space-y-4">
                   {cart?.length > 0 ? cart.map((item: any) => (
                     <div key={item.id} className="flex flex-col sm:flex-row gap-4 p-4 border border-gray-100 rounded-xl relative hover:border-[#F2A900] transition group">
-                      <div className="w-20 h-20 bg-gray-50 rounded-lg flex items-center justify-center flex-shrink-0 p-2">
-                        {item.imageUrl ? <img src={item.imageUrl} alt={item.name} className="object-contain w-full h-full" /> : <span className="text-3xl">{item.imageEmoji || '📦'}</span>}
+                      <div className="w-20 h-20 bg-gray-50 rounded-lg flex items-center justify-center flex-shrink-0 p-2 border border-gray-200">
+                        {item.imageUrl ? <img src={getImageUrl(item.imageUrl)} alt={item.name} className="object-contain w-full h-full mix-blend-multiply" /> : <span className="text-3xl">{item.imageEmoji || '📦'}</span>}
                       </div>
-                      <div className="flex-1">
+                      <div className="flex-1 flex flex-col justify-center">
                         <h3 className="font-bold text-sm text-gray-900 pr-8 line-clamp-2">{item.name}</h3>
                         <p className="text-xs text-gray-500 mt-1 flex items-center gap-2">
                           {item.color && <><span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-gray-800 border border-gray-300"></span> {item.color}</span><span className="text-gray-300">|</span></>}
@@ -186,9 +213,7 @@ export default function CheckoutSystem() {
                         <div className="flex items-center justify-between mt-3">
                           <span className="font-black text-gray-900">TZS {item.price?.toLocaleString()}</span>
                           <div className="flex items-center gap-3 bg-gray-50 border border-gray-200 rounded-lg px-2 py-1">
-                            <button className="text-gray-500 hover:text-black font-bold disabled:opacity-50" disabled={item.quantity <= 1}>-</button>
-                            <span className="text-xs font-black w-4 text-center">{item.quantity}</span>
-                            <button className="text-gray-500 hover:text-black font-bold">+</button>
+                            <span className="text-xs font-black px-2 py-0.5 text-center">Qty: {item.quantity}</span>
                           </div>
                         </div>
                       </div>
@@ -198,7 +223,7 @@ export default function CheckoutSystem() {
                     <div className="text-center py-10">
                       <FiShoppingCart className="mx-auto text-4xl text-gray-300 mb-4"/>
                       <p className="text-gray-500 font-medium mb-4">Your cart is empty</p>
-                      <button onClick={() => router.push('/shop')} className="bg-[#0A101D] text-white px-6 py-2 rounded-xl text-sm font-bold">Continue Shopping</button>
+                      <button onClick={() => router.push('/')} className="bg-[#0A101D] text-white px-6 py-2 rounded-xl text-sm font-bold">Continue Shopping</button>
                     </div>
                   )}
                 </div>
@@ -235,17 +260,16 @@ export default function CheckoutSystem() {
                     <div>
                       <label className="block text-xs font-bold text-gray-600 mb-1.5">Region <span className="text-red-500">*</span></label>
                       <select value={formData.region} onChange={(e)=>setFormData({...formData, region: e.target.value})} className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-[#F2A900]">
-                        <option value="Dar es Salaam">Dar es Salaam</option>
-                        <option value="Mwanza">Mwanza</option>
-                        <option value="Arusha">Arusha</option>
-                        <option value="Dodoma">Dodoma</option>
+                        {TANZANIA_REGIONS.map(region => (
+                          <option key={region} value={region}>{region}</option>
+                        ))}
                       </select>
                     </div>
                     <div className="sm:col-span-2">
                       <label className="block text-xs font-bold text-gray-600 mb-1.5">Full Address / Landmark <span className="text-red-500">*</span></label>
                       <div className="relative">
                         <FiMapPin className="absolute left-3 top-3 text-gray-400" />
-                        <textarea required rows={2} value={formData.address} onChange={(e)=>setFormData({...formData, address: e.target.value})} placeholder="E.g., Nyamagana B, Near Rock City Mall" className="w-full pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-[#F2A900]"></textarea>
+                        <textarea required rows={2} value={formData.address} onChange={(e)=>setFormData({...formData, address: e.target.value})} placeholder="E.g., Kinondoni, Mkwajuni" className="w-full pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-[#F2A900]"></textarea>
                       </div>
                     </div>
                   </div>
@@ -259,9 +283,9 @@ export default function CheckoutSystem() {
                       <div 
                         key={method.id} 
                         onClick={() => setSelectedShipping(method)}
-                        className={`relative p-3 sm:p-4 rounded-xl border-2 cursor-pointer transition flex flex-col items-start gap-2 ${selectedShipping.id === method.id ? 'border-[#F2A900] bg-yellow-50/30 shadow-sm' : 'border-gray-100 bg-white hover:border-gray-200'}`}
+                        className={`relative p-3 sm:p-4 rounded-xl border-2 cursor-pointer transition flex flex-col items-start gap-2 ${selectedShipping?.id === method.id ? 'border-[#F2A900] bg-yellow-50/30 shadow-sm' : 'border-gray-100 bg-white hover:border-gray-200'}`}
                       >
-                        {selectedShipping.id === method.id ? (
+                        {selectedShipping?.id === method.id ? (
                            <div className="absolute top-3 right-3 text-[#F2A900]"><FiCheckCircle size={18} className="fill-[#F2A900] text-white" /></div>
                         ) : (
                            <div className="absolute top-3 right-3 w-4.5 h-4.5 rounded-full border border-gray-300"></div>
@@ -290,7 +314,7 @@ export default function CheckoutSystem() {
                      {cart.map(item => (
                        <div key={item.id} className="flex items-center gap-3 pb-3 border-b border-gray-100 last:border-0 last:pb-0">
                          <div className="w-12 h-12 bg-gray-50 rounded border border-gray-200 flex items-center justify-center flex-shrink-0 p-1">
-                           {item.imageUrl ? <img src={item.imageUrl} alt={item.name} className="object-contain w-full h-full mix-blend-multiply" /> : <span className="text-xl">{item.imageEmoji || '📦'}</span>}
+                           {item.imageUrl ? <img src={getImageUrl(item.imageUrl)} alt={item.name} className="object-contain w-full h-full mix-blend-multiply" /> : <span className="text-xl">{item.imageEmoji || '📦'}</span>}
                          </div>
                          <div className="flex-1">
                            <h4 className="text-xs font-bold text-gray-900 line-clamp-1">{item.name}</h4>
@@ -332,7 +356,7 @@ export default function CheckoutSystem() {
                    <h2 className="font-black text-base flex items-center gap-2 mb-4">📝 3. Pricing Summary</h2>
                    <div className="space-y-2 text-sm">
                       <div className="flex justify-between text-gray-600 font-medium"><span>Subtotal</span><span>TZS {subtotal.toLocaleString()}</span></div>
-                      <div className="flex justify-between text-gray-600 font-medium"><span>Delivery ({selectedShipping.name})</span><span>TZS {deliveryFee.toLocaleString()}</span></div>
+                      <div className="flex justify-between text-gray-600 font-medium"><span>Delivery ({selectedShipping?.name})</span><span>TZS {deliveryFee.toLocaleString()}</span></div>
                       <div className="flex justify-between text-green-600 font-bold"><span>Discount</span><span>- TZS {discount.toLocaleString()}</span></div>
                    </div>
                    <div className="border-t border-gray-100 mt-3 pt-3 flex justify-between items-center">
@@ -368,7 +392,7 @@ export default function CheckoutSystem() {
               <div className="space-y-3 text-sm mb-6">
                 <div className="flex justify-between text-gray-600 font-medium"><span>Subtotal</span><span>TZS {subtotal.toLocaleString()}</span></div>
                 <div className="flex justify-between text-gray-600 font-medium">
-                   <span>Delivery {currentStep > 1 && `(${selectedShipping.name})`}</span>
+                   <span>Delivery {currentStep > 1 && `(${selectedShipping?.name})`}</span>
                    <span>TZS {deliveryFee.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between text-green-600 font-bold"><span>Discount</span><span>- TZS {discount.toLocaleString()}</span></div>
