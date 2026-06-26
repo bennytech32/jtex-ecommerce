@@ -539,7 +539,7 @@ export default function CheckoutSystem() {
                        alert("Tafadhali weka namba sahihi ya simu kwa malipo.");
                        return;
                     }
-                    alert('Requesting payment...');
+                    router.push('/order-success');
                   }
                 }}
                 disabled={cart.length === 0}
@@ -597,7 +597,7 @@ export default function CheckoutSystem() {
                     alert("Tafadhali weka namba sahihi ya simu kwa malipo.");
                     return;
                  }
-                 alert('Requesting payment...');
+                 router.push('/order-success');
               }}
               className="w-full bg-[#F2A900] text-black font-black py-4 rounded-xl flex items-center justify-center gap-2 shadow-sm"
             >
