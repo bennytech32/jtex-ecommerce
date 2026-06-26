@@ -6,7 +6,7 @@ import { useCart } from '../context/CartContext';
 import { 
   FiArrowLeft, FiShoppingCart, FiMapPin, FiCreditCard, 
   FiTrash2, FiChevronRight, FiShield, FiCheckCircle, 
-  FiTruck, FiBox, FiPhone, FiUser, FiInfo, FiStar
+  FiTruck, FiBox, FiPhone, FiUser, FiStar
 } from 'react-icons/fi';
 
 // === SHIPPING OPTIONS ===
@@ -126,7 +126,7 @@ export default function CheckoutSystem() {
   const deliveryFee = currentStep > 1 && selectedShipping ? selectedShipping.price : 0;
   const totalAmount = subtotal - discount + deliveryFee;
   
-  // Custom advance amount kama UI inavyoonyesha (Mfano TZS 50,000 fixed au asilimia)
+  // Custom advance amount kama UI inavyoonyesha
   const advancePayment = selectedPaymentType.id === 'cod' ? Math.min(50000, totalAmount) : totalAmount;
   const remainingBalance = totalAmount - advancePayment;
 
@@ -134,7 +134,6 @@ export default function CheckoutSystem() {
     const savedUser = localStorage.getItem('jtex_user');
     if (!savedUser) {
       alert("Lazima uingie kwenye akaunti yako (Login) ili uweze kuendelea na malipo.");
-      // router.push('/login'); 
       return;
     }
     if (cart.length === 0) {
@@ -470,7 +469,7 @@ export default function CheckoutSystem() {
               
               {/* Items Mini List */}
               <div className="space-y-3 mb-6 max-h-[250px] overflow-y-auto custom-scrollbar pr-2">
-                 {cart.map(item => (
+                 {cart.map((item: any) => (
                    <div key={item.id} className="flex gap-3">
                      <div className="w-10 h-10 bg-gray-50 rounded border border-gray-100 flex items-center justify-center flex-shrink-0 p-1">
                        {item.imageUrl ? <img src={getImageUrl(item.imageUrl)} alt={item.name} className="object-contain w-full h-full mix-blend-multiply" /> : <span className="text-lg">{item.imageEmoji || '📦'}</span>}
