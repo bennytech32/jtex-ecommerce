@@ -10,7 +10,7 @@ import {
   FiArrowRight, FiShield, FiTruck, FiRefreshCw, FiMic, FiCamera, 
   FiHome, FiZap, FiChevronRight, FiMail, FiPhone, FiFacebook, 
   FiTwitter, FiInstagram, FiLinkedin, FiSend, FiMessageCircle, 
-  FiBell, FiSettings, FiBox
+  FiBell, FiSettings
 } from 'react-icons/fi';
 
 export default function HomePage() {
@@ -50,7 +50,7 @@ export default function HomePage() {
           const data = await res.json();
           setProducts(data);
 
-          // Extract unique categories directly from products for accuracy
+          // Extract unique categories directly from products
           const uniqueCats = Array.from(new Set(data.map((p: any) => p.category))).filter(Boolean);
           const formattedCats = uniqueCats.map((c: any) => ({
              name: c, 
@@ -133,18 +133,19 @@ export default function HomePage() {
     if(lower.includes('fashion') || lower.includes('cloth')) return <FiShoppingBag size={24} />;
     if(lower.includes('home') || lower.includes('kitchen')) return <FiCoffee size={24} />;
     if(lower.includes('beaut')) return <FiSmile size={24} />;
-    return <FiGrid size={24} />; // Default generic icon
+    return <FiGrid size={24} />;
   };
 
-  // Helper for category routing
   const handleCategoryClick = (slug: string) => {
     router.push(`/categories/${slug}`);
   };
 
-  // Dynamic Sidebar Logic based on Login Status
-  const renderSidebar = () => {
+  // =========================================================
+  // LOGIC YA SIDEBAR (Auth vs Guest) ILIYOSAHULIKA MWANZO
+  // =========================================================
+  const renderSidebarMenu = () => {
     if (isLoggedIn) {
-      // Full Menu for Logged In Users
+      // Menu Ndefu ya Mtu Aliyelogin
       return (
         <nav className="bg-white rounded-2xl border border-gray-100 py-3 shadow-sm mb-6 flex flex-col">
           <button className="flex items-center gap-3 px-6 py-2.5 bg-gray-50 text-gray-900 font-bold transition"><FiHome size={18}/> Home</button>
@@ -169,7 +170,7 @@ export default function HomePage() {
         </nav>
       );
     } else {
-      // Short Menu for Guests (Mockup Accurate)
+      // Menu Fupi ya Guest (Kama kwenye picha uliyozungushia)
       return (
         <nav className="bg-white rounded-2xl border border-gray-100 py-3 shadow-sm mb-6 flex flex-col">
           <button className="flex items-center gap-3 px-6 py-2.5 bg-gray-50 text-gray-900 font-bold transition"><FiHome size={18}/> Home</button>
@@ -182,7 +183,7 @@ export default function HomePage() {
           <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#F2A900] transition font-medium" onClick={() => router.push('/help')}><FiHeadphones size={18}/> Support</button>
           
           <div className="px-6 mt-4 pt-4 border-t border-gray-100">
-             <button onClick={() => router.push('/login')} className="w-full bg-[#0A101D] text-white font-bold py-3 rounded-xl hover:bg-gray-800 transition shadow-sm text-xs">Login / Register</button>
+             <button onClick={() => router.push('/login')} className="w-full bg-[#0A101D] text-white font-bold py-3 rounded-xl hover:bg-gray-800 transition shadow-sm text-xs">Sign In / Register</button>
           </div>
         </nav>
       );
@@ -197,13 +198,10 @@ export default function HomePage() {
       {/* ========================================================= */}
       <header className="hidden lg:block bg-[#0A101D] text-white border-b border-gray-800 sticky top-0 z-50">
         <div className="max-w-[1600px] mx-auto px-6 h-20 flex items-center justify-between gap-6">
-          
-          {/* Logo */}
           <div className="flex items-center gap-8 flex-shrink-0">
             <div className="cursor-pointer flex text-3xl font-black italic tracking-tighter" onClick={() => router.push('/')}>
               <span className="text-blue-500">J</span><span className="text-[#F2A900]">t</span><span className="text-white">ex</span>
             </div>
-            
             <div className="flex items-center gap-2 cursor-pointer hover:bg-gray-800/50 p-2 rounded-lg transition">
               <FiMapPin className="text-gray-400" size={20}/>
               <div className="flex flex-col leading-tight">
@@ -213,7 +211,6 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Search Bar */}
           <div className="flex-1 max-w-2xl flex items-center h-11 bg-white rounded-lg overflow-hidden">
             <button className="h-full px-4 text-gray-600 text-sm font-bold bg-gray-100 border-r border-gray-200 flex items-center gap-1 hover:bg-gray-200 transition">
               All <FiChevronDown/>
@@ -228,7 +225,6 @@ export default function HomePage() {
             </button>
           </div>
 
-          {/* Actions */}
           <div className="flex items-center gap-4 flex-shrink-0">
             <button className="flex items-center gap-2 hover:bg-gray-800/50 p-2 rounded-lg transition">
               <img src="https://flagcdn.com/w20/tz.png" alt="TZ" className="w-5 rounded-sm"/>
@@ -283,14 +279,14 @@ export default function HomePage() {
       </header>
 
       {/* ========================================================= */}
-      {/* 3. MAIN LAYOUT (DESKTOP: SIDEBAR + CONTENT | MOBILE: FULL) */}
+      {/* 3. MAIN LAYOUT */}
       {/* ========================================================= */}
       <div className="max-w-[1600px] mx-auto lg:px-6 lg:py-6 flex gap-6">
         
         {/* DESKTOP SIDEBAR */}
         <aside className="hidden lg:flex flex-col w-[260px] flex-shrink-0">
           
-          {/* Dynamic Render Sidebar Menu Component */}
+          {/* Hapa ndipo tulipoita function ya renderSidebarMenu */}
           {renderSidebarMenu()}
 
           <div className="bg-[#0A101D] text-white rounded-2xl p-6 relative overflow-hidden shadow-lg border border-gray-800">
@@ -302,7 +298,7 @@ export default function HomePage() {
           </div>
         </aside>
 
-        {/* MAIN CONTENT */}
+        {/* MAIN CONTENT AREA */}
         <main className="flex-1 min-w-0">
           
           {/* Desktop Categories Header (Real Dynamic Data) */}
