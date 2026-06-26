@@ -7,7 +7,8 @@ import {
   FiSearch, FiMapPin, FiShoppingCart, FiUser, FiPackage, 
   FiHeart, FiHeadphones, FiChevronDown, FiGrid, FiList, 
   FiMonitor, FiSmartphone, FiShoppingBag, FiCoffee, FiSmile,
-  FiArrowRight, FiShield, FiTruck, FiRefreshCw, FiMic, FiCamera, FiHome, FiZap
+  FiArrowRight, FiShield, FiTruck, FiRefreshCw, FiMic, FiCamera, FiHome, FiZap,
+  FiChevronRight // <-- Tumeongeza hii hapa
 } from 'react-icons/fi';
 
 export default function HomePage() {
@@ -81,7 +82,7 @@ export default function HomePage() {
     <div className="min-h-screen bg-[#F8FAFC] pb-20 lg:pb-0 font-sans text-gray-900">
       
       {/* ========================================================= */}
-      {/* 1. DESKTOP HEADER[cite: 7] */}
+      {/* 1. DESKTOP HEADER */}
       {/* ========================================================= */}
       <header className="hidden lg:block bg-[#0A101D] text-white border-b border-gray-800 sticky top-0 z-50">
         <div className="max-w-[1500px] mx-auto px-6 h-20 flex items-center justify-between gap-6">
@@ -140,7 +141,7 @@ export default function HomePage() {
       </header>
 
       {/* ========================================================= */}
-      {/* 2. MOBILE HEADER[cite: 8] */}
+      {/* 2. MOBILE HEADER */}
       {/* ========================================================= */}
       <header className="lg:hidden bg-[#0A101D] text-white px-4 py-3 sticky top-0 z-50">
         <div className="flex items-center justify-between mb-3">
@@ -175,7 +176,7 @@ export default function HomePage() {
       {/* ========================================================= */}
       <div className="max-w-[1500px] mx-auto lg:px-6 lg:py-6 flex gap-6">
         
-        {/* DESKTOP SIDEBAR[cite: 7] */}
+        {/* DESKTOP SIDEBAR */}
         <aside className="hidden lg:flex flex-col w-[260px] flex-shrink-0">
           <nav className="bg-white rounded-2xl border border-gray-100 p-3 shadow-sm mb-6 flex flex-col gap-1">
             <button className="flex items-center gap-3 px-4 py-3 rounded-xl bg-gray-50 text-gray-900 font-bold transition"><FiHome size={18}/> Home</button>
@@ -198,7 +199,7 @@ export default function HomePage() {
         {/* MAIN CONTENT */}
         <main className="flex-1 min-w-0">
           
-          {/* Desktop Categories Header[cite: 7] */}
+          {/* Desktop Categories Header */}
           <div className="hidden lg:flex items-center justify-between bg-white rounded-2xl border border-gray-100 px-6 py-4 shadow-sm mb-6">
             <div className="flex items-center gap-8">
               {['Electronics', 'Computers', 'Phones', 'Fashion', 'Home & Kitchen', 'Beauty'].map(cat => (
@@ -207,7 +208,7 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Mobile Categories Row[cite: 8] */}
+          {/* Mobile Categories Row */}
           <div className="lg:hidden flex overflow-x-auto hide-scrollbar gap-4 px-4 py-5 bg-white border-b border-gray-100">
             {defaultCategories.map((cat, idx) => (
               <div key={idx} className="flex flex-col items-center gap-2 flex-shrink-0 cursor-pointer group">
@@ -219,7 +220,7 @@ export default function HomePage() {
             ))}
           </div>
 
-          {/* Mobile Pre-Hero Feature Cards[cite: 8] */}
+          {/* Mobile Pre-Hero Feature Cards */}
           <div className="lg:hidden flex gap-3 px-4 py-4">
              <div className="flex-1 bg-white border border-gray-100 rounded-xl p-3 flex items-center gap-3 shadow-sm">
                 <div className="w-10 h-10 bg-yellow-50 text-[#F2A900] rounded-lg flex items-center justify-center"><FiTruck size={20}/></div>
@@ -272,7 +273,7 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Desktop Features Row[cite: 7] & Mobile Features Row[cite: 8] */}
+          {/* Desktop Features Row & Mobile Features Row */}
           <div className="px-4 lg:px-0 mb-8 lg:mb-10">
              <div className="flex overflow-x-auto hide-scrollbar gap-4 lg:gap-6 bg-white lg:bg-transparent lg:border-t lg:border-b lg:border-gray-200 lg:py-6 rounded-2xl lg:rounded-none p-4 lg:p-0 shadow-sm lg:shadow-none border border-gray-100 lg:border-none">
                 <div className="flex items-center gap-3 lg:gap-4 flex-shrink-0 flex-1 min-w-[200px]">
@@ -364,7 +365,7 @@ export default function HomePage() {
              )}
           </div>
 
-          {/* Top Brands Banner[cite: 7, 8] */}
+          {/* Top Brands Banner */}
           <div className="px-4 lg:px-0 mb-6">
              <div className="bg-[#0A101D] rounded-2xl flex flex-col lg:flex-row items-center justify-between p-6 lg:p-8 gap-6 shadow-md">
                 <div className="text-center lg:text-left">
@@ -390,7 +391,7 @@ export default function HomePage() {
       </div>
 
       {/* ========================================================= */}
-      {/* 4. MOBILE BOTTOM NAVIGATION[cite: 8] */}
+      {/* 4. MOBILE BOTTOM NAVIGATION */}
       {/* ========================================================= */}
       <div className="lg:hidden fixed bottom-0 left-0 w-full bg-white border-t border-gray-100 px-6 py-3 flex justify-between items-center z-50 shadow-[0_-10px_20px_rgba(0,0,0,0.03)] pb-safe">
          <button onClick={() => router.push('/')} className="flex flex-col items-center gap-1 text-[#F2A900]">
