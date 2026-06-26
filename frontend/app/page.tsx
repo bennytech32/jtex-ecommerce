@@ -9,14 +9,17 @@ import {
   FiMonitor, FiSmartphone, FiShoppingBag, FiCoffee, FiSmile,
   FiArrowRight, FiShield, FiTruck, FiRefreshCw, FiMic, FiCamera, 
   FiHome, FiZap, FiChevronRight, FiMail, FiPhone, FiFacebook, 
-  FiTwitter, FiInstagram, FiLinkedin, FiSend, FiMessageCircle, FiBell, FiSettings
+  FiTwitter, FiInstagram, FiLinkedin, FiSend, FiMessageCircle, 
+  FiBell, FiSettings, FiBox
 } from 'react-icons/fi';
 
 export default function HomePage() {
   const router = useRouter();
   const { cart, addToCart } = useCart();
   const [products, setProducts] = useState<any[]>([]);
+  const [dbCategories, setDbCategories] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   
   // Timer State for Flash Sales
   const [timeLeft, setTimeLeft] = useState({ hrs: 12, mins: 56, secs: 32 });
@@ -35,13 +38,25 @@ export default function HomePage() {
   };
 
   useEffect(() => {
-    // Fetch Real Products
-    const fetchProducts = async () => {
+    // 1. Check Authentication Status
+    const token = localStorage.getItem('jtex_token');
+    setIsLoggedIn(!!token);
+
+    // 2. Fetch Real Products & Categories
+    const fetchData = async () => {
       try {
         const res = await fetch(`${getApiUrl()}/api/products`);
         if (res.ok) {
           const data = await res.json();
           setProducts(data);
+
+          // Extract unique categories directly from products for accuracy
+          const uniqueCats = Array.from(new Set(data.map((p: any) => p.category))).filter(Boolean);
+          const formattedCats = uniqueCats.map((c: any) => ({
+             name: c, 
+             slug: c.toLowerCase().replace(/ & /g, '-')
+          }));
+          setDbCategories(formattedCats);
         }
       } catch (error) {
         console.error("Error fetching products:", error);
@@ -49,9 +64,9 @@ export default function HomePage() {
         setIsLoading(false);
       }
     };
-    fetchProducts();
+    fetchData();
 
-    // Flash Sale Countdown Logic
+    // 3. Flash Sale Countdown Logic
     const timer = setInterval(() => {
       setTimeLeft(prev => {
         let { hrs, mins, secs } = prev;
@@ -68,9 +83,9 @@ export default function HomePage() {
       });
     }, 1000);
 
-    // Hero Banner Slider Logic (Auto Slide every 5 seconds)
+    // 4. Hero Banner Slider Logic (Auto Slide every 5 seconds)
     const slideTimer = setInterval(() => {
-      setCurrentSlide(prev => (prev + 1) % 4); // We have 4 slides
+      setCurrentSlide(prev => (prev + 1) % 4);
     }, 5000);
 
     return () => {
@@ -79,7 +94,7 @@ export default function HomePage() {
     };
   }, []);
 
-  // Slide Data
+  // Slide Data for Banner
   const slides = [
     {
       title: <>Best Quality,<br/>Best Prices,<br/><span className="text-[#F2A900]">Only on Jtex</span></>,
@@ -107,22 +122,71 @@ export default function HomePage() {
     }
   ];
 
-  // Extract unique categories from real products, or use defaults if empty
-  const defaultCategories = [
-    { name: 'Electronics', icon: <FiHeadphones size={24} /> },
-    { name: 'Computers', icon: <FiMonitor size={24} /> },
-    { name: 'Phones', icon: <FiSmartphone size={24} /> },
-    { name: 'Fashion', icon: <FiShoppingBag size={24} /> },
-    { name: 'Home & Kitchen', icon: <FiCoffee size={24} /> },
-    { name: 'Beauty', icon: <FiSmile size={24} /> }
-  ];
-
   const cartCount = cart?.length || 0;
 
+  // Helper for Category Icons
+  const getCategoryIcon = (catName: string) => {
+    const lower = catName.toLowerCase();
+    if(lower.includes('electronic')) return <FiHeadphones size={24} />;
+    if(lower.includes('computer') || lower.includes('laptop')) return <FiMonitor size={24} />;
+    if(lower.includes('phone') || lower.includes('mobile')) return <FiSmartphone size={24} />;
+    if(lower.includes('fashion') || lower.includes('cloth')) return <FiShoppingBag size={24} />;
+    if(lower.includes('home') || lower.includes('kitchen')) return <FiCoffee size={24} />;
+    if(lower.includes('beaut')) return <FiSmile size={24} />;
+    return <FiGrid size={24} />; // Default generic icon
+  };
+
   // Helper for category routing
-  const handleCategoryClick = (categoryName: string) => {
-    const slug = categoryName.toLowerCase().replace(/ & /g, '-');
+  const handleCategoryClick = (slug: string) => {
     router.push(`/categories/${slug}`);
+  };
+
+  // Dynamic Sidebar Logic based on Login Status
+  const renderSidebar = () => {
+    if (isLoggedIn) {
+      // Full Menu for Logged In Users
+      return (
+        <nav className="bg-white rounded-2xl border border-gray-100 py-3 shadow-sm mb-6 flex flex-col">
+          <button className="flex items-center gap-3 px-6 py-2.5 bg-gray-50 text-gray-900 font-bold transition"><FiHome size={18}/> Home</button>
+          <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#F2A900] transition font-medium" onClick={() => router.push('/categories')}><FiGrid size={18}/> Categories</button>
+          <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#F2A900] transition font-medium">
+            <FiZap size={18}/> Deals <span className="ml-auto bg-red-100 text-red-600 text-[10px] font-black px-1.5 py-0.5 rounded">Hot</span>
+          </button>
+          <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#F2A900] transition font-medium" onClick={() => router.push('/profile')}><FiPackage size={18}/> Orders</button>
+          <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#F2A900] transition font-medium">
+            <FiMessageCircle size={18}/> Messages <span className="ml-auto bg-[#F2A900] text-white text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full">3</span>
+          </button>
+          <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#F2A900] transition font-medium">
+            <FiBell size={18}/> Notifications <span className="ml-auto bg-red-500 text-white text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full">12</span>
+          </button>
+          <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#F2A900] transition font-medium"><FiHeart size={18}/> Wishlist</button>
+          <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#F2A900] transition font-medium" onClick={() => router.push('/checkout')}>
+            <FiShoppingCart size={18}/> Cart <span className="ml-auto bg-[#F2A900] text-white text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full">{cartCount > 0 ? cartCount : 3}</span>
+          </button>
+          <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#F2A900] transition font-medium" onClick={() => router.push('/profile')}><FiUser size={18}/> Account</button>
+          <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#F2A900] transition font-medium"><FiSettings size={18}/> Settings</button>
+          <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#F2A900] transition font-medium" onClick={() => router.push('/help')}><FiHeadphones size={18}/> Help & Support</button>
+        </nav>
+      );
+    } else {
+      // Short Menu for Guests (Mockup Accurate)
+      return (
+        <nav className="bg-white rounded-2xl border border-gray-100 py-3 shadow-sm mb-6 flex flex-col">
+          <button className="flex items-center gap-3 px-6 py-2.5 bg-gray-50 text-gray-900 font-bold transition"><FiHome size={18}/> Home</button>
+          <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#F2A900] transition font-medium" onClick={() => router.push('/categories')}><FiGrid size={18}/> Categories</button>
+          <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#F2A900] transition font-medium">
+            <FiZap size={18}/> Deals <span className="ml-auto bg-red-100 text-red-600 text-[10px] font-black px-1.5 py-0.5 rounded">Hot</span>
+          </button>
+          <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#F2A900] transition font-medium" onClick={() => router.push('/login')}><FiPackage size={18}/> Orders</button>
+          <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#F2A900] transition font-medium" onClick={() => router.push('/login')}><FiHeart size={18}/> Wishlist</button>
+          <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#F2A900] transition font-medium" onClick={() => router.push('/help')}><FiHeadphones size={18}/> Support</button>
+          
+          <div className="px-6 mt-4 pt-4 border-t border-gray-100">
+             <button onClick={() => router.push('/login')} className="w-full bg-[#0A101D] text-white font-bold py-3 rounded-xl hover:bg-gray-800 transition shadow-sm text-xs">Login / Register</button>
+          </div>
+        </nav>
+      );
+    }
   };
 
   return (
@@ -175,13 +239,13 @@ export default function HomePage() {
               <span className="text-[10px] font-bold mt-1">Cart</span>
               {cartCount > 0 && <span className="absolute top-0 right-1 bg-[#F2A900] text-black text-[10px] font-black w-4 h-4 flex items-center justify-center rounded-full">{cartCount}</span>}
             </button>
-            <button onClick={() => router.push('/profile')} className="flex flex-col items-center hover:bg-gray-800/50 p-2 rounded-lg transition">
+            <button onClick={() => router.push(isLoggedIn ? '/profile' : '/login')} className="flex flex-col items-center hover:bg-gray-800/50 p-2 rounded-lg transition">
               <FiPackage size={22} className="text-gray-300"/>
               <span className="text-[10px] font-bold mt-1">Track Order</span>
             </button>
-            <button onClick={() => router.push('/profile')} className="flex items-center gap-2 border border-gray-700 bg-gray-800/50 hover:bg-gray-700 px-4 py-2 rounded-full transition">
+            <button onClick={() => router.push(isLoggedIn ? '/profile' : '/login')} className="flex items-center gap-2 border border-gray-700 bg-gray-800/50 hover:bg-gray-700 px-4 py-2 rounded-full transition">
               <FiUser size={18}/>
-              <span className="text-xs font-bold">My Account</span>
+              <span className="text-xs font-bold">{isLoggedIn ? 'My Account' : 'Sign In'}</span>
             </button>
           </div>
         </div>
@@ -225,28 +289,9 @@ export default function HomePage() {
         
         {/* DESKTOP SIDEBAR */}
         <aside className="hidden lg:flex flex-col w-[260px] flex-shrink-0">
-          {/* Sidebar Navigation matching the provided UI */}
-          <nav className="bg-white rounded-2xl border border-gray-100 py-3 shadow-sm mb-6 flex flex-col">
-            <button className="flex items-center gap-3 px-6 py-2.5 bg-orange-50 text-[#F2A900] border-r-4 border-[#F2A900] font-bold transition"><FiHome size={18}/> Home</button>
-            <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#F2A900] transition font-medium"><FiGrid size={18}/> Categories</button>
-            <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#F2A900] transition font-medium">
-              <FiZap size={18}/> Deals <span className="ml-auto bg-red-100 text-red-600 text-[10px] font-black px-1.5 py-0.5 rounded">Hot</span>
-            </button>
-            <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#F2A900] transition font-medium" onClick={() => router.push('/profile')}><FiPackage size={18}/> Orders</button>
-            <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#F2A900] transition font-medium">
-              <FiMessageCircle size={18}/> Messages <span className="ml-auto bg-[#F2A900] text-white text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full">3</span>
-            </button>
-            <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#F2A900] transition font-medium">
-              <FiBell size={18}/> Notifications <span className="ml-auto bg-red-500 text-white text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full">12</span>
-            </button>
-            <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#F2A900] transition font-medium"><FiHeart size={18}/> Wishlist</button>
-            <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#F2A900] transition font-medium" onClick={() => router.push('/checkout')}>
-              <FiShoppingCart size={18}/> Cart <span className="ml-auto bg-[#F2A900] text-white text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full">{cartCount > 0 ? cartCount : 3}</span>
-            </button>
-            <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#F2A900] transition font-medium" onClick={() => router.push('/profile')}><FiUser size={18}/> Account</button>
-            <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#F2A900] transition font-medium"><FiSettings size={18}/> Settings</button>
-            <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#F2A900] transition font-medium" onClick={() => router.push('/help')}><FiHeadphones size={18}/> Help & Support</button>
-          </nav>
+          
+          {/* Dynamic Render Sidebar Menu Component */}
+          {renderSidebarMenu()}
 
           <div className="bg-[#0A101D] text-white rounded-2xl p-6 relative overflow-hidden shadow-lg border border-gray-800">
             <div className="absolute top-0 right-0 w-32 h-32 bg-[#F2A900]/20 rounded-full blur-3xl"></div>
@@ -260,24 +305,24 @@ export default function HomePage() {
         {/* MAIN CONTENT */}
         <main className="flex-1 min-w-0">
           
-          {/* Desktop Categories Header */}
+          {/* Desktop Categories Header (Real Dynamic Data) */}
           <div className="hidden lg:flex items-center justify-between bg-white rounded-2xl border border-gray-100 px-6 py-4 shadow-sm mb-6">
-            <div className="flex items-center gap-8 w-full">
-              {defaultCategories.map(cat => (
-                 <span key={cat.name} onClick={() => handleCategoryClick(cat.name)} className="text-sm font-bold text-gray-600 hover:text-[#F2A900] cursor-pointer transition">{cat.name}</span>
+            <div className="flex items-center gap-8 w-full overflow-x-auto hide-scrollbar">
+              {dbCategories.slice(0, 6).map(cat => (
+                 <span key={cat.slug} onClick={() => handleCategoryClick(cat.slug)} className="text-sm font-bold text-gray-600 hover:text-[#F2A900] cursor-pointer transition whitespace-nowrap">{cat.name}</span>
               ))}
-              <span onClick={() => handleCategoryClick('All')} className="text-sm font-bold text-gray-600 hover:text-[#F2A900] cursor-pointer transition ml-auto flex items-center gap-1">More <FiChevronDown/></span>
+              <span onClick={() => router.push('/categories')} className="text-sm font-bold text-gray-600 hover:text-[#F2A900] cursor-pointer transition ml-auto flex items-center gap-1 whitespace-nowrap">More <FiChevronDown/></span>
             </div>
           </div>
 
-          {/* Mobile Categories Row */}
+          {/* Mobile Categories Row (Real Dynamic Data) */}
           <div className="lg:hidden flex overflow-x-auto hide-scrollbar gap-4 px-4 py-5 bg-white border-b border-gray-100">
-            {defaultCategories.map((cat, idx) => (
-              <div key={idx} onClick={() => handleCategoryClick(cat.name)} className="flex flex-col items-center gap-2 flex-shrink-0 cursor-pointer group">
+            {dbCategories.slice(0, 6).map((cat, idx) => (
+              <div key={idx} onClick={() => handleCategoryClick(cat.slug)} className="flex flex-col items-center gap-2 flex-shrink-0 cursor-pointer group">
                 <div className={`w-14 h-14 rounded-full flex items-center justify-center transition-all ${idx === 0 ? 'bg-yellow-50 text-[#F2A900] border border-yellow-200' : 'bg-gray-50 text-gray-600 border border-gray-100 group-hover:bg-gray-100'}`}>
-                  {cat.icon}
+                  {getCategoryIcon(cat.name)}
                 </div>
-                <span className={`text-[10px] font-bold ${idx === 0 ? 'text-[#F2A900]' : 'text-gray-700'}`}>{cat.name}</span>
+                <span className={`text-[10px] font-bold ${idx === 0 ? 'text-[#F2A900]' : 'text-gray-700'} truncate w-16 text-center`}>{cat.name}</span>
               </div>
             ))}
           </div>
@@ -297,7 +342,6 @@ export default function HomePage() {
           {/* Slider Hero Banner (1200-1600px width, 400px height) */}
           <div className="px-4 lg:px-0 mb-6 lg:mb-8">
             <div className="relative w-full max-w-[1600px] h-[300px] md:h-[400px] mx-auto rounded-3xl overflow-hidden shadow-lg">
-              
               {slides.map((slide, index) => (
                 <div 
                   key={index}
@@ -463,8 +507,6 @@ export default function HomePage() {
       {/* ========================================================= */}
       <footer className="bg-[#0A101D] text-gray-300 py-12 lg:py-16 pb-28 lg:pb-16 mt-8">
         <div className="max-w-[1500px] mx-auto px-6 lg:px-8">
-          
-          {/* Newsletter Section */}
           <div className="flex flex-col lg:flex-row items-center justify-between border-b border-gray-800 pb-10 mb-10 gap-6">
             <div className="text-center lg:text-left">
               <h3 className="text-xl font-black text-white mb-2">Subscribe to our Newsletter</h3>
@@ -472,22 +514,14 @@ export default function HomePage() {
             </div>
             <div className="flex w-full lg:w-auto">
               <input type="email" placeholder="Enter your email address" className="px-4 py-3 rounded-l-xl w-full lg:w-80 text-gray-900 outline-none text-sm" />
-              <button className="bg-[#F2A900] text-black px-6 py-3 rounded-r-xl font-bold flex items-center gap-2 hover:bg-yellow-500 transition text-sm">
-                Subscribe <FiSend />
-              </button>
+              <button className="bg-[#F2A900] text-black px-6 py-3 rounded-r-xl font-bold flex items-center gap-2 hover:bg-yellow-500 transition text-sm">Subscribe <FiSend /></button>
             </div>
           </div>
 
-          {/* Main Footer Links */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-8 mb-10">
-            {/* Brand Info */}
             <div>
-              <div className="flex text-3xl font-black italic tracking-tighter mb-6">
-                <span className="text-blue-500">J</span><span className="text-[#F2A900]">t</span><span className="text-white">ex</span>
-              </div>
-              <p className="text-sm text-gray-400 leading-relaxed mb-6">
-                Your one-stop destination for the best quality electronics, fashion, and home appliances in Tanzania. Shop smart, live better.
-              </p>
+              <div className="flex text-3xl font-black italic tracking-tighter mb-6"><span className="text-blue-500">J</span><span className="text-[#F2A900]">t</span><span className="text-white">ex</span></div>
+              <p className="text-sm text-gray-400 leading-relaxed mb-6">Your one-stop destination for the best quality electronics, fashion, and home appliances in Tanzania. Shop smart, live better.</p>
               <div className="flex gap-4">
                 <a href="#" className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-[#F2A900] hover:text-black transition"><FiFacebook size={18}/></a>
                 <a href="#" className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-[#F2A900] hover:text-black transition"><FiTwitter size={18}/></a>
@@ -496,19 +530,16 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Quick Links */}
             <div>
               <h4 className="text-white font-black text-lg mb-6">Quick Links</h4>
               <ul className="space-y-3 text-sm font-medium">
-                <li><a href="#" className="hover:text-[#F2A900] transition">About Us</a></li>
-                <li><a href="#" className="hover:text-[#F2A900] transition">Shop Categories</a></li>
-                <li><a href="#" className="hover:text-[#F2A900] transition">Flash Sales</a></li>
-                <li><a href="#" className="hover:text-[#F2A900] transition">Contact Us</a></li>
-                <li><a href="#" className="hover:text-[#F2A900] transition">Careers</a></li>
+                <li><button onClick={() => router.push('/about')} className="hover:text-[#F2A900] transition">About Us</button></li>
+                <li><button onClick={() => router.push('/categories')} className="hover:text-[#F2A900] transition">Shop Categories</button></li>
+                <li><button onClick={() => router.push('/')} className="hover:text-[#F2A900] transition">Flash Sales</button></li>
+                <li><button onClick={() => router.push('/help')} className="hover:text-[#F2A900] transition">Contact Us</button></li>
               </ul>
             </div>
 
-            {/* Customer Service Links to /help */}
             <div>
               <h4 className="text-white font-black text-lg mb-6">Customer Service</h4>
               <ul className="space-y-3 text-sm font-medium">
@@ -520,24 +551,13 @@ export default function HomePage() {
               </ul>
             </div>
 
-            {/* Contact Info */}
             <div>
               <h4 className="text-white font-black text-lg mb-6">Contact Us</h4>
               <ul className="space-y-4 text-sm font-medium">
-                <li className="flex items-start gap-3">
-                  <FiMapPin className="text-[#F2A900] text-lg flex-shrink-0 mt-0.5" />
-                  <span>Dar es Salaam, Kariakoo</span>
-                </li>
-                <li className="flex items-center gap-3">
-                  <FiPhone className="text-[#F2A900] text-lg flex-shrink-0" />
-                  <span>+255767659586</span>
-                </li>
-                <li className="flex items-center gap-3">
-                  <FiMail className="text-[#F2A900] text-lg flex-shrink-0" />
-                  <span>support@jtex.co.tz</span>
-                </li>
+                <li className="flex items-start gap-3"><FiMapPin className="text-[#F2A900] text-lg flex-shrink-0 mt-0.5" /><span>Dar es Salaam, Kariakoo</span></li>
+                <li className="flex items-center gap-3"><FiPhone className="text-[#F2A900] text-lg flex-shrink-0" /><span>+255767659586</span></li>
+                <li className="flex items-center gap-3"><FiMail className="text-[#F2A900] text-lg flex-shrink-0" /><span>support@jtex.co.tz</span></li>
               </ul>
-              {/* Payment Methods */}
               <div className="mt-6">
                  <p className="text-[10px] text-gray-500 mb-2 font-bold uppercase tracking-wider">We Accept</p>
                  <div className="flex gap-2">
@@ -549,7 +569,6 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Copyright */}
           <div className="border-t border-gray-800 pt-8 flex flex-col md:flex-row items-center justify-between gap-4 text-xs font-medium text-gray-500">
             <p>&copy; {new Date().getFullYear()} Jtex Marketplace. All rights reserved.</p>
             <div className="flex gap-6">
@@ -569,14 +588,13 @@ export default function HomePage() {
             <FiHome size={22} className="fill-current"/>
             <span className="text-[10px] font-black">Home</span>
          </button>
-         <button className="flex flex-col items-center gap-1 text-gray-400 hover:text-gray-800 transition">
+         <button onClick={() => router.push('/categories')} className="flex flex-col items-center gap-1 text-gray-400 hover:text-gray-800 transition">
             <FiGrid size={22}/>
             <span className="text-[10px] font-bold">Categories</span>
          </button>
          
-         {/* Floating Center Button for Flash Sales */}
          <div className="relative -top-6">
-            <button className="w-14 h-14 bg-[#0A101D] text-white rounded-full flex items-center justify-center shadow-lg border-4 border-white hover:scale-105 transition-transform">
+            <button className="w-14 h-14 bg-[#0A101D] text-white rounded-full flex items-center justify-center shadow-lg border-4 border-white hover:scale-105 transition-transform" onClick={() => router.push('/')}>
                <FiZap size={24} className="fill-current text-[#F2A900]"/>
             </button>
             <span className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[10px] font-bold text-gray-800 whitespace-nowrap">Flash Sales</span>
@@ -587,9 +605,9 @@ export default function HomePage() {
             <span className="text-[10px] font-bold">Cart</span>
             {cartCount > 0 && <span className="absolute -top-1 -right-2 bg-[#F2A900] text-black text-[10px] font-black w-4 h-4 flex items-center justify-center rounded-full">{cartCount}</span>}
          </button>
-         <button onClick={() => router.push('/profile')} className="flex flex-col items-center gap-1 text-gray-400 hover:text-gray-800 transition">
+         <button onClick={() => router.push(isLoggedIn ? '/profile' : '/login')} className="flex flex-col items-center gap-1 text-gray-400 hover:text-gray-800 transition">
             <FiUser size={22}/>
-            <span className="text-[10px] font-bold">My Jtex</span>
+            <span className="text-[10px] font-bold">Account</span>
          </button>
       </div>
 
