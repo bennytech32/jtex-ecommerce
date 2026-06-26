@@ -20,6 +20,9 @@ export default function HomePage() {
   
   // Timer State for Flash Sales
   const [timeLeft, setTimeLeft] = useState({ hrs: 12, mins: 56, secs: 32 });
+  
+  // Slider State for Hero Banner
+  const [currentSlide, setCurrentSlide] = useState(0);
 
   const getApiUrl = () => {
     const url = process.env.NEXT_PUBLIC_API_URL || 'https://jtex-ecommerce-production.up.railway.app';
@@ -64,8 +67,45 @@ export default function HomePage() {
         return { hrs, mins, secs };
       });
     }, 1000);
-    return () => clearInterval(timer);
+
+    // Hero Banner Slider Logic (Auto Slide every 5 seconds)
+    const slideTimer = setInterval(() => {
+      setCurrentSlide(prev => (prev + 1) % 4); // We have 4 slides
+    }, 5000);
+
+    return () => {
+      clearInterval(timer);
+      clearInterval(slideTimer);
+    };
   }, []);
+
+  // Slide Data
+  const slides = [
+    {
+      title: <>Best Quality,<br/>Best Prices,<br/><span className="text-[#F2A900]">Only on Jtex</span></>,
+      subtitle: "Shop the latest gadgets, electronics, fashion and more at unbeatable prices.",
+      bg: "from-[#071626] to-[#0A1B30]",
+      icon: "💻"
+    },
+    {
+      title: <>Mega Deals<br/>On Top Brands,<br/><span className="text-[#F2A900]">Save Up to 50%</span></>,
+      subtitle: "Upgrade your lifestyle with our premium selection of smartphones and accessories.",
+      bg: "from-[#1A0B1C] to-[#2D0F21]",
+      icon: "📱"
+    },
+    {
+      title: <>Fast & Secure<br/>Delivery to,<br/><span className="text-[#F2A900]">Dar es Salaam</span></>,
+      subtitle: "Order today and get your items delivered right to your doorstep anywhere in TZ.",
+      bg: "from-[#051C1A] to-[#0A2D28]",
+      icon: "🚚"
+    },
+    {
+      title: <>Discover The<br/>New Fashion,<br/><span className="text-[#F2A900]">Trending Now</span></>,
+      subtitle: "Step out in style with our latest clothing and footwear collections for you.",
+      bg: "from-[#2A1605] to-[#3D1E08]",
+      icon: "🎒"
+    }
+  ];
 
   // Extract unique categories from real products, or use defaults if empty
   const defaultCategories = [
@@ -98,7 +138,7 @@ export default function HomePage() {
               <FiMapPin className="text-gray-400" size={20}/>
               <div className="flex flex-col leading-tight">
                 <span className="text-[10px] text-gray-400">Deliver to</span>
-                <span className="text-xs font-bold flex items-center gap-1">Tanzania, United Republic <FiChevronDown/></span>
+                <span className="text-xs font-bold flex items-center gap-1">Dar es Salaam, Kariakoo <FiChevronDown/></span>
               </div>
             </div>
           </div>
@@ -150,7 +190,7 @@ export default function HomePage() {
             <FiMapPin size={20} className="text-[#F2A900]"/>
             <div className="flex flex-col leading-tight">
               <span className="text-[10px] text-gray-400">Deliver to</span>
-              <span className="text-sm font-bold flex items-center gap-1">Tanzania <FiChevronDown size={14}/></span>
+              <span className="text-sm font-bold flex items-center gap-1">Kariakoo <FiChevronDown size={14}/></span>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -185,7 +225,8 @@ export default function HomePage() {
             <button className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition font-medium"><FiZap size={18}/> Deals <span className="ml-auto bg-red-100 text-red-600 text-[10px] font-black px-1.5 py-0.5 rounded">Hot</span></button>
             <button className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition font-medium" onClick={() => router.push('/profile')}><FiPackage size={18}/> Orders</button>
             <button className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition font-medium"><FiHeart size={18}/> Wishlist</button>
-            <button className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition font-medium"><FiHeadphones size={18}/> Support</button>
+            {/* Support inaelekezwa kwenye /help page */}
+            <button className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition font-medium" onClick={() => router.push('/help')}><FiHeadphones size={18}/> Support</button>
           </nav>
 
           <div className="bg-[#0A101D] text-white rounded-2xl p-6 relative overflow-hidden shadow-lg border border-gray-800">
@@ -233,41 +274,52 @@ export default function HomePage() {
              </div>
           </div>
 
-          {/* Hero Banner */}
+          {/* Slider Hero Banner (1200-1600px width, 400px height) */}
           <div className="px-4 lg:px-0 mb-6 lg:mb-8">
-            <div className="bg-gradient-to-br from-[#071626] to-[#0A1B30] rounded-3xl p-6 lg:p-12 relative overflow-hidden shadow-lg min-h-[220px] lg:min-h-[380px] flex items-center">
-              {/* Graphic Elements */}
-              <div className="absolute right-0 top-0 w-full h-full opacity-20 pointer-events-none">
-                 <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="w-full h-full stroke-[#F2A900]" strokeWidth="0.5" fill="none">
-                    <circle cx="90" cy="50" r="40" />
-                    <circle cx="90" cy="50" r="60" />
-                    <circle cx="90" cy="50" r="80" />
-                 </svg>
-              </div>
-              <div className="absolute -right-10 -bottom-10 lg:right-10 lg:bottom-0 w-40 lg:w-96 opacity-30 lg:opacity-100 pointer-events-none mix-blend-screen">
-                 <span className="text-[150px] lg:text-[300px]">💻</span>
-              </div>
+            <div className="relative w-full max-w-[1600px] h-[300px] md:h-[400px] mx-auto rounded-3xl overflow-hidden shadow-lg">
+              
+              {slides.map((slide, index) => (
+                <div 
+                  key={index}
+                  className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${currentSlide === index ? 'opacity-100 z-10' : 'opacity-0 z-0'} bg-gradient-to-br ${slide.bg} p-6 lg:p-12 flex items-center`}
+                >
+                  {/* Graphic Elements */}
+                  <div className="absolute right-0 top-0 w-full h-full opacity-20 pointer-events-none">
+                     <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="w-full h-full stroke-[#F2A900]" strokeWidth="0.5" fill="none">
+                        <circle cx="90" cy="50" r="40" />
+                        <circle cx="90" cy="50" r="60" />
+                        <circle cx="90" cy="50" r="80" />
+                     </svg>
+                  </div>
+                  <div className="absolute -right-10 -bottom-10 lg:right-10 lg:bottom-0 w-40 lg:w-96 opacity-30 lg:opacity-100 pointer-events-none mix-blend-screen flex items-center justify-center h-full">
+                     <span className="text-[120px] lg:text-[250px]">{slide.icon}</span>
+                  </div>
 
-              <div className="relative z-10 max-w-sm lg:max-w-xl">
-                 <h1 className="text-3xl lg:text-5xl font-black text-white mb-3 lg:mb-6 leading-tight">
-                    Best Quality,<br/>Best Prices,<br/><span className="text-[#F2A900]">Only on Jtex</span>
-                 </h1>
-                 <p className="text-gray-300 text-xs lg:text-base font-medium mb-6 lg:mb-10 leading-relaxed max-w-[280px] lg:max-w-md">
-                    Shop the latest gadgets, electronics, fashion and more at unbeatable prices.
-                 </p>
-                 <button className="bg-[#F2A900] text-black font-black px-6 lg:px-8 py-2.5 lg:py-3.5 rounded-xl flex items-center gap-2 hover:bg-yellow-500 transition shadow-[0_0_20px_rgba(242,169,0,0.3)] text-sm lg:text-base">
-                    <span className="hidden lg:inline">Shop Now</span>
-                    <span className="lg:hidden">Buy Now</span> 
-                    <FiArrowRight/>
-                 </button>
-              </div>
+                  <div className="relative z-10 max-w-sm lg:max-w-xl">
+                     <h1 className="text-3xl lg:text-5xl font-black text-white mb-3 lg:mb-6 leading-tight">
+                        {slide.title}
+                     </h1>
+                     <p className="text-gray-300 text-xs lg:text-base font-medium mb-6 lg:mb-10 leading-relaxed max-w-[280px] lg:max-w-md">
+                        {slide.subtitle}
+                     </p>
+                     <button className="bg-[#F2A900] text-black font-black px-6 lg:px-8 py-2.5 lg:py-3.5 rounded-xl flex items-center gap-2 hover:bg-yellow-500 transition shadow-[0_0_20px_rgba(242,169,0,0.3)] text-sm lg:text-base">
+                        <span className="hidden lg:inline">Shop Now</span>
+                        <span className="lg:hidden">Buy Now</span> 
+                        <FiArrowRight/>
+                     </button>
+                  </div>
+                </div>
+              ))}
 
-              {/* Dots */}
-              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2">
-                 <div className="w-6 h-2 bg-[#F2A900] rounded-full"></div>
-                 <div className="w-2 h-2 bg-white/30 rounded-full"></div>
-                 <div className="w-2 h-2 bg-white/30 rounded-full"></div>
-                 <div className="w-2 h-2 bg-white/30 rounded-full"></div>
+              {/* Slider Dots */}
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 z-20">
+                 {slides.map((_, idx) => (
+                    <button 
+                      key={idx} 
+                      onClick={() => setCurrentSlide(idx)}
+                      className={`h-2 rounded-full transition-all duration-300 ${currentSlide === idx ? 'w-6 bg-[#F2A900]' : 'w-2 bg-white/50 hover:bg-white'}`}
+                    ></button>
+                 ))}
               </div>
             </div>
           </div>
@@ -291,7 +343,7 @@ export default function HomePage() {
                    <div className="w-10 h-10 lg:w-12 lg:h-12 bg-gray-50 text-gray-700 rounded-full flex items-center justify-center border border-gray-100"><FiRefreshCw size={20}/></div>
                    <div><h4 className="font-black text-xs lg:text-sm text-gray-900">Easy Returns</h4><p className="text-[10px] lg:text-xs text-gray-500">7 days return policy</p></div>
                 </div>
-                <div className="flex items-center gap-3 lg:gap-4 flex-shrink-0 flex-1 min-w-[200px] lg:border-l border-gray-200 lg:pl-6">
+                <div className="flex items-center gap-3 lg:gap-4 flex-shrink-0 flex-1 min-w-[200px] lg:border-l border-gray-200 lg:pl-6 cursor-pointer" onClick={() => router.push('/help')}>
                    <div className="w-10 h-10 lg:w-12 lg:h-12 bg-gray-50 text-gray-700 rounded-full flex items-center justify-center border border-gray-100"><FiHeadphones size={20}/></div>
                    <div><h4 className="font-black text-xs lg:text-sm text-gray-900">24/7 Support</h4><p className="text-[10px] lg:text-xs text-gray-500">We are here to help</p></div>
                 </div>
@@ -322,17 +374,18 @@ export default function HomePage() {
                 </div>
              </div>
 
-             {/* Real Products Grid/Scroll */}
+             {/* Real Products GRID LAYOUT */}
              {isLoading ? (
                <div className="flex justify-center py-10"><div className="w-8 h-8 border-4 border-[#F2A900] border-t-transparent rounded-full animate-spin"></div></div>
              ) : (
-               <div className="flex overflow-x-auto hide-scrollbar gap-4 pb-4">
-                  {products.slice(0, 6).map((product: any) => {
+               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 lg:gap-4">
+                  {products.slice(0, 10).map((product: any) => {
+                    // Logic ndogo ya kutengeneza punguzo (Discount) kuendana na UI
                     const visualDiscount = Math.floor(Math.random() * 20) + 5; 
                     const oldPrice = Math.round(product.price * (1 + (visualDiscount/100)));
 
                     return (
-                      <div key={product.id} className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm flex flex-col flex-shrink-0 w-[160px] lg:w-[220px] group hover:border-[#F2A900] transition cursor-pointer">
+                      <div key={product.id} className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm flex flex-col group hover:border-[#F2A900] transition cursor-pointer">
                          <div className="relative w-full aspect-square bg-gray-50 rounded-xl flex items-center justify-center mb-4 p-2">
                             <span className="absolute top-2 left-2 bg-[#FF7A00] text-white text-[10px] font-black px-1.5 py-0.5 rounded">-{visualDiscount}%</span>
                             <button className="absolute top-2 right-2 text-gray-400 hover:text-red-500 lg:hidden"><FiHeart/></button>
@@ -436,15 +489,15 @@ export default function HomePage() {
               </ul>
             </div>
 
-            {/* Customer Service */}
+            {/* Customer Service Links to /help */}
             <div>
               <h4 className="text-white font-black text-lg mb-6">Customer Service</h4>
               <ul className="space-y-3 text-sm font-medium">
-                <li><a href="#" className="hover:text-[#F2A900] transition">My Account</a></li>
-                <li><a href="#" className="hover:text-[#F2A900] transition">Order Tracking</a></li>
-                <li><a href="#" className="hover:text-[#F2A900] transition">Returns & Exchanges</a></li>
-                <li><a href="#" className="hover:text-[#F2A900] transition">Shipping Information</a></li>
-                <li><a href="#" className="hover:text-[#F2A900] transition">FAQs</a></li>
+                <li><button onClick={() => router.push('/help')} className="hover:text-[#F2A900] transition">My Account</button></li>
+                <li><button onClick={() => router.push('/help')} className="hover:text-[#F2A900] transition">Order Tracking</button></li>
+                <li><button onClick={() => router.push('/help')} className="hover:text-[#F2A900] transition">Returns & Exchanges</button></li>
+                <li><button onClick={() => router.push('/help')} className="hover:text-[#F2A900] transition">Shipping Information</button></li>
+                <li><button onClick={() => router.push('/help')} className="hover:text-[#F2A900] transition">FAQs</button></li>
               </ul>
             </div>
 
@@ -454,11 +507,11 @@ export default function HomePage() {
               <ul className="space-y-4 text-sm font-medium">
                 <li className="flex items-start gap-3">
                   <FiMapPin className="text-[#F2A900] text-lg flex-shrink-0 mt-0.5" />
-                  <span>Nyamagana B, Near Rock City Mall, Mwanza, Tanzania</span>
+                  <span>Dar es Salaam, Kariakoo</span>
                 </li>
                 <li className="flex items-center gap-3">
                   <FiPhone className="text-[#F2A900] text-lg flex-shrink-0" />
-                  <span>+255 700 000 000</span>
+                  <span>+255767659586</span>
                 </li>
                 <li className="flex items-center gap-3">
                   <FiMail className="text-[#F2A900] text-lg flex-shrink-0" />
