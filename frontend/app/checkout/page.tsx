@@ -6,7 +6,7 @@ import { useCart } from '../context/CartContext';
 import { 
   FiArrowLeft, FiShoppingCart, FiMapPin, FiCreditCard, 
   FiTrash2, FiChevronRight, FiShield, FiCheckCircle, 
-  FiTruck, FiBox, FiPhone, FiUser, FiStar
+  FiTruck, FiBox, FiPhone, FiUser, FiStar, FiLock
 } from 'react-icons/fi';
 
 // === SHIPPING OPTIONS ===
