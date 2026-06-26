@@ -4,7 +4,8 @@ import React from 'react';
 import { useRouter } from 'next/navigation';
 import { 
   FiCheck, FiCopy, FiMapPin, FiPackage, FiTruck, 
-  FiCalendar, FiShield, FiStar, FiShoppingCart, FiArrowLeft
+  FiCalendar, FiShield, FiStar, FiShoppingCart, FiArrowLeft,
+  FiClock, FiCheckCircle, FiChevronRight
 } from 'react-icons/fi';
 
 export default function OrderSuccessPage() {
