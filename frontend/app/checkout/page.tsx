@@ -1,12 +1,12 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useCart } from '../context/CartContext'; // Badilisha path kulingana na faili lako
+import { useCart } from '../context/CartContext'; // Hakikisha path ni sahihi
 import { 
   FiArrowLeft, FiShoppingCart, FiMapPin, FiCreditCard, 
   FiTrash2, FiChevronRight, FiShield, FiCheckCircle, 
-  FiEdit3, FiTruck, FiBox, FiPhone, FiUser
+  FiTruck, FiBox, FiPhone, FiUser
 } from 'react-icons/fi';
 
 // === MOCK DATA KWA AJILI YA SHIPPING NA PAYMENT ===
@@ -25,7 +25,8 @@ const PAYMENT_METHODS = [
 
 export default function CheckoutSystem() {
   const router = useRouter();
-  const { cart, removeFromCart, updateQuantity, cartTotal, clearCart } = useCart();
+  // Nimeondoa updateQuantity hapa ili kufix ile TypeScript error
+  const { cart, removeFromCart, cartTotal, clearCart } = useCart();
   
   // States za Checkout
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1);
