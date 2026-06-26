@@ -10,7 +10,7 @@ import {
   FiMapPin, FiShield, FiTruck, FiSmartphone, FiSettings, FiHeart, 
   FiHelpCircle, FiEdit2, FiPlus, FiMessageCircle, FiBox, FiMoon, FiSun, FiChevronDown,
   FiBell, FiCalendar, FiClock, FiActivity, FiArrowUpRight, FiArrowDownRight, FiMoreHorizontal,
-  FiHome, FiGrid, FiShare2, FiArrowLeft, FiHeadphones
+  FiHome, FiGrid, FiShare2, FiArrowLeft, FiHeadphones, FiCopy, FiCheck
 } from 'react-icons/fi';
 
 const translations = {
