@@ -6,7 +6,7 @@ import { useCart } from '../context/CartContext';
 import { 
   FiArrowLeft, FiShoppingCart, FiMapPin, FiCreditCard, 
   FiTrash2, FiChevronRight, FiShield, FiCheckCircle, 
-  FiTruck, FiBox, FiPhone, FiUser, FiInfo
+  FiTruck, FiBox, FiPhone, FiUser, FiInfo, FiStar
 } from 'react-icons/fi';
 
 // === SHIPPING OPTIONS ===
@@ -319,7 +319,7 @@ export default function CheckoutSystem() {
               </div>
             )}
 
-            {/* STEP 3: PAYMENT UI MPYA (Ikifanana na picha ya 4 na 5) */}
+            {/* STEP 3: PAYMENT UI MPYA */}
             {currentStep === 3 && (
               <div className="space-y-6">
                 
