@@ -7,8 +7,9 @@ import {
   FiSearch, FiMapPin, FiShoppingCart, FiUser, FiPackage, 
   FiHeart, FiHeadphones, FiChevronDown, FiGrid, FiList, 
   FiMonitor, FiSmartphone, FiShoppingBag, FiCoffee, FiSmile,
-  FiArrowRight, FiShield, FiTruck, FiRefreshCw, FiMic, FiCamera, FiHome, FiZap,
-  FiChevronRight // <-- Tumeongeza hii hapa
+  FiArrowRight, FiShield, FiTruck, FiRefreshCw, FiMic, FiCamera, 
+  FiHome, FiZap, FiChevronRight, FiMail, FiPhone, FiFacebook, 
+  FiTwitter, FiInstagram, FiLinkedin, FiSend
 } from 'react-icons/fi';
 
 export default function HomePage() {
@@ -79,7 +80,7 @@ export default function HomePage() {
   const cartCount = cart?.length || 0;
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] pb-20 lg:pb-0 font-sans text-gray-900">
+    <div className="min-h-screen bg-[#F8FAFC] font-sans text-gray-900">
       
       {/* ========================================================= */}
       {/* 1. DESKTOP HEADER */}
@@ -244,7 +245,6 @@ export default function HomePage() {
                  </svg>
               </div>
               <div className="absolute -right-10 -bottom-10 lg:right-10 lg:bottom-0 w-40 lg:w-96 opacity-30 lg:opacity-100 pointer-events-none mix-blend-screen">
-                 {/* Fake Laptop/Phone presentation image representation */}
                  <span className="text-[150px] lg:text-[300px]">💻</span>
               </div>
 
@@ -256,7 +256,6 @@ export default function HomePage() {
                     Shop the latest gadgets, electronics, fashion and more at unbeatable prices.
                  </p>
                  <button className="bg-[#F2A900] text-black font-black px-6 lg:px-8 py-2.5 lg:py-3.5 rounded-xl flex items-center gap-2 hover:bg-yellow-500 transition shadow-[0_0_20px_rgba(242,169,0,0.3)] text-sm lg:text-base">
-                    {/* Responsive text matching mockups */}
                     <span className="hidden lg:inline">Shop Now</span>
                     <span className="lg:hidden">Buy Now</span> 
                     <FiArrowRight/>
@@ -329,7 +328,6 @@ export default function HomePage() {
              ) : (
                <div className="flex overflow-x-auto hide-scrollbar gap-4 pb-4">
                   {products.slice(0, 6).map((product: any) => {
-                    // Logic ndogo ya kutengeneza punguzo (Discount) kuendana na UI
                     const visualDiscount = Math.floor(Math.random() * 20) + 5; 
                     const oldPrice = Math.round(product.price * (1 + (visualDiscount/100)));
 
@@ -366,14 +364,13 @@ export default function HomePage() {
           </div>
 
           {/* Top Brands Banner */}
-          <div className="px-4 lg:px-0 mb-6">
+          <div className="px-4 lg:px-0 mb-10 lg:mb-16">
              <div className="bg-[#0A101D] rounded-2xl flex flex-col lg:flex-row items-center justify-between p-6 lg:p-8 gap-6 shadow-md">
                 <div className="text-center lg:text-left">
                    <h3 className="text-xl font-black text-white mb-1">Top Brands, Top Quality</h3>
                    <p className="text-sm text-gray-400 font-medium lg:mb-0 mb-4">Shop your favorite brands</p>
                 </div>
                 <div className="flex flex-wrap justify-center items-center gap-6 lg:gap-10 opacity-70 grayscale hover:grayscale-0 transition duration-500">
-                   {/* Fake Brands using emojis/text for display matching the mockup visually */}
                    <span className="text-white font-black text-2xl tracking-tighter">MI</span>
                    <span className="text-white font-black text-2xl tracking-widest uppercase">Samsung</span>
                    <span className="text-white font-black text-2xl">🍎</span>
@@ -386,12 +383,114 @@ export default function HomePage() {
                 </button>
              </div>
           </div>
-
         </main>
       </div>
 
       {/* ========================================================= */}
-      {/* 4. MOBILE BOTTOM NAVIGATION */}
+      {/* 4. PROFESSIONAL FOOTER */}
+      {/* ========================================================= */}
+      <footer className="bg-[#0A101D] text-gray-300 py-12 lg:py-16 pb-28 lg:pb-16 mt-8">
+        <div className="max-w-[1500px] mx-auto px-6 lg:px-8">
+          
+          {/* Newsletter Section */}
+          <div className="flex flex-col lg:flex-row items-center justify-between border-b border-gray-800 pb-10 mb-10 gap-6">
+            <div className="text-center lg:text-left">
+              <h3 className="text-xl font-black text-white mb-2">Subscribe to our Newsletter</h3>
+              <p className="text-sm text-gray-400">Get the latest updates on new products and upcoming sales.</p>
+            </div>
+            <div className="flex w-full lg:w-auto">
+              <input type="email" placeholder="Enter your email address" className="px-4 py-3 rounded-l-xl w-full lg:w-80 text-gray-900 outline-none text-sm" />
+              <button className="bg-[#F2A900] text-black px-6 py-3 rounded-r-xl font-bold flex items-center gap-2 hover:bg-yellow-500 transition text-sm">
+                Subscribe <FiSend />
+              </button>
+            </div>
+          </div>
+
+          {/* Main Footer Links */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-8 mb-10">
+            {/* Brand Info */}
+            <div>
+              <div className="flex text-3xl font-black italic tracking-tighter mb-6">
+                <span className="text-blue-500">J</span><span className="text-[#F2A900]">t</span><span className="text-white">ex</span>
+              </div>
+              <p className="text-sm text-gray-400 leading-relaxed mb-6">
+                Your one-stop destination for the best quality electronics, fashion, and home appliances in Tanzania. Shop smart, live better.
+              </p>
+              <div className="flex gap-4">
+                <a href="#" className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-[#F2A900] hover:text-black transition"><FiFacebook size={18}/></a>
+                <a href="#" className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-[#F2A900] hover:text-black transition"><FiTwitter size={18}/></a>
+                <a href="#" className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-[#F2A900] hover:text-black transition"><FiInstagram size={18}/></a>
+                <a href="#" className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-[#F2A900] hover:text-black transition"><FiLinkedin size={18}/></a>
+              </div>
+            </div>
+
+            {/* Quick Links */}
+            <div>
+              <h4 className="text-white font-black text-lg mb-6">Quick Links</h4>
+              <ul className="space-y-3 text-sm font-medium">
+                <li><a href="#" className="hover:text-[#F2A900] transition">About Us</a></li>
+                <li><a href="#" className="hover:text-[#F2A900] transition">Shop Categories</a></li>
+                <li><a href="#" className="hover:text-[#F2A900] transition">Flash Sales</a></li>
+                <li><a href="#" className="hover:text-[#F2A900] transition">Contact Us</a></li>
+                <li><a href="#" className="hover:text-[#F2A900] transition">Careers</a></li>
+              </ul>
+            </div>
+
+            {/* Customer Service */}
+            <div>
+              <h4 className="text-white font-black text-lg mb-6">Customer Service</h4>
+              <ul className="space-y-3 text-sm font-medium">
+                <li><a href="#" className="hover:text-[#F2A900] transition">My Account</a></li>
+                <li><a href="#" className="hover:text-[#F2A900] transition">Order Tracking</a></li>
+                <li><a href="#" className="hover:text-[#F2A900] transition">Returns & Exchanges</a></li>
+                <li><a href="#" className="hover:text-[#F2A900] transition">Shipping Information</a></li>
+                <li><a href="#" className="hover:text-[#F2A900] transition">FAQs</a></li>
+              </ul>
+            </div>
+
+            {/* Contact Info */}
+            <div>
+              <h4 className="text-white font-black text-lg mb-6">Contact Us</h4>
+              <ul className="space-y-4 text-sm font-medium">
+                <li className="flex items-start gap-3">
+                  <FiMapPin className="text-[#F2A900] text-lg flex-shrink-0 mt-0.5" />
+                  <span>Nyamagana B, Near Rock City Mall, Mwanza, Tanzania</span>
+                </li>
+                <li className="flex items-center gap-3">
+                  <FiPhone className="text-[#F2A900] text-lg flex-shrink-0" />
+                  <span>+255 700 000 000</span>
+                </li>
+                <li className="flex items-center gap-3">
+                  <FiMail className="text-[#F2A900] text-lg flex-shrink-0" />
+                  <span>support@jtex.co.tz</span>
+                </li>
+              </ul>
+              {/* Payment Methods */}
+              <div className="mt-6">
+                 <p className="text-[10px] text-gray-500 mb-2 font-bold uppercase tracking-wider">We Accept</p>
+                 <div className="flex gap-2">
+                    <div className="w-10 h-6 bg-white rounded flex items-center justify-center text-[8px] font-black text-blue-800">VISA</div>
+                    <div className="w-10 h-6 bg-white rounded flex items-center justify-center text-[8px] font-black text-red-600">MASTER</div>
+                    <div className="w-10 h-6 bg-green-600 rounded flex items-center justify-center text-[8px] font-black text-white">M-PESA</div>
+                 </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Copyright */}
+          <div className="border-t border-gray-800 pt-8 flex flex-col md:flex-row items-center justify-between gap-4 text-xs font-medium text-gray-500">
+            <p>&copy; {new Date().getFullYear()} Jtex Marketplace. All rights reserved.</p>
+            <div className="flex gap-6">
+              <a href="#" className="hover:text-white transition">Privacy Policy</a>
+              <a href="#" className="hover:text-white transition">Terms of Service</a>
+              <a href="#" className="hover:text-white transition">Cookie Policy</a>
+            </div>
+          </div>
+        </div>
+      </footer>
+
+      {/* ========================================================= */}
+      {/* 5. MOBILE BOTTOM NAVIGATION */}
       {/* ========================================================= */}
       <div className="lg:hidden fixed bottom-0 left-0 w-full bg-white border-t border-gray-100 px-6 py-3 flex justify-between items-center z-50 shadow-[0_-10px_20px_rgba(0,0,0,0.03)] pb-safe">
          <button onClick={() => router.push('/')} className="flex flex-col items-center gap-1 text-[#F2A900]">
