@@ -1,16 +1,16 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useCart } from '../context/CartContext'; // Hakikisha path ni sahihi
+import { useCart } from '../context/CartContext';
 import { 
   FiArrowLeft, FiShoppingCart, FiMapPin, FiCreditCard, 
   FiTrash2, FiChevronRight, FiShield, FiCheckCircle, 
   FiTruck, FiBox, FiPhone, FiUser
 } from 'react-icons/fi';
 
-// === MOCK DATA KWA AJILI YA SHIPPING NA PAYMENT ===
-const SHIPPING_METHODS = [
+// === SHIPPING AND PAYMENT OPTIONS ===
+const ALL_SHIPPING_METHODS = [
   { id: 'bodaboda', name: 'Bodaboda', price: 5000, time: '1 - 2 Hours', emoji: '🏍️' },
   { id: 'bus', name: 'Bus', price: 15000, time: '1 - 2 Days', emoji: '🚌' },
   { id: 'aeroplane', name: 'Aeroplane', price: 25000, time: '1 Day', emoji: '✈️' },
@@ -25,38 +25,87 @@ const PAYMENT_METHODS = [
 
 export default function CheckoutSystem() {
   const router = useRouter();
-  // Nimeondoa updateQuantity hapa ili kufix ile TypeScript error
-  const { cart, removeFromCart, cartTotal, clearCart } = useCart();
   
-  // States za Checkout
+  // NOTE: Hakikisha `updateQuantity` ipo kwenye CartContext yako
+  const { cart, removeFromCart, updateQuantity, cartTotal, clearCart } = useCart();
+  
+  // States
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1);
-  const [selectedShipping, setSelectedShipping] = useState(SHIPPING_METHODS[0]);
   const [selectedPayment, setSelectedPayment] = useState(PAYMENT_METHODS[1]); // Default COD
   
-  // Form States (Shipping Details)
+  // Form States
   const [formData, setFormData] = useState({
-    fullName: 'John Mwangi',
-    phone: '+255 712 345 678',
+    fullName: '',
+    phone: '',
     country: 'Tanzania',
-    region: 'Mwanza',
-    district: 'Ilemela',
-    address: 'Nyamagana B, Near Rock City Mall, House No. 23'
+    region: 'Dar es Salaam',
+    district: '',
+    address: ''
   });
 
+  // Dynamic Shipping Methods based on Region
+  const availableShippingMethods = formData.region === 'Dar es Salaam' 
+    ? ALL_SHIPPING_METHODS 
+    : ALL_SHIPPING_METHODS.filter(method => method.id !== 'bodaboda');
+
+  const [selectedShipping, setSelectedShipping] = useState(availableShippingMethods[0]);
+
+  // Update selected shipping if the current one becomes unavailable due to region change
+  useEffect(() => {
+    if (!availableShippingMethods.find(m => m.id === selectedShipping.id)) {
+      setSelectedShipping(availableShippingMethods[0]);
+    }
+  }, [formData.region, availableShippingMethods, selectedShipping.id]);
+
+  // Fetch User Info on Mount
+  useEffect(() => {
+    const savedUser = localStorage.getItem('jtex_user');
+    if (savedUser) {
+      try {
+        const parsedUser = JSON.parse(savedUser);
+        setFormData(prev => ({
+          ...prev,
+          fullName: parsedUser.name || '',
+          phone: parsedUser.phone || '',
+        }));
+      } catch (e) {
+        console.error("Error parsing user data");
+      }
+    }
+  }, []);
+
   // Mahesabu
-  const subtotal = cartTotal || 3080000; // Fallback for UI testing
-  const discount = subtotal * 0.10; // 10% Discount mfano
-  const deliveryFee = selectedShipping.price;
+  const subtotal = cartTotal || 0; 
+  // Example: 0% discount by default. Modify logic if you have coupon codes.
+  const discount = 0; 
+  const deliveryFee = currentStep > 1 ? selectedShipping.price : 0;
   const totalAmount = subtotal - discount + deliveryFee;
-  const advancePayment = selectedPayment.id === 'cod' ? 50000 : totalAmount;
+  const advancePayment = selectedPayment.id === 'cod' ? totalAmount * 0.2 : totalAmount; // 20% advance for COD
   const remainingBalance = totalAmount - advancePayment;
+
+  // Handle Proceed to Step 2 (Check Authentication)
+  const handleProceedToShipping = () => {
+    const savedUser = localStorage.getItem('jtex_user');
+    if (!savedUser) {
+      // Kama mtumiaji hajalogin, mpeleke ukurasa wa login
+      // Unaweza kubadilisha route hii kutegemeana na setup yako
+      alert("Please login to proceed with checkout.");
+      // router.push('/login?redirect=/checkout'); 
+      return;
+    }
+    if (cart.length === 0) {
+      alert("Your cart is empty.");
+      return;
+    }
+    setCurrentStep(2);
+  };
 
   // Header Stepper
   const renderStepper = () => (
     <div className="flex items-center justify-center gap-2 sm:gap-4 mb-8 relative px-4">
       <div className="absolute top-1/2 left-[15%] right-[15%] h-0.5 bg-gray-200 -z-10 -translate-y-1/2"></div>
       
-      {/* Hatua 1: Cart */}
+      {/* Hatua 1 */}
       <div className="flex flex-col items-center gap-2 bg-white px-2">
         <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-bold text-sm sm:text-base ${currentStep >= 1 ? 'bg-[#F2A900] text-white shadow-md' : 'bg-gray-200 text-gray-500'}`}>
           {currentStep > 1 ? <FiCheckCircle size={20} /> : '1'}
@@ -66,7 +115,7 @@ export default function CheckoutSystem() {
 
       <div className={`flex-1 h-0.5 ${currentStep >= 2 ? 'bg-[#F2A900]' : 'bg-transparent'}`}></div>
 
-      {/* Hatua 2: Checkout */}
+      {/* Hatua 2 */}
       <div className="flex flex-col items-center gap-2 bg-white px-2">
         <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-bold text-sm sm:text-base ${currentStep >= 2 ? 'bg-[#F2A900] text-white shadow-md' : 'bg-gray-200 text-gray-500'}`}>
           {currentStep > 2 ? <FiCheckCircle size={20} /> : '2'}
@@ -76,7 +125,7 @@ export default function CheckoutSystem() {
 
       <div className={`flex-1 h-0.5 ${currentStep >= 3 ? 'bg-[#F2A900]' : 'bg-transparent'}`}></div>
 
-      {/* Hatua 3: Payment */}
+      {/* Hatua 3 */}
       <div className="flex flex-col items-center gap-2 bg-white px-2">
         <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-bold text-sm sm:text-base ${currentStep >= 3 ? 'bg-[#F2A900] text-white shadow-md' : 'bg-gray-200 text-gray-500'}`}>
           3
@@ -121,8 +170,8 @@ export default function CheckoutSystem() {
             {currentStep === 1 && (
               <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100">
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="font-black text-lg flex items-center gap-2"><FiShoppingCart className="text-[#F2A900]"/> My Cart ({cart?.length || 3} Items)</h2>
-                  <button onClick={clearCart} className="text-red-500 text-xs font-bold hover:underline flex items-center gap-1"><FiTrash2/> Clear</button>
+                  <h2 className="font-black text-lg flex items-center gap-2"><FiShoppingCart className="text-[#F2A900]"/> My Cart ({cart?.length || 0} Items)</h2>
+                  {cart?.length > 0 && <button onClick={clearCart} className="text-red-500 text-xs font-bold hover:underline flex items-center gap-1"><FiTrash2/> Clear All</button>}
                 </div>
                 
                 {/* Cart Items List */}
@@ -130,21 +179,27 @@ export default function CheckoutSystem() {
                   {cart?.length > 0 ? cart.map((item: any) => (
                     <div key={item.id} className="flex flex-col sm:flex-row gap-4 p-4 border border-gray-100 rounded-xl relative hover:border-[#F2A900] transition group">
                       <div className="w-20 h-20 bg-gray-50 rounded-lg flex items-center justify-center flex-shrink-0 p-2">
-                        {item.imageUrl ? <img src={item.imageUrl} alt={item.name} className="object-contain w-full h-full" /> : <FiBox className="text-3xl text-gray-300"/>}
+                        {item.imageUrl ? <img src={item.imageUrl} alt={item.name} className="object-contain w-full h-full" /> : <span className="text-3xl">{item.imageEmoji || '📦'}</span>}
                       </div>
                       <div className="flex-1">
-                        <h3 className="font-bold text-sm text-gray-900 pr-8">{item.name}</h3>
+                        <h3 className="font-bold text-sm text-gray-900 pr-8 line-clamp-2">{item.name}</h3>
                         <p className="text-xs text-gray-500 mt-1 flex items-center gap-2">
-                          <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-gray-800 border border-gray-300"></span> Space Gray</span>
-                          <span className="text-gray-300">|</span>
-                          <span>256GB</span>
+                          {item.color && <><span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-gray-800 border border-gray-300"></span> {item.color}</span><span className="text-gray-300">|</span></>}
+                          {item.storage && <span>{item.storage}</span>}
                         </p>
                         <div className="flex items-center justify-between mt-3">
                           <span className="font-black text-gray-900">TZS {item.price?.toLocaleString()}</span>
                           <div className="flex items-center gap-3 bg-gray-50 border border-gray-200 rounded-lg px-2 py-1">
-                            <button className="text-gray-500 hover:text-black font-bold">-</button>
+                            <button 
+                              onClick={() => updateQuantity && item.quantity > 1 && updateQuantity(item.id, item.quantity - 1)} 
+                              className="text-gray-500 hover:text-black font-bold disabled:opacity-50"
+                              disabled={item.quantity <= 1}
+                            >-</button>
                             <span className="text-xs font-black w-4 text-center">{item.quantity}</span>
-                            <button className="text-gray-500 hover:text-black font-bold">+</button>
+                            <button 
+                               onClick={() => updateQuantity && updateQuantity(item.id, item.quantity + 1)}
+                               className="text-gray-500 hover:text-black font-bold"
+                            >+</button>
                           </div>
                         </div>
                       </div>
@@ -152,8 +207,9 @@ export default function CheckoutSystem() {
                     </div>
                   )) : (
                     <div className="text-center py-10">
-                      <FiShoppingCart className="mx-auto text-4xl text-gray-300 mb-2"/>
-                      <p className="text-gray-500 font-medium">Your cart is empty</p>
+                      <FiShoppingCart className="mx-auto text-4xl text-gray-300 mb-4"/>
+                      <p className="text-gray-500 font-medium mb-4">Your cart is empty</p>
+                      <button onClick={() => router.push('/shop')} className="bg-[#0A101D] text-white px-6 py-2 rounded-xl text-sm font-bold">Continue Shopping</button>
                     </div>
                   )}
                 </div>
@@ -171,33 +227,36 @@ export default function CheckoutSystem() {
                       <label className="block text-xs font-bold text-gray-600 mb-1.5">Full Name <span className="text-red-500">*</span></label>
                       <div className="relative">
                         <FiUser className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                        <input type="text" value={formData.fullName} onChange={(e)=>setFormData({...formData, fullName: e.target.value})} className="w-full pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-[#F2A900]" />
+                        <input type="text" required value={formData.fullName} onChange={(e)=>setFormData({...formData, fullName: e.target.value})} className="w-full pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-[#F2A900]" />
                       </div>
                     </div>
                     <div>
                       <label className="block text-xs font-bold text-gray-600 mb-1.5">Phone Number <span className="text-red-500">*</span></label>
                       <div className="relative">
                         <FiPhone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                        <input type="text" value={formData.phone} onChange={(e)=>setFormData({...formData, phone: e.target.value})} className="w-full pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-[#F2A900]" />
+                        <input type="text" required value={formData.phone} onChange={(e)=>setFormData({...formData, phone: e.target.value})} className="w-full pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-[#F2A900]" />
                       </div>
                     </div>
                     <div>
                       <label className="block text-xs font-bold text-gray-600 mb-1.5">Country <span className="text-red-500">*</span></label>
-                      <select className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-[#F2A900]">
-                        <option>Tanzania</option>
+                      <select value={formData.country} onChange={(e)=>setFormData({...formData, country: e.target.value})} className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-[#F2A900]">
+                        <option value="Tanzania">Tanzania</option>
                       </select>
                     </div>
                     <div>
                       <label className="block text-xs font-bold text-gray-600 mb-1.5">Region <span className="text-red-500">*</span></label>
-                      <select className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-[#F2A900]">
-                        <option>Mwanza</option><option>Dar es Salaam</option>
+                      <select value={formData.region} onChange={(e)=>setFormData({...formData, region: e.target.value})} className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-[#F2A900]">
+                        <option value="Dar es Salaam">Dar es Salaam</option>
+                        <option value="Mwanza">Mwanza</option>
+                        <option value="Arusha">Arusha</option>
+                        <option value="Dodoma">Dodoma</option>
                       </select>
                     </div>
                     <div className="sm:col-span-2">
                       <label className="block text-xs font-bold text-gray-600 mb-1.5">Full Address / Landmark <span className="text-red-500">*</span></label>
                       <div className="relative">
                         <FiMapPin className="absolute left-3 top-3 text-gray-400" />
-                        <textarea rows={2} value={formData.address} onChange={(e)=>setFormData({...formData, address: e.target.value})} className="w-full pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-[#F2A900]"></textarea>
+                        <textarea required rows={2} value={formData.address} onChange={(e)=>setFormData({...formData, address: e.target.value})} placeholder="E.g., Nyamagana B, Near Rock City Mall" className="w-full pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-[#F2A900]"></textarea>
                       </div>
                     </div>
                   </div>
@@ -207,7 +266,7 @@ export default function CheckoutSystem() {
                 <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100">
                   <h2 className="font-black text-base flex items-center gap-2 mb-4"><FiTruck className="text-[#F2A900]"/> 2. Choose Shipping Method</h2>
                   <div className="grid grid-cols-2 gap-3 sm:gap-4">
-                    {SHIPPING_METHODS.map((method) => (
+                    {availableShippingMethods.map((method) => (
                       <div 
                         key={method.id} 
                         onClick={() => setSelectedShipping(method)}
@@ -235,26 +294,22 @@ export default function CheckoutSystem() {
             {currentStep === 3 && (
               <div className="space-y-6">
                 
-                {/* Order Summary Recap */}
+                {/* Order Summary Recap - Real Data */}
                 <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100">
-                   <h2 className="font-black text-base flex items-center gap-2 mb-4"><FiBox className="text-[#F2A900]"/> 1. Order Summary (3 Items)</h2>
+                   <h2 className="font-black text-base flex items-center gap-2 mb-4"><FiBox className="text-[#F2A900]"/> 1. Order Summary ({cart.length} Items)</h2>
                    <div className="space-y-3">
-                     {/* Mock items list matching design */}
-                     <div className="flex items-center gap-3 pb-3 border-b border-gray-100">
-                       <div className="w-12 h-12 bg-gray-50 rounded border border-gray-200 flex items-center justify-center flex-shrink-0 text-xl">📱</div>
-                       <div className="flex-1"><h4 className="text-xs font-bold text-gray-900">iPhone 16 Pro Max</h4><p className="text-[10px] text-gray-500">256GB • Desert Titanium</p><p className="text-[10px] text-gray-500">Qty: 1</p></div>
-                       <div className="text-xs font-black">TZS 1,000,000</div>
-                     </div>
-                     <div className="flex items-center gap-3 pb-3 border-b border-gray-100">
-                       <div className="w-12 h-12 bg-gray-50 rounded border border-gray-200 flex items-center justify-center flex-shrink-0 text-xl">💻</div>
-                       <div className="flex-1"><h4 className="text-xs font-bold text-gray-900">MacBook Air M2</h4><p className="text-[10px] text-gray-500">13.6" • Space Gray</p><p className="text-[10px] text-gray-500">Qty: 1</p></div>
-                       <div className="text-xs font-black">TZS 2,000,000</div>
-                     </div>
-                     <div className="flex items-center gap-3">
-                       <div className="w-12 h-12 bg-gray-50 rounded border border-gray-200 flex items-center justify-center flex-shrink-0 text-xl">🎒</div>
-                       <div className="flex-1"><h4 className="text-xs font-bold text-gray-900">Laptop Bag</h4><p className="text-[10px] text-gray-500">13.6" • Space Gray</p><p className="text-[10px] text-gray-500">Qty: 1</p></div>
-                       <div className="text-xs font-black">TZS 80,000</div>
-                     </div>
+                     {cart.map(item => (
+                       <div key={item.id} className="flex items-center gap-3 pb-3 border-b border-gray-100 last:border-0 last:pb-0">
+                         <div className="w-12 h-12 bg-gray-50 rounded border border-gray-200 flex items-center justify-center flex-shrink-0 p-1">
+                           {item.imageUrl ? <img src={item.imageUrl} alt={item.name} className="object-contain w-full h-full mix-blend-multiply" /> : <span className="text-xl">{item.imageEmoji || '📦'}</span>}
+                         </div>
+                         <div className="flex-1">
+                           <h4 className="text-xs font-bold text-gray-900 line-clamp-1">{item.name}</h4>
+                           <p className="text-[10px] text-gray-500">Qty: {item.quantity}</p>
+                         </div>
+                         <div className="text-xs font-black">TZS {(item.price * item.quantity).toLocaleString()}</div>
+                       </div>
+                     ))}
                    </div>
                 </div>
 
@@ -289,8 +344,7 @@ export default function CheckoutSystem() {
                    <div className="space-y-2 text-sm">
                       <div className="flex justify-between text-gray-600 font-medium"><span>Subtotal</span><span>TZS {subtotal.toLocaleString()}</span></div>
                       <div className="flex justify-between text-gray-600 font-medium"><span>Delivery ({selectedShipping.name})</span><span>TZS {deliveryFee.toLocaleString()}</span></div>
-                      <div className="flex justify-between text-green-600 font-bold"><span>Discount (10%)</span><span>- TZS {discount.toLocaleString()}</span></div>
-                      <div className="flex justify-between text-gray-600 font-medium"><span>VAT (0%)</span><span>TZS 0</span></div>
+                      <div className="flex justify-between text-green-600 font-bold"><span>Discount</span><span>- TZS {discount.toLocaleString()}</span></div>
                    </div>
                    <div className="border-t border-gray-100 mt-3 pt-3 flex justify-between items-center">
                       <span className="font-bold text-gray-900">Total Amount</span>
@@ -326,18 +380,17 @@ export default function CheckoutSystem() {
                 <div className="flex justify-between text-gray-600 font-medium"><span>Subtotal</span><span>TZS {subtotal.toLocaleString()}</span></div>
                 <div className="flex justify-between text-gray-600 font-medium">
                    <span>Delivery {currentStep > 1 && `(${selectedShipping.name})`}</span>
-                   <span>TZS {currentStep > 1 ? deliveryFee.toLocaleString() : '0'}</span>
+                   <span>TZS {deliveryFee.toLocaleString()}</span>
                 </div>
-                <div className="flex justify-between text-green-600 font-bold"><span>Discount (10%)</span><span>- TZS {discount.toLocaleString()}</span></div>
-                <div className="flex justify-between text-gray-600 font-medium"><span>VAT (0%)</span><span>TZS 0</span></div>
+                <div className="flex justify-between text-green-600 font-bold"><span>Discount</span><span>- TZS {discount.toLocaleString()}</span></div>
               </div>
 
               <div className="border-t border-gray-200 pt-4 mb-6">
                 <div className="flex justify-between items-end">
                    <span className="font-bold text-gray-900">Total Amount</span>
-                   <span className="font-black text-2xl text-gray-900">TZS {currentStep > 1 ? totalAmount.toLocaleString() : (subtotal - discount).toLocaleString()}</span>
+                   <span className="font-black text-2xl text-gray-900">TZS {totalAmount.toLocaleString()}</span>
                 </div>
-                <p className="text-[10px] text-green-600 font-bold mt-1 text-right">You will save TZS {discount.toLocaleString()} on this order</p>
+                {discount > 0 && <p className="text-[10px] text-green-600 font-bold mt-1 text-right">You will save TZS {discount.toLocaleString()} on this order</p>}
               </div>
 
               {currentStep === 3 && selectedPayment.id === 'cod' && (
@@ -355,12 +408,22 @@ export default function CheckoutSystem() {
 
               <button 
                 onClick={() => {
-                  if (currentStep < 3) setCurrentStep(currentStep + 1 as any);
-                  else alert('Order Placed Successfully!');
+                  if (currentStep === 1) {
+                    handleProceedToShipping();
+                  } else if (currentStep === 2) {
+                    if(!formData.fullName || !formData.phone || !formData.address) {
+                       alert("Please fill in all required shipping details.");
+                       return;
+                    }
+                    setCurrentStep(3);
+                  } else {
+                    alert('Proceeding to payment gateway...');
+                  }
                 }}
-                className="w-full bg-[#F2A900] hover:bg-yellow-500 text-black font-black py-4 rounded-xl flex items-center justify-center gap-2 transition shadow-md"
+                disabled={cart.length === 0}
+                className="w-full bg-[#F2A900] disabled:bg-gray-300 disabled:text-gray-500 hover:bg-yellow-500 text-black font-black py-4 rounded-xl flex items-center justify-center gap-2 transition shadow-md"
               >
-                {currentStep === 1 ? 'Proceed to Checkout' : currentStep === 2 ? 'Continue to Payment' : `Pay Advance TZS ${advancePayment.toLocaleString()}`}
+                {currentStep === 1 ? 'Proceed to Checkout' : currentStep === 2 ? 'Continue to Payment' : `Pay ${selectedPayment.id === 'cod' ? 'Advance ' : ''}TZS ${selectedPayment.id === 'cod' ? advancePayment.toLocaleString() : totalAmount.toLocaleString()}`}
                 <FiChevronRight size={18} />
               </button>
               
@@ -379,11 +442,21 @@ export default function CheckoutSystem() {
           <div className="flex items-center justify-between gap-4">
             <div className="flex flex-col">
               <span className="text-[10px] font-bold text-gray-500">Total</span>
-              <span className="text-sm font-black text-gray-900">TZS {currentStep === 1 ? (subtotal - discount).toLocaleString() : totalAmount.toLocaleString()}</span>
+              <span className="text-sm font-black text-gray-900">TZS {totalAmount.toLocaleString()}</span>
             </div>
             <button 
-              onClick={() => setCurrentStep(currentStep + 1 as any)}
-              className="flex-1 bg-[#F2A900] text-black font-black py-3.5 rounded-xl flex items-center justify-center gap-1 shadow-sm"
+              onClick={() => {
+                 if (currentStep === 1) handleProceedToShipping();
+                 else {
+                    if(!formData.fullName || !formData.phone || !formData.address) {
+                       alert("Please fill in all required shipping details.");
+                       return;
+                    }
+                    setCurrentStep(3);
+                 }
+              }}
+              disabled={cart.length === 0}
+              className="flex-1 bg-[#F2A900] disabled:bg-gray-300 text-black font-black py-3.5 rounded-xl flex items-center justify-center gap-1 shadow-sm"
             >
               {currentStep === 1 ? 'Proceed to Checkout' : 'Continue to Payment'} <FiChevronRight />
             </button>
@@ -394,7 +467,7 @@ export default function CheckoutSystem() {
               <FiShield /> Your payment is secure and protected
             </div>
             <button 
-              onClick={() => alert('Processing Payment...')}
+              onClick={() => alert('Proceeding to payment gateway...')}
               className="w-full bg-[#F2A900] text-black font-black py-4 rounded-xl flex items-center justify-center gap-2 shadow-sm"
             >
               <FiCreditCard /> {selectedPayment.id === 'cod' ? `Pay Advance TZS ${advancePayment.toLocaleString()}` : `Pay TZS ${totalAmount.toLocaleString()}`} <FiChevronRight />
