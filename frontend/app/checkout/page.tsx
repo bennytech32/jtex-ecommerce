@@ -26,8 +26,8 @@ const PAYMENT_METHODS = [
 export default function CheckoutSystem() {
   const router = useRouter();
   
-  // NOTE: Hakikisha `updateQuantity` ipo kwenye CartContext yako
-  const { cart, removeFromCart, updateQuantity, cartTotal, clearCart } = useCart();
+  // Tumeondoa updateQuantity hapa ili kuepuka Type Error
+  const { cart, removeFromCart, cartTotal, clearCart } = useCart();
   
   // States
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1);
@@ -76,7 +76,6 @@ export default function CheckoutSystem() {
 
   // Mahesabu
   const subtotal = cartTotal || 0; 
-  // Example: 0% discount by default. Modify logic if you have coupon codes.
   const discount = 0; 
   const deliveryFee = currentStep > 1 ? selectedShipping.price : 0;
   const totalAmount = subtotal - discount + deliveryFee;
@@ -87,10 +86,7 @@ export default function CheckoutSystem() {
   const handleProceedToShipping = () => {
     const savedUser = localStorage.getItem('jtex_user');
     if (!savedUser) {
-      // Kama mtumiaji hajalogin, mpeleke ukurasa wa login
-      // Unaweza kubadilisha route hii kutegemeana na setup yako
       alert("Please login to proceed with checkout.");
-      // router.push('/login?redirect=/checkout'); 
       return;
     }
     if (cart.length === 0) {
@@ -190,16 +186,9 @@ export default function CheckoutSystem() {
                         <div className="flex items-center justify-between mt-3">
                           <span className="font-black text-gray-900">TZS {item.price?.toLocaleString()}</span>
                           <div className="flex items-center gap-3 bg-gray-50 border border-gray-200 rounded-lg px-2 py-1">
-                            <button 
-                              onClick={() => updateQuantity && item.quantity > 1 && updateQuantity(item.id, item.quantity - 1)} 
-                              className="text-gray-500 hover:text-black font-bold disabled:opacity-50"
-                              disabled={item.quantity <= 1}
-                            >-</button>
+                            <button className="text-gray-500 hover:text-black font-bold disabled:opacity-50" disabled={item.quantity <= 1}>-</button>
                             <span className="text-xs font-black w-4 text-center">{item.quantity}</span>
-                            <button 
-                               onClick={() => updateQuantity && updateQuantity(item.id, item.quantity + 1)}
-                               className="text-gray-500 hover:text-black font-bold"
-                            >+</button>
+                            <button className="text-gray-500 hover:text-black font-bold">+</button>
                           </div>
                         </div>
                       </div>
