@@ -20,6 +20,7 @@ export default function HomePage() {
   const [dbCategories, setDbCategories] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userLocation, setUserLocation] = useState('Fetching...'); // State ya Location
   
   // Timer State for Flash Sales
   const [timeLeft, setTimeLeft] = useState({ hrs: 12, mins: 56, secs: 32 });
@@ -37,12 +38,34 @@ export default function HomePage() {
     return url.startsWith('http') ? url : `${getApiUrl()}${url}`;
   };
 
+  // Function ya kufanya asilimia za discount zitulie (Deterministic based on Product ID)
+  const getDeterministicDiscount = (id: string) => {
+    if (!id) return 15; // Default discount
+    let hash = 0;
+    for (let i = 0; i < String(id).length; i++) {
+      hash = String(id).charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return (Math.abs(hash) % 20) + 5; // Inatoa namba kati ya 5% na 24% ambayo haibadiliki kwa ID moja
+  };
+
   useEffect(() => {
     // 1. Check Authentication Status
     const token = localStorage.getItem('jtex_token');
     setIsLoggedIn(!!token);
 
-    // 2. Fetch Real Products & Categories
+    // 2. Fetch User Location automatically
+    fetch('https://ipapi.co/json/')
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.city) {
+          setUserLocation(`${data.city}, ${data.country_code || 'TZ'}`);
+        } else {
+          setUserLocation('Dar es Salaam, TZ');
+        }
+      })
+      .catch(() => setUserLocation('Dar es Salaam, TZ'));
+
+    // 3. Fetch Real Products & Categories
     const fetchData = async () => {
       try {
         const res = await fetch(`${getApiUrl()}/api/products`);
@@ -66,7 +89,7 @@ export default function HomePage() {
     };
     fetchData();
 
-    // 3. Flash Sale Countdown Logic
+    // 4. Flash Sale Countdown Logic
     const timer = setInterval(() => {
       setTimeLeft(prev => {
         let { hrs, mins, secs } = prev;
@@ -83,7 +106,7 @@ export default function HomePage() {
       });
     }, 1000);
 
-    // 4. Hero Banner Slider Logic (Auto Slide every 5 seconds)
+    // 5. Hero Banner Slider Logic (Auto Slide every 5 seconds)
     const slideTimer = setInterval(() => {
       setCurrentSlide(prev => (prev + 1) % 4);
     }, 5000);
@@ -109,7 +132,7 @@ export default function HomePage() {
       icon: "📱"
     },
     {
-      title: <>Fast & Secure<br/>Delivery to,<br/><span className="text-[#F2A900]">Dar es Salaam</span></>,
+      title: <>Fast & Secure<br/>Delivery to,<br/><span className="text-[#F2A900]">{userLocation.split(',')[0]}</span></>,
       subtitle: "Order today and get your items delivered right to your doorstep anywhere in TZ.",
       bg: "from-[#051C1A] to-[#0A2D28]",
       icon: "🚚"
@@ -127,55 +150,56 @@ export default function HomePage() {
   // Helper for Category Icons
   const getCategoryIcon = (catName: string) => {
     const lower = catName.toLowerCase();
-    if(lower.includes('electronic')) return <FiHeadphones size={24} />;
+    if(lower.includes('electronic') || lower.includes('elektroniki')) return <FiHeadphones size={24} />;
     if(lower.includes('computer') || lower.includes('laptop')) return <FiMonitor size={24} />;
-    if(lower.includes('phone') || lower.includes('mobile')) return <FiSmartphone size={24} />;
-    if(lower.includes('fashion') || lower.includes('cloth')) return <FiShoppingBag size={24} />;
+    if(lower.includes('phone') || lower.includes('mobile') || lower.includes('simu')) return <FiSmartphone size={24} />;
+    if(lower.includes('fashion') || lower.includes('cloth') || lower.includes('nguo')) return <FiShoppingBag size={24} />;
     if(lower.includes('home') || lower.includes('kitchen')) return <FiCoffee size={24} />;
-    if(lower.includes('beaut')) return <FiSmile size={24} />;
+    if(lower.includes('beaut') || lower.includes('urembo')) return <FiSmile size={24} />;
     return <FiGrid size={24} />;
   };
 
-  const handleCategoryClick = (slug: string) => {
-    router.push(`/categories/${slug}`);
+  // Kila uki-click category yoyote inakupeleka moja kwa moja /categories
+  const handleCategoryClick = () => {
+    router.push('/categories');
   };
 
   // =========================================================
-  // LOGIC YA SIDEBAR (Auth vs Guest) ILIYOSAHULIKA MWANZO
+  // LOGIC YA SIDEBAR (Auth vs Guest) LINK ZINA FANYA KAZI
   // =========================================================
   const renderSidebarMenu = () => {
     if (isLoggedIn) {
       // Menu Ndefu ya Mtu Aliyelogin
       return (
         <nav className="bg-white rounded-2xl border border-gray-100 py-3 shadow-sm mb-6 flex flex-col">
-          <button className="flex items-center gap-3 px-6 py-2.5 bg-gray-50 text-gray-900 font-bold transition"><FiHome size={18}/> Home</button>
+          <button className="flex items-center gap-3 px-6 py-2.5 bg-gray-50 text-gray-900 font-bold transition" onClick={() => router.push('/')}><FiHome size={18}/> Home</button>
           <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#F2A900] transition font-medium" onClick={() => router.push('/categories')}><FiGrid size={18}/> Categories</button>
-          <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#F2A900] transition font-medium">
+          <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#F2A900] transition font-medium" onClick={() => router.push('/deals')}>
             <FiZap size={18}/> Deals <span className="ml-auto bg-red-100 text-red-600 text-[10px] font-black px-1.5 py-0.5 rounded">Hot</span>
           </button>
           <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#F2A900] transition font-medium" onClick={() => router.push('/profile')}><FiPackage size={18}/> Orders</button>
-          <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#F2A900] transition font-medium">
+          <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#F2A900] transition font-medium" onClick={() => router.push('/messages')}>
             <FiMessageCircle size={18}/> Messages <span className="ml-auto bg-[#F2A900] text-white text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full">3</span>
           </button>
-          <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#F2A900] transition font-medium">
+          <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#F2A900] transition font-medium" onClick={() => router.push('/notifications')}>
             <FiBell size={18}/> Notifications <span className="ml-auto bg-red-500 text-white text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full">12</span>
           </button>
-          <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#F2A900] transition font-medium"><FiHeart size={18}/> Wishlist</button>
+          <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#F2A900] transition font-medium" onClick={() => router.push('/wishlist')}><FiHeart size={18}/> Wishlist</button>
           <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#F2A900] transition font-medium" onClick={() => router.push('/checkout')}>
             <FiShoppingCart size={18}/> Cart <span className="ml-auto bg-[#F2A900] text-white text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full">{cartCount > 0 ? cartCount : 3}</span>
           </button>
           <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#F2A900] transition font-medium" onClick={() => router.push('/profile')}><FiUser size={18}/> Account</button>
-          <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#F2A900] transition font-medium"><FiSettings size={18}/> Settings</button>
+          <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#F2A900] transition font-medium" onClick={() => router.push('/settings')}><FiSettings size={18}/> Settings</button>
           <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#F2A900] transition font-medium" onClick={() => router.push('/help')}><FiHeadphones size={18}/> Help & Support</button>
         </nav>
       );
     } else {
-      // Menu Fupi ya Guest (Kama kwenye picha uliyozungushia)
+      // Menu Fupi ya Guest 
       return (
         <nav className="bg-white rounded-2xl border border-gray-100 py-3 shadow-sm mb-6 flex flex-col">
-          <button className="flex items-center gap-3 px-6 py-2.5 bg-gray-50 text-gray-900 font-bold transition"><FiHome size={18}/> Home</button>
+          <button className="flex items-center gap-3 px-6 py-2.5 bg-gray-50 text-gray-900 font-bold transition" onClick={() => router.push('/')}><FiHome size={18}/> Home</button>
           <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#F2A900] transition font-medium" onClick={() => router.push('/categories')}><FiGrid size={18}/> Categories</button>
-          <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#F2A900] transition font-medium">
+          <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#F2A900] transition font-medium" onClick={() => router.push('/deals')}>
             <FiZap size={18}/> Deals <span className="ml-auto bg-red-100 text-red-600 text-[10px] font-black px-1.5 py-0.5 rounded">Hot</span>
           </button>
           <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#F2A900] transition font-medium" onClick={() => router.push('/login')}><FiPackage size={18}/> Orders</button>
@@ -206,7 +230,7 @@ export default function HomePage() {
               <FiMapPin className="text-gray-400" size={20}/>
               <div className="flex flex-col leading-tight">
                 <span className="text-[10px] text-gray-400">Deliver to</span>
-                <span className="text-xs font-bold flex items-center gap-1">Dar es Salaam, Kariakoo <FiChevronDown/></span>
+                <span className="text-xs font-bold flex items-center gap-1">{userLocation} <FiChevronDown/></span>
               </div>
             </div>
           </div>
@@ -256,7 +280,7 @@ export default function HomePage() {
             <FiMapPin size={20} className="text-[#F2A900]"/>
             <div className="flex flex-col leading-tight">
               <span className="text-[10px] text-gray-400">Deliver to</span>
-              <span className="text-sm font-bold flex items-center gap-1">Kariakoo <FiChevronDown size={14}/></span>
+              <span className="text-sm font-bold flex items-center gap-1">{userLocation.split(',')[0]} <FiChevronDown size={14}/></span>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -286,7 +310,6 @@ export default function HomePage() {
         {/* DESKTOP SIDEBAR */}
         <aside className="hidden lg:flex flex-col w-[260px] flex-shrink-0">
           
-          {/* Hapa ndipo tulipoita function ya renderSidebarMenu */}
           {renderSidebarMenu()}
 
           <div className="bg-[#0A101D] text-white rounded-2xl p-6 relative overflow-hidden shadow-lg border border-gray-800">
@@ -294,7 +317,7 @@ export default function HomePage() {
             <p className="text-xs text-gray-400 font-bold mb-1">Special Offers</p>
             <h3 className="text-3xl font-black text-[#F2A900] mb-2 leading-tight">Up to 40% Off</h3>
             <p className="text-sm text-gray-300 font-medium mb-6">On selected items</p>
-            <button className="bg-[#F2A900] text-black text-xs font-black px-6 py-2.5 rounded-lg flex items-center gap-2 hover:bg-yellow-500 transition shadow-md w-max">Shop Now <FiArrowRight/></button>
+            <button onClick={() => router.push('/categories')} className="bg-[#F2A900] text-black text-xs font-black px-6 py-2.5 rounded-lg flex items-center gap-2 hover:bg-yellow-500 transition shadow-md w-max">Shop Now <FiArrowRight/></button>
           </div>
         </aside>
 
@@ -304,17 +327,18 @@ export default function HomePage() {
           {/* Desktop Categories Header (Real Dynamic Data) */}
           <div className="hidden lg:flex items-center justify-between bg-white rounded-2xl border border-gray-100 px-6 py-4 shadow-sm mb-6">
             <div className="flex items-center gap-8 w-full overflow-x-auto hide-scrollbar">
-              {dbCategories.slice(0, 6).map(cat => (
-                 <span key={cat.slug} onClick={() => handleCategoryClick(cat.slug)} className="text-sm font-bold text-gray-600 hover:text-[#F2A900] cursor-pointer transition whitespace-nowrap">{cat.name}</span>
+              {/* Nimeondoa .slice(0, 6) ili zionyeshe zote */}
+              {dbCategories.map(cat => (
+                 <span key={cat.slug} onClick={handleCategoryClick} className="text-sm font-bold text-gray-600 hover:text-[#F2A900] cursor-pointer transition whitespace-nowrap">{cat.name}</span>
               ))}
-              <span onClick={() => router.push('/categories')} className="text-sm font-bold text-gray-600 hover:text-[#F2A900] cursor-pointer transition ml-auto flex items-center gap-1 whitespace-nowrap">More <FiChevronDown/></span>
             </div>
           </div>
 
           {/* Mobile Categories Row (Real Dynamic Data) */}
           <div className="lg:hidden flex overflow-x-auto hide-scrollbar gap-4 px-4 py-5 bg-white border-b border-gray-100">
-            {dbCategories.slice(0, 6).map((cat, idx) => (
-              <div key={idx} onClick={() => handleCategoryClick(cat.slug)} className="flex flex-col items-center gap-2 flex-shrink-0 cursor-pointer group">
+            {/* Nimeondoa .slice(0, 6) ili zionyeshe zote kwenye mobile pia */}
+            {dbCategories.map((cat, idx) => (
+              <div key={idx} onClick={handleCategoryClick} className="flex flex-col items-center gap-2 flex-shrink-0 cursor-pointer group">
                 <div className={`w-14 h-14 rounded-full flex items-center justify-center transition-all ${idx === 0 ? 'bg-yellow-50 text-[#F2A900] border border-yellow-200' : 'bg-gray-50 text-gray-600 border border-gray-100 group-hover:bg-gray-100'}`}>
                   {getCategoryIcon(cat.name)}
                 </div>
@@ -362,7 +386,7 @@ export default function HomePage() {
                      <p className="text-gray-300 text-xs lg:text-base font-medium mb-6 lg:mb-10 leading-relaxed max-w-[280px] lg:max-w-md">
                         {slide.subtitle}
                      </p>
-                     <button className="bg-[#F2A900] text-black font-black px-6 lg:px-8 py-2.5 lg:py-3.5 rounded-xl flex items-center gap-2 hover:bg-yellow-500 transition shadow-[0_0_20px_rgba(242,169,0,0.3)] text-sm lg:text-base">
+                     <button onClick={() => router.push('/categories')} className="bg-[#F2A900] text-black font-black px-6 lg:px-8 py-2.5 lg:py-3.5 rounded-xl flex items-center gap-2 hover:bg-yellow-500 transition shadow-[0_0_20px_rgba(242,169,0,0.3)] text-sm lg:text-base">
                         <span className="hidden lg:inline">Shop Now</span>
                         <span className="lg:hidden">Buy Now</span> 
                         <FiArrowRight/>
@@ -430,7 +454,7 @@ export default function HomePage() {
                          <div className="flex flex-col items-center"><div className="bg-[#0A101D] text-white text-sm font-black w-8 h-8 flex items-center justify-center rounded-md">{String(timeLeft.secs).padStart(2, '0')}</div><span className="text-[8px] font-bold text-gray-500 mt-0.5 uppercase">Secs</span></div>
                       </div>
                    </div>
-                   <button className="text-xs font-bold text-blue-600 flex items-center gap-1 hover:underline">View All <FiChevronRight/></button>
+                   <button onClick={() => router.push('/categories')} className="text-xs font-bold text-blue-600 flex items-center gap-1 hover:underline">View All <FiChevronRight/></button>
                 </div>
              </div>
 
@@ -440,14 +464,18 @@ export default function HomePage() {
              ) : (
                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 lg:gap-4">
                   {products.slice(0, 12).map((product: any) => {
-                    const visualDiscount = Math.floor(Math.random() * 20) + 5; 
-                    const oldPrice = Math.round(product.price * (1 + (visualDiscount/100)));
+                    const visualDiscount = getDeterministicDiscount(product.id); 
+                    const oldPrice = Math.round(product.price / (1 - (visualDiscount/100)));
 
                     return (
-                      <div key={product.id} className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm flex flex-col group hover:border-[#F2A900] transition cursor-pointer">
+                      <div 
+                        key={product.id} 
+                        onClick={() => router.push(`/product/${product.id}`)} 
+                        className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm flex flex-col group hover:border-[#F2A900] transition cursor-pointer"
+                      >
                          <div className="relative w-full aspect-square bg-gray-50 rounded-xl flex items-center justify-center mb-4 p-2">
                             <span className="absolute top-2 left-2 bg-[#FF7A00] text-white text-[10px] font-black px-1.5 py-0.5 rounded">-{visualDiscount}%</span>
-                            <button className="absolute top-2 right-2 text-gray-400 hover:text-red-500 lg:hidden"><FiHeart/></button>
+                            <button className="absolute top-2 right-2 text-gray-400 hover:text-red-500 lg:hidden" onClick={(e) => { e.stopPropagation(); /* Add logic for wishlist here */ }}><FiHeart/></button>
                             
                             {product.imageUrl ? (
                                <img src={getImageUrl(product.imageUrl)} alt={product.name} className="object-contain w-full h-full mix-blend-multiply group-hover:scale-105 transition-transform duration-300" />
@@ -490,7 +518,7 @@ export default function HomePage() {
                    <span className="text-white font-black text-2xl tracking-widest">SONY</span>
                    <span className="text-white font-black text-2xl">Lenovo</span>
                 </div>
-                <button className="hidden lg:flex bg-[#F2A900] text-black text-xs font-black px-6 py-2.5 rounded-lg items-center gap-2 hover:bg-yellow-500 transition shadow-md">
+                <button onClick={() => router.push('/categories')} className="hidden lg:flex bg-[#F2A900] text-black text-xs font-black px-6 py-2.5 rounded-lg items-center gap-2 hover:bg-yellow-500 transition shadow-md">
                    View All Brands <FiArrowRight/>
                 </button>
              </div>
@@ -539,8 +567,8 @@ export default function HomePage() {
             <div>
               <h4 className="text-white font-black text-lg mb-6">Customer Service</h4>
               <ul className="space-y-3 text-sm font-medium">
-                <li><button onClick={() => router.push('/help')} className="hover:text-[#F2A900] transition">My Account</button></li>
-                <li><button onClick={() => router.push('/help')} className="hover:text-[#F2A900] transition">Order Tracking</button></li>
+                <li><button onClick={() => router.push('/profile')} className="hover:text-[#F2A900] transition">My Account</button></li>
+                <li><button onClick={() => router.push('/profile')} className="hover:text-[#F2A900] transition">Order Tracking</button></li>
                 <li><button onClick={() => router.push('/help')} className="hover:text-[#F2A900] transition">Returns & Exchanges</button></li>
                 <li><button onClick={() => router.push('/help')} className="hover:text-[#F2A900] transition">Shipping Information</button></li>
                 <li><button onClick={() => router.push('/help')} className="hover:text-[#F2A900] transition">FAQs</button></li>
@@ -590,7 +618,7 @@ export default function HomePage() {
          </button>
          
          <div className="relative -top-6">
-            <button className="w-14 h-14 bg-[#0A101D] text-white rounded-full flex items-center justify-center shadow-lg border-4 border-white hover:scale-105 transition-transform" onClick={() => router.push('/')}>
+            <button className="w-14 h-14 bg-[#0A101D] text-white rounded-full flex items-center justify-center shadow-lg border-4 border-white hover:scale-105 transition-transform" onClick={() => router.push('/categories')}>
                <FiZap size={24} className="fill-current text-[#F2A900]"/>
             </button>
             <span className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[10px] font-bold text-gray-800 whitespace-nowrap">Flash Sales</span>
