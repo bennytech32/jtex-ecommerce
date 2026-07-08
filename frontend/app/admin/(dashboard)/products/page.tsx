@@ -34,7 +34,6 @@ export default function AdminProducts() {
 
   // --- AUTO SKU GENERATOR ---
   useEffect(() => {
-    // Generate SKU automatically based on category and name when adding a new product
     if (name && category && !editingProduct) {
       const prefix = category.substring(0, 3).toUpperCase();
       const namePart = name.substring(0, 3).toUpperCase();
@@ -59,7 +58,6 @@ export default function AdminProducts() {
     fetchProducts();
   }, []);
 
-  // Anapobadili Kategoria, tunasafisha Specs za zamani kuepusha mchanganyiko
   const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>, isEdit: boolean = false) => {
     const val = e.target.value;
     if (isEdit) {
@@ -71,7 +69,6 @@ export default function AdminProducts() {
     }
   };
 
-  // --- KAZI ZA PICHA NA LIMIT YA PICHA 5 ---
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>, isEdit: boolean = false) => {
     const files = e.target.files;
     if (files) {
@@ -109,7 +106,6 @@ export default function AdminProducts() {
     }
   };
 
-  // --- KUWEKA BIDHAA MPYA (ADD) ---
   const handleAddProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true); setMessage(''); setError('');
@@ -119,12 +115,10 @@ export default function AdminProducts() {
     formData.append('name', name);
     formData.append('category', category); 
     formData.append('brand', brand);
-    formData.append('badge', badge); // Hifadhi Badge mpya (Hot, Sale, n.k.)
+    formData.append('badge', badge); 
     formData.append('buyingPrice', buyingPrice); 
     formData.append('price', price);
     formData.append('stockQuantity', stockQuantity); 
-    
-    // Badilisha spec Object kuwa JSON String (Ili ikae kwenye Database safi)
     formData.append('specifications', JSON.stringify(specData));
     
     imageFiles.forEach((file) => formData.append('images', file));
@@ -148,7 +142,6 @@ export default function AdminProducts() {
     }
   };
 
-  // --- KUFUTA BIDHAA (DELETE) ---
   const handleDeleteProduct = async (id: string) => {
     if (!window.confirm("Una uhakika unataka kufuta bidhaa hii? Kitendo hiki hakirudishwi nyuma!")) return;
     
@@ -165,13 +158,11 @@ export default function AdminProducts() {
     }
   };
 
-  // --- KUFUNGUA MODAL YA KUEDIT ---
   const openEditModal = (product: any) => {
     setEditingProduct({ ...product });
     setEditImageFiles([]);
     setEditImagePreviews(product.imageUrl ? [`${API_URL}${product.imageUrl}`] : []);
     
-    // Vuta na Parss specifications za zamani ziwe Object
     if (product.specifications) {
       try {
         setEditSpecData(JSON.parse(product.specifications));
@@ -183,7 +174,6 @@ export default function AdminProducts() {
     }
   };
 
-  // --- KUHIFADHI MABADILIKO YA EDIT (UPDATE) ---
   const handleUpdateProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true); setMessage(''); setError('');
@@ -193,12 +183,10 @@ export default function AdminProducts() {
     formData.append('name', editingProduct.name);
     formData.append('category', editingProduct.category); 
     formData.append('brand', editingProduct.brand);
-    formData.append('badge', editingProduct.badge || ''); // Hifadhi Badge mpya inapo-edit
+    formData.append('badge', editingProduct.badge || ''); 
     formData.append('buyingPrice', editingProduct.buyingPrice); 
     formData.append('price', editingProduct.price);
     formData.append('stockQuantity', editingProduct.stockQuantity); 
-    
-    // Hifadhi specs kama JSON String
     formData.append('specifications', JSON.stringify(editSpecData));
     
     editImageFiles.forEach((file) => formData.append('images', file));
@@ -220,17 +208,28 @@ export default function AdminProducts() {
     }
   };
 
-  // --- DYNAMIC SPECIFICATIONS UI RENDERER (Kama ulivyoomba) ---
+  // --- DYNAMIC SPECIFICATIONS UI RENDERER (Imeboreshwa Kuwa Super Smart) ---
   const renderDynamicSpecs = (cat: string, currentState: any, setState: any) => {
     let fields: string[] = [];
     
-    // AI-like Logic: Leta fields kutokana na Category iliyochaguliwa
     const normalizedCat = cat.toLowerCase();
 
-    if (normalizedCat.includes('electronic') || normalizedCat.includes('computer') || normalizedCat.includes('phone')) {
-      fields = ['RAM', 'Storage', 'Processor', 'Display Size', 'Battery', 'OS', 'Color'];
-    } else if (normalizedCat.includes('headphone') || normalizedCat.includes('audio')) {
+    if (normalizedCat.includes('computer') || normalizedCat.includes('laptop') || normalizedCat.includes('pc')) {
+      fields = ['RAM', 'Storage', 'Processor', 'Generation', 'Graphics', 'Display Size', 'Resolution', 'OS', 'Color'];
+    } else if (normalizedCat.includes('monitor')) {
+      fields = ['Display Size', 'Resolution', 'Refresh Rate (Hz)', 'Panel Type', 'Ports'];
+    } else if (normalizedCat.includes('printer')) {
+      fields = ['Printer Type', 'Print Speed', 'Color Output', 'Connectivity', 'Paper Size'];
+    } else if (normalizedCat.includes('accessor')) {
+      fields = ['Connection Type', 'Compatibility', 'Color', 'Features'];
+    } else if (normalizedCat.includes('smartwatch') || normalizedCat.includes('watch')) {
+      fields = ['Screen Size', 'Battery Life', 'Water Resistance', 'OS Compatibility', 'Color'];
+    } else if (normalizedCat.includes('phone') || normalizedCat.includes('mobile') || normalizedCat.includes('tablet')) {
+      fields = ['RAM', 'Storage', 'Processor', 'Display Size', 'Battery', 'Camera', 'OS', 'Color'];
+    } else if (normalizedCat.includes('headphone') || normalizedCat.includes('audio') || normalizedCat.includes('speaker')) {
       fields = ['Color', 'Battery Life', 'Bluetooth Version', 'Noise Cancellation'];
+    } else if (normalizedCat.includes('electronic')) {
+      fields = ['Power (Watts)', 'Voltage', 'Color', 'Warranty', 'Weight'];
     } else if (normalizedCat.includes('cloth') || normalizedCat.includes('fashion')) {
       fields = ['Size', 'Color', 'Material', 'Gender'];
     } else if (normalizedCat.includes('shoe')) {
@@ -284,7 +283,6 @@ export default function AdminProducts() {
 
           <form onSubmit={handleAddProduct} className="space-y-4">
             
-            {/* Picha Upload (Max 5) */}
             <div>
               <label className="block text-[11px] font-bold text-gray-500 uppercase mb-2">Picha za Bidhaa (Mwisho 5)</label>
               {imagePreviews.length > 0 && (
@@ -304,7 +302,7 @@ export default function AdminProducts() {
 
             <div>
               <label className="block text-[11px] font-bold text-gray-500 uppercase mb-1">Jina la Bidhaa</label>
-              <div className="flex items-center bg-gray-50 border rounded-lg px-3 py-2"><FiBox className="text-gray-400 mr-2" /><input type="text" required value={name} onChange={e => setName(e.target.value)} className="w-full bg-transparent outline-none text-sm" placeholder="Mf: iPhone 15 Pro" /></div>
+              <div className="flex items-center bg-gray-50 border rounded-lg px-3 py-2"><FiBox className="text-gray-400 mr-2" /><input type="text" required value={name} onChange={e => setName(e.target.value)} className="w-full bg-transparent outline-none text-sm" placeholder="Mf: HP LaserJet Pro / iPhone 15" /></div>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
@@ -313,7 +311,11 @@ export default function AdminProducts() {
                 <select value={category} onChange={(e) => handleCategoryChange(e, false)} className="w-full bg-gray-50 border rounded-lg px-3 py-2 outline-none text-sm font-medium">
                   <option value="Electronics">Electronics</option>
                   <option value="Computers">Computers</option>
+                  <option value="Monitors">Monitors</option>
+                  <option value="Printers">Printers</option>
+                  <option value="Accessories">Accessories</option>
                   <option value="Phones">Phones</option>
+                  <option value="Smartwatches">Smartwatches</option>
                   <option value="Headphones">Headphones</option>
                   <option value="Clothing">Clothing</option>
                   <option value="Shoes">Shoes</option>
@@ -324,7 +326,7 @@ export default function AdminProducts() {
               </div>
               <div>
                 <label className="block text-[11px] font-bold text-gray-500 uppercase mb-1">Brand</label>
-                <input type="text" value={brand} onChange={e => setBrand(e.target.value)} className="w-full bg-gray-50 border rounded-lg px-3 py-2 outline-none text-sm" placeholder="Apple" />
+                <input type="text" value={brand} onChange={e => setBrand(e.target.value)} className="w-full bg-gray-50 border rounded-lg px-3 py-2 outline-none text-sm" placeholder="Apple / HP / Dell" />
               </div>
             </div>
 
@@ -339,7 +341,6 @@ export default function AdminProducts() {
               </div>
             </div>
 
-            {/* SEHEMU MPYA YA BADGES KAMA ULIVYOOMBA */}
             <div>
               <label className="block text-[11px] font-bold text-gray-500 uppercase mb-1 flex items-center gap-1"><FiTag className="text-[#F2A900]"/> Product Badge</label>
               <select value={badge} onChange={e => setBadge(e.target.value)} className="w-full bg-gray-50 border rounded-lg px-3 py-2 outline-none text-sm font-medium">
@@ -360,11 +361,11 @@ export default function AdminProducts() {
             <div className="grid grid-cols-2 gap-3 mt-4">
               <div>
                 <label className="block text-[11px] font-bold text-gray-500 uppercase mb-1">Bei ya Kununua</label>
-                <input type="number" value={buyingPrice} onChange={e => setBuyingPrice(e.target.value)} className="w-full bg-gray-50 border rounded-lg px-3 py-2 outline-none text-sm font-black" placeholder="2000000" />
+                <input type="number" value={buyingPrice} onChange={e => setBuyingPrice(e.target.value)} className="w-full bg-gray-50 border rounded-lg px-3 py-2 outline-none text-sm font-black" placeholder="200000" />
               </div>
               <div>
                 <label className="block text-[11px] font-bold text-gray-500 uppercase mb-1">Bei ya Kuuza</label>
-                <input type="number" required value={price} onChange={e => setPrice(e.target.value)} className="w-full bg-gray-50 border rounded-lg px-3 py-2 outline-none text-sm font-black text-[#0F172A]" placeholder="2500000" />
+                <input type="number" required value={price} onChange={e => setPrice(e.target.value)} className="w-full bg-gray-50 border rounded-lg px-3 py-2 outline-none text-sm font-black text-[#0F172A]" placeholder="250000" />
               </div>
             </div>
 
@@ -442,7 +443,6 @@ export default function AdminProducts() {
             
             <form onSubmit={handleUpdateProduct} className="p-4 sm:p-6 space-y-4">
               
-              {/* EDIT PICHA (Max 5) */}
               <div>
                 <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Badili au Ongeza Picha (Mwisho 5)</label>
                 {editImagePreviews.length > 0 && (
@@ -468,7 +468,11 @@ export default function AdminProducts() {
                   <select value={editingProduct.category} onChange={(e) => handleCategoryChange(e, true)} className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 outline-none text-sm font-medium">
                     <option value="Electronics">Electronics</option>
                     <option value="Computers">Computers</option>
+                    <option value="Monitors">Monitors</option>
+                    <option value="Printers">Printers</option>
+                    <option value="Accessories">Accessories</option>
                     <option value="Phones">Phones</option>
+                    <option value="Smartwatches">Smartwatches</option>
                     <option value="Headphones">Headphones</option>
                     <option value="Clothing">Clothing</option>
                     <option value="Shoes">Shoes</option>
@@ -485,7 +489,6 @@ export default function AdminProducts() {
                 <div><label className="block text-xs font-bold text-gray-500 mb-1">Stock</label><input type="number" value={editingProduct.stockQuantity} onChange={e => setEditingProduct({...editingProduct, stockQuantity: e.target.value})} className="w-full border rounded-xl px-3 py-2 text-sm" /></div>
               </div>
 
-              {/* EDIT BADGE */}
               <div>
                 <label className="block text-[11px] font-bold text-gray-500 uppercase mb-1 flex items-center gap-1"><FiTag className="text-[#F2A900]"/> Product Badge</label>
                 <select value={editingProduct.badge || ''} onChange={e => setEditingProduct({...editingProduct, badge: e.target.value})} className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 outline-none text-sm font-medium">

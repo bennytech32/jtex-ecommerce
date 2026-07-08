@@ -6,7 +6,7 @@ import { useCart } from '../context/CartContext';
 import { 
   FiArrowLeft, FiShoppingCart, FiMapPin, FiCreditCard, 
   FiTrash2, FiChevronRight, FiShield, FiCheckCircle, 
-  FiTruck, FiBox, FiPhone, FiUser, FiStar, FiLock
+  FiTruck, FiBox, FiPhone, FiUser, FiStar, FiLock, FiInfo
 } from 'react-icons/fi';
 
 // === SHIPPING OPTIONS ===
@@ -26,18 +26,10 @@ const PAYMENT_TYPES = [
 
 // === PAYMENT METHODS (GATEWAYS) ===
 const PAYMENT_METHODS = [
-  { id: 'mobile_money', name: 'Mobile Money', desc: 'Pay using mobile money', icon: '📱' },
+  { id: 'mobile_money', name: 'Mobile Money', desc: 'Pay via Lipa Namba', icon: '📱' },
   { id: 'bank', name: 'Bank Transfer', desc: 'Direct to our bank', icon: '🏦' },
   { id: 'visa', name: 'Visa Card', desc: 'Debit/Credit Card', icon: 'VISA' },
   { id: 'mastercard', name: 'MasterCard', desc: 'Debit/Credit Card', icon: '🔴🟠' }
-];
-
-// === MOBILE NETWORKS ===
-const MOBILE_NETWORKS = [
-  { id: 'vodacom', name: 'vodacom', sub: 'M-Pesa', color: 'text-red-500' },
-  { id: 'yas', name: 'yas', sub: 'Yas Money', color: 'text-yellow-400 bg-[#0A101D] px-1 rounded' },
-  { id: 'airtel', name: 'airtel', sub: 'Airtel Money', color: 'text-red-600' },
-  { id: 'selcom', name: 'selcom', sub: 'Selcom Pay', color: 'text-green-500' }
 ];
 
 // === MIKOA YA TANZANIA ===
@@ -60,7 +52,6 @@ export default function CheckoutSystem() {
   
   const getApiUrl = () => 'https://jtex-ecommerce-production.up.railway.app';
   
-  // Function ya kufix link za picha
   const getImageUrl = (url: string) => {
     if (!url) return '';
     return url.startsWith('http') ? url : `${getApiUrl()}${url}`;
@@ -68,30 +59,27 @@ export default function CheckoutSystem() {
   
   // States
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1);
-  const [selectedPaymentType, setSelectedPaymentType] = useState(PAYMENT_TYPES[1]); // Default COD
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(PAYMENT_METHODS[0]); // Default Mobile Money
-  const [selectedNetwork, setSelectedNetwork] = useState(MOBILE_NETWORKS[0]); // Default Vodacom
-  const [paymentPhone, setPaymentPhone] = useState('');
+  const [selectedPaymentType, setSelectedPaymentType] = useState(PAYMENT_TYPES[1]); 
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(PAYMENT_METHODS[0]); 
   
   // Form States
   const [formData, setFormData] = useState({
     fullName: '',
     phone: '',
     country: 'Tanzania',
-    region: 'Dar es Salaam', // Default Region
+    region: 'Dar es Salaam', 
     district: '',
     address: ''
   });
 
-  // Logiki ya Usafiri kulingana na Mkoa (Region)
   const isDarEsSalaam = formData.region === 'Dar es Salaam';
   const isIsland = ISLAND_REGIONS.includes(formData.region);
 
   const availableShippingMethods = ALL_SHIPPING_METHODS.filter(method => {
     if (method.id === 'bodaboda') return isDarEsSalaam;
     if (method.id === 'boat') return isIsland;
-    if (method.id === 'bus') return !isIsland; // Mabasi hayaendi visiwani
-    if (method.id === 'aeroplane') return true; // Ndege zinaenda kote
+    if (method.id === 'bus') return !isIsland; 
+    if (method.id === 'aeroplane') return true; 
     return true;
   });
 
@@ -113,20 +101,17 @@ export default function CheckoutSystem() {
           fullName: parsedUser.name || '',
           phone: parsedUser.phone || '',
         }));
-        setPaymentPhone(parsedUser.phone || '');
       } catch (e) {
         console.error("Error parsing user data");
       }
     }
   }, []);
 
-  // Mahesabu Real-time (Bila Mockup Data)
   const subtotal = cartTotal || 0; 
-  const discount = Math.round(subtotal * 0.10); // Mfano wa 10% discount
+  const discount = Math.round(subtotal * 0.10); 
   const deliveryFee = currentStep > 1 && selectedShipping ? selectedShipping.price : 0;
   const totalAmount = subtotal - discount + deliveryFee;
   
-  // Custom advance amount kama UI inavyoonyesha
   const advancePayment = selectedPaymentType.id === 'cod' ? Math.min(50000, totalAmount) : totalAmount;
   const remainingBalance = totalAmount - advancePayment;
 
@@ -143,12 +128,9 @@ export default function CheckoutSystem() {
     setCurrentStep(2);
   };
 
-  // Header Stepper
   const renderStepper = () => (
     <div className="flex items-center justify-center gap-2 sm:gap-4 mb-8 relative px-4">
       <div className="absolute top-1/2 left-[15%] right-[15%] h-0.5 bg-gray-200 -z-10 -translate-y-1/2"></div>
-      
-      {/* Hatua 1 */}
       <div className="flex flex-col items-center gap-2 bg-white px-2">
         <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-bold text-sm sm:text-base ${currentStep >= 1 ? 'bg-[#F2A900] text-white shadow-md' : 'bg-gray-200 text-gray-500'}`}>
           {currentStep > 1 ? <FiCheckCircle size={20} /> : '1'}
@@ -156,8 +138,6 @@ export default function CheckoutSystem() {
         <span className={`text-[10px] sm:text-xs font-bold ${currentStep >= 1 ? 'text-gray-900' : 'text-gray-400'}`}>My Cart</span>
       </div>
       <div className={`flex-1 h-0.5 ${currentStep >= 2 ? 'bg-[#F2A900]' : 'bg-transparent'}`}></div>
-
-      {/* Hatua 2 */}
       <div className="flex flex-col items-center gap-2 bg-white px-2">
         <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-bold text-sm sm:text-base ${currentStep >= 2 ? 'bg-[#F2A900] text-white shadow-md' : 'bg-gray-200 text-gray-500'}`}>
           {currentStep > 2 ? <FiCheckCircle size={20} /> : '2'}
@@ -165,8 +145,6 @@ export default function CheckoutSystem() {
         <span className={`text-[10px] sm:text-xs font-bold ${currentStep >= 2 ? 'text-gray-900' : 'text-gray-400'}`}>Checkout</span>
       </div>
       <div className={`flex-1 h-0.5 ${currentStep >= 3 ? 'bg-[#F2A900]' : 'bg-transparent'}`}></div>
-
-      {/* Hatua 3 */}
       <div className="flex flex-col items-center gap-2 bg-white px-2">
         <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-bold text-sm sm:text-base ${currentStep >= 3 ? 'bg-[#F2A900] text-white shadow-md' : 'bg-gray-200 text-gray-500'}`}>
           3
@@ -178,7 +156,6 @@ export default function CheckoutSystem() {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] pb-24 md:pb-12">
-      {/* Top Navigation */}
       <header className="bg-white sticky top-0 z-40 px-4 py-4 flex items-center justify-between border-b border-gray-100 shadow-sm">
         <button onClick={() => currentStep > 1 ? setCurrentStep(currentStep - 1 as any) : router.back()} className="p-2 hover:bg-gray-100 rounded-full transition">
           <FiArrowLeft size={24} className="text-gray-800" />
@@ -318,7 +295,7 @@ export default function CheckoutSystem() {
               </div>
             )}
 
-            {/* STEP 3: PAYMENT UI MPYA */}
+            {/* STEP 3: PAYMENT UI MPYA (IMEREKEBISHWA KUFANANA NA PICHA) */}
             {currentStep === 3 && (
               <div className="space-y-6">
                 
@@ -384,42 +361,84 @@ export default function CheckoutSystem() {
                      ))}
                    </div>
 
-                   {/* Mobile Money Sub-Network Selection */}
+                   {/* MOBILE MONEY DETAILS (KUTOKA KWENYE PICHA) */}
                    {selectedPaymentMethod.id === 'mobile_money' && (
                      <div className="animate-fade-in border-t border-gray-100 pt-5">
-                       <h3 className="text-xs font-bold text-gray-800 mb-3">Select Mobile Money Network</h3>
-                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
-                          {MOBILE_NETWORKS.map((net) => (
-                            <div 
-                              key={net.id} 
-                              onClick={() => setSelectedNetwork(net)}
-                              className={`relative p-3 rounded-xl border cursor-pointer transition flex flex-col items-center justify-center text-center h-[70px] ${selectedNetwork.id === net.id ? 'border-[#F2A900] bg-yellow-50/50 shadow-sm' : 'border-gray-200 bg-white hover:border-gray-300'}`}
-                            >
-                              {selectedNetwork.id === net.id && (
-                                 <FiCheckCircle size={14} className="absolute top-1.5 right-1.5 text-[#F2A900] fill-[#F2A900] text-white" />
-                              )}
-                              <span className={`font-black text-base tracking-tight ${net.color}`}>{net.name}</span>
-                              <span className="text-[10px] text-gray-500 font-bold mt-1">{net.sub}</span>
-                            </div>
-                          ))}
+                       <h3 className="text-xs font-bold text-gray-800 mb-3 uppercase tracking-wider flex items-center gap-2"><FiInfo className="text-blue-500"/> Akaunti za Mitandao (Lipa Namba)</h3>
+                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
+                         
+                         {/* Vodacom M-Pesa */}
+                         <div className="border border-red-200 bg-red-50/30 p-4 rounded-xl flex items-center gap-4 hover:shadow-sm transition">
+                           <div className="w-12 h-12 bg-red-600 rounded-full flex items-center justify-center font-black text-white text-lg">M</div>
+                           <div>
+                             <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wide">Vodacom M-Pesa</p>
+                             <p className="text-xl font-black text-red-600 tracking-wider">52121360</p>
+                             <p className="text-[11px] font-bold text-gray-800 mt-0.5">Name | Jtex</p>
+                           </div>
+                         </div>
+
+                         {/* Mixx by Yas */}
+                         <div className="border border-blue-200 bg-blue-50/30 p-4 rounded-xl flex items-center gap-4 hover:shadow-sm transition">
+                           <div className="w-12 h-12 bg-[#0A101D] rounded-full flex items-center justify-center font-black text-yellow-400 text-sm italic">Mixx</div>
+                           <div>
+                             <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wide">Mixx By Yas</p>
+                             <p className="text-xl font-black text-blue-700 tracking-wider">7101850</p>
+                             <p className="text-[11px] font-bold text-gray-800 mt-0.5">Name | Jtex</p>
+                           </div>
+                         </div>
+
+                       </div>
+                       
+                       <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 text-xs text-gray-600 font-medium">
+                         <p className="font-bold text-gray-900 mb-2">Jinsi ya Kulipia kwa M-Pesa:</p>
+                         <ol className="list-decimal ml-4 space-y-1.5 text-[11px]">
+                           <li>Piga <strong>*150*00#</strong></li>
+                           <li>Chagua 4. <strong>Lipa kwa M-Pesa</strong></li>
+                           <li>Chagua 1. <strong>Weka LIPA Namba</strong></li>
+                           <li>Weka namba <strong>52121360</strong></li>
+                           <li>Weka kiasi kinachotakiwa (Tsh {selectedPaymentType.id === 'cod' ? advancePayment.toLocaleString() : totalAmount.toLocaleString()})</li>
+                           <li>Weka Namba ya Siri kuthibitisha.</li>
+                         </ol>
+                       </div>
+                     </div>
+                   )}
+
+                   {/* BANK TRANSFER DETAILS (KUTOKA KWENYE PICHA) */}
+                   {selectedPaymentMethod.id === 'bank' && (
+                     <div className="animate-fade-in border-t border-gray-100 pt-5">
+                       <h3 className="text-xs font-bold text-gray-800 mb-3 uppercase tracking-wider flex items-center gap-2"><FiInfo className="text-green-500"/> Akaunti za Benki</h3>
+                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
+                         
+                         {/* NMB Bank */}
+                         <div className="border border-blue-200 bg-blue-50/30 p-4 rounded-xl flex items-center gap-4 hover:shadow-sm transition">
+                           <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center font-black text-white text-[10px]">NMB</div>
+                           <div>
+                             <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wide">NMB Close to you</p>
+                             <p className="text-xl font-black text-blue-700 tracking-wider">23310067430</p>
+                             <p className="text-[11px] font-bold text-gray-800 mt-0.5">Jtex Company</p>
+                           </div>
+                         </div>
+
+                         {/* CRDB Bank */}
+                         <div className="border border-green-200 bg-green-50/30 p-4 rounded-xl flex items-center gap-4 hover:shadow-sm transition">
+                           <div className="w-12 h-12 bg-green-600 rounded-full flex items-center justify-center font-black text-white text-[10px]">CRDB</div>
+                           <div>
+                             <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wide">CRDB BANK</p>
+                             <p className="text-xl font-black text-green-700 tracking-wider">0150001JGMU00</p>
+                             <p className="text-[11px] font-bold text-gray-800 mt-0.5">Jtex Company</p>
+                           </div>
+                         </div>
+
                        </div>
 
-                       <div className="space-y-1.5 max-w-sm">
-                          <label className="block text-xs font-bold text-gray-600">Mobile Money Number <span className="text-red-500">*</span></label>
-                          <div className="relative flex items-center border border-gray-200 rounded-xl overflow-hidden focus-within:border-[#F2A900] transition bg-gray-50 h-11">
-                             <div className="flex items-center gap-1.5 bg-white pl-3 pr-2 py-3 border-r border-gray-200 h-full">
-                                <img src="https://flagcdn.com/w20/tz.png" className="w-4 rounded-sm" alt="TZ Flag"/>
-                                <span className="text-gray-800 text-sm font-bold">+255</span>
-                             </div>
-                             <input type="tel" required value={paymentPhone} onChange={e => setPaymentPhone(e.target.value)} placeholder="7XX XXX XXX" className="w-full bg-transparent pl-3 pr-4 py-3 text-sm text-gray-900 outline-none font-medium tracking-wide" />
-                          </div>
-                          <p className="text-[9px] text-gray-400">Payment request will be sent to this number</p>
+                       <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 text-xs text-gray-600 font-medium">
+                         Tafadhali fanya muamala wa <strong>Tsh {selectedPaymentType.id === 'cod' ? advancePayment.toLocaleString() : totalAmount.toLocaleString()}</strong> kwenda kwenye moja ya akaunti za benki hapo juu. Tunashauri uhifadhi ujumbe wako wa muamala kwa ajili ya uthibitisho.
                        </div>
                      </div>
                    )}
                    
-                   {/* Placeholder For Cards/Bank */}
-                   {selectedPaymentMethod.id !== 'mobile_money' && (
+                   {/* Placeholder For Cards */}
+                   {(selectedPaymentMethod.id === 'visa' || selectedPaymentMethod.id === 'mastercard') && (
                      <div className="animate-fade-in border-t border-gray-100 pt-5 text-center py-4">
                        <p className="text-sm font-bold text-gray-500">You will be redirected to the secure {selectedPaymentMethod.name} gateway to complete this payment.</p>
                      </div>
@@ -467,7 +486,6 @@ export default function CheckoutSystem() {
                  {currentStep < 3 && <button onClick={() => setCurrentStep(1)} className="text-xs font-bold text-gray-500 hover:text-black">Edit Cart ✏️</button>}
               </div>
               
-              {/* Items Mini List */}
               <div className="space-y-3 mb-6 max-h-[250px] overflow-y-auto custom-scrollbar pr-2">
                  {cart.map((item: any) => (
                    <div key={item.id} className="flex gap-3">
@@ -483,7 +501,6 @@ export default function CheckoutSystem() {
                  ))}
               </div>
 
-              {/* Promo Code Box */}
               <div className="bg-green-50 border border-green-100 rounded-lg p-3 flex items-center justify-between mb-5">
                  <div className="flex items-center gap-2">
                     <FiBox className="text-green-600"/>
@@ -535,17 +552,13 @@ export default function CheckoutSystem() {
                     }
                     setCurrentStep(3);
                   } else {
-                    if (selectedPaymentMethod.id === 'mobile_money' && paymentPhone.length < 9) {
-                       alert("Tafadhali weka namba sahihi ya simu kwa malipo.");
-                       return;
-                    }
                     router.push('/order-success');
                   }
                 }}
                 disabled={cart.length === 0}
                 className="w-full bg-[#F2A900] disabled:bg-gray-300 disabled:text-gray-500 hover:bg-yellow-500 text-black font-black py-4 rounded-xl flex items-center justify-center gap-2 transition shadow-md"
               >
-                {currentStep === 1 ? 'Proceed to Checkout' : currentStep === 2 ? 'Continue to Payment' : <><FiLock /> Place Order</>}
+                {currentStep === 1 ? 'Proceed to Checkout' : currentStep === 2 ? 'Continue to Payment' : <><FiLock /> Confirm Place Order</>}
               </button>
               
               <div className="mt-4 flex flex-col gap-3 border-t border-gray-100 pt-4">
@@ -593,15 +606,11 @@ export default function CheckoutSystem() {
             </div>
             <button 
               onClick={() => {
-                 if (selectedPaymentMethod.id === 'mobile_money' && paymentPhone.length < 9) {
-                    alert("Tafadhali weka namba sahihi ya simu kwa malipo.");
-                    return;
-                 }
                  router.push('/order-success');
               }}
               className="w-full bg-[#F2A900] text-black font-black py-4 rounded-xl flex items-center justify-center gap-2 shadow-sm"
             >
-              <FiLock /> {selectedPaymentType.id === 'cod' ? `Pay Advance TZS ${advancePayment.toLocaleString()}` : `Pay TZS ${totalAmount.toLocaleString()}`} <FiChevronRight />
+              <FiLock /> {selectedPaymentType.id === 'cod' ? `Confirm Order TZS ${advancePayment.toLocaleString()}` : `Confirm Order TZS ${totalAmount.toLocaleString()}`} <FiChevronRight />
             </button>
           </div>
         )}

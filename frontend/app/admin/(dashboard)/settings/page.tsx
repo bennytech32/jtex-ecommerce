@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { FiSettings, FiSave, FiGlobe, FiLock, FiTruck, FiMapPin, FiPercent } from 'react-icons/fi';
+import { FiSettings, FiSave, FiGlobe, FiLock, FiTruck, FiMapPin, FiPercent, FiImage, FiUploadCloud, FiLayout } from 'react-icons/fi';
 
 const translations = {
   en: {
@@ -10,6 +10,7 @@ const translations = {
     tabGeneral: "Store Information",
     tabShipping: "Shipping & COD",
     tabSecurity: "Security Settings",
+    tabBanners: "Website Banners & UI", // NEW
     generalTitle: "Basic Jtex Configurations",
     platformName: "Platform Name",
     contactEmail: "Contact Email Address",
@@ -25,6 +26,11 @@ const translations = {
     securityTitle: "Account Security Management",
     securityDesc: "Update your Super Admin access credentials and master passwords here.",
     securityBtn: "Send Password Reset Email",
+    bannersTitle: "Storefront Banners & Appearance", // NEW
+    bannersDesc: "Upload hero banners, promotional graphics, and change main website texts displayed to customers.", // NEW
+    heroBannerLabel: "Main Hero Banner", // NEW
+    promoBannerLabel: "Promotional Banner (Middle Section)", // NEW
+    bannerTextLabel: "Hero Banner Main Headline", // NEW
     alertSuccess: "System settings updated successfully! 🔥",
     switchLang: "SWAHILI"
   },
@@ -34,6 +40,7 @@ const translations = {
     tabGeneral: "Taarifa za Duka",
     tabShipping: "Usafirishaji & COD",
     tabSecurity: "Ulinzi (Security)",
+    tabBanners: "Mabango & Muonekano", // NEW
     generalTitle: "Taarifa za Msingi za Jtex",
     platformName: "Jina la Jukwaa",
     contactEmail: "Barua Pepe ya Mawasiliano",
@@ -49,6 +56,11 @@ const translations = {
     securityTitle: "Ulinzi wa Akaunti",
     securityDesc: "Badilisha nywila (password) yako ya Super Admin na mifumo ya ulinzi hapa.",
     securityBtn: "Tuma Barua Pepe ya Kubadili Nywila",
+    bannersTitle: "Mabango ya Duka & Muonekano", // NEW
+    bannersDesc: "Badilisha picha kubwa za mbele (Hero Banners), mabango ya matangazo, na maneno yanayoonekana kwa wateja.", // NEW
+    heroBannerLabel: "Bango Kuu la Mbele (Hero Banner)", // NEW
+    promoBannerLabel: "Bango la Matangazo (Promo Banner)", // NEW
+    bannerTextLabel: "Kichwa cha Habari (Kwenye Bango)", // NEW
     alertSuccess: "Mipangilio ya mfumo imehifadhiwa kikamilifu! 🔥",
     switchLang: "ENGLISH"
   }
@@ -90,7 +102,7 @@ const initialRegions = [
 
 export default function AdminSettings() {
   const [lang, setLang] = useState<'en' | 'sw'>('en');
-  const [activeTab, setActiveTab] = useState<'general' | 'shipping' | 'security'>('general');
+  const [activeTab, setActiveTab] = useState<'general' | 'banners' | 'shipping' | 'security'>('general');
   
   // Dynamic editable states
   const [regions, setRegions] = useState(initialRegions);
@@ -98,12 +110,27 @@ export default function AdminSettings() {
   const [platformName, setPlatformName] = useState("Jtex Marketplace");
   const [contactEmail, setContactEmail] = useState("support@jtex.co.tz");
   const [metaDescription, setMetaDescription] = useState("Pata bidhaa bora kwa bei nafuu Tanzania.");
+  
+  // NEW: Banners & UI States
+  const [heroBanner, setHeroBanner] = useState<string | null>(null);
+  const [promoBanner, setPromoBanner] = useState<string | null>(null);
+  const [bannerHeading, setBannerHeading] = useState("Nunua Bidhaa Bora kwa Bei Nafuu");
 
   const t = translations[lang];
 
   // Kushughulikia mabadiliko ya bei ya mkoa maalum
   const handleFeeChange = (id: string, newFee: number) => {
     setRegions(prev => prev.map(r => r.id === id ? { ...r, fee: newFee } : r));
+  };
+
+  // Kushughulikia Upload za Banners
+  const handleBannerUpload = (e: React.ChangeEvent<HTMLInputElement>, type: 'hero' | 'promo') => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const previewUrl = URL.createObjectURL(file);
+      if (type === 'hero') setHeroBanner(previewUrl);
+      else setPromoBanner(previewUrl);
+    }
   };
 
   const handleSaveSettings = (e: React.FormEvent) => {
@@ -114,7 +141,10 @@ export default function AdminSettings() {
       contactEmail,
       metaDescription,
       upfrontPercent,
-      regions
+      regions,
+      heroBanner,
+      promoBanner,
+      bannerHeading
     };
     console.log("Saving Configuration to Live Server:", configurationPayload);
     alert(t.alertSuccess);
@@ -148,6 +178,15 @@ export default function AdminSettings() {
                 className={`w-full text-left px-4 py-3 rounded-xl text-sm font-black flex items-center gap-3 transition ${activeTab === 'general' ? 'bg-[#0F172A] text-white shadow-md' : 'text-gray-600 hover:bg-gray-100'}`}
               >
                 <FiGlobe className="text-lg" /> {t.tabGeneral}
+              </button>
+            </li>
+            {/* NEW: Banners Tab Button */}
+            <li>
+              <button 
+                onClick={() => setActiveTab('banners')} 
+                className={`w-full text-left px-4 py-3 rounded-xl text-sm font-black flex items-center gap-3 transition ${activeTab === 'banners' ? 'bg-[#0F172A] text-white shadow-md' : 'text-gray-600 hover:bg-gray-100'}`}
+              >
+                <FiLayout className="text-lg" /> {t.tabBanners}
               </button>
             </li>
             <li>
@@ -207,6 +246,81 @@ export default function AdminSettings() {
                   />
                 </div>
                 <button type="submit" className="bg-[#0F172A] text-white px-6 py-3 rounded-xl text-sm font-black flex items-center gap-2 hover:bg-gray-800 transition shadow-sm">
+                  <FiSave /> {t.saveBtn}
+                </button>
+              </form>
+            </div>
+          )}
+
+          {/* TAB 1.5: BANNERS & UI CONTROL (NEW) */}
+          {activeTab === 'banners' && (
+            <div className="animate-fade-in">
+              <h2 className="text-lg font-black text-gray-900 mb-2 uppercase tracking-wider">{t.bannersTitle}</h2>
+              <p className="text-xs text-gray-500 mb-6 leading-relaxed max-w-2xl">{t.bannersDesc}</p>
+              
+              <form onSubmit={handleSaveSettings} className="space-y-6">
+                
+                {/* Hero Banner Upload */}
+                <div className="bg-gray-50 border border-gray-200 p-5 rounded-2xl">
+                  <label className="block text-xs font-bold text-gray-800 uppercase mb-3 flex items-center gap-2">
+                    <FiImage className="text-blue-500" /> {t.heroBannerLabel}
+                  </label>
+                  {heroBanner ? (
+                    <div className="relative w-full h-40 sm:h-56 rounded-xl overflow-hidden border-2 border-gray-200 mb-3 group">
+                      <img src={heroBanner} alt="Hero Banner" className="w-full h-full object-cover" />
+                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
+                        <label className="cursor-pointer bg-white text-gray-900 px-4 py-2 rounded-lg font-bold text-xs shadow-md">
+                          Badilisha Picha
+                          <input type="file" accept="image/*" className="hidden" onChange={(e) => handleBannerUpload(e, 'hero')} />
+                        </label>
+                      </div>
+                    </div>
+                  ) : (
+                    <label className="flex flex-col items-center justify-center w-full h-40 sm:h-56 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:bg-gray-100 transition bg-white mb-3">
+                      <FiUploadCloud className="text-3xl text-gray-400 mb-2" />
+                      <span className="text-sm text-gray-500 font-bold">Pakia Picha ya Hero (1920x600)</span>
+                      <input type="file" accept="image/*" className="hidden" onChange={(e) => handleBannerUpload(e, 'hero')} />
+                    </label>
+                  )}
+                  
+                  {/* Banner Headline Text */}
+                  <div>
+                    <label className="block text-[11px] font-bold text-gray-500 uppercase mb-2 mt-4">{t.bannerTextLabel}</label>
+                    <input 
+                      type="text" 
+                      value={bannerHeading} 
+                      onChange={e => setBannerHeading(e.target.value)}
+                      placeholder="Mfn: Nunua Bidhaa Bora kwa Bei Nafuu"
+                      className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#F2A900]/40 text-sm font-bold text-gray-800 transition" 
+                    />
+                  </div>
+                </div>
+
+                {/* Promo Banner Upload */}
+                <div className="bg-gray-50 border border-gray-200 p-5 rounded-2xl">
+                  <label className="block text-xs font-bold text-gray-800 uppercase mb-3 flex items-center gap-2">
+                    <FiImage className="text-green-500" /> {t.promoBannerLabel}
+                  </label>
+                  {promoBanner ? (
+                    <div className="relative w-full h-32 sm:h-40 rounded-xl overflow-hidden border-2 border-gray-200 group">
+                      <img src={promoBanner} alt="Promo Banner" className="w-full h-full object-cover" />
+                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
+                        <label className="cursor-pointer bg-white text-gray-900 px-4 py-2 rounded-lg font-bold text-xs shadow-md">
+                          Badilisha Picha
+                          <input type="file" accept="image/*" className="hidden" onChange={(e) => handleBannerUpload(e, 'promo')} />
+                        </label>
+                      </div>
+                    </div>
+                  ) : (
+                    <label className="flex flex-col items-center justify-center w-full h-32 sm:h-40 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:bg-gray-100 transition bg-white">
+                      <FiUploadCloud className="text-3xl text-gray-400 mb-2" />
+                      <span className="text-sm text-gray-500 font-bold">Pakia Bango la Promo (1200x400)</span>
+                      <input type="file" accept="image/*" className="hidden" onChange={(e) => handleBannerUpload(e, 'promo')} />
+                    </label>
+                  )}
+                </div>
+
+                <button type="submit" className="bg-[#0F172A] text-white px-6 py-3 rounded-xl text-sm font-black flex items-center gap-2 hover:bg-gray-800 transition shadow-md">
                   <FiSave /> {t.saveBtn}
                 </button>
               </form>

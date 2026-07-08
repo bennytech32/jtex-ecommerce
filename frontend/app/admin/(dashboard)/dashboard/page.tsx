@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation'; 
 import { 
   FiBox, FiUsers, FiDollarSign, FiAlertCircle, FiGlobe, 
   FiPlusCircle, FiMonitor, FiTruck, FiTrendingUp, FiCreditCard,
@@ -39,18 +39,15 @@ const translations = {
     openPos: "Open POS System",
     addProduct: "Add New Product",
     manageOrders: "Manage Orders",
-    // Tabs
     tabOverview: "Dashboard",
     tabOrders: "Order Management",
     tabCrm: "CRM & Debts",
     tabProducts: "Products & Inventory",
     productsDesc: "Manage stock, SKUs, images, and prices of your products.",
-    // Order Management
     updateStatus: "Update Status",
     address: "Delivery Address",
     upfront: "Upfront Paid",
     debt: "Remaining Debt",
-    // CRM
     phone: "Phone Number",
     loyalty: "Loyalty Points",
     clearDebt: "Clear Debt",
@@ -65,14 +62,12 @@ const translations = {
     optShipped: "SHIPPED",
     optDelivered: "DELIVERED",
     optCancelled: "CANCELLED",
-    // Products table headers
     prodName: "Product Name",
     prodSku: "SKU",
     prodPrice: "Price",
     prodStock: "Stock",
     prodCategory: "Category",
     noProducts: "No products available in inventory.",
-    // Categories matching frontend
     catElectronics: "Electronics",
     catFashion: "Fashion",
     catShoes: "Shoes",
@@ -106,18 +101,15 @@ const translations = {
     openPos: "Fungua POS (Uza)",
     addProduct: "Weka Bidhaa Mpya",
     manageOrders: "Shughulikia Oda",
-    // Tabs
     tabOverview: "Dashibodi",
     tabOrders: "Usimamizi wa Oda",
     tabCrm: "Wateja & Madeni",
     tabProducts: "Bidhaa & Inventory",
     productsDesc: "Dhibiti stock, SKU, picha na bei za bidhaa zako.",
-    // Order Management
     updateStatus: "Badili Hali",
     address: "Anwani ya Mzigo",
     upfront: "Kianzio (Imelipwa)",
     debt: "Deni Lililobaki",
-    // CRM
     phone: "Namba ya Simu",
     loyalty: "Pointi za Uaminifu",
     clearDebt: "Futa Deni",
@@ -132,14 +124,12 @@ const translations = {
     optShipped: "SHIPPED (Njiani)",
     optDelivered: "DELIVERED (Imefika)",
     optCancelled: "CANCELLED (Ghairi)",
-    // Products table headers
     prodName: "Jina la Bidhaa",
     prodSku: "SKU",
     prodPrice: "Bei",
     prodStock: "Stoki",
     prodCategory: "Kategoria",
     noProducts: "Hakuna bidhaa ghalani kwa sasa.",
-    // Categories matching frontend
     catElectronics: "Elektroniki",
     catFashion: "Nguo",
     catShoes: "Viatu",
@@ -175,6 +165,12 @@ export default function AdminDashboard() {
   ];
 
   const getApiUrl = () => process.env.NEXT_PUBLIC_API_URL || 'https://jtex-ecommerce-production.up.railway.app';
+
+  // FIX: Imeondolewa Guard ya "Token" hapa kwasababu layout ishaifanya.
+  // Tunaita data zetu moja kwa moja.
+  useEffect(() => {
+    fetchData();
+  }, []);
 
   const getTranslatedCategoryName = (categoryStr: string) => {
     if (!categoryStr) return 'N/A';
@@ -220,10 +216,6 @@ export default function AdminDashboard() {
     }
   };
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
   const handleUpdateStatus = async (orderId: string, newStatus: string) => {
     try {
       const res = await fetch(`${getApiUrl()}/api/orders/${orderId}/status`, {
@@ -240,9 +232,10 @@ export default function AdminDashboard() {
     }
   };
 
+
   if (isLoading) {
     return (
-      <div className="w-full h-screen flex flex-col items-center justify-center bg-gray-50">
+      <div className="w-full h-full flex flex-col items-center justify-center bg-[#F8FAFC]">
         <div className="w-12 h-12 border-4 border-[#F2A900] border-t-transparent rounded-full animate-spin mb-4"></div>
         <p className="text-gray-500 font-bold animate-pulse">Loading Admin System...</p>
       </div>
@@ -250,7 +243,7 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="w-full min-h-screen p-4 sm:p-6 lg:p-8 overflow-y-auto bg-[#F8FAFC] font-sans">
+    <div className="w-full h-full font-sans">
       
       {/* HEADER */}
       <header className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
