@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useCart } from '../../context/CartContext';
+import { useCart } from '../context/CartContext';
 import { 
   FiSearch, FiMapPin, FiShoppingCart, FiUser, FiPackage, 
   FiHeart, FiHeadphones, FiChevronDown, FiGrid, FiList, 
