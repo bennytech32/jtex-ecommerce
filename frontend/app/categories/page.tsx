@@ -13,7 +13,7 @@ import {
   FiBell, FiSettings, FiFilter, FiChevronLeft, FiBox
 } from 'react-icons/fi';
 
-export default function CategoryPage({ params }: { params: { slug: string } }) {
+export default function CategoryPage({ params }: { params: { slug?: string } }) {
   const router = useRouter();
   const { cart, addToCart } = useCart();
   const [products, setProducts] = useState<any[]>([]);
@@ -21,9 +21,11 @@ export default function CategoryPage({ params }: { params: { slug: string } }) {
   const [isLoading, setIsLoading] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  
+
+  const slug = params?.slug ?? 'all';
+
   // Undo URL slug formatting (e.g. 'home-kitchen' -> 'Home & Kitchen')
-  const categoryNameStr = params.slug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+  const categoryNameStr = slug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
 
   const getApiUrl = () => {
     const url = process.env.NEXT_PUBLIC_API_URL || 'https://jtex-ecommerce-production.up.railway.app';
@@ -49,8 +51,8 @@ export default function CategoryPage({ params }: { params: { slug: string } }) {
           
           // Filter products by the current category slug
           const filtered = data.filter((p: any) => 
-             p.category?.toLowerCase() === params.slug.toLowerCase().replace(/-/g, ' ') ||
-             p.category?.toLowerCase().replace(/ & /g, '-') === params.slug.toLowerCase()
+             p.category?.toLowerCase() === slug.toLowerCase().replace(/-/g, ' ') ||
+             p.category?.toLowerCase().replace(/ & /g, '-') === slug.toLowerCase()
           );
           setProducts(filtered.length > 0 ? filtered : data); // fallback to all if empty
           
@@ -65,7 +67,7 @@ export default function CategoryPage({ params }: { params: { slug: string } }) {
       }
     };
     fetchData();
-  }, [params.slug]);
+  }, [slug]);
 
   const cartCount = cart?.length || 0;
 
