@@ -10,7 +10,7 @@ import {
   FiArrowRight, FiShield, FiTruck, FiRefreshCw, FiMic, FiCamera, 
   FiHome, FiZap, FiChevronRight, FiMail, FiPhone, FiFacebook, 
   FiTwitter, FiInstagram, FiLinkedin, FiSend, FiMessageCircle, 
-  FiBell, FiSettings, FiArrowLeft
+  FiBell, FiSettings, FiArrowLeft, FiGlobe
 } from 'react-icons/fi';
 
 export default function HomePage() {
@@ -229,7 +229,6 @@ export default function HomePage() {
       <header className="hidden lg:block bg-[#0A101D] text-white border-b border-gray-800 sticky top-0 z-50">
         <div className="max-w-[1600px] mx-auto px-6 h-24 flex items-center justify-between gap-6">
           <div className="flex items-center gap-8 flex-shrink-0">
-            {/* REAL LOGO IMPLEMENTATION WITH INCREASED SIZE (h-20 lg:h-28) */}
             <img 
               src="/logo.png" 
               alt="Jtex Logo" 
@@ -288,15 +287,17 @@ export default function HomePage() {
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
              <button onClick={() => router.back()} className="p-1"><FiArrowLeft className="text-xl text-gray-300"/></button>
-             <img src="/logo.png" alt="Jtex Logo" className="h-8 cursor-pointer object-contain" onClick={() => router.push('/')} />
+             {/* FIX: Imeongezwa brightness-0 invert (kuifanya iwe nyeupe) na h-10 w-auto ili ionekane wazi */}
+             <img src="/logo.png" alt="Jtex Logo" className="h-10 w-auto cursor-pointer object-contain brightness-0 invert" onClick={() => router.push('/')} />
           </div>
           <div className="flex items-center gap-4">
-             <div className="relative" onClick={() => router.push('/checkout')}>
-                <FiShoppingCart size={22} className="text-gray-300"/>
-                {cartCount > 0 && <span className="absolute -top-1.5 -right-1.5 bg-[#F2A900] text-black text-[10px] font-black w-4 h-4 flex items-center justify-center rounded-full">{cartCount}</span>}
-             </div>
+             {/* FIX: Sehemu ya Cart imeondolewa. Lugha imewekwa badala yake */}
+             <button className="flex items-center gap-1 text-sm font-bold text-gray-300 hover:text-white transition">
+                <FiGlobe size={18}/> EN <FiChevronDown size={14}/>
+             </button>
+
              {user ? (
-                <div className="w-7 h-7 bg-[#F2A900] text-black rounded-full flex items-center justify-center font-bold text-[10px]" onClick={() => router.push('/profile')}>{user?.name?.charAt(0) || 'U'}</div>
+                <div className="w-8 h-8 bg-[#F2A900] text-black rounded-full flex items-center justify-center font-bold text-[10px] shadow-sm" onClick={() => router.push('/profile')}>{user?.name?.charAt(0) || 'U'}</div>
              ) : (
                 <FiUser className="text-xl text-gray-300" onClick={() => router.push('/login')} />
              )}
@@ -439,7 +440,7 @@ export default function HomePage() {
                 <div className="flex items-center gap-2">
                    <FiZap size={24} className="text-[#F2A900] fill-[#F2A900]"/>
                    <h2 className="text-xl lg:text-2xl font-black text-gray-900">Flash Sales</h2>
-                   <span className="hidden lg:inline-block ml-4 text-xs font-bold text-gray-500">Limited time offers - Don&apos;t miss out!</span>
+                   <span className="hidden lg:inline-block ml-4 text-xs font-bold text-gray-500">Limited time offers - Don't miss out!</span>
                 </div>
                 
                 <div className="flex items-center justify-between md:justify-end w-full md:w-auto gap-4">
@@ -511,7 +512,7 @@ export default function HomePage() {
       </div>
 
       {/* ========================================================= */}
-      {/* 4. FULL WIDTH TOP BRANDS MARQUEE (IMEREFUSHWA NA KUSLIDE) */}
+      {/* 4. FULL WIDTH TOP BRANDS MARQUEE (IMEREFUSHWA NA KUSLIDE NA KUTENGWA) */}
       {/* ========================================================= */}
       <style>{`
         @keyframes slideLeftToRight {
@@ -528,33 +529,37 @@ export default function HomePage() {
         }
       `}</style>
 
-      <div className="w-full bg-[#0A101D] border-t border-b border-gray-800 py-6 lg:py-8 overflow-hidden mb-10 lg:mb-16">
-         <div className="max-w-[1600px] mx-auto flex items-center gap-10 px-6">
-            <div className="flex flex-col items-start gap-1 flex-shrink-0">
-               <h3 className="text-xl lg:text-3xl font-black text-white leading-tight flex items-center gap-2">Top <span className="text-[#F2A900]">Brands</span></h3>
-               <p className="text-[10px] lg:text-sm text-gray-400 font-medium">Premium Partners</p>
+      {/* FIX: Tumeongeza margin-bottom kubwa (mb-20 lg:mb-28) ili iachane na Footer */}
+      <div className="w-full bg-[#0A101D] border-t border-b border-gray-800 py-5 lg:py-6 overflow-hidden relative flex flex-col md:flex-row items-center gap-4 mb-20 lg:mb-28">
+         
+         <div className="md:absolute md:left-0 md:top-0 md:bottom-0 md:z-20 md:bg-gradient-to-r md:from-[#0A101D] md:via-[#0A101D] md:to-transparent w-full md:w-80 flex items-center px-6 md:px-10 justify-between md:justify-start">
+            <div className="flex flex-col">
+               <h3 className="text-xl lg:text-2xl font-black text-white leading-tight flex items-center gap-2">Top <span className="text-[#F2A900]">Brands</span></h3>
+               <p className="hidden md:block text-[10px] text-gray-400 mt-1 font-medium tracking-wide uppercase">Premium Partners</p>
             </div>
-            <div className="w-full overflow-hidden">
-               <div className="marquee-container items-center gap-10 lg:gap-16">
-                  {/* Array imerudiwa mara mbili ili kuzunguka (loop) bila kukatika */}
-                  {[...brandLogos, ...brandLogos].map((num, idx) => (
-                     <div key={idx} className="flex-shrink-0 flex items-center justify-center">
-                       <img 
-                         src={`/${num}.png`} 
-                         alt={`Brand ${num}`} 
-                         className="h-10 lg:h-14 object-contain grayscale hover:grayscale-0 brightness-200 hover:brightness-100 transition-all duration-300"
-                         onError={(e) => {
-                            (e.target as HTMLImageElement).style.display = 'none';
-                         }}
-                       />
-                     </div>
-                  ))}
-               </div>
-            </div>
-            <button onClick={() => router.push('/categories')} className="text-sm font-bold text-gray-300 flex items-center gap-1.5 flex-shrink-0 hover:text-[#F2A900]">
-                View All <FiChevronRight/>
+            <button onClick={() => router.push('/categories')} className="md:hidden bg-[#F2A900] text-black text-[10px] font-black px-4 py-1.5 rounded-lg flex items-center gap-1 shadow-sm">
+                Shop All <FiArrowRight/>
             </button>
          </div>
+
+         <div className="w-full relative mt-2 md:mt-0">
+            <div className="marquee-container items-center gap-10 lg:gap-20 md:pl-[350px]">
+               {[...brandLogos, ...brandLogos].map((num, idx) => (
+                  <div key={idx} className="flex-shrink-0 flex items-center justify-center">
+                    <img 
+                      src={`/${num}.png`} 
+                      alt={`Brand ${num}`} 
+                      className="h-8 lg:h-12 object-contain grayscale hover:grayscale-0 brightness-200 hover:brightness-100 transition-all duration-300 cursor-pointer"
+                      onError={(e) => {
+                         (e.target as HTMLImageElement).style.display = 'none';
+                      }}
+                    />
+                  </div>
+               ))}
+            </div>
+         </div>
+
+         <div className="hidden md:block absolute right-0 top-0 bottom-0 z-20 bg-gradient-to-l from-[#0A101D] to-transparent w-32 pointer-events-none"></div>
       </div>
 
       {/* ========================================================= */}
