@@ -229,6 +229,7 @@ export default function HomePage() {
       <header className="hidden lg:block bg-[#0A101D] text-white border-b border-gray-800 sticky top-0 z-50">
         <div className="max-w-[1600px] mx-auto px-6 h-24 flex items-center justify-between gap-6">
           <div className="flex items-center gap-8 flex-shrink-0">
+            {/* REAL LOGO IMPLEMENTATION WITH INCREASED SIZE (h-20 lg:h-28) */}
             <img 
               src="/logo.png" 
               alt="Jtex Logo" 
@@ -285,13 +286,12 @@ export default function HomePage() {
       {/* ========================================================= */}
       <header className="lg:hidden bg-[#0A101D] text-white px-4 py-3 sticky top-0 z-50">
         <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 w-1/2">
              <button onClick={() => router.back()} className="p-1"><FiArrowLeft className="text-xl text-gray-300"/></button>
-             {/* FIX: Imeongezwa brightness-0 invert (kuifanya iwe nyeupe) na h-10 w-auto ili ionekane wazi */}
-             <img src="/logo.png" alt="Jtex Logo" className="h-10 w-auto cursor-pointer object-contain brightness-0 invert" onClick={() => router.push('/')} />
+             {/* FIX: Imeongezwa max-w-full ili kuhakikisha logo inatoshea vizuri bila kukatika */}
+             <img src="/logo.png" alt="Jtex Logo" className="h-8 max-w-full cursor-pointer object-contain" onClick={() => router.push('/')} />
           </div>
-          <div className="flex items-center gap-4">
-             {/* FIX: Sehemu ya Cart imeondolewa. Lugha imewekwa badala yake */}
+          <div className="flex items-center gap-4 justify-end w-1/2">
              <button className="flex items-center gap-1 text-sm font-bold text-gray-300 hover:text-white transition">
                 <FiGlobe size={18}/> EN <FiChevronDown size={14}/>
              </button>
