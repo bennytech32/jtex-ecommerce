@@ -10,7 +10,7 @@ import {
   FiMapPin, FiShield, FiTruck, FiSmartphone, FiSettings, FiHeart, 
   FiHelpCircle, FiEdit2, FiPlus, FiMessageCircle, FiBox, FiMoon, FiSun, FiChevronDown,
   FiBell, FiCalendar, FiClock, FiActivity, FiArrowUpRight, FiArrowDownRight, FiMoreHorizontal,
-  FiHome, FiGrid, FiShare2, FiArrowLeft, FiHeadphones, FiCheck, FiMenu, FiZap // FiZap imeongezwa hapa!
+  FiHome, FiGrid, FiShare2, FiArrowLeft, FiHeadphones, FiCheck, FiMenu, FiZap, FiCamera, FiLock
 } from 'react-icons/fi';
 
 export default function ProfileTrackingPage() {

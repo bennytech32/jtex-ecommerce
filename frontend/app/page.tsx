@@ -10,7 +10,7 @@ import {
   FiArrowRight, FiShield, FiTruck, FiRefreshCw, FiMic, FiCamera, 
   FiHome, FiZap, FiChevronRight, FiMail, FiPhone, FiFacebook, 
   FiTwitter, FiInstagram, FiLinkedin, FiSend, FiMessageCircle, 
-  FiBell, FiSettings
+  FiBell, FiSettings, FiArrowLeft
 } from 'react-icons/fi';
 
 export default function HomePage() {
@@ -20,6 +20,9 @@ export default function HomePage() {
   const [dbCategories, setDbCategories] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  
+  // FIX: Tumeongeza state ya user hapa
+  const [user, setUser] = useState<any>(null);
   
   // Updated State variables to handle City and Country dynamically
   const [userLocation, setUserLocation] = useState('Fetching...'); 
@@ -54,6 +57,12 @@ export default function HomePage() {
   useEffect(() => {
     const token = localStorage.getItem('jtex_token');
     setIsLoggedIn(!!token);
+
+    // FIX: Tumevuta taarifa za user kutoka local storage
+    const savedUser = localStorage.getItem('jtex_user');
+    if (savedUser) {
+        try { setUser(JSON.parse(savedUser)); } catch (e) {}
+    }
 
     // Dynamic Location Fetching
     fetch('https://ipapi.co/json/')
@@ -152,6 +161,9 @@ export default function HomePage() {
 
   const cartCount = cart?.length || 0;
 
+  // Orodha mpya ya Logos (1 mpaka 11)
+  const brandLogos = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
+
   const getCategoryIcon = (catName: string) => {
     const lower = catName.toLowerCase();
     if(lower.includes('electronic') || lower.includes('elektroniki')) return <FiHeadphones size={20} />;
@@ -217,11 +229,11 @@ export default function HomePage() {
       <header className="hidden lg:block bg-[#0A101D] text-white border-b border-gray-800 sticky top-0 z-50">
         <div className="max-w-[1600px] mx-auto px-6 h-24 flex items-center justify-between gap-6">
           <div className="flex items-center gap-8 flex-shrink-0">
-            {/* REAL LOGO IMPLEMENTATION WITH INCREASED SIZE (h-16 lg:h-24) */}
+            {/* REAL LOGO IMPLEMENTATION WITH INCREASED SIZE (h-20 lg:h-28) */}
             <img 
               src="/logo.png" 
               alt="Jtex Logo" 
-              className="h-16 lg:h-24 cursor-pointer object-contain" 
+              className="h-20 lg:h-28 cursor-pointer object-contain" 
               onClick={() => router.push('/')} 
             />
             <div className="flex items-center gap-2 cursor-pointer hover:bg-gray-800/50 p-2 rounded-lg transition">
@@ -275,17 +287,19 @@ export default function HomePage() {
       <header className="lg:hidden bg-[#0A101D] text-white px-4 py-3 sticky top-0 z-50">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <FiMapPin size={20} className="text-[#F2A900]"/>
-            <div className="flex flex-col leading-tight">
-              <span className="text-[10px] text-gray-400">Deliver to</span>
-              <span className="text-sm font-bold flex items-center gap-1">{userLocation.split(',')[0]} <FiChevronDown size={14}/></span>
-            </div>
+             <button onClick={() => router.back()} className="p-1"><FiArrowLeft className="text-xl text-gray-300"/></button>
+             <img src="/logo.png" alt="Jtex Logo" className="h-8 cursor-pointer object-contain" onClick={() => router.push('/')} />
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
              <div className="relative" onClick={() => router.push('/checkout')}>
-                <FiShoppingCart size={22}/>
+                <FiShoppingCart size={22} className="text-gray-300"/>
                 {cartCount > 0 && <span className="absolute -top-1.5 -right-1.5 bg-[#F2A900] text-black text-[10px] font-black w-4 h-4 flex items-center justify-center rounded-full">{cartCount}</span>}
              </div>
+             {user ? (
+                <div className="w-7 h-7 bg-[#F2A900] text-black rounded-full flex items-center justify-center font-bold text-[10px]" onClick={() => router.push('/profile')}>{user?.name?.charAt(0) || 'U'}</div>
+             ) : (
+                <FiUser className="text-xl text-gray-300" onClick={() => router.push('/login')} />
+             )}
           </div>
         </div>
         <div className="flex items-center h-11 bg-white rounded-xl overflow-hidden shadow-sm">
@@ -303,7 +317,7 @@ export default function HomePage() {
       {/* ========================================================= */}
       {/* 3. MAIN LAYOUT */}
       {/* ========================================================= */}
-      <div className="max-w-[1600px] mx-auto lg:px-6 lg:py-6 flex gap-6">
+      <div className="max-w-[1600px] mx-auto lg:px-6 lg:py-6 flex gap-6 overflow-hidden">
         
         {/* DESKTOP SIDEBAR */}
         <aside className="hidden lg:flex flex-col w-[260px] flex-shrink-0">
@@ -320,7 +334,7 @@ export default function HomePage() {
         </aside>
 
         {/* MAIN CONTENT AREA */}
-        <main className="flex-1 min-w-0 pb-10">
+        <main className="flex-1 min-w-0 pb-6 relative">
           
           {/* DESKTOP CATEGORIES HEADER ZIKAE ICONS */}
           <div className="hidden lg:flex items-center bg-white rounded-2xl border border-gray-100 px-4 py-4 shadow-sm mb-6 overflow-hidden">
@@ -472,7 +486,6 @@ export default function HomePage() {
                         </div>
 
                         <div className="flex flex-col flex-grow">
-                           {/* FIX: Title inashuka mstari vizuri bila kukatwa katikati ya neno */}
                            <h4 className="font-bold text-xs lg:text-sm text-gray-800 mb-2 line-clamp-2 leading-snug">{product.name}</h4>
                            
                            <div className="flex flex-col xl:flex-row xl:items-center gap-1 xl:gap-2 mb-2 mt-auto">
@@ -494,44 +507,60 @@ export default function HomePage() {
                </div>
              )}
           </div>
-
-          {/* Top Brands Banner WITH REAL LOGOS (1.png to 6.png) */}
-          <div className="px-4 lg:px-0 mb-10 lg:mb-16">
-             <div className="bg-[#0A101D] rounded-2xl flex flex-col md:flex-row items-center justify-between px-6 py-6 lg:py-8 overflow-hidden gap-8 shadow-md border border-gray-800 w-full">
-                <div className="flex flex-col md:flex-row items-center gap-4 text-center md:text-left z-10 w-full md:w-auto">
-                   <div>
-                     <h3 className="text-xl lg:text-2xl font-black text-white leading-tight">Top Brands, <span className="text-[#F2A900]">Top Quality</span></h3>
-                     <p className="text-[10px] lg:text-xs text-gray-400 font-medium mt-1">Shop your favorite premium brands today.</p>
-                   </div>
-                   <button onClick={() => router.push('/categories')} className="bg-[#F2A900] text-black text-xs font-black px-6 py-2.5 rounded-lg flex items-center justify-center gap-1.5 hover:bg-yellow-500 transition shadow-sm w-max mt-2 md:mt-0">
-                      View All <FiArrowRight/>
-                   </button>
-                </div>
-                
-                {/* REAL BRAND LOGOS SECTION */}
-                <div className="flex flex-1 flex-wrap md:flex-nowrap justify-center md:justify-end items-center gap-8 lg:gap-12 opacity-80 hover:opacity-100 transition duration-500">
-                   {[1, 2, 3, 4, 5, 6].map((num) => (
-                      <img 
-                        key={num}
-                        src={`/${num}.png`} 
-                        alt={`Brand ${num}`} 
-                        className="h-8 lg:h-12 object-contain grayscale hover:grayscale-0 brightness-200 hover:brightness-100 transition-all duration-300"
-                        onError={(e) => {
-                           // Kama picha haipo, itaficha icon (Fallback ya usalama)
-                           (e.target as HTMLImageElement).style.display = 'none';
-                        }}
-                      />
-                   ))}
-                </div>
-             </div>
-          </div>
         </main>
       </div>
 
       {/* ========================================================= */}
-      {/* 4. PROFESSIONAL FOOTER */}
+      {/* 4. FULL WIDTH TOP BRANDS MARQUEE (IMEREFUSHWA NA KUSLIDE) */}
       {/* ========================================================= */}
-      <footer className="bg-[#0A101D] text-gray-300 py-12 lg:py-16 pb-28 lg:pb-16 mt-8">
+      <style>{`
+        @keyframes slideLeftToRight {
+          0% { transform: translateX(-50%); }
+          100% { transform: translateX(0%); }
+        }
+        .marquee-container {
+          display: flex;
+          width: max-content;
+          animation: slideLeftToRight 40s linear infinite;
+        }
+        .marquee-container:hover {
+          animation-play-state: paused;
+        }
+      `}</style>
+
+      <div className="w-full bg-[#0A101D] border-t border-b border-gray-800 py-6 lg:py-8 overflow-hidden mb-10 lg:mb-16">
+         <div className="max-w-[1600px] mx-auto flex items-center gap-10 px-6">
+            <div className="flex flex-col items-start gap-1 flex-shrink-0">
+               <h3 className="text-xl lg:text-3xl font-black text-white leading-tight flex items-center gap-2">Top <span className="text-[#F2A900]">Brands</span></h3>
+               <p className="text-[10px] lg:text-sm text-gray-400 font-medium">Premium Partners</p>
+            </div>
+            <div className="w-full overflow-hidden">
+               <div className="marquee-container items-center gap-10 lg:gap-16">
+                  {/* Array imerudiwa mara mbili ili kuzunguka (loop) bila kukatika */}
+                  {[...brandLogos, ...brandLogos].map((num, idx) => (
+                     <div key={idx} className="flex-shrink-0 flex items-center justify-center">
+                       <img 
+                         src={`/${num}.png`} 
+                         alt={`Brand ${num}`} 
+                         className="h-10 lg:h-14 object-contain grayscale hover:grayscale-0 brightness-200 hover:brightness-100 transition-all duration-300"
+                         onError={(e) => {
+                            (e.target as HTMLImageElement).style.display = 'none';
+                         }}
+                       />
+                     </div>
+                  ))}
+               </div>
+            </div>
+            <button onClick={() => router.push('/categories')} className="text-sm font-bold text-gray-300 flex items-center gap-1.5 flex-shrink-0 hover:text-[#F2A900]">
+                View All <FiChevronRight/>
+            </button>
+         </div>
+      </div>
+
+      {/* ========================================================= */}
+      {/* 5. PROFESSIONAL FOOTER */}
+      {/* ========================================================= */}
+      <footer className="bg-[#0A101D] text-gray-300 py-12 lg:py-16 pb-28 lg:pb-16">
         <div className="max-w-[1500px] mx-auto px-6 lg:px-8">
           <div className="flex flex-col lg:flex-row items-center justify-between border-b border-gray-800 pb-10 mb-10 gap-6">
             <div className="text-center lg:text-left">
@@ -546,8 +575,8 @@ export default function HomePage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-8 mb-10">
             <div>
-              {/* REAL LOGO IMPLEMENTATION WITH INCREASED SIZE (h-20 lg:h-28) */}
-              <img src="/logo.png" alt="Jtex Logo" className="h-20 lg:h-28 object-contain mb-6 mx-auto lg:mx-0" />
+              {/* REAL LOGO IMPLEMENTATION WITH INCREASED SIZE (h-24 lg:h-32) */}
+              <img src="/logo.png" alt="Jtex Logo" className="h-24 lg:h-32 object-contain mb-6 mx-auto lg:mx-0" />
               <p className="text-sm text-gray-400 leading-relaxed mb-6">Your one-stop destination for the best quality electronics, fashion, and home appliances in {userCountry}. Shop smart, live better.</p>
               <div className="flex gap-4">
                 <a href="#" className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-[#F2A900] hover:text-black transition"><FiFacebook size={18}/></a>
@@ -608,7 +637,7 @@ export default function HomePage() {
       </footer>
 
       {/* ========================================================= */}
-      {/* 5. MOBILE BOTTOM NAVIGATION */}
+      {/* 6. MOBILE BOTTOM NAVIGATION */}
       {/* ========================================================= */}
       <div className="lg:hidden fixed bottom-0 left-0 w-full bg-white border-t border-gray-100 px-6 py-3 flex justify-between items-center z-50 shadow-[0_-10px_20px_rgba(0,0,0,0.03)] pb-safe">
          <button onClick={() => router.push('/')} className="flex flex-col items-center gap-1 text-[#F2A900]">
