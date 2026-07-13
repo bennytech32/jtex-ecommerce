@@ -60,16 +60,17 @@ export default function ProductDetail() {
     fetchProduct();
   }, [id]);
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center font-bold text-gray-500">Inatafuta bidhaa...</div>;
+  if (loading) return (
+    <div className="min-h-screen flex items-center justify-center bg-white">
+      <div className="w-12 h-12 border-4 border-[#F2A900] border-t-transparent rounded-full animate-spin"></div>
+    </div>
+  );
+  
   if (!product) return <div className="min-h-screen flex items-center justify-center font-bold text-red-500">Bidhaa haijapatikana!</div>;
 
   const basePrice = product.price;
   const tier2Price = basePrice * 0.95; 
   const tier3Price = basePrice * 0.90; 
-  
-  // Kutengeneza bei ya zamani (Visual Mockup based on your image)
-  const discountPercentage = 20;
-  const oldPrice = Math.round(basePrice / (1 - (discountPercentage / 100)));
 
   const relatedProducts = allProducts
     .filter(p => p.category === product.category && p.id !== product.id)
@@ -82,11 +83,6 @@ export default function ProductDetail() {
         <button onClick={(e) => toggleWishlist(e, item.id)} className="absolute top-2 right-2 z-20 w-7 h-7 bg-white/90 backdrop-blur rounded-full flex items-center justify-center text-gray-400 hover:text-red-500 shadow-sm transition">
           <FiHeart className={`text-sm ${isWishlisted ? "fill-red-500 text-red-500" : ""}`} />
         </button>
-        {item.oldPrice && (
-          <span className="absolute top-2 left-2 bg-red-500 text-white text-[9px] sm:text-[10px] font-bold px-1.5 py-0.5 rounded shadow-sm z-10">
-            -{Math.round(((item.oldPrice - item.price) / item.oldPrice) * 100)}%
-          </span>
-        )}
         <div className="aspect-square bg-white border border-gray-50 rounded-lg mb-2 sm:mb-3 flex items-center justify-center p-1 sm:p-2 relative overflow-hidden group-hover:bg-gray-50 transition">
           {item.imageUrl ? (
             <img src={`${API_URL}${item.imageUrl}`} alt={item.name} className="object-contain w-full h-full mix-blend-multiply group-hover:scale-105 transition duration-500" />
@@ -193,16 +189,12 @@ export default function ProductDetail() {
           {/* PRODUCT DETAILS SECTION */}
           <div className="w-full lg:w-1/2 flex flex-col px-4 lg:px-0 mt-4 lg:mt-0">
             
-            {/* Price Area (Kama picha) */}
-            <div className="flex items-end gap-2 mb-1">
+            {/* Price Area */}
+            <div className="flex items-end gap-2 mb-2">
                <span className="text-2xl lg:text-3xl font-bold text-gray-900 leading-none">TSH {basePrice.toLocaleString()}</span>
             </div>
-            <div className="flex items-center gap-2 mb-2">
-               <span className="text-sm text-gray-400 line-through">TSH {oldPrice.toLocaleString()}</span>
-               <span className="bg-[#FF7A00] text-white text-[10px] font-bold px-1.5 py-0.5 rounded shadow-sm">-{discountPercentage}%</span>
-            </div>
             
-            {/* Title (Maneno yamepunguzwa uzito - font-medium) */}
+            {/* Title */}
             <h1 className="text-base lg:text-xl font-medium text-gray-800 leading-snug mb-2">{product.name}</h1>
 
             {/* Ratings */}
@@ -213,21 +205,21 @@ export default function ProductDetail() {
               <span className="text-gray-500 text-xs">4.0 Star Rated, 30 Reviews</span>
             </div>
 
-            {/* Tier Pricing (Imekaa vizuri kuendana na picha) */}
+            {/* Tier Pricing */}
             <div className="bg-gray-50 rounded-xl p-3 border border-gray-100 mb-5">
               <p className="text-[11px] font-semibold text-gray-600 mb-2">Minimum Order 1 Piece</p>
               <div className="grid grid-cols-3 divide-x divide-gray-200">
                 <div className="px-2">
                   <p className="text-[10px] text-gray-500 mb-0.5">1 Piece</p>
-                  <p className="font-bold text-sm lg:text-base text-gray-900">TSH {(basePrice / 1000).toFixed(0)}K</p>
+                  <p className="font-bold text-sm lg:text-base text-gray-900">TSH {basePrice.toLocaleString()}</p>
                 </div>
                 <div className="px-3">
                   <p className="text-[10px] text-gray-500 mb-0.5">2-5 Pieces</p>
-                  <p className="font-bold text-sm lg:text-base text-gray-900">TSH {(tier2Price / 1000).toFixed(0)}K</p>
+                  <p className="font-bold text-sm lg:text-base text-gray-900">TSH {tier2Price.toLocaleString()}</p>
                 </div>
                 <div className="px-3">
                   <p className="text-[10px] text-gray-500 mb-0.5">&gt;5 Pieces</p>
-                  <p className="font-bold text-sm lg:text-base text-gray-900">TSH {(tier3Price / 1000).toFixed(0)}K</p>
+                  <p className="font-bold text-sm lg:text-base text-gray-900">TSH {tier3Price.toLocaleString()}</p>
                 </div>
               </div>
             </div>
@@ -241,24 +233,12 @@ export default function ProductDetail() {
               </p>
             </div>
 
-            {/* Variations/Specs */}
-            <div className="mb-6 space-y-4">
-              {specs.RAM && (
-                <div>
-                  <p className="text-[11px] font-semibold text-gray-500 uppercase mb-2">Memory (RAM)</p>
-                  <div className="flex gap-2">
-                    <span className="bg-gray-100 border border-gray-300 text-gray-800 px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer">{specs.RAM}</span>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Desktop Action Buttons (Mobile iko chini kabisa) */}
+            {/* Desktop Action Buttons */}
             <div className="hidden lg:flex flex-col sm:flex-row gap-3 mt-auto">
               <button onClick={() => { addToCart(product); alert('Imewekwa kwenye kikapu!'); }} className="flex-1 bg-[#F2A900] hover:bg-yellow-500 text-black font-bold py-3.5 rounded-xl text-sm transition shadow-sm flex justify-center items-center gap-2">
                 <FiShoppingCart /> Add To Cart
               </button>
-              <button onClick={() => { addToCart(product); router.push('/?cart=open'); }} className="flex-1 bg-[#0A101D] hover:bg-gray-800 text-white font-bold py-3.5 rounded-xl text-sm transition flex justify-center items-center gap-2">
+              <button onClick={() => { addToCart(product); router.push('/checkout'); }} className="flex-1 bg-[#0A101D] hover:bg-gray-800 text-white font-bold py-3.5 rounded-xl text-sm transition flex justify-center items-center gap-2">
                 Buy Now <FiChevronRight />
               </button>
             </div>
@@ -282,10 +262,7 @@ export default function ProductDetail() {
                 <span className="w-1/3 font-semibold text-gray-500">Brand</span>
                 <span className="w-2/3 font-medium text-gray-900">{product.brand || 'N/A'}</span>
               </div>
-              <div className="flex py-2 border-b border-gray-200 last:border-0 text-sm">
-                <span className="w-1/3 font-semibold text-gray-500">Category</span>
-                <span className="w-2/3 font-medium text-gray-900">{product.category}</span>
-              </div>
+              {/* Category imeondolewa hapa */}
               {Object.keys(specs).map((key) => (
                 <div key={key} className="flex py-2 border-b border-gray-200 last:border-0 text-sm">
                   <span className="w-1/3 font-semibold text-gray-500">{key}</span>

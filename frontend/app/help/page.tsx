@@ -2,14 +2,15 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useCart } from '../context/CartContext';
 import { 
   FiHelpCircle, FiTruck, FiRefreshCcw, FiMapPin, 
   FiMessageCircle, FiSearch, FiChevronDown, FiChevronRight, 
-  FiPackage, FiGlobe, FiMail 
+  FiPackage, FiGlobe, FiMail, FiShoppingCart, FiUser, 
+  FiMic, FiCamera, FiMaximize, FiHome, FiGrid, FiZap,
+  FiArrowLeft, FiX, FiCheckCircle // Zilizokuwa zimekosekana tumeziweka hapa!
 } from 'react-icons/fi';
 
-import TopTicker from '../components/navigation/TopTicker';
-import NavbarLinks from '../components/navigation/NavbarLinks';
 import Footer from '../components/common/Footer';
 
 const translations = {
@@ -105,15 +106,27 @@ const translations = {
 
 export default function HelpCenter() {
   const router = useRouter();
+  const { cart } = useCart();
   const [lang, setLang] = useState<'en' | 'sw'>('en');
   const [activeTab, setActiveTab] = useState('faq');
   const [openFaq, setOpenFaq] = useState<number | null>(0);
   const [trackingId, setTrackingId] = useState('');
   const [trackingStatus, setTrackingStatus] = useState<any>(null);
+  
+  const [user, setUser] = useState<any>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const t = translations[lang];
+  const cartCount = cart?.length || 0;
 
   useEffect(() => {
+    const savedUser = localStorage.getItem('jtex_user');
+    if (savedUser) {
+        try {
+            setUser(JSON.parse(savedUser));
+        } catch (e) {}
+    }
+
     const params = new URLSearchParams(window.location.search);
     const tab = params.get('tab');
     if (tab && ['faq', 'track', 'returns', 'shipping', 'contact'].includes(tab)) {
@@ -144,21 +157,82 @@ export default function HelpCenter() {
     { id: 'contact', icon: <FiMessageCircle />, label: t.tabs.contact },
   ];
 
+  const toggleLanguage = () => setLang(prev => prev === 'en' ? 'sw' : 'en');
+
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-gray-900 font-sans antialiased flex flex-col">
-      <TopTicker />
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-40 shadow-sm">
-        <div className="w-full max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      
+      {/* 1. DESKTOP HEADER */}
+      <header className="hidden md:flex bg-white border-b border-gray-200 sticky top-0 z-40 shadow-sm h-16 items-center px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center gap-6 w-[240px]">
           <span onClick={() => router.push('/')} className="text-2xl font-black text-[#0F172A] tracking-tight cursor-pointer">
             J<span className="text-[#F2A900]">tex</span>
           </span>
-          <button onClick={() => setLang(lang === 'en' ? 'sw' : 'en')} className="text-xs font-bold border border-gray-200 px-3 py-1.5 rounded hover:bg-gray-50 transition">
-            {lang === 'en' ? 'SW' : 'EN'}
+        </div>
+        <div className="flex-1 flex justify-center px-8">
+          <div className="w-full max-w-3xl flex border-2 border-[#0F3B4E] rounded-full overflow-hidden bg-white h-11 transition-all shadow-sm">
+            <div className="bg-[#0F3B4E] text-white px-4 py-2 text-xs font-bold flex items-center gap-2">
+                ✨ AI Search
+            </div>
+            <input 
+              type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} 
+              placeholder="Search products, categories..." className="flex-1 px-4 text-sm outline-none text-gray-900 placeholder-gray-400" 
+            />
+            <div className="flex items-center px-2 text-gray-400 gap-2">
+               <FiCamera className="cursor-pointer hover:text-blue-500"/>
+               <FiMic className="cursor-pointer hover:text-blue-500"/>
+            </div>
+            <button className="bg-[#F2A900] px-6 flex items-center justify-center text-white hover:bg-yellow-500 transition">
+              <FiSearch className="text-lg" />
+            </button>
+          </div>
+        </div>
+        <div className="flex items-center gap-4 justify-end">
+          <button onClick={toggleLanguage} className="flex items-center gap-1 text-xs font-bold border border-gray-200 px-3 py-1.5 rounded-full hover:bg-gray-50">
+            <img src="https://flagcdn.com/w20/tz.png" className="w-4 rounded-sm" alt="TZ" /> {lang === 'en' ? 'SW' : 'EN'}
           </button>
+          <button onClick={() => router.push('/checkout')} className="relative text-gray-700 hover:text-[#F2A900] transition">
+            <FiShoppingCart className="text-xl" />
+            {cartCount > 0 && <span className="absolute -top-2 -right-2 bg-[#F2A900] text-white text-[9px] font-black w-4 h-4 flex items-center justify-center rounded-full">{cartCount}</span>}
+          </button>
+          {user ? (
+            <div className="w-8 h-8 bg-[#0F3B4E] text-white rounded-full flex items-center justify-center font-bold text-xs cursor-pointer shadow-sm" onClick={() => router.push('/profile')}>
+              {user?.name?.charAt(0) || 'U'}
+            </div>
+          ) : (
+            <button onClick={() => router.push('/login')} className="text-xs font-bold bg-[#0F3B4E] text-white px-4 py-2 rounded-full hover:bg-gray-800 transition">
+              Sign In
+            </button>
+          )}
         </div>
       </header>
-      <NavbarLinks />
 
+      {/* 2. MOBILE HEADER */}
+      <header className="md:hidden bg-white sticky top-0 z-40 shadow-sm">
+        <div className="flex items-center justify-between px-4 py-3">
+          <div className="flex items-center gap-3">
+             <button onClick={() => router.back()} className="p-1"><FiArrowLeft className="text-xl text-gray-800"/></button>
+             <span onClick={() => router.push('/')} className="text-xl font-black text-[#0F172A] tracking-tight">
+               J<span className="text-[#F2A900]">tex</span>
+             </span>
+          </div>
+          <div className="flex items-center gap-4">
+             <div className="relative" onClick={() => router.push('/checkout')}>
+                <FiShoppingCart size={22} className="text-gray-700"/>
+                {cartCount > 0 && <span className="absolute -top-1.5 -right-1.5 bg-[#F2A900] text-black text-[10px] font-black w-4 h-4 flex items-center justify-center rounded-full">{cartCount}</span>}
+             </div>
+             {user ? (
+                <div className="w-7 h-7 bg-[#0F3B4E] text-white rounded-full flex items-center justify-center font-bold text-[10px]" onClick={() => router.push('/profile')}>
+                  {user?.name?.charAt(0) || 'U'}
+                </div>
+             ) : (
+                <FiUser className="text-xl text-gray-700" onClick={() => router.push('/login')} />
+             )}
+          </div>
+        </div>
+      </header>
+
+      {/* HERO SECTION */}
       <div className="bg-[#0F172A] text-white py-12 sm:py-16 px-4">
         <div className="max-w-3xl mx-auto text-center">
           <h1 className="text-3xl sm:text-4xl font-black mb-4">{t.helpCenter}</h1>
@@ -173,8 +247,9 @@ export default function HelpCenter() {
         </div>
       </div>
 
-      <main className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col lg:flex-row gap-8 flex-1 -mt-8">
+      <main className="w-full max-w-[1500px] mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col lg:flex-row gap-8 flex-1 -mt-8 pb-20 md:pb-8">
         
+        {/* SIDEBAR TABS */}
         <aside className="w-full lg:w-[280px] flex-shrink-0 relative z-10">
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden sticky top-24">
             <nav className="p-2 space-y-1">
@@ -194,6 +269,7 @@ export default function HelpCenter() {
           </div>
         </aside>
 
+        {/* CONTENT AREA */}
         <section className="flex-1 min-w-0 relative z-10">
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sm:p-10 min-h-[500px]">
             
@@ -232,7 +308,7 @@ export default function HelpCenter() {
                     value={trackingId}
                     onChange={(e) => setTrackingId(e.target.value)}
                     placeholder={t.track.placeholder}
-                    className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#F2A900]/50 text-sm font-mono uppercase"
+                    className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-[#F2A900] text-sm font-mono uppercase transition"
                   />
                   <button type="submit" className="bg-[#0F172A] text-white px-6 py-3 rounded-xl font-bold text-sm hover:bg-gray-800 transition">
                     {t.track.btn}
@@ -306,7 +382,7 @@ export default function HelpCenter() {
               <div className="animate-fade-in">
                 <h2 className="text-2xl font-black text-gray-900 mb-8 flex items-center gap-3"><FiMessageCircle className="text-[#F2A900]"/> {t.tabs.contact}</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-                  <a href="https://wa.me/255700000000" target="_blank" className="flex items-center gap-4 bg-green-50 p-6 rounded-2xl border border-green-100 hover:shadow-md transition">
+                  <a href="https://wa.me/255767659586" target="_blank" className="flex items-center gap-4 bg-green-50 p-6 rounded-2xl border border-green-100 hover:shadow-md transition">
                     <div className="w-12 h-12 bg-green-500 text-white rounded-full flex items-center justify-center text-2xl"><FiMessageCircle /></div>
                     <div><h4 className="font-black text-green-900">WhatsApp</h4><p className="text-xs text-green-700 mt-1">Live Chat (24/7)</p></div>
                   </a>
@@ -321,7 +397,43 @@ export default function HelpCenter() {
           </div>
         </section>
       </main>
-      <Footer />
+
+      <div className="hidden md:block">
+         <Footer />
+      </div>
+
+      {/* MOBILE BOTTOM NAVIGATION */}
+      <div className="md:hidden fixed bottom-0 left-0 w-full bg-white border-t border-gray-100 flex justify-around items-center h-[60px] px-2 z-50 shadow-[0_-10px_20px_rgba(0,0,0,0.03)] pb-safe">
+        <button onClick={() => router.push('/')} className={`flex flex-col items-center gap-1 w-16 text-gray-400 hover:text-gray-900`}>
+          <FiHome className="text-xl" />
+          <span className="text-[9px] font-bold">Home</span>
+        </button>
+        <button onClick={() => router.push('/categories')} className={`flex flex-col items-center gap-1 w-16 text-gray-400 hover:text-gray-900`}>
+          <FiGrid className="text-xl" />
+          <span className="text-[9px] font-bold">Categories</span>
+        </button>
+        
+        {/* CENTER BIG BUTTON */}
+        <div className="relative -top-5">
+           <div className="w-14 h-14 bg-[#0F3B4E] rounded-full flex items-center justify-center text-white shadow-lg border-4 border-white cursor-pointer hover:bg-[#0D3040] transition" onClick={() => router.push('/')}>
+              <FiZap className="text-2xl text-[#F2A900] fill-current" />
+           </div>
+           <span className="absolute -bottom-4 left-1/2 -translate-x-1/2 text-[9px] font-bold text-gray-600 whitespace-nowrap">Flash Sales</span>
+        </div>
+
+        <button onClick={() => router.push('/checkout')} className="flex flex-col items-center gap-1 w-16 text-gray-400 hover:text-gray-900 relative">
+          <div className="relative">
+             <FiShoppingCart className="text-xl" />
+             {cartCount > 0 && <span className="absolute -top-1.5 -right-1.5 bg-[#F2A900] text-black text-[10px] font-black w-4 h-4 flex items-center justify-center rounded-full">{cartCount}</span>}
+          </div>
+          <span className="text-[9px] font-bold">Cart</span>
+        </button>
+        <button onClick={() => { if(user) router.push('/profile'); else router.push('/login'); }} className="flex flex-col items-center gap-1 w-16 text-gray-400 hover:text-gray-900">
+          <FiUser className="text-xl" />
+          <span className="text-[9px] font-bold">Account</span>
+        </button>
+      </div>
+
     </div>
   );
 }

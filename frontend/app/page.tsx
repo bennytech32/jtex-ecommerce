@@ -84,8 +84,8 @@ export default function HomePage() {
 
           const uniqueCats = Array.from(new Set(data.map((p: any) => p.category))).filter(Boolean);
           const formattedCats = uniqueCats.map((c: any) => ({
-             name: c, 
-             slug: c.toLowerCase().replace(/ & /g, '-')
+              name: c, 
+              slug: c.toLowerCase().replace(/ & /g, '-')
           }));
           setDbCategories(formattedCats);
         }
@@ -137,7 +137,6 @@ export default function HomePage() {
       icon: "📱"
     },
     {
-      // Updated to dynamically use the user's country
       title: <>Fast & Secure<br/>Delivery to,<br/><span className="text-[#F2A900]">{userLocation.split(',')[0]}</span></>,
       subtitle: `Order today and get your items delivered right to your doorstep anywhere in ${userCountry}.`,
       bg: "from-[#051C1A] to-[#0A2D28]",
@@ -155,13 +154,13 @@ export default function HomePage() {
 
   const getCategoryIcon = (catName: string) => {
     const lower = catName.toLowerCase();
-    if(lower.includes('electronic') || lower.includes('elektroniki')) return <FiHeadphones size={24} />;
-    if(lower.includes('computer') || lower.includes('laptop')) return <FiMonitor size={24} />;
-    if(lower.includes('phone') || lower.includes('mobile') || lower.includes('simu')) return <FiSmartphone size={24} />;
-    if(lower.includes('fashion') || lower.includes('cloth') || lower.includes('nguo')) return <FiShoppingBag size={24} />;
-    if(lower.includes('home') || lower.includes('kitchen')) return <FiCoffee size={24} />;
-    if(lower.includes('beaut') || lower.includes('urembo')) return <FiSmile size={24} />;
-    return <FiGrid size={24} />;
+    if(lower.includes('electronic') || lower.includes('elektroniki')) return <FiHeadphones size={20} />;
+    if(lower.includes('computer') || lower.includes('laptop')) return <FiMonitor size={20} />;
+    if(lower.includes('phone') || lower.includes('mobile') || lower.includes('simu')) return <FiSmartphone size={20} />;
+    if(lower.includes('fashion') || lower.includes('cloth') || lower.includes('nguo')) return <FiShoppingBag size={20} />;
+    if(lower.includes('home') || lower.includes('kitchen')) return <FiCoffee size={20} />;
+    if(lower.includes('beaut') || lower.includes('urembo')) return <FiSmile size={20} />;
+    return <FiGrid size={20} />;
   };
 
   const handleCategoryClick = () => {
@@ -216,11 +215,15 @@ export default function HomePage() {
       {/* 1. DESKTOP HEADER */}
       {/* ========================================================= */}
       <header className="hidden lg:block bg-[#0A101D] text-white border-b border-gray-800 sticky top-0 z-50">
-        <div className="max-w-[1600px] mx-auto px-6 h-20 flex items-center justify-between gap-6">
+        <div className="max-w-[1600px] mx-auto px-6 h-24 flex items-center justify-between gap-6">
           <div className="flex items-center gap-8 flex-shrink-0">
-            <div className="cursor-pointer flex text-3xl font-black italic tracking-tighter" onClick={() => router.push('/')}>
-              <span className="text-blue-500">J</span><span className="text-[#F2A900]">t</span><span className="text-white">ex</span>
-            </div>
+            {/* REAL LOGO IMPLEMENTATION WITH INCREASED SIZE (h-16 lg:h-24) */}
+            <img 
+              src="/logo.png" 
+              alt="Jtex Logo" 
+              className="h-16 lg:h-24 cursor-pointer object-contain" 
+              onClick={() => router.push('/')} 
+            />
             <div className="flex items-center gap-2 cursor-pointer hover:bg-gray-800/50 p-2 rounded-lg transition">
               <FiMapPin className="text-gray-400" size={20}/>
               <div className="flex flex-col leading-tight">
@@ -230,7 +233,7 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="flex-1 max-w-2xl flex items-center h-11 bg-white rounded-lg overflow-hidden">
+          <div className="flex-1 max-w-2xl flex items-center h-12 bg-white rounded-lg overflow-hidden shadow-sm">
             <button className="h-full px-4 text-gray-600 text-sm font-bold bg-gray-100 border-r border-gray-200 flex items-center gap-1 hover:bg-gray-200 transition">
               All <FiChevronDown/>
             </button>
@@ -239,28 +242,27 @@ export default function HomePage() {
               <FiCamera className="cursor-pointer hover:text-gray-600"/>
               <FiMic className="cursor-pointer hover:text-gray-600"/>
             </div>
-            <button className="h-full px-6 bg-[#F2A900] text-black hover:bg-yellow-500 transition">
-              <FiSearch size={18} />
+            <button className="h-full px-8 bg-[#F2A900] text-black hover:bg-yellow-500 transition">
+              <FiSearch size={20} />
             </button>
           </div>
 
           <div className="flex items-center gap-4 flex-shrink-0">
             <button className="flex items-center gap-2 hover:bg-gray-800/50 p-2 rounded-lg transition">
-              {/* Dynamic Flag and Country Code */}
               <img src={`https://flagcdn.com/w20/${countryCode}.png`} alt={userCountry} className="w-5 rounded-sm"/>
               <span className="text-xs font-bold uppercase">{countryCode} <FiChevronDown className="inline"/></span>
             </button>
             <button onClick={() => router.push('/checkout')} className="relative flex flex-col items-center hover:bg-gray-800/50 p-2 rounded-lg transition">
-              <FiShoppingCart size={22} className="text-gray-300"/>
+              <FiShoppingCart size={24} className="text-gray-300"/>
               <span className="text-[10px] font-bold mt-1">Cart</span>
               {cartCount > 0 && <span className="absolute top-0 right-1 bg-[#F2A900] text-black text-[10px] font-black w-4 h-4 flex items-center justify-center rounded-full">{cartCount}</span>}
             </button>
             <button onClick={() => router.push(isLoggedIn ? '/profile' : '/login')} className="flex flex-col items-center hover:bg-gray-800/50 p-2 rounded-lg transition">
-              <FiPackage size={22} className="text-gray-300"/>
+              <FiPackage size={24} className="text-gray-300"/>
               <span className="text-[10px] font-bold mt-1">Track Order</span>
             </button>
-            <button onClick={() => router.push(isLoggedIn ? '/profile' : '/login')} className="flex items-center gap-2 border border-gray-700 bg-gray-800/50 hover:bg-gray-700 px-4 py-2 rounded-full transition">
-              <FiUser size={18}/>
+            <button onClick={() => router.push(isLoggedIn ? '/profile' : '/login')} className="flex items-center gap-2 border border-gray-700 bg-gray-800/50 hover:bg-gray-700 px-4 py-2.5 rounded-full transition">
+              <FiUser size={20}/>
               <span className="text-xs font-bold">{isLoggedIn ? 'My Account' : 'Sign In'}</span>
             </button>
           </div>
@@ -318,19 +320,22 @@ export default function HomePage() {
         </aside>
 
         {/* MAIN CONTENT AREA */}
-        <main className="flex-1 min-w-0">
+        <main className="flex-1 min-w-0 pb-10">
           
-          {/* Desktop Categories Header */}
-          <div className="hidden lg:flex items-center justify-between bg-white rounded-2xl border border-gray-100 px-6 py-4 shadow-sm mb-6">
-            <div className="flex items-center gap-8 w-full overflow-x-auto hide-scrollbar">
-              {dbCategories.map(cat => (
-                 <span key={cat.slug} onClick={handleCategoryClick} className="text-sm font-bold text-gray-600 hover:text-[#F2A900] cursor-pointer transition whitespace-nowrap">{cat.name}</span>
+          {/* DESKTOP CATEGORIES HEADER ZIKAE ICONS */}
+          <div className="hidden lg:flex items-center bg-white rounded-2xl border border-gray-100 px-4 py-4 shadow-sm mb-6 overflow-hidden">
+            <div className="flex items-center gap-3 w-full overflow-x-auto hide-scrollbar">
+              {dbCategories.map((cat, idx) => (
+                 <button key={idx} onClick={handleCategoryClick} className="flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-yellow-50 text-gray-700 hover:text-[#F2A900] border border-gray-100 hover:border-[#F2A900]/30 rounded-xl transition cursor-pointer whitespace-nowrap">
+                    <span className="text-[#F2A900]">{getCategoryIcon(cat.name)}</span>
+                    <span className="text-xs font-bold">{cat.name}</span>
+                 </button>
               ))}
             </div>
           </div>
 
           {/* Mobile Categories Row */}
-          <div className="lg:hidden flex overflow-x-auto hide-scrollbar gap-4 px-4 py-5 bg-white border-b border-gray-100">
+          <div className="lg:hidden flex overflow-x-auto hide-scrollbar gap-4 px-4 py-5 bg-white border-b border-gray-100 mb-4">
             {dbCategories.map((cat, idx) => (
               <div key={idx} onClick={handleCategoryClick} className="flex flex-col items-center gap-2 flex-shrink-0 cursor-pointer group">
                 <div className={`w-14 h-14 rounded-full flex items-center justify-center transition-all ${idx === 0 ? 'bg-yellow-50 text-[#F2A900] border border-yellow-200' : 'bg-gray-50 text-gray-600 border border-gray-100 group-hover:bg-gray-100'}`}>
@@ -339,18 +344,6 @@ export default function HomePage() {
                 <span className={`text-[10px] font-bold ${idx === 0 ? 'text-[#F2A900]' : 'text-gray-700'} truncate w-16 text-center`}>{cat.name}</span>
               </div>
             ))}
-          </div>
-
-          {/* Mobile Pre-Hero Feature Cards */}
-          <div className="lg:hidden flex gap-3 px-4 py-4">
-             <div className="flex-1 bg-white border border-gray-100 rounded-xl p-3 flex items-center gap-3 shadow-sm">
-                <div className="w-10 h-10 bg-yellow-50 text-[#F2A900] rounded-lg flex items-center justify-center"><FiTruck size={20}/></div>
-                <div><p className="text-[10px] font-black text-gray-900 leading-tight">FREE shipping</p><p className="text-[9px] text-gray-500">on your first order</p></div>
-             </div>
-             <div className="flex-1 bg-white border border-gray-100 rounded-xl p-3 flex items-center gap-3 shadow-sm">
-                <div className="w-10 h-10 bg-yellow-50 text-[#F2A900] rounded-lg flex items-center justify-center"><FiShield size={20}/></div>
-                <div><p className="text-[10px] font-black text-gray-900 leading-tight">Money-back protection</p><p className="text-[9px] text-gray-500">for up to 60 days</p></div>
-             </div>
           </div>
 
           {/* Slider Hero Banner */}
@@ -427,12 +420,12 @@ export default function HomePage() {
           </div>
 
           {/* Flash Sales Section */}
-          <div className="px-4 lg:px-0 mb-10">
-             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
+          <div className="px-4 lg:px-0 mb-6">
+             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
                 <div className="flex items-center gap-2">
                    <FiZap size={24} className="text-[#F2A900] fill-[#F2A900]"/>
                    <h2 className="text-xl lg:text-2xl font-black text-gray-900">Flash Sales</h2>
-                   <span className="hidden lg:inline-block ml-4 text-xs font-bold text-gray-500">Limited time offers - Don't miss out!</span>
+                   <span className="hidden lg:inline-block ml-4 text-xs font-bold text-gray-500">Limited time offers - Don&apos;t miss out!</span>
                 </div>
                 
                 <div className="flex items-center justify-between md:justify-end w-full md:w-auto gap-4">
@@ -449,8 +442,10 @@ export default function HomePage() {
                    <button onClick={() => router.push('/categories')} className="text-xs font-bold text-blue-600 flex items-center gap-1 hover:underline">View All <FiChevronRight/></button>
                 </div>
              </div>
+          </div>
 
-             {/* 5 ITEMS PER ROW */}
+          {/* 5 ITEMS PER ROW NA MANENO YASIYOKATIKA */}
+          <div className="px-4 lg:px-0 mb-10">
              {isLoading ? (
                <div className="flex justify-center py-10"><div className="w-8 h-8 border-4 border-[#F2A900] border-t-transparent rounded-full animate-spin"></div></div>
              ) : (
@@ -463,30 +458,35 @@ export default function HomePage() {
                      <div 
                        key={product.id} 
                        onClick={() => router.push(`/product/${product.id}`)} 
-                       className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm flex flex-col group hover:border-[#F2A900] transition cursor-pointer"
+                       className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm flex flex-col h-full group hover:border-[#F2A900] transition cursor-pointer"
                      >
-                        <div className="relative w-full aspect-square bg-gray-50 rounded-xl flex items-center justify-center mb-4 p-2">
-                           <span className="absolute top-2 left-2 bg-[#FF7A00] text-white text-[10px] font-black px-1.5 py-0.5 rounded">-{visualDiscount}%</span>
-                           <button className="absolute top-2 right-2 text-gray-400 hover:text-red-500 lg:hidden" onClick={(e) => { e.stopPropagation(); }}><FiHeart/></button>
+                        <div className="relative w-full pt-[100%] bg-gray-50/50 rounded-xl mb-4 overflow-hidden border border-gray-50 flex-shrink-0">
+                           <span className="absolute top-2 left-2 bg-[#FF7A00] text-white text-[10px] font-black px-1.5 py-0.5 rounded z-20">-{visualDiscount}%</span>
+                           <button className="absolute top-2 right-2 text-gray-400 hover:text-red-500 lg:hidden z-20" onClick={(e) => { e.stopPropagation(); }}><FiHeart/></button>
                            
                            {product.imageUrl ? (
-                              <img src={getImageUrl(product.imageUrl)} alt={product.name} className="object-contain w-full h-full mix-blend-multiply group-hover:scale-105 transition-transform duration-300" />
+                              <img src={getImageUrl(product.imageUrl)} alt={product.name} className="absolute inset-0 w-full h-full object-contain mix-blend-multiply p-4 group-hover:scale-105 transition-transform duration-300" />
                            ) : (
-                              <span className="text-5xl">📦</span>
+                              <div className="absolute inset-0 flex items-center justify-center text-5xl">📦</div>
                            )}
                         </div>
-                        <h4 className="font-bold text-xs lg:text-sm text-gray-800 mb-1 line-clamp-2 leading-tight">{product.name}</h4>
-                        <div className="flex flex-col lg:flex-row lg:items-center gap-1 lg:gap-2 mb-2 mt-auto">
-                           <span className="font-black text-sm lg:text-base text-gray-900">TZS {product.price.toLocaleString()}</span>
-                           <span className="text-[10px] text-gray-400 line-through">TZS {oldPrice.toLocaleString()}</span>
-                        </div>
-                        <div className="flex items-center justify-between mt-1">
-                           <div className="flex items-center text-[#F2A900] text-[10px] font-bold">
-                              <span className="flex items-center tracking-tighter">★★★★★</span> <span className="text-gray-400 ml-1 font-medium">({Math.floor(Math.random() * 100) + 10})</span>
+
+                        <div className="flex flex-col flex-grow">
+                           {/* FIX: Title inashuka mstari vizuri bila kukatwa katikati ya neno */}
+                           <h4 className="font-bold text-xs lg:text-sm text-gray-800 mb-2 line-clamp-2 leading-snug">{product.name}</h4>
+                           
+                           <div className="flex flex-col xl:flex-row xl:items-center gap-1 xl:gap-2 mb-2 mt-auto">
+                              <span className="font-black text-sm lg:text-base text-gray-900">TZS {product.price.toLocaleString()}</span>
+                              <span className="text-[10px] text-gray-400 line-through">TZS {oldPrice.toLocaleString()}</span>
                            </div>
-                           <button onClick={(e) => { e.stopPropagation(); addToCart(product); }} className="w-8 h-8 bg-gray-50 border border-gray-200 rounded-lg flex items-center justify-center text-gray-600 hover:bg-[#F2A900] hover:text-black hover:border-[#F2A900] transition">
-                              <FiShoppingCart size={14}/>
-                           </button>
+                           <div className="flex items-center justify-between mt-1 border-t border-gray-100 pt-3">
+                              <div className="flex items-center text-[#F2A900] text-[10px] font-bold">
+                                 <span className="flex items-center tracking-tighter">★★★★★</span> <span className="text-gray-400 ml-1 font-medium hidden sm:inline-block">({Math.floor(Math.random() * 100) + 10})</span>
+                              </div>
+                              <button onClick={(e) => { e.stopPropagation(); addToCart(product); }} className="w-8 h-8 bg-gray-50 border border-gray-200 rounded-lg flex items-center justify-center text-gray-600 hover:bg-[#F2A900] hover:text-black hover:border-[#F2A900] transition">
+                                 <FiShoppingCart size={14}/>
+                              </button>
+                           </div>
                         </div>
                      </div>
                    )
@@ -495,29 +495,33 @@ export default function HomePage() {
              )}
           </div>
 
-          {/* Top Brands Banner (IMEREKEBISHWA: Nyembamba na Sleek - W-Full) */}
+          {/* Top Brands Banner WITH REAL LOGOS (1.png to 6.png) */}
           <div className="px-4 lg:px-0 mb-10 lg:mb-16">
-             <div className="bg-[#0A101D] rounded-2xl flex flex-col md:flex-row items-center justify-between px-6 py-4 lg:py-6 overflow-hidden gap-6 shadow-md border border-gray-800 w-full">
-                
-                {/* Text and Call to Action - Simple and Inline */}
+             <div className="bg-[#0A101D] rounded-2xl flex flex-col md:flex-row items-center justify-between px-6 py-6 lg:py-8 overflow-hidden gap-8 shadow-md border border-gray-800 w-full">
                 <div className="flex flex-col md:flex-row items-center gap-4 text-center md:text-left z-10 w-full md:w-auto">
                    <div>
                      <h3 className="text-xl lg:text-2xl font-black text-white leading-tight">Top Brands, <span className="text-[#F2A900]">Top Quality</span></h3>
-                     <p className="text-[10px] lg:text-xs text-gray-400 font-medium">Shop your favorite premium brands today.</p>
+                     <p className="text-[10px] lg:text-xs text-gray-400 font-medium mt-1">Shop your favorite premium brands today.</p>
                    </div>
-                   <button onClick={() => router.push('/categories')} className="bg-[#F2A900] text-black text-xs font-black px-5 py-2 rounded-lg flex items-center justify-center gap-1.5 hover:bg-yellow-500 transition shadow-sm w-max">
+                   <button onClick={() => router.push('/categories')} className="bg-[#F2A900] text-black text-xs font-black px-6 py-2.5 rounded-lg flex items-center justify-center gap-1.5 hover:bg-yellow-500 transition shadow-sm w-max mt-2 md:mt-0">
                       View All <FiArrowRight/>
                    </button>
                 </div>
-
-                {/* Brand Logos (Nyembamba kwenye line moja) */}
-                <div className="flex flex-1 flex-wrap md:flex-nowrap justify-center md:justify-end items-center gap-6 lg:gap-10 opacity-70 grayscale hover:grayscale-0 transition duration-500">
-                   <span className="text-white font-black text-2xl lg:text-3xl tracking-tighter">MI</span>
-                   <span className="text-white font-black text-lg lg:text-xl tracking-widest uppercase">Samsung</span>
-                   <span className="text-white font-black text-2xl lg:text-3xl">🍎</span>
-                   <span className="text-white font-black text-2xl lg:text-3xl italic">hp</span>
-                   <span className="text-white font-black text-xl lg:text-2xl tracking-widest">SONY</span>
-                   <span className="text-white font-black text-xl lg:text-2xl">Lenovo</span>
+                
+                {/* REAL BRAND LOGOS SECTION */}
+                <div className="flex flex-1 flex-wrap md:flex-nowrap justify-center md:justify-end items-center gap-8 lg:gap-12 opacity-80 hover:opacity-100 transition duration-500">
+                   {[1, 2, 3, 4, 5, 6].map((num) => (
+                      <img 
+                        key={num}
+                        src={`/${num}.png`} 
+                        alt={`Brand ${num}`} 
+                        className="h-8 lg:h-12 object-contain grayscale hover:grayscale-0 brightness-200 hover:brightness-100 transition-all duration-300"
+                        onError={(e) => {
+                           // Kama picha haipo, itaficha icon (Fallback ya usalama)
+                           (e.target as HTMLImageElement).style.display = 'none';
+                        }}
+                      />
+                   ))}
                 </div>
              </div>
           </div>
@@ -542,7 +546,8 @@ export default function HomePage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-8 mb-10">
             <div>
-              <div className="flex text-3xl font-black italic tracking-tighter mb-6"><span className="text-blue-500">J</span><span className="text-[#F2A900]">t</span><span className="text-white">ex</span></div>
+              {/* REAL LOGO IMPLEMENTATION WITH INCREASED SIZE (h-20 lg:h-28) */}
+              <img src="/logo.png" alt="Jtex Logo" className="h-20 lg:h-28 object-contain mb-6 mx-auto lg:mx-0" />
               <p className="text-sm text-gray-400 leading-relaxed mb-6">Your one-stop destination for the best quality electronics, fashion, and home appliances in {userCountry}. Shop smart, live better.</p>
               <div className="flex gap-4">
                 <a href="#" className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-[#F2A900] hover:text-black transition"><FiFacebook size={18}/></a>
@@ -625,7 +630,7 @@ export default function HomePage() {
          <button onClick={() => router.push('/checkout')} className="flex flex-col items-center gap-1 text-gray-400 hover:text-gray-800 transition relative">
             <FiShoppingCart size={22}/>
             <span className="text-[10px] font-bold">Cart</span>
-            {cartCount > 0 && <span className="absolute -top-1 -right-2 bg-[#F2A900] text-black text-[10px] font-black w-4 h-4 flex items-center justify-center rounded-full">{cartCount}</span>}
+            {cartCount > 0 && <span className="absolute -top-1.5 -right-1.5 bg-[#F2A900] text-black text-[10px] font-black w-4 h-4 flex items-center justify-center rounded-full">{cartCount}</span>}
          </button>
          <button onClick={() => router.push(isLoggedIn ? '/profile' : '/login')} className="flex flex-col items-center gap-1 text-gray-400 hover:text-gray-800 transition">
             <FiUser size={22}/>
