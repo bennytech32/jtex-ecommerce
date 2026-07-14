@@ -1,12 +1,10 @@
-import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { CartProvider } from "../context/CartContext"; // Hii inarudisha mfumo wako wa kikapu
+import { CartProvider } from "../context/CartContext";
 
 const inter = Inter({ subsets: ["latin"] });
 
-// 1. MAELEZO YA SEO NA LOGO YAKO MPYA
-export const metadata: Metadata = {
+export const metadata = {
   title: 'Jtex E-Commerce | Best Quality, Best Prices',
   description: 'Shop the latest gadgets, electronics, fashion and more at Jtex Africa.',
   openGraph: {
@@ -31,12 +29,11 @@ export const metadata: Metadata = {
   },
 };
 
-// 2. MUUNDO MKUU WA WEBSITE (RootLayout iliyokuwa imefutika)
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
     <html lang="en">
       <body className={inter.className}>
