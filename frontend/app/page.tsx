@@ -32,7 +32,6 @@ export default function HomePage() {
   const handleSearch = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (searchQuery.trim() !== '') {
-      // Inapeleka kwenye categories ikiwa na query (Itabidi utengeneze logic kule kuisoma)
       router.push(`/categories?search=${encodeURIComponent(searchQuery)}`);
     } else {
       router.push('/categories');
@@ -748,7 +747,6 @@ export default function HomePage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-8 mb-10">
             <div>
-              {/* REAL LOGO IMPLEMENTATION WITH INCREASED SIZE (h-24 lg:h-32) */}
               <img src="/logo.png" alt="Jtex Logo" className="h-24 lg:h-32 object-contain mb-6 mx-auto lg:mx-0" />
               <p className="text-sm text-gray-400 leading-relaxed mb-6">Your one-stop destination for the best quality electronics, fashion, and home appliances in {userCountry}. Shop smart, live better.</p>
               <div className="flex gap-4">
