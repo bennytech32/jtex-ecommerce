@@ -47,15 +47,22 @@ export default function AdminLoginPage() {
             <div className="absolute bottom-10 -right-10 w-72 h-72 bg-[#F2A900]/20 rounded-full blur-3xl"></div>
         </div>
 
-        <div className="relative z-10">
-            <div className="inline-flex text-5xl font-black italic tracking-tighter mb-2">
-                <span className="text-white">J</span><span className="text-[#F2A900]">t</span><span className="text-white">ex</span>
+        {/* LOGO MPYA - DESKTOP */}
+        <div className="relative z-10 flex flex-col items-start">
+            <img 
+              src="/logo.png" 
+              alt="Jtex Logo" 
+              className="h-16 lg:h-20 object-contain brightness-0 invert" 
+              // Tunatumia 'brightness-0 invert' kuifanya iwe nyeupe kabisa kwenye dark background
+            />
+            <div className="mt-2 inline-flex items-center">
+              <span className="text-gray-400 font-bold tracking-widest uppercase text-xs">Enterprise Admin Portal</span>
+              <span className="ml-3 bg-[#F2A900] text-black text-[9px] font-black px-2 py-0.5 rounded-sm">SECURE</span>
             </div>
-            <p className="text-gray-400 font-medium tracking-wide uppercase text-sm mt-1">Enterprise Admin Portal</p>
         </div>
 
         <div className="relative z-10 mb-20">
-            <h1 className="text-4xl font-black text-white leading-tight mb-4">
+            <h1 className="text-4xl xl:text-5xl font-black text-white leading-tight mb-4">
                 Manage your store <br/> <span className="text-[#F2A900]">efficiently & securely.</span>
             </h1>
             <p className="text-gray-400 text-base max-w-md leading-relaxed">
@@ -71,17 +78,23 @@ export default function AdminLoginPage() {
       </div>
 
       {/* RIGHT PANEL - LOGIN FORM (Full width kwenye simu, nusu kwenye PC) */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 bg-gray-50/50">
-        <div className="w-full max-w-md">
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 bg-gray-50/50 relative">
+        
+        {/* LOGO MPYA - MOBILE ONLY */}
+        <div className="absolute top-6 left-6 lg:hidden flex items-center gap-2">
+            <img 
+              src="/logo.png" 
+              alt="Jtex Logo" 
+              className="h-10 object-contain" 
+            />
+            <span className="bg-[#0F172A] text-white text-[9px] font-black px-2 py-0.5 rounded-sm mt-1">ADMIN</span>
+        </div>
+
+        <div className="w-full max-w-md mt-10 lg:mt-0">
             
             {/* Header ya Fomu */}
             <div className="mb-10 text-center lg:text-left">
-                {/* Logo kwa ajili ya simu tu */}
-                <div className="lg:hidden inline-flex text-4xl font-black italic tracking-tighter mb-4">
-                    <span className="text-[#0F172A]">J</span><span className="text-[#F2A900]">t</span><span className="text-[#0F172A]">ex</span>
-                    <span className="text-[10px] bg-[#0F172A] text-white px-2 py-0.5 rounded-full ml-1 self-start mt-2">ADMIN</span>
-                </div>
-                <h2 className="text-2xl sm:text-3xl font-black text-gray-900 mb-2">Karibu Tena</h2>
+                <h2 className="text-3xl font-black text-gray-900 mb-2">Karibu Tena 👋</h2>
                 <p className="text-gray-500 text-sm font-medium">Tafadhali ingiza taarifa zako za siri kuendelea.</p>
             </div>
 
