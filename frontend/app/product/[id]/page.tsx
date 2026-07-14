@@ -18,6 +18,9 @@ export default function ProductDetail() {
   const [product, setProduct] = useState<any>(null);
   const [allProducts, setAllProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  // State mpya kwa ajili ya picha nyingi 
+  const [images, setImages] = useState<string[]>([]);
   const [mainImage, setMainImage] = useState<string>('');
   
   const [specs, setSpecs] = useState<any>({});
@@ -25,21 +28,18 @@ export default function ProductDetail() {
 
   const API_URL = 'https://jtex-ecommerce-production.up.railway.app';
 
-  // Weka au ondoa kwenye wishlist
   const toggleWishlist = (e: React.MouseEvent, productId: string) => {
     e.stopPropagation();
     setWishlist(prev => prev.includes(productId) ? prev.filter(id => id !== productId) : [...prev, productId]);
   };
 
-  // Kufungua WhatsApp kwa ajili ya kuulizia bidhaa
   const handleWhatsAppInquiry = () => {
     if (!product) return;
-    const businessPhone = "255767949581"; // Namba ya ofisi
+    const businessPhone = "255767949581"; 
     const message = `Habari Jtex,%0ANinaulizia kuhusu hii bidhaa:%0A*${product.name}*%0A*Bei:* TZS ${product.price.toLocaleString()}%0A%0A*Link:* ${window.location.href}`;
     window.open(`https://wa.me/${businessPhone}?text=${message}`, '_blank');
   };
 
-  // Mfumo wa Kushare Link ya Bidhaa
   const handleShare = async () => {
     if (!product) return;
     const shareData = {
@@ -59,6 +59,17 @@ export default function ProductDetail() {
     }
   };
 
+  // Helper ya kusoma picha kwenye database iwe ni Array
+  const getImagesArray = (imgData: string) => {
+    if (!imgData) return [];
+    try {
+      const parsed = JSON.parse(imgData);
+      return Array.isArray(parsed) ? parsed : [imgData];
+    } catch(e) {
+      return [imgData];
+    }
+  };
+
   useEffect(() => {
     const fetchProduct = async () => {
       try {
@@ -70,7 +81,13 @@ export default function ProductDetail() {
         
         if (foundProduct) {
           setProduct(foundProduct);
-          setMainImage(foundProduct.imageUrl ? `${API_URL}${foundProduct.imageUrl}` : '');
+          
+          // Tunachukua picha ZOTE 5 kutoka kwenye database
+          const parsedImages = getImagesArray(foundProduct.imageUrl).map((img: string) => `${API_URL}${img}`);
+          setImages(parsedImages);
+          
+          // Tunaiweka picha ya kwanza kuwa picha kuu inayoonekana
+          setMainImage(parsedImages.length > 0 ? parsedImages[0] : '');
           
           if (foundProduct.specifications) {
             try {
@@ -102,22 +119,28 @@ export default function ProductDetail() {
   const tier3Price = basePrice * 0.90; 
   const isMainProductWishlisted = wishlist.includes(product.id);
 
+  // Tunaitenganisha 'Model' kutoka kwenye specs zingine ili tuiweke vizuri kwenye UI
+  const { Model, ...otherSpecs } = specs;
+  const displayModel = Model || product.model || 'N/A';
+
   const relatedProducts = allProducts
     .filter(p => p.category === product.category && p.id !== product.id)
     .slice(0, 5);
 
   const RelatedProductCard = ({ item }: { item: any }) => {
     const isWishlisted = wishlist.includes(item.id);
+    const itemFirstImage = getImagesArray(item.imageUrl)[0];
+    
     return (
       <div className="w-full bg-white rounded-xl p-2.5 sm:p-4 border border-gray-100 shadow-sm hover:shadow-lg transition-all duration-300 relative group flex flex-col cursor-pointer" onClick={() => router.push(`/product/${item.id}`)}>
         <button onClick={(e) => toggleWishlist(e, item.id)} className="absolute top-2 right-2 z-20 w-7 h-7 bg-white/90 backdrop-blur rounded-full flex items-center justify-center text-gray-400 hover:text-red-500 shadow-sm transition">
           <FiHeart className={`text-sm ${isWishlisted ? "fill-red-500 text-red-500" : ""}`} />
         </button>
         <div className="aspect-square bg-white border border-gray-50 rounded-lg mb-2 sm:mb-3 flex items-center justify-center p-1 sm:p-2 relative overflow-hidden group-hover:bg-gray-50 transition">
-          {item.imageUrl ? (
-            <img src={`${API_URL}${item.imageUrl}`} alt={item.name} className="object-contain w-full h-full mix-blend-multiply group-hover:scale-105 transition duration-500" />
+          {itemFirstImage ? (
+            <img src={`${API_URL}${itemFirstImage}`} alt={item.name} className="object-contain w-full h-full mix-blend-multiply group-hover:scale-105 transition duration-500" />
           ) : (
-            <span className="text-4xl group-hover:scale-105 transition duration-500">{item.imageEmoji}</span>
+            <span className="text-4xl group-hover:scale-105 transition duration-500">{item.imageEmoji || '📦'}</span>
           )}
         </div>
         <h3 className="text-[11px] sm:text-sm font-medium text-gray-800 leading-tight mb-1 line-clamp-2 group-hover:text-[#F2A900] transition h-8">{item.name}</h3>
@@ -136,7 +159,6 @@ export default function ProductDetail() {
     );
   };
 
-  // Helper Function for Condition Colors
   const getConditionStyles = (condition: string) => {
     switch (condition?.toLowerCase()) {
       case 'refurbished':
@@ -144,7 +166,7 @@ export default function ProductDetail() {
       case 'used':
         return 'bg-orange-50 text-orange-700';
       default:
-        return 'bg-green-50 text-green-700'; // Default kwa Brand New
+        return 'bg-green-50 text-green-700';
     }
   };
 
@@ -154,9 +176,7 @@ export default function ProductDetail() {
          <TopTicker />
       </div>
       
-      {/* ========================================================= */}
       {/* 1. MOBILE HEADER WITH SEARCH BAR */}
-      {/* ========================================================= */}
       <div className="lg:hidden flex items-center gap-3 p-3 bg-white sticky top-0 z-40 shadow-sm">
          <button onClick={() => router.back()} className="text-gray-800 p-1 flex-shrink-0">
             <FiArrowLeft size={24} />
@@ -168,15 +188,12 @@ export default function ProductDetail() {
          </div>
 
          <div className="flex items-center gap-3 text-gray-800 flex-shrink-0">
-            {/* Added Heart (Wishlist) to mobile header */}
             <FiHeart onClick={(e) => toggleWishlist(e, product.id)} size={22} className={`cursor-pointer transition ${isMainProductWishlisted ? 'fill-red-500 text-red-500' : 'hover:text-red-500'}`} />
             <FiShare onClick={handleShare} size={22} className="cursor-pointer hover:text-[#F2A900] transition" />
          </div>
       </div>
 
-      {/* ========================================================= */}
       {/* 2. DESKTOP HEADER */}
-      {/* ========================================================= */}
       <div className="hidden lg:flex border-b border-gray-100 bg-white sticky top-0 z-40 max-w-7xl mx-auto px-6 py-4 items-center justify-between">
         <button onClick={() => router.push('/')} className="flex items-center gap-2 text-sm font-bold text-gray-600 hover:text-gray-900 transition">
           <FiArrowLeft className="text-lg" /> Back to Store
@@ -189,19 +206,20 @@ export default function ProductDetail() {
 
       <main className="max-w-7xl mx-auto lg:px-6 lg:py-8">
         
-        {/* ========================================================= */}
-        {/* SEHEMU YA JUU: PICHA NA MAELEZO MAFUPI */}
-        {/* ========================================================= */}
         <div className="flex flex-col lg:flex-row gap-0 lg:gap-10 mb-8 lg:mb-12">
           
           {/* IMAGE SECTION */}
           <div className="w-full lg:w-1/2 flex flex-col-reverse lg:flex-row gap-4">
             
-            {/* Desktop Side Thumbnails */}
+            {/* Desktop Side Thumbnails - Zinaonyesha picha zote sasa hivi */}
             <div className="hidden lg:flex flex-col gap-3 w-20">
-              {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="w-20 h-20 bg-gray-50 rounded-lg border border-gray-200 p-2 cursor-pointer hover:border-[#F2A900] transition">
-                  {mainImage ? <img src={mainImage} className="w-full h-full object-contain mix-blend-multiply" /> : <div className="w-full h-full flex items-center justify-center text-2xl">{product.imageEmoji || '📦'}</div>}
+              {images.map((imgStr, idx) => (
+                <div 
+                   key={idx} 
+                   onClick={() => setMainImage(imgStr)} 
+                   className={`w-20 h-20 bg-gray-50 rounded-lg border p-2 cursor-pointer transition ${mainImage === imgStr ? 'border-[#F2A900]' : 'border-gray-200 hover:border-[#F2A900]/50'}`}
+                >
+                  <img src={imgStr} className="w-full h-full object-contain mix-blend-multiply" />
                 </div>
               ))}
             </div>
@@ -212,24 +230,28 @@ export default function ProductDetail() {
                 {product.brand}
               </span>
               
-              {/* Mobile 1/4 Badge */}
               <span className="lg:hidden absolute bottom-8 left-4 bg-gray-200/80 text-gray-800 text-xs font-bold px-3 py-1 rounded-full z-10">
-                1/4
+                1/{images.length || 1}
               </span>
 
               {mainImage ? (
-                <img src={mainImage} alt={product.name} className="w-full max-h-[350px] object-contain mix-blend-multiply" />
+                <img src={mainImage} alt={product.name} className="w-full max-h-[350px] object-contain mix-blend-multiply transition-all duration-300" />
               ) : (
                 <span className="text-9xl">{product.imageEmoji || '📦'}</span>
               )}
 
               {/* Mobile Dots */}
-              <div className="lg:hidden absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5">
-                 <div className="w-4 h-1.5 bg-[#F2A900] rounded-full"></div>
-                 <div className="w-1.5 h-1.5 bg-gray-300 rounded-full"></div>
-                 <div className="w-1.5 h-1.5 bg-gray-300 rounded-full"></div>
-                 <div className="w-1.5 h-1.5 bg-gray-300 rounded-full"></div>
-              </div>
+              {images.length > 1 && (
+                <div className="lg:hidden absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 overflow-x-auto">
+                   {images.map((img, idx) => (
+                     <div 
+                        key={idx} 
+                        onClick={() => setMainImage(img)}
+                        className={`h-1.5 rounded-full cursor-pointer transition-all ${mainImage === img ? 'w-4 bg-[#F2A900]' : 'w-1.5 bg-gray-300'}`}
+                     ></div>
+                   ))}
+                </div>
+              )}
             </div>
           </div>
 
@@ -239,7 +261,7 @@ export default function ProductDetail() {
             {/* Title */}
             <h1 className="text-xl lg:text-2xl font-bold text-gray-900 leading-snug mb-4">{product.name}</h1>
 
-            {/* Price Area (Moved Top) */}
+            {/* Price Area */}
             <div className="flex flex-col mb-4">
                <span className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Current Price</span>
                <div className="flex items-end gap-3">
@@ -248,9 +270,8 @@ export default function ProductDetail() {
                </div>
             </div>
 
-            {/* Ratings and Condition (Moved Below Price) */}
+            {/* Ratings and Condition */}
             <div className="flex flex-col gap-2 mb-6 border-b border-gray-100 pb-4">
-               {/* Reviews */}
                <div className="flex items-center gap-2 text-sm">
                  <div className="flex text-[#F2A900] text-sm">
                    <FiStar className="fill-current" /><FiStar className="fill-current" /><FiStar className="fill-current" /><FiStar className="fill-current" /><FiStar className="fill-current text-gray-300" />
@@ -258,7 +279,6 @@ export default function ProductDetail() {
                  <span className="text-blue-600 font-semibold text-xs hover:underline cursor-pointer">30 Reviews</span>
                </div>
                
-               {/* Condition - Imevutwa toka kwenye database */}
                <div className="flex items-center gap-2">
                  <span className="text-xs font-bold text-gray-500">Condition:</span>
                  <span className={`${getConditionStyles(product.condition)} text-[10px] font-black uppercase px-2 py-0.5 rounded flex items-center gap-1`}>
@@ -308,7 +328,7 @@ export default function ProductDetail() {
         </div>
 
         {/* ========================================================= */}
-        {/* SEHEMU YA KATI: MAELEZO NA SPECIFICATIONS (Kama Picha) */}
+        {/* SEHEMU YA KATI: MAELEZO NA SPECIFICATIONS */}
         {/* ========================================================= */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12 border-t border-gray-100 pt-8 lg:pt-12 mb-12 px-4 lg:px-0">
           <div>
@@ -320,18 +340,23 @@ export default function ProductDetail() {
           <div>
             <h3 className="text-lg font-bold mb-4">Specifications</h3>
             
-            {/* Mpangilio wa Specifications kama kwenye picha */}
             <div className="bg-white rounded-2xl p-2">
               <div className="flex items-center justify-between py-4 border-b border-gray-100 text-sm hover:bg-gray-50 px-2 rounded-t-xl transition">
                 <span className="font-bold text-gray-800 w-1/3">Brand</span>
                 <span className="font-medium text-gray-600 w-2/3">{product.brand || 'N/A'}</span>
               </div>
+              
+              {/* Uwanja Rasmi wa Model Name */}
+              <div className="flex items-center justify-between py-4 border-b border-gray-100 text-sm hover:bg-gray-50 px-2 transition">
+                <span className="font-bold text-gray-800 w-1/3">Model Name</span>
+                <span className="font-medium text-blue-600 w-2/3">{displayModel}</span>
+              </div>
 
-              {Object.keys(specs).length > 0 ? (
-                Object.keys(specs).map((key, index, arr) => (
+              {Object.keys(otherSpecs).length > 0 ? (
+                Object.keys(otherSpecs).map((key, index, arr) => (
                   <div key={key} className={`flex items-center justify-between py-4 border-gray-100 text-sm hover:bg-gray-50 px-2 transition ${index !== arr.length - 1 ? 'border-b' : 'rounded-b-xl'}`}>
                     <span className="font-bold text-gray-800 w-1/3">{key}</span>
-                    <span className="font-medium text-gray-600 w-2/3">{specs[key]}</span>
+                    <span className="font-medium text-gray-600 w-2/3">{otherSpecs[key]}</span>
                   </div>
                 ))
               ) : (
@@ -363,16 +388,13 @@ export default function ProductDetail() {
          <Footer />
       </div>
 
-      {/* ========================================================= */}
-      {/* 3. MOBILE BOTTOM ACTION BAR (Sticky Bottom) */}
-      {/* ========================================================= */}
+      {/* 3. MOBILE BOTTOM ACTION BAR */}
       <div className="lg:hidden fixed bottom-0 left-0 w-full bg-white border-t border-gray-100 px-3 py-2 flex items-center gap-3 z-50 shadow-[0_-10px_20px_rgba(0,0,0,0.05)] pb-safe">
          <div onClick={() => router.push('/')} className="flex flex-col items-center justify-center text-gray-500 hover:text-[#F2A900] min-w-[50px] cursor-pointer transition">
             <FiHome size={22} className="mb-0.5" />
             <span className="text-[9px] font-medium">Store</span>
          </div>
          
-         {/* Kitufe cha WhatsApp */}
          <div onClick={handleWhatsAppInquiry} className="flex flex-col items-center justify-center text-gray-500 hover:text-[#25D366] min-w-[50px] cursor-pointer transition">
             <FiMessageCircle size={22} className="mb-0.5" />
             <span className="text-[9px] font-medium">WhatsApp</span>
