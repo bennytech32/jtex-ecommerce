@@ -472,7 +472,7 @@ export default function CheckoutSystem() {
                    )}
 
                    <div className="flex gap-3 mt-8 border-t border-gray-100 pt-6">
-                      <button type="button" onClick={() => setWorkflowStep(2)} className="px-6 py-4 bg-gray-100 text-gray-600 font-bold rounded-xl text-sm hover:bg-gray-200 transition">Back</button>
+                      <button type="button" onClick={() => setCurrentStep(2)} className="px-6 py-4 bg-gray-100 text-gray-600 font-bold rounded-xl text-sm hover:bg-gray-200 transition">Back</button>
                       <button type="button" onClick={handleWhatsAppOrder} className="flex-1 bg-green-600 hover:bg-green-700 text-white font-black py-4 rounded-xl transition shadow-lg flex items-center justify-center gap-2">
                         <FiLock /> {selectedPaymentType.id === 'cod' ? `Confirm Order TZS ${advancePayment.toLocaleString()}` : `Confirm Order TZS ${totalAmount.toLocaleString()}`}
                       </button>
