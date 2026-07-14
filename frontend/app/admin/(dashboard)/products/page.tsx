@@ -114,6 +114,9 @@ export default function AdminProducts() {
     }
   };
 
+  // ==========================================
+  // MABORESHO YAMEFANYIKA HAPA KUDAKA ERROR HALISI
+  // ==========================================
   const handleAddProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true); setMessage(''); setError('');
@@ -134,7 +137,16 @@ export default function AdminProducts() {
 
     try {
       const res = await fetch(`${API_URL}/api/products`, { method: 'POST', body: formData });
-      const data = await res.json();
+      
+      // Tunasoma jibu kama "text" kwanza ili kudaka errors zinazokuja kama HTML toka kwa server
+      const rawText = await res.text();
+      let data: any = {};
+      try {
+         data = JSON.parse(rawText);
+      } catch(e) {
+         data = { error: rawText };
+      }
+
       if (res.ok) {
         setMessage('Bidhaa imeongezwa kikamilifu!');
         setSku(''); setName(''); setBrand(''); setBadge(''); setCondition('Brand New'); setBuyingPrice(''); setPrice(''); setStockQuantity(''); setSpecData({});
@@ -142,16 +154,19 @@ export default function AdminProducts() {
         if (fileInputRef.current) fileInputRef.current.value = '';
         fetchProducts();
       } else {
-        setError(data.error || 'Imeshindwa kuweka bidhaa.');
+        // Hapa itatuonyesha error halisi toka Database
+        const errorMsg = data.error || data.message || "Server imekataa kupokea data.";
+        console.error("MAJIBU YA SERVER YALIYOGOMA:", rawText);
+        setError(`Imeshindwa: ${errorMsg}`);
       }
-    } catch (err) {
-      setError('Tatizo la mtandao au server imekataa mawasiliano.');
+    } catch (err: any) {
+      console.error("NETWORK ERROR:", err);
+      setError(`Tatizo la mtandao: ${err.message}`);
     } finally {
       setIsLoading(false);
     }
   };
 
-  // --- KIPENGELE KILICHOBORESHWA KWA AJILI YA KUFUTA BIDHAA ---
   const handleDeleteProduct = async (id: string | number) => {
     if (!window.confirm("Una uhakika unataka kufuta bidhaa hii? Kitendo hiki hakirudishwi nyuma!")) return;
     
@@ -160,34 +175,27 @@ export default function AdminProducts() {
     
     try {
       const cleanId = String(id);
-      
-      // Tumeondoa headers zisizo za lazima ambazo wakati mwingine zinasababisha CORS kufeli kwenye DELETE
       const res = await fetch(`${API_URL}/api/products/${cleanId}`, { 
         method: 'DELETE'
       });
+      
+      const errorText = await res.text();
       
       if (res.ok) {
         setMessage('Bidhaa imefutwa kikamilifu!');
         fetchProducts(); 
       } else {
-        // Tunasoma error kama 'text' ya kawaida kwanza badala ya kulazimisha iwe JSON
-        const errorText = await res.text();
         console.error("Delete Error Raw Response:", errorText);
-        
-        let errorMsg = res.statusText || 'Server imekataa (Huenda bidhaa hii ipo kwenye rekodi za mauzo au kikapu).';
+        let errorMsg = res.statusText;
         try {
-          // Tunajaribu kuibadili iwe JSON kama inawezekana
           const parsed = JSON.parse(errorText);
           if (parsed.error) errorMsg = parsed.error;
         } catch(e) {
-          // Kama sio JSON, na ni ujumbe mfupi, tunautumia
           if (errorText && errorText.length < 150) errorMsg = errorText;
         }
-
         setError(`Imeshindwa kufuta: ${errorMsg}`);
       }
     } catch (err: any) {
-      console.error("Delete Catch Error:", err);
       setError(`Tatizo la mtandao: ${err.message}`);
     }
   };
@@ -228,16 +236,26 @@ export default function AdminProducts() {
 
     try {
       const res = await fetch(`${API_URL}/api/products/${editingProduct.id}`, { method: 'PUT', body: formData });
+      
+      const rawText = await res.text();
+      let data: any = {};
+      try {
+         data = JSON.parse(rawText);
+      } catch(e) {
+         data = { error: rawText };
+      }
+
       if (res.ok) {
-        setMessage('Bidhaa imesasishwa (Updated) kikamilifu!');
+        setMessage('Bidhaa imesasishwa kikamilifu!');
         setEditingProduct(null);
         fetchProducts();
       } else {
-        const data = await res.json();
-        setError(data.error || 'Imeshindwa kusasisha bidhaa.');
+        const errorMsg = data.error || data.message || "Server imekataa kusasisha data.";
+        console.error("MAJIBU YA SERVER YALIYOGOMA KUSASISHA:", rawText);
+        setError(`Imeshindwa: ${errorMsg}`);
       }
-    } catch (err) {
-      setError('Tatizo la mtandao au server imekataa mawasiliano.');
+    } catch (err: any) {
+      setError(`Tatizo la mtandao: ${err.message}`);
     } finally {
       setIsLoading(false);
     }
@@ -305,7 +323,7 @@ export default function AdminProducts() {
       </div>
 
       {message && <div className="mb-4 p-4 bg-green-50 text-green-600 text-sm rounded-xl flex items-center gap-2 font-bold shadow-sm"><FiCheckCircle className="text-lg" /> {message}</div>}
-      {error && <div className="mb-4 p-4 bg-red-50 text-red-600 text-sm rounded-xl flex items-center gap-2 font-bold shadow-sm"><FiAlertTriangle className="text-lg" /> {error}</div>}
+      {error && <div className="mb-4 p-4 bg-red-50 text-red-600 text-sm rounded-xl flex items-center gap-2 font-bold shadow-sm break-words"><FiAlertTriangle className="text-lg" /> {error}</div>}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
