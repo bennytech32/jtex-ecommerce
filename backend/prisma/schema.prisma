@@ -1,99 +1,96 @@
-// backend/prisma/schema.prisma
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
   provider = "prisma-client-js"
 }
 
+// Hakikisha provider ni sahihi na aina ya database yako (Mfano: "postgresql" au "mysql")
 datasource db {
-  provider = "postgresql"
+  provider = "postgresql" 
   url      = env("DATABASE_URL")
 }
 
-// 1. MTEJA / MUUZAJI (USERS)
 model User {
-  id            String         @id @default(uuid())
-  name          String
-  email         String         @unique
-  phone         String?
-  password      String
-  role          String         @default("CUSTOMER") // CUSTOMER, VENDOR, ADMIN, SUPER_ADMIN
-  loyaltyPoints Int            @default(0)
-  debtAmount    Float          @default(0.0)
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  
-  orders        Order[]
-  vendorProfile VendorProfile?
+  id        String     @id @default(cuid())
+  name      String?
+  email     String     @unique
+  password  String?
+  phone     String?
+  role      String     @default("USER") // Inaweza kuwa "ADMIN" au "USER"
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  orders    Order[]
+  cartItems CartItem[]
 }
 
-// 2. DUKA LA MUUZAJI KAMA NI MARKETPLACE
-model VendorProfile {
-  id          String   @id @default(uuid())
-  storeName   String
-  description String?
-  address     String?
-  userId      String   @unique
-  user        User     @relation(fields: [userId], references: [id])
-}
-
-// 3. BIDHAA (PRODUCTS)
 model Product {
-  id             String      @id @default(uuid())
+  id             String      @id @default(cuid())
   sku            String      @unique
   name           String
-  description    String
   category       String
   brand          String?
-  buyingPrice    Float       @default(0.0) // Bei ya kununulia (Ghalani)
-  price          Float       // Bei ya kuuzia (Dukani)
-  oldPrice       Float?      // Bei ya zamani (Ili kuonyesha punguzo)
+  
+  // === MABORESHO MPYA KWA AJILI YA HOME PAGE ===
+  badge          String?     @default("")
+  condition      String?     @default("Brand New")
+  
+  description    String?     @db.Text
+  buyingPrice    Float       @default(0)
+  price          Float
   stockQuantity  Int         @default(0)
-  inStock        Boolean     @default(true)
-  lowStockAlert  Int         @default(5)
+  specifications String?     @db.Text // Inahifadhi JSON string ya features
   imageUrl       String?
-  imageEmoji     String      @default("📦")
-  specifications String?     // Mfano: RAM 8GB, ROM 256GB
+  imageEmoji     String?
   createdAt      DateTime    @default(now())
   updatedAt      DateTime    @updatedAt
 
+  // Mahusiano na meza nyingine
+  cartItems      CartItem[]
   orderItems     OrderItem[]
 }
 
-// 4. ODA & USAFIRISHAJI (ORDERS)
-model Order {
-  id             String      @id @default(uuid())
-  userId         String
-  user           User        @relation(fields: [userId], references: [id])
-  items          OrderItem[]
-  totalAmount    Float
-  shippingFee    Float       @default(0.0)
-  upfrontPayment Float       @default(0.0) // Kianzio alicholipa (Mfano 20%)
-  deliveryRegion String      // Mfano: Dar es Salaam, Mwanza
-  address        String
-  paymentMethod  String      @default("COD") // Cash On Delivery
-  status         String      @default("PENDING") // PENDING, PROCESSING, SHIPPED, DELIVERED, CANCELLED
-  createdAt      DateTime    @default(now())
-  updatedAt      DateTime    @updatedAt
-}
-
-// 5. BIDHAA NDANI YA ODA (ORDER ITEMS)
-model OrderItem {
-  id        String  @id @default(uuid())
-  orderId   String
-  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+model CartItem {
+  id        String   @id @default(cuid())
+  userId    String?  // Ikiwa null inamaanisha mteja anatumia Session/hajalogin
   productId String
-  product   Product @relation(fields: [productId], references: [id])
-  quantity  Int
-  unitPrice Float
-  subTotal  Float
+  quantity  Int      @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // === SULUHISHO LA KUFUTA BIDHAA (Cascade Delete) ===
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
 }
 
-// 6. FEDHA NA MIAMALA (FINANCE TRANSACTIONS)
-model FinanceTransaction {
-  id          String   @id @default(uuid())
-  type        String   // INCOME au EXPENSE
-  category    String   // Mfano: Rent, Salary, Sales
-  amount      Float
-  description String?
-  date        DateTime @default(now())
+model Order {
+  id              String      @id @default(cuid())
+  userId          String
+  totalAmount     Float
+  shippingAddress String?     @db.Text
+  shippingMethod  String?
+  paymentType     String?
+  paymentMethod   String?
+  status          String      @default("PENDING") // PENDING, COMPLETED, CANCELLED
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orderItems      OrderItem[]
+}
+
+model OrderItem {
+  id        String   @id @default(cuid())
+  orderId   String
+  productId String
+  quantity  Int
+  price     Float    // Bei ya bidhaa wakati inanunuliwa
+  createdAt DateTime @default(now())
+
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  
+  // === SULUHISHO LA KUFUTA BIDHAA (Cascade Delete) ===
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
 }

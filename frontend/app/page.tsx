@@ -10,7 +10,7 @@ import {
   FiArrowRight, FiShield, FiTruck, FiRefreshCw, FiMic, FiCamera, 
   FiHome, FiZap, FiChevronRight, FiMail, FiPhone, FiFacebook, 
   FiTwitter, FiInstagram, FiLinkedin, FiSend, FiMessageCircle, 
-  FiBell, FiSettings, FiArrowLeft, FiGlobe
+  FiBell, FiSettings, FiArrowLeft, FiGlobe, FiStar
 } from 'react-icons/fi';
 
 export default function HomePage() {
@@ -21,13 +21,23 @@ export default function HomePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   
-  // FIX: Tumeongeza state ya user hapa
   const [user, setUser] = useState<any>(null);
-  
-  // Updated State variables to handle City and Country dynamically
   const [userLocation, setUserLocation] = useState('Fetching...'); 
   const [userCountry, setUserCountry] = useState('...');
-  const [countryCode, setCountryCode] = useState('tz'); // Default for flag
+  const [countryCode, setCountryCode] = useState('tz'); 
+
+  // === SEARCH STATE PAMOJA NA FUNCTION YAKE ===
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const handleSearch = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (searchQuery.trim() !== '') {
+      // Inapeleka kwenye categories ikiwa na query (Itabidi utengeneze logic kule kuisoma)
+      router.push(`/categories?search=${encodeURIComponent(searchQuery)}`);
+    } else {
+      router.push('/categories');
+    }
+  };
 
   // Timer State for Flash Sales
   const [timeLeft, setTimeLeft] = useState({ hrs: 12, mins: 56, secs: 32 });
@@ -58,13 +68,11 @@ export default function HomePage() {
     const token = localStorage.getItem('jtex_token');
     setIsLoggedIn(!!token);
 
-    // FIX: Tumevuta taarifa za user kutoka local storage
     const savedUser = localStorage.getItem('jtex_user');
     if (savedUser) {
         try { setUser(JSON.parse(savedUser)); } catch (e) {}
     }
 
-    // Dynamic Location Fetching
     fetch('https://ipapi.co/json/')
       .then(res => res.json())
       .then(data => {
@@ -161,7 +169,6 @@ export default function HomePage() {
 
   const cartCount = cart?.length || 0;
 
-  // Orodha mpya ya Logos (1 mpaka 11)
   const brandLogos = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
 
   const getCategoryIcon = (catName: string) => {
@@ -185,9 +192,21 @@ export default function HomePage() {
         <nav className="bg-white rounded-2xl border border-gray-100 py-3 shadow-sm mb-6 flex flex-col">
           <button className="flex items-center gap-3 px-6 py-2.5 bg-gray-50 text-gray-900 font-bold transition" onClick={() => router.push('/')}><FiHome size={18}/> Home</button>
           <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#F2A900] transition font-medium" onClick={() => router.push('/categories')}><FiGrid size={18}/> Categories</button>
+          
+          <div className="border-t border-gray-100 my-2"></div>
+          
           <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#F2A900] transition font-medium" onClick={() => router.push('/deals')}>
             <FiZap size={18}/> Flash Sales <span className="ml-auto bg-red-100 text-red-600 text-[10px] font-black px-1.5 py-0.5 rounded">Hot</span>
           </button>
+          <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#F2A900] transition font-medium" onClick={() => router.push('/new-arrivals')}>
+            <FiPackage size={18}/> New Arrivals <span className="ml-auto bg-green-100 text-green-600 text-[10px] font-black px-1.5 py-0.5 rounded">New</span>
+          </button>
+          <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#F2A900] transition font-medium" onClick={() => router.push('/trending')}>
+            <FiStar size={18}/> Trending Now
+          </button>
+          
+          <div className="border-t border-gray-100 my-2"></div>
+
           <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#F2A900] transition font-medium" onClick={() => router.push('/messages')}>
             <FiMessageCircle size={18}/> Messages <span className="ml-auto bg-[#F2A900] text-white text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full">3</span>
           </button>
@@ -207,9 +226,21 @@ export default function HomePage() {
         <nav className="bg-white rounded-2xl border border-gray-100 py-3 shadow-sm mb-6 flex flex-col">
           <button className="flex items-center gap-3 px-6 py-2.5 bg-gray-50 text-gray-900 font-bold transition" onClick={() => router.push('/')}><FiHome size={18}/> Home</button>
           <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#F2A900] transition font-medium" onClick={() => router.push('/categories')}><FiGrid size={18}/> Categories</button>
+          
+          <div className="border-t border-gray-100 my-2"></div>
+          
           <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#F2A900] transition font-medium" onClick={() => router.push('/deals')}>
             <FiZap size={18}/> Flash Sales <span className="ml-auto bg-red-100 text-red-600 text-[10px] font-black px-1.5 py-0.5 rounded">Hot</span>
           </button>
+          <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#F2A900] transition font-medium" onClick={() => router.push('/new-arrivals')}>
+            <FiPackage size={18}/> New Arrivals <span className="ml-auto bg-green-100 text-green-600 text-[10px] font-black px-1.5 py-0.5 rounded">New</span>
+          </button>
+          <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#F2A900] transition font-medium" onClick={() => router.push('/trending')}>
+            <FiStar size={18}/> Trending Now
+          </button>
+
+          <div className="border-t border-gray-100 my-2"></div>
+
           <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#F2A900] transition font-medium" onClick={() => router.push('/help')}><FiHeadphones size={18}/> Support</button>
           
           <div className="px-6 mt-4 pt-4 border-t border-gray-100">
@@ -220,16 +251,32 @@ export default function HomePage() {
     }
   };
 
+  const newArrivals = products.filter(p => p.badge === 'New' || p.badge === 'Sale').slice(0, 5);
+  const trendingProducts = products.filter(p => p.badge === 'Hot' || p.badge === 'Top Rated').slice(0, 5);
+  const fallbackNewArrivals = newArrivals.length > 0 ? newArrivals : products.slice(10, 15);
+  const fallbackTrending = trendingProducts.length > 0 ? trendingProducts : products.slice(15, 20);
+
   return (
     <div className="min-h-screen bg-[#F8FAFC] font-sans text-gray-900">
       
+      {/* FLOATING CART (Desktop Only) */}
+      <div className="hidden lg:flex fixed bottom-10 right-10 z-50">
+        <button onClick={() => router.push('/checkout')} className="bg-[#F2A900] text-black w-14 h-14 rounded-full shadow-[0_10px_25px_rgba(242,169,0,0.5)] flex items-center justify-center hover:scale-110 transition-transform relative group">
+          <FiShoppingCart size={24} />
+          {cartCount > 0 && <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[11px] font-black w-5 h-5 flex items-center justify-center rounded-full border-2 border-white">{cartCount}</span>}
+          
+          <div className="absolute right-full mr-4 bg-[#0A101D] text-white text-xs font-bold px-3 py-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+             View Cart ({cartCount} items)
+          </div>
+        </button>
+      </div>
+
       {/* ========================================================= */}
       {/* 1. DESKTOP HEADER */}
       {/* ========================================================= */}
-      <header className="hidden lg:block bg-[#0A101D] text-white border-b border-gray-800 sticky top-0 z-50">
+      <header className="hidden lg:block bg-[#0A101D] text-white border-b border-gray-800 sticky top-0 z-40">
         <div className="max-w-[1600px] mx-auto px-6 h-24 flex items-center justify-between gap-6">
           <div className="flex items-center gap-8 flex-shrink-0">
-            {/* REAL LOGO IMPLEMENTATION WITH INCREASED SIZE (h-20 lg:h-28) */}
             <img 
               src="/logo.png" 
               alt="Jtex Logo" 
@@ -245,19 +292,26 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="flex-1 max-w-2xl flex items-center h-12 bg-white rounded-lg overflow-hidden shadow-sm">
-            <button className="h-full px-4 text-gray-600 text-sm font-bold bg-gray-100 border-r border-gray-200 flex items-center gap-1 hover:bg-gray-200 transition">
+          {/* ACTIVE SEARCH DESKTOP */}
+          <form onSubmit={handleSearch} className="flex-1 max-w-2xl flex items-center h-12 bg-white rounded-lg overflow-hidden shadow-sm">
+            <button type="button" className="h-full px-4 text-gray-600 text-sm font-bold bg-gray-100 border-r border-gray-200 flex items-center gap-1 hover:bg-gray-200 transition">
               All <FiChevronDown/>
             </button>
-            <input type="text" placeholder="Search products, brands..." className="flex-1 h-full px-4 text-sm text-gray-900 outline-none" />
+            <input 
+              type="text" 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search products, brands..." 
+              className="flex-1 h-full px-4 text-sm text-gray-900 outline-none" 
+            />
             <div className="flex items-center gap-3 px-3 text-gray-400">
               <FiCamera className="cursor-pointer hover:text-gray-600"/>
               <FiMic className="cursor-pointer hover:text-gray-600"/>
             </div>
-            <button className="h-full px-8 bg-[#F2A900] text-black hover:bg-yellow-500 transition">
+            <button type="submit" className="h-full px-8 bg-[#F2A900] text-black hover:bg-yellow-500 transition">
               <FiSearch size={20} />
             </button>
-          </div>
+          </form>
 
           <div className="flex items-center gap-4 flex-shrink-0">
             <button className="flex items-center gap-2 hover:bg-gray-800/50 p-2 rounded-lg transition">
@@ -288,7 +342,6 @@ export default function HomePage() {
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2 w-1/2">
              <button onClick={() => router.back()} className="p-1"><FiArrowLeft className="text-xl text-gray-300"/></button>
-             {/* FIX: Imeongezwa w-24 na h-auto, object-contain na brightness-0 invert (kuifanya iwe nyeupe) */}
              <div className="h-8 w-24 relative flex items-center">
                  <img src="/logo.png" alt="Jtex Logo" className="max-h-full max-w-full object-contain brightness-0 invert cursor-pointer" onClick={() => router.push('/')} />
              </div>
@@ -305,16 +358,24 @@ export default function HomePage() {
              )}
           </div>
         </div>
-        <div className="flex items-center h-11 bg-white rounded-xl overflow-hidden shadow-sm">
-          <input type="text" placeholder="Search Jtex" className="flex-1 h-full px-4 text-sm text-gray-900 outline-none" />
+        
+        {/* ACTIVE SEARCH MOBILE */}
+        <form onSubmit={handleSearch} className="flex items-center h-11 bg-white rounded-xl overflow-hidden shadow-sm">
+          <input 
+            type="text" 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search Jtex" 
+            className="flex-1 h-full px-4 text-sm text-gray-900 outline-none" 
+          />
           <div className="flex items-center gap-3 px-3 text-gray-400">
             <FiMic size={18} className="cursor-pointer"/>
             <FiCamera size={18} className="cursor-pointer"/>
           </div>
-          <button className="h-full px-5 bg-[#F2A900] text-black">
+          <button type="submit" className="h-full px-5 bg-[#F2A900] text-black">
             <FiSearch size={18} />
           </button>
-        </div>
+        </form>
       </header>
 
       {/* ========================================================= */}
@@ -456,18 +517,18 @@ export default function HomePage() {
                          <div className="flex flex-col items-center"><div className="bg-[#0A101D] text-white text-sm font-black w-8 h-8 flex items-center justify-center rounded-md">{String(timeLeft.secs).padStart(2, '0')}</div><span className="text-[8px] font-bold text-gray-500 mt-0.5 uppercase">Secs</span></div>
                       </div>
                    </div>
-                   <button onClick={() => router.push('/categories')} className="text-xs font-bold text-blue-600 flex items-center gap-1 hover:underline">View All <FiChevronRight/></button>
+                   <button onClick={() => router.push('/deals')} className="text-xs font-bold text-blue-600 flex items-center gap-1 hover:underline">View All <FiChevronRight/></button>
                 </div>
              </div>
           </div>
 
-          {/* 5 ITEMS PER ROW NA MANENO YASIYOKATIKA */}
-          <div className="px-4 lg:px-0 mb-10">
+          {/* 5 ITEMS PER ROW NA MANENO YASIYOKATIKA (Flash Sales) */}
+          <div className="px-4 lg:px-0 mb-12">
              {isLoading ? (
                <div className="flex justify-center py-10"><div className="w-8 h-8 border-4 border-[#F2A900] border-t-transparent rounded-full animate-spin"></div></div>
              ) : (
                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 lg:gap-4">
-                 {products.slice(0, 10).map((product: any) => {
+                 {products.slice(0, 5).map((product: any) => {
                    const visualDiscount = getDeterministicDiscount(product.id); 
                    const oldPrice = Math.round(product.price / (1 - (visualDiscount/100)));
 
@@ -490,7 +551,6 @@ export default function HomePage() {
 
                         <div className="flex flex-col flex-grow">
                            <h4 className="font-bold text-xs lg:text-sm text-gray-800 mb-2 line-clamp-2 leading-snug">{product.name}</h4>
-                           
                            <div className="flex flex-col xl:flex-row xl:items-center gap-1 xl:gap-2 mb-2 mt-auto">
                               <span className="font-black text-sm lg:text-base text-gray-900">TZS {product.price.toLocaleString()}</span>
                               <span className="text-[10px] text-gray-400 line-through">TZS {oldPrice.toLocaleString()}</span>
@@ -510,11 +570,118 @@ export default function HomePage() {
                </div>
              )}
           </div>
+
+          {/* ========================================================= */}
+          {/* SECTION MPYA 1: NEW ARRIVALS */}
+          {/* ========================================================= */}
+          <div className="px-4 lg:px-0 mb-12">
+             <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-2">
+                   <FiPackage size={24} className="text-green-600"/>
+                   <h2 className="text-xl lg:text-2xl font-black text-gray-900">New Arrivals</h2>
+                </div>
+                <button onClick={() => router.push('/new-arrivals')} className="text-xs font-bold text-gray-500 flex items-center gap-1 hover:text-black transition">See All <FiChevronRight/></button>
+             </div>
+
+             {isLoading ? (
+               <div className="flex justify-center py-10"><div className="w-8 h-8 border-4 border-[#F2A900] border-t-transparent rounded-full animate-spin"></div></div>
+             ) : (
+               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 lg:gap-4">
+                 {fallbackNewArrivals.map((product: any) => {
+                   return (
+                     <div 
+                       key={product.id} 
+                       onClick={() => router.push(`/product/${product.id}`)} 
+                       className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm flex flex-col h-full group hover:border-[#F2A900] transition cursor-pointer relative"
+                     >
+                        {/* New Badge */}
+                        <div className="absolute top-0 right-0 bg-green-500 text-white text-[9px] font-black px-3 py-1 rounded-bl-xl z-20 shadow-sm uppercase tracking-wider">
+                           NEW
+                        </div>
+
+                        <div className="relative w-full pt-[100%] bg-gray-50/50 rounded-xl mb-4 overflow-hidden border border-gray-50 flex-shrink-0">
+                           {product.imageUrl ? (
+                              <img src={getImageUrl(product.imageUrl)} alt={product.name} className="absolute inset-0 w-full h-full object-contain mix-blend-multiply p-4 group-hover:scale-105 transition-transform duration-300" />
+                           ) : (
+                              <div className="absolute inset-0 flex items-center justify-center text-5xl">📦</div>
+                           )}
+                        </div>
+
+                        <div className="flex flex-col flex-grow">
+                           <h4 className="font-bold text-xs lg:text-sm text-gray-800 mb-2 line-clamp-2 leading-snug group-hover:text-blue-600 transition">{product.name}</h4>
+                           <div className="mt-auto flex flex-col gap-2 border-t border-gray-100 pt-3">
+                              <span className="font-black text-sm lg:text-base text-gray-900">TZS {product.price.toLocaleString()}</span>
+                              <button onClick={(e) => { e.stopPropagation(); addToCart(product); }} className="w-full py-2 bg-gray-50 border border-gray-200 rounded-lg flex items-center justify-center text-gray-700 font-bold text-[11px] hover:bg-[#F2A900] hover:text-black hover:border-[#F2A900] transition gap-2">
+                                 <FiShoppingCart size={14}/> Add To Cart
+                              </button>
+                           </div>
+                        </div>
+                     </div>
+                   )
+                 })}
+               </div>
+             )}
+          </div>
+
+          {/* ========================================================= */}
+          {/* SECTION MPYA 2: TRENDING NOW (TOP SELLING) */}
+          {/* ========================================================= */}
+          <div className="px-4 lg:px-0 mb-10">
+             <div className="flex items-center justify-between mb-6 bg-gradient-to-r from-gray-900 to-gray-800 p-4 lg:p-6 rounded-2xl shadow-md">
+                <div>
+                   <div className="flex items-center gap-2 mb-1">
+                      <FiStar size={24} className="text-[#F2A900] fill-current"/>
+                      <h2 className="text-xl lg:text-2xl font-black text-white">Trending Now</h2>
+                   </div>
+                   <p className="text-xs text-gray-400">Most loved by customers this week.</p>
+                </div>
+                <button onClick={() => router.push('/trending')} className="text-xs font-bold text-[#F2A900] flex items-center gap-1 hover:text-white transition">See All <FiChevronRight/></button>
+             </div>
+
+             {isLoading ? (
+               <div className="flex justify-center py-10"><div className="w-8 h-8 border-4 border-[#F2A900] border-t-transparent rounded-full animate-spin"></div></div>
+             ) : (
+               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 lg:gap-4">
+                 {fallbackTrending.map((product: any) => {
+                   return (
+                     <div 
+                       key={product.id} 
+                       onClick={() => router.push(`/product/${product.id}`)} 
+                       className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm flex flex-col h-full group hover:border-[#F2A900] transition cursor-pointer"
+                     >
+                        <div className="relative w-full pt-[100%] bg-gray-50/50 rounded-xl mb-4 overflow-hidden border border-gray-50 flex-shrink-0">
+                           {/* Custom Hot Badge */}
+                           <div className="absolute top-2 left-2 w-8 h-8 bg-white rounded-full shadow flex items-center justify-center z-20">
+                             <span className="text-[#F2A900] text-lg">🔥</span>
+                           </div>
+
+                           {product.imageUrl ? (
+                              <img src={getImageUrl(product.imageUrl)} alt={product.name} className="absolute inset-0 w-full h-full object-contain mix-blend-multiply p-4 group-hover:scale-105 transition-transform duration-300" />
+                           ) : (
+                              <div className="absolute inset-0 flex items-center justify-center text-5xl">📦</div>
+                           )}
+                        </div>
+
+                        <div className="flex flex-col flex-grow text-center">
+                           <div className="flex items-center justify-center text-[#F2A900] text-[10px] mb-2">★★★★★ <span className="text-gray-400 ml-1">({Math.floor(Math.random() * 200) + 50})</span></div>
+                           <h4 className="font-bold text-xs lg:text-sm text-gray-800 mb-2 line-clamp-2 leading-snug">{product.name}</h4>
+                           <span className="font-black text-sm lg:text-base text-[#0A101D] mb-3 mt-auto">TZS {product.price.toLocaleString()}</span>
+                           <button onClick={(e) => { e.stopPropagation(); addToCart(product); }} className="w-full py-2 bg-[#0A101D] text-white rounded-lg flex items-center justify-center font-bold text-[11px] hover:bg-[#F2A900] hover:text-black transition">
+                              Add To Cart
+                           </button>
+                        </div>
+                     </div>
+                   )
+                 })}
+               </div>
+             )}
+          </div>
+
         </main>
       </div>
 
       {/* ========================================================= */}
-      {/* 4. FULL WIDTH TOP BRANDS MARQUEE (IMEREFUSHWA NA KUSLIDE NA KUTENGWA) */}
+      {/* 4. FULL WIDTH TOP BRANDS MARQUEE */}
       {/* ========================================================= */}
       <style>{`
         @keyframes slideLeftToRight {
@@ -597,7 +764,7 @@ export default function HomePage() {
               <ul className="space-y-3 text-sm font-medium">
                 <li><button onClick={() => router.push('/about')} className="hover:text-[#F2A900] transition">About Us</button></li>
                 <li><button onClick={() => router.push('/categories')} className="hover:text-[#F2A900] transition">Shop Categories</button></li>
-                <li><button onClick={() => router.push('/')} className="hover:text-[#F2A900] transition">Flash Sales</button></li>
+                <li><button onClick={() => router.push('/deals')} className="hover:text-[#F2A900] transition">Flash Sales</button></li>
                 <li><button onClick={() => router.push('/help')} className="hover:text-[#F2A900] transition">Contact Us</button></li>
               </ul>
             </div>
@@ -645,7 +812,7 @@ export default function HomePage() {
       {/* ========================================================= */}
       {/* 6. MOBILE BOTTOM NAVIGATION */}
       {/* ========================================================= */}
-      <div className="lg:hidden fixed bottom-0 left-0 w-full bg-white border-t border-gray-100 px-6 py-3 flex justify-between items-center z-50 shadow-[0_-10px_20px_rgba(0,0,0,0.03)] pb-safe">
+      <div className="lg:hidden fixed bottom-0 left-0 w-full bg-white border-t border-gray-100 flex justify-around items-center h-[60px] px-2 z-50 shadow-[0_-10px_20px_rgba(0,0,0,0.03)] pb-safe">
          <button onClick={() => router.push('/')} className="flex flex-col items-center gap-1 text-[#F2A900]">
             <FiHome size={22} className="fill-current"/>
             <span className="text-[10px] font-black">Home</span>
@@ -656,7 +823,7 @@ export default function HomePage() {
          </button>
          
          <div className="relative -top-6">
-            <button className="w-14 h-14 bg-[#0A101D] text-white rounded-full flex items-center justify-center shadow-lg border-4 border-white hover:scale-105 transition-transform" onClick={() => router.push('/categories')}>
+            <button className="w-14 h-14 bg-[#0A101D] text-white rounded-full flex items-center justify-center shadow-lg border-4 border-white hover:scale-105 transition-transform" onClick={() => router.push('/deals')}>
                <FiZap size={24} className="fill-current text-[#F2A900]"/>
             </button>
             <span className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[10px] font-bold text-gray-800 whitespace-nowrap">Flash Sales</span>
