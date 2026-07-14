@@ -11,6 +11,7 @@ import {
   FiHome, FiTag, FiPackage, FiHeadphones, FiHeart, FiBox, FiMonitor
 } from 'react-icons/fi';
 
+// FIX: Imerudishwa hatua moja nyuma (../) kulingana na faili lilipo
 import Footer from '../components/common/Footer';
 
 // === CONSTANTS ===
@@ -25,7 +26,6 @@ export default function CategoryPage({ params }: { params?: { slug?: string } })
   const router = useRouter();
   const { cart, addToCart, cartTotal } = useCart();
   
-  // FIX: Ulinzi (Fallback) kuzuia Error ya "params.slug is undefined"
   const resolvedSlug = params?.slug || '';
   const categoryNameStr = resolvedSlug 
     ? resolvedSlug.replace(/-/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase()) 
@@ -42,19 +42,14 @@ export default function CategoryPage({ params }: { params?: { slug?: string } })
   const [userCountry, setUserCountry] = useState('...');
   const [countryCode, setCountryCode] = useState('tz');
   
-  // Filtering & Sorting States
   const [searchQuery, setSearchQuery] = useState('');
   const [sortOrder, setSortOrder] = useState('popular');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [wishlist, setWishlist] = useState<string[]>([]);
   
-  // NEW STATES KWA AJILI YA FILTERS ZINAZOFANYA KAZI
   const [maxPrice, setMaxPrice] = useState<number>(10000000);
   const [selectedBrand, setSelectedBrand] = useState<string>('All');
   const [availableBrands, setAvailableBrands] = useState<string[]>([]);
-
-  // Modal States (Sasa Inafanana na Home Page)
-  const [selectedProduct, setSelectedProduct] = useState<any | null>(null);
 
   const getApiUrl = () => process.env.NEXT_PUBLIC_API_URL || 'https://jtex-ecommerce-production.up.railway.app';
   const getImageUrl = (url: string) => {
@@ -77,7 +72,6 @@ export default function CategoryPage({ params }: { params?: { slug?: string } })
         try { setUser(JSON.parse(savedUser)); } catch (e) {}
     }
 
-    // Fetch Location
     fetch('https://ipapi.co/json/')
       .then(res => res.json())
       .then(data => {
@@ -157,7 +151,7 @@ export default function CategoryPage({ params }: { params?: { slug?: string } })
 
   const cartCount = cart?.length || 0;
 
-  // === PRODUCT CARD COMPONENT (Kama Home Page - Zisizokatika & Same Aspect Ratio) ===
+  // === PRODUCT CARD COMPONENT (Imeboreshwa kukupeleka kwenye bidhaa badala ya modal) ===
   const ProductCard = ({ product }: { product: any }) => {
     const isWishlisted = wishlist.includes(product.id);
     const visualDiscount = getDeterministicDiscount(product.id); 
@@ -165,7 +159,7 @@ export default function CategoryPage({ params }: { params?: { slug?: string } })
 
     if (viewMode === 'list') {
       return (
-        <div onClick={() => setSelectedProduct(product)} className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm flex gap-4 group hover:border-[#F2A900] transition cursor-pointer">
+        <div onClick={() => router.push(`/product/${product.id}`)} className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm flex gap-4 group hover:border-[#F2A900] transition cursor-pointer">
           <div className="relative w-32 h-32 bg-gray-50/50 rounded-xl flex items-center justify-center flex-shrink-0 p-2 overflow-hidden border border-gray-50">
             <span className="absolute top-2 left-2 bg-[#FF7A00] text-white text-[10px] font-black px-1.5 py-0.5 rounded z-20">-{visualDiscount}%</span>
             {product.imageUrl ? <img src={getImageUrl(product.imageUrl)} alt={product.name} className="absolute inset-0 w-full h-full object-contain mix-blend-multiply p-2 group-hover:scale-105 transition-transform" /> : <span className="text-4xl">📦</span>}
@@ -185,7 +179,7 @@ export default function CategoryPage({ params }: { params?: { slug?: string } })
       );
     }
     return (
-      <div onClick={() => setSelectedProduct(product)} className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm flex flex-col h-full group hover:border-[#F2A900] transition cursor-pointer">
+      <div onClick={() => router.push(`/product/${product.id}`)} className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm flex flex-col h-full group hover:border-[#F2A900] transition cursor-pointer">
         <div className="relative w-full pt-[100%] bg-gray-50/50 rounded-xl mb-4 overflow-hidden border border-gray-50 flex-shrink-0">
             <span className="absolute top-2 left-2 bg-[#FF7A00] text-white text-[10px] font-black px-1.5 py-0.5 rounded z-20">-{visualDiscount}%</span>
             <button onClick={(e) => toggleWishlist(e, product.id)} className="absolute top-2 right-2 text-gray-400 hover:text-red-500 lg:hidden z-20"><FiHeart className={isWishlisted ? "fill-red-500 text-red-500" : ""}/></button>
@@ -211,28 +205,32 @@ export default function CategoryPage({ params }: { params?: { slug?: string } })
   return (
     <div className="min-h-screen bg-[#F8FAFC] font-sans text-gray-900">
       
-      {/* 1. DESKTOP HEADER (REAL LOGO KAMA HOME PAGE) */}
+      {/* 1. DESKTOP HEADER */}
       <header className="hidden lg:block bg-[#0A101D] text-white border-b border-gray-800 sticky top-0 z-50">
         <div className="max-w-[1600px] mx-auto px-6 h-24 flex items-center justify-between gap-6">
           <div className="flex items-center gap-8 flex-shrink-0">
-            <img src="/logo.png" alt="Jtex Logo" className="h-16 lg:h-24 cursor-pointer object-contain" onClick={() => router.push('/')} />
+            <img src="/logo.png" alt="Jtex Logo" className="h-20 lg:h-28 cursor-pointer object-contain" onClick={() => router.push('/')} />
             <div className="flex items-center gap-2 cursor-pointer hover:bg-gray-800/50 p-2 rounded-lg transition">
               <FiMapPin className="text-gray-400" size={20}/>
               <div className="flex flex-col leading-tight">
                 <span className="text-[10px] text-gray-400">Deliver to</span>
-                <span className="text-xs font-bold flex items-center gap-1">{userLocation.split(',')[0]} <FiChevronDown/></span>
+                <span className="text-xs font-bold flex items-center gap-1">{userLocation} <FiChevronDown/></span>
               </div>
             </div>
           </div>
 
           <div className="flex-1 max-w-2xl flex items-center h-12 bg-white rounded-lg overflow-hidden shadow-sm">
-            <button className="h-full px-4 text-gray-600 text-sm font-bold bg-gray-100 border-r border-gray-200 flex items-center gap-1 hover:bg-gray-200 transition">All <FiChevronDown/></button>
+            <button className="h-full px-4 text-gray-600 text-sm font-bold bg-gray-100 border-r border-gray-200 flex items-center gap-1 hover:bg-gray-200 transition">
+              All <FiChevronDown/>
+            </button>
             <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search products, brands..." className="flex-1 h-full px-4 text-sm text-gray-900 outline-none" />
             <div className="flex items-center gap-3 px-3 text-gray-400">
               <FiCamera className="cursor-pointer hover:text-gray-600"/>
               <FiMic className="cursor-pointer hover:text-gray-600"/>
             </div>
-            <button className="h-full px-8 bg-[#F2A900] text-black hover:bg-yellow-500 transition"><FiSearch size={20} /></button>
+            <button className="h-full px-8 bg-[#F2A900] text-black hover:bg-yellow-500 transition">
+              <FiSearch size={20} />
+            </button>
           </div>
 
           <div className="flex items-center gap-4 flex-shrink-0">
@@ -260,17 +258,18 @@ export default function CategoryPage({ params }: { params?: { slug?: string } })
       {/* 2. MOBILE HEADER */}
       <header className="lg:hidden bg-[#0A101D] text-white px-4 py-3 sticky top-0 z-50">
         <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 w-1/2">
              <button onClick={() => router.back()} className="p-1"><FiArrowLeft className="text-xl text-gray-300"/></button>
-             <img src="/logo.png" alt="Jtex Logo" className="h-8 cursor-pointer object-contain" onClick={() => router.push('/')} />
-          </div>
-          <div className="flex items-center gap-4">
-             <div className="relative" onClick={() => router.push('/checkout')}>
-                <FiShoppingCart size={22} className="text-gray-300"/>
-                {cartCount > 0 && <span className="absolute -top-1.5 -right-1.5 bg-[#F2A900] text-black text-[10px] font-black w-4 h-4 flex items-center justify-center rounded-full">{cartCount}</span>}
+             <div className="h-8 w-24 relative flex items-center">
+                 <img src="/logo.png" alt="Jtex Logo" className="max-h-full max-w-full object-contain brightness-0 invert cursor-pointer" onClick={() => router.push('/')} />
              </div>
+          </div>
+          <div className="flex items-center gap-4 justify-end w-1/2">
+             <button className="flex items-center gap-1 text-sm font-bold text-gray-300 hover:text-white transition">
+                <FiGlobe size={18}/> EN <FiChevronDown size={14}/>
+             </button>
              {user ? (
-                <div className="w-7 h-7 bg-[#F2A900] text-black rounded-full flex items-center justify-center font-bold text-[10px]" onClick={() => router.push('/profile')}>{user?.name?.charAt(0) || 'U'}</div>
+                <div className="w-8 h-8 bg-[#F2A900] text-black rounded-full flex items-center justify-center font-bold text-[10px] shadow-sm" onClick={() => router.push('/profile')}>{user?.name?.charAt(0) || 'U'}</div>
              ) : (
                 <FiUser className="text-xl text-gray-300" onClick={() => router.push('/login')} />
              )}
@@ -418,64 +417,6 @@ export default function CategoryPage({ params }: { params?: { slug?: string } })
         </button>
         <button onClick={() => router.push(user ? '/profile' : '/login')} className="flex flex-col items-center gap-1 text-gray-400 hover:text-gray-900"><FiUser size={20}/><span className="text-[9px] font-bold">Account</span></button>
       </div>
-
-      {/* ========================================================= */}
-      {/* 4. PRODUCT VIEW MODAL (KAMA YA LANDING PAGE) */}
-      {/* ========================================================= */}
-      {selectedProduct && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-2 md:p-4 backdrop-blur-sm">
-          <div className="bg-white w-full max-w-5xl rounded-2xl max-h-[95vh] overflow-y-auto shadow-2xl relative animate-fade-in">
-            <button onClick={() => setSelectedProduct(null)} className="absolute top-4 right-4 text-gray-500 hover:text-gray-900 bg-gray-100 p-2 rounded-full z-10 transition"><FiX size={24} /></button>
-            <div className="flex flex-col lg:flex-row gap-8 p-6 lg:p-8">
-              
-              <div className="w-full lg:w-1/3 flex flex-col gap-4">
-                <div className="bg-gray-50 aspect-square rounded-xl border border-gray-200 flex items-center justify-center overflow-hidden p-8 relative">
-                  <span className="absolute top-4 left-4 bg-red-500 text-white text-xs font-black px-2 py-1 rounded shadow-sm z-10">-{getDeterministicDiscount(selectedProduct.id)}%</span>
-                  {selectedProduct.imageUrl ? ( 
-                    <img src={getImageUrl(selectedProduct.imageUrl)} alt={selectedProduct.name} className="object-contain w-full h-full mix-blend-multiply" /> 
-                  ) : ( <span className="text-8xl">📦</span> )}
-                </div>
-              </div>
-              
-              <div className="w-full lg:w-1/3 flex flex-col">
-                <span className="text-sm text-blue-600 font-bold hover:underline cursor-pointer">{selectedProduct.brand || 'Jtex Authentic'}</span>
-                <h1 className="text-xl lg:text-2xl font-bold text-gray-900 mt-1 leading-snug">{selectedProduct.name}</h1>
-                <div className="flex items-center gap-2 mt-2 border-b border-gray-100 pb-3">
-                   <span className="text-[#F2A900] text-sm tracking-tighter">★★★★★</span>
-                   <span className="text-gray-500 text-xs font-medium">({Math.floor(Math.random() * 100) + 10} Reviews)</span>
-                </div>
-                <div className="mt-4 space-y-3">
-                   <p className="text-sm text-gray-600 leading-relaxed line-clamp-4">
-                     {selectedProduct.description || `High-quality ${selectedProduct.category} product designed for durability and optimal performance. Perfect for everyday use.`}
-                   </p>
-                </div>
-              </div>
-              
-              <div className="w-full lg:w-1/3">
-                <div className="border border-gray-200 rounded-xl p-5 shadow-sm bg-gray-50">
-                   <p className="text-3xl font-black text-gray-900 mb-1">TZS {selectedProduct.price?.toLocaleString()}</p>
-                   <p className="text-sm text-gray-400 line-through mb-5">
-                      TZS {Math.round(selectedProduct.price / (1 - (getDeterministicDiscount(selectedProduct.id)/100))).toLocaleString()}
-                   </p>
-                   <div className="mb-5">
-                     <p className="font-semibold text-sm text-green-600 mb-1">In Stock - Ready to Ship</p>
-                     <p className="text-[11px] text-gray-500 leading-relaxed">Delivery within 24 hours in Dar es Salaam.</p>
-                   </div>
-                   <div className="space-y-3 mt-auto">
-                     <button onClick={() => { addToCart(selectedProduct); setSelectedProduct(null); router.push('/checkout'); }} className="w-full bg-[#FFD814] hover:bg-[#F7CA00] text-black font-bold py-3.5 rounded-full text-sm transition shadow-sm border border-[#FCD200] flex justify-center items-center gap-2">
-                       <FiShoppingCart /> Add to Cart
-                     </button>
-                     <button onClick={() => { addToCart(selectedProduct); setSelectedProduct(null); router.push('/checkout'); }} className="w-full bg-[#FFA41C] hover:bg-[#FA8900] text-black font-bold py-3.5 rounded-full text-sm transition shadow-sm border border-[#FF8F00]">
-                       Buy Now <FiChevronRight className="inline" />
-                     </button>
-                   </div>
-                </div>
-              </div>
-              
-            </div>
-          </div>
-        </div>
-      )}
 
     </div>
   );
