@@ -108,9 +108,8 @@ export default function CheckoutSystem() {
   }, []);
 
   const subtotal = cartTotal || 0; 
-  const discount = Math.round(subtotal * 0.10); 
   const deliveryFee = currentStep > 1 && selectedShipping ? selectedShipping.price : 0;
-  const totalAmount = subtotal - discount + deliveryFee;
+  const totalAmount = subtotal + deliveryFee;
   
   const advancePayment = selectedPaymentType.id === 'cod' ? Math.min(50000, totalAmount) : totalAmount;
   const remainingBalance = totalAmount - advancePayment;
@@ -126,6 +125,34 @@ export default function CheckoutSystem() {
       return;
     }
     setCurrentStep(2);
+  };
+
+  // WhatsApp Order Submission (Takes over the Final Button)
+  const handleWhatsAppOrder = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    
+    if (!formData.fullName || !formData.phone || !formData.address) {
+      alert("Tafadhali kamilisha kujaza taarifa zako za makazi kwanza.");
+      setCurrentStep(2);
+      return;
+    }
+
+    const businessPhone = "255767949581"; // Namba ya Jtex
+    let itemsText = cart.map((item: any, index: number) => 
+      `${index + 1}. ${item.name} - Qty: ${item.quantity} (TZS ${(item.price * item.quantity).toLocaleString()})`
+    ).join('%0A');
+
+    const paymentInfo = selectedPaymentType.id === 'cod' 
+      ? `Nimelipia Kianzio (Advance): TZS ${advancePayment.toLocaleString()}%0ASalia langu ni: TZS ${remainingBalance.toLocaleString()} (Nitalipa nikipokea mzigo)` 
+      : `Nimelipia Full Amount: TZS ${totalAmount.toLocaleString()}`;
+
+    const message = `Habari Jtex, nimefanya manunuzi mtandaoni.%0A%0A*BIDHAA ZANGU:*%0A${itemsText}%0A%0A*TAARIFA ZANGU:*%0AJina: ${formData.fullName}%0ASimu: ${formData.phone}%0AMkoa: ${formData.region}%0AAnwani: ${formData.address}%0A%0A*NJIA YA KUSAFIRISHA:*%0A${selectedShipping.name} (TZS ${deliveryFee.toLocaleString()})%0A%0A*JUMLA KUU:* TZS ${totalAmount.toLocaleString()}%0A%0A*MALIPO YALIYOTEULIWA:*%0ANjia: ${selectedPaymentMethod.name}%0A${paymentInfo}%0A%0ATafadhali thibitisha order yangu.`;
+
+    const whatsappUrl = `https://wa.me/${businessPhone}?text=${message}`;
+    
+    clearCart();
+    window.open(whatsappUrl, '_blank');
+    router.push('/');
   };
 
   const renderStepper = () => (
@@ -295,7 +322,7 @@ export default function CheckoutSystem() {
               </div>
             )}
 
-            {/* STEP 3: PAYMENT UI MPYA (IMEREKEBISHWA KUFANANA NA PICHA) */}
+            {/* STEP 3: PAYMENT UI MPYA */}
             {currentStep === 3 && (
               <div className="space-y-6">
                 
@@ -361,7 +388,7 @@ export default function CheckoutSystem() {
                      ))}
                    </div>
 
-                   {/* MOBILE MONEY DETAILS (KUTOKA KWENYE PICHA) */}
+                   {/* MOBILE MONEY DETAILS */}
                    {selectedPaymentMethod.id === 'mobile_money' && (
                      <div className="animate-fade-in border-t border-gray-100 pt-5">
                        <h3 className="text-xs font-bold text-gray-800 mb-3 uppercase tracking-wider flex items-center gap-2"><FiInfo className="text-blue-500"/> Akaunti za Mitandao (Lipa Namba)</h3>
@@ -403,7 +430,7 @@ export default function CheckoutSystem() {
                      </div>
                    )}
 
-                   {/* BANK TRANSFER DETAILS (KUTOKA KWENYE PICHA) */}
+                   {/* BANK TRANSFER DETAILS */}
                    {selectedPaymentMethod.id === 'bank' && (
                      <div className="animate-fade-in border-t border-gray-100 pt-5">
                        <h3 className="text-xs font-bold text-gray-800 mb-3 uppercase tracking-wider flex items-center gap-2"><FiInfo className="text-green-500"/> Akaunti za Benki</h3>
@@ -432,7 +459,7 @@ export default function CheckoutSystem() {
                        </div>
 
                        <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 text-xs text-gray-600 font-medium">
-                         Tafadhali fanya muamala wa <strong>Tsh {selectedPaymentType.id === 'cod' ? advancePayment.toLocaleString() : totalAmount.toLocaleString()}</strong> kwenda kwenye moja ya akaunti za benki hapo juu. Tunashauri uhifadhi ujumbe wako wa muamala kwa ajili ya uthibitisho.
+                         Tafadhali fanya muamala wa <strong>Tsh {selectedPaymentType.id === 'cod' ? advancePayment.toLocaleString() : totalAmount.toLocaleString()}</strong> kwenda kwenye moja ya akaunti za benki hapo juu. Tunashauri uhifadhi ujumbe wako wa muamala.
                        </div>
                      </div>
                    )}
@@ -443,6 +470,13 @@ export default function CheckoutSystem() {
                        <p className="text-sm font-bold text-gray-500">You will be redirected to the secure {selectedPaymentMethod.name} gateway to complete this payment.</p>
                      </div>
                    )}
+
+                   <div className="flex gap-3 mt-8 border-t border-gray-100 pt-6">
+                      <button type="button" onClick={() => setWorkflowStep(2)} className="px-6 py-4 bg-gray-100 text-gray-600 font-bold rounded-xl text-sm hover:bg-gray-200 transition">Back</button>
+                      <button type="button" onClick={handleWhatsAppOrder} className="flex-1 bg-green-600 hover:bg-green-700 text-white font-black py-4 rounded-xl transition shadow-lg flex items-center justify-center gap-2">
+                        <FiLock /> {selectedPaymentType.id === 'cod' ? `Confirm Order TZS ${advancePayment.toLocaleString()}` : `Confirm Order TZS ${totalAmount.toLocaleString()}`}
+                      </button>
+                   </div>
                 </div>
 
                 {/* Pricing Summary (Mobile only visual match) */}
@@ -451,8 +485,6 @@ export default function CheckoutSystem() {
                    <div className="space-y-2 text-sm">
                       <div className="flex justify-between text-gray-600 font-medium"><span>Subtotal</span><span>TZS {subtotal.toLocaleString()}</span></div>
                       <div className="flex justify-between text-gray-600 font-medium"><span>Delivery ({selectedShipping?.name})</span><span>TZS {deliveryFee.toLocaleString()}</span></div>
-                      <div className="flex justify-between text-green-600 font-bold"><span>Discount (10%)</span><span>- TZS {discount.toLocaleString()}</span></div>
-                      <div className="flex justify-between text-gray-600 font-medium"><span>VAT (0%)</span><span>TZS 0</span></div>
                    </div>
                    <div className="border-t border-gray-100 mt-3 pt-3 flex justify-between items-center">
                       <span className="font-bold text-gray-900">Total Amount</span>
@@ -501,22 +533,12 @@ export default function CheckoutSystem() {
                  ))}
               </div>
 
-              <div className="bg-green-50 border border-green-100 rounded-lg p-3 flex items-center justify-between mb-5">
-                 <div className="flex items-center gap-2">
-                    <FiBox className="text-green-600"/>
-                    <span className="text-xs font-bold text-gray-700">Promo Code Applied</span>
-                 </div>
-                 <span className="bg-green-100 text-green-700 text-[10px] font-black px-2 py-1 rounded">10% OFF</span>
-              </div>
-
-              <div className="space-y-3 text-sm mb-6">
+              <div className="space-y-3 text-sm mb-6 border-t border-gray-100 pt-4">
                 <div className="flex justify-between text-gray-600 font-medium"><span>Sub Total</span><span>TZS {subtotal.toLocaleString()}</span></div>
                 <div className="flex justify-between text-gray-600 font-medium">
                    <span>Delivery {currentStep > 1 && selectedShipping ? `(${selectedShipping.name})` : ''}</span>
                    <span>TZS {deliveryFee.toLocaleString()}</span>
                 </div>
-                <div className="flex justify-between text-green-600 font-bold"><span>Discount (10%)</span><span>- TZS {discount.toLocaleString()}</span></div>
-                <div className="flex justify-between text-gray-600 font-medium"><span>VAT (0%)</span><span>TZS 0</span></div>
               </div>
 
               <div className="border-t border-gray-200 pt-4 mb-6">
@@ -524,49 +546,38 @@ export default function CheckoutSystem() {
                    <span className="font-bold text-gray-900">Total Amount</span>
                    <span className="font-black text-xl text-gray-900">TZS {totalAmount.toLocaleString()}</span>
                 </div>
-                {discount > 0 && <p className="text-[10px] text-green-600 font-bold mt-1.5 flex items-center gap-1"><FiCheckCircle/> You will save TZS {discount.toLocaleString()} on this order</p>}
               </div>
 
-              {currentStep === 3 && selectedPaymentType.id === 'cod' && (
-                <div className="mb-6 bg-yellow-50 border border-[#F2A900]/30 rounded-xl flex overflow-hidden">
-                   <div className="p-3 w-[45%] flex flex-col justify-center border-r border-[#F2A900]/20">
-                      <div className="flex items-center gap-1.5 text-[10px] text-gray-600 font-bold mb-1"><span className="w-5 h-5 bg-[#F2A900] text-black rounded flex items-center justify-center"><FiCreditCard size={12}/></span> Advance (20%)</div>
-                      <div className="font-black text-green-700 text-sm">TZS {advancePayment.toLocaleString()}</div>
-                   </div>
-                   <div className="p-3 flex-1 flex flex-col justify-center bg-white rounded-r-xl border-y border-r border-transparent">
-                      <div className="text-[10px] text-gray-600 font-bold mb-1">Remaining Balance</div>
-                      <div className="font-black text-gray-900 text-sm">TZS {remainingBalance.toLocaleString()}</div>
-                      <div className="text-[8px] text-gray-400 mt-0.5">Balance will be paid upon delivery.</div>
-                   </div>
-                </div>
-              )}
-
-              <button 
-                onClick={() => {
-                  if (currentStep === 1) {
-                    handleProceedToShipping();
-                  } else if (currentStep === 2) {
-                    if(!formData.fullName || !formData.phone || !formData.address) {
-                       alert("Please fill in all required shipping details.");
-                       return;
+              {currentStep < 3 ? (
+                <button 
+                  onClick={() => {
+                    if (currentStep === 1) {
+                      handleProceedToShipping();
+                    } else if (currentStep === 2) {
+                      if(!formData.fullName || !formData.phone || !formData.address) {
+                         alert("Please fill in all required shipping details.");
+                         return;
+                      }
+                      setCurrentStep(3);
                     }
-                    setCurrentStep(3);
-                  } else {
-                    router.push('/order-success');
-                  }
-                }}
-                disabled={cart.length === 0}
-                className="w-full bg-[#F2A900] disabled:bg-gray-300 disabled:text-gray-500 hover:bg-yellow-500 text-black font-black py-4 rounded-xl flex items-center justify-center gap-2 transition shadow-md"
-              >
-                {currentStep === 1 ? 'Proceed to Checkout' : currentStep === 2 ? 'Continue to Payment' : <><FiLock /> Confirm Place Order</>}
-              </button>
+                  }}
+                  disabled={cart.length === 0}
+                  className="w-full bg-[#F2A900] disabled:bg-gray-300 disabled:text-gray-500 hover:bg-yellow-500 text-black font-black py-4 rounded-xl flex items-center justify-center gap-2 transition shadow-md"
+                >
+                  {currentStep === 1 ? 'Proceed to Checkout' : 'Continue to Payment'}
+                </button>
+              ) : (
+                <button onClick={handleWhatsAppOrder} className="w-full bg-[#25D366] hover:bg-[#1EBE5D] text-white font-black py-4 rounded-xl flex items-center justify-center gap-2 transition shadow-md">
+                   <FiLock /> {selectedPaymentType.id === 'cod' ? `Confirm Order TZS ${advancePayment.toLocaleString()}` : `Confirm Order TZS ${totalAmount.toLocaleString()}`}
+                </button>
+              )}
               
               <div className="mt-4 flex flex-col gap-3 border-t border-gray-100 pt-4">
                  <div className="flex items-center justify-center gap-1.5 text-[10px] text-gray-500 font-medium"><FiShield className="text-green-500"/> Your information is safe with us</div>
                  <div className="flex justify-between mt-2">
-                    <div className="flex flex-col items-center gap-1 w-1/3"><FiShield className="text-gray-400 text-lg"/><span className="text-[8px] font-bold text-center">Secure Payment</span></div>
-                    <div className="flex flex-col items-center gap-1 w-1/3 border-x border-gray-100"><FiCheckCircle className="text-gray-400 text-lg"/><span className="text-[8px] font-bold text-center">Money-back Guarantee</span></div>
-                    <div className="flex flex-col items-center gap-1 w-1/3"><FiPhone className="text-gray-400 text-lg"/><span className="text-[8px] font-bold text-center">24/7 Customer Support</span></div>
+                    <div className="flex flex-col items-center gap-1 w-1/3"><FiShield className="text-gray-400 text-lg"/><span className="text-[8px] font-bold text-center">Secure Manual Payment</span></div>
+                    <div className="flex flex-col items-center gap-1 w-1/3 border-x border-gray-100"><FiCheckCircle className="text-gray-400 text-lg"/><span className="text-[8px] font-bold text-center">Quality Guarantee</span></div>
+                    <div className="flex flex-col items-center gap-1 w-1/3"><FiPhone className="text-gray-400 text-lg"/><span className="text-[8px] font-bold text-center">24/7 Human Support</span></div>
                  </div>
               </div>
             </div>
@@ -602,15 +613,13 @@ export default function CheckoutSystem() {
         ) : (
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-center gap-1 text-[10px] text-green-600 font-bold mb-1">
-              <FiShield /> Your payment is secure and protected
+              <FiShield /> Submit your order safely via WhatsApp
             </div>
             <button 
-              onClick={() => {
-                 router.push('/order-success');
-              }}
-              className="w-full bg-[#F2A900] text-black font-black py-4 rounded-xl flex items-center justify-center gap-2 shadow-sm"
+              onClick={handleWhatsAppOrder}
+              className="w-full bg-[#25D366] text-white font-black py-4 rounded-xl flex items-center justify-center gap-2 shadow-sm"
             >
-              <FiLock /> {selectedPaymentType.id === 'cod' ? `Confirm Order TZS ${advancePayment.toLocaleString()}` : `Confirm Order TZS ${totalAmount.toLocaleString()}`} <FiChevronRight />
+              <FiPhone /> Order via WhatsApp <FiChevronRight />
             </button>
           </div>
         )}

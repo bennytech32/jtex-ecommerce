@@ -288,8 +288,10 @@ export default function HomePage() {
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2 w-1/2">
              <button onClick={() => router.back()} className="p-1"><FiArrowLeft className="text-xl text-gray-300"/></button>
-             {/* FIX: Imeongezwa max-w-full ili kuhakikisha logo inatoshea vizuri bila kukatika */}
-             <img src="/logo.png" alt="Jtex Logo" className="h-8 max-w-full cursor-pointer object-contain" onClick={() => router.push('/')} />
+             {/* FIX: Imeongezwa w-24 na h-auto, object-contain na brightness-0 invert (kuifanya iwe nyeupe) */}
+             <div className="h-8 w-24 relative flex items-center">
+                 <img src="/logo.png" alt="Jtex Logo" className="max-h-full max-w-full object-contain brightness-0 invert cursor-pointer" onClick={() => router.push('/')} />
+             </div>
           </div>
           <div className="flex items-center gap-4 justify-end w-1/2">
              <button className="flex items-center gap-1 text-sm font-bold text-gray-300 hover:text-white transition">
@@ -529,7 +531,6 @@ export default function HomePage() {
         }
       `}</style>
 
-      {/* FIX: Tumeongeza margin-bottom kubwa (mb-20 lg:mb-28) ili iachane na Footer */}
       <div className="w-full bg-[#0A101D] border-t border-b border-gray-800 py-5 lg:py-6 overflow-hidden relative flex flex-col md:flex-row items-center gap-4 mb-20 lg:mb-28">
          
          <div className="md:absolute md:left-0 md:top-0 md:bottom-0 md:z-20 md:bg-gradient-to-r md:from-[#0A101D] md:via-[#0A101D] md:to-transparent w-full md:w-80 flex items-center px-6 md:px-10 justify-between md:justify-start">

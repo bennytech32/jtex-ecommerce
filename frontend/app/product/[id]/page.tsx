@@ -25,9 +25,38 @@ export default function ProductDetail() {
 
   const API_URL = 'https://jtex-ecommerce-production.up.railway.app';
 
+  // Weka au ondoa kwenye wishlist
   const toggleWishlist = (e: React.MouseEvent, productId: string) => {
     e.stopPropagation();
     setWishlist(prev => prev.includes(productId) ? prev.filter(id => id !== productId) : [...prev, productId]);
+  };
+
+  // Kufungua WhatsApp kwa ajili ya kuulizia bidhaa
+  const handleWhatsAppInquiry = () => {
+    if (!product) return;
+    const businessPhone = "255767949581"; // Namba ya ofisi
+    const message = `Habari Jtex,%0ANinaulizia kuhusu hii bidhaa:%0A*${product.name}*%0A*Bei:* TZS ${product.price.toLocaleString()}%0A%0A*Link:* ${window.location.href}`;
+    window.open(`https://wa.me/${businessPhone}?text=${message}`, '_blank');
+  };
+
+  // Mfumo wa Kushare Link ya Bidhaa
+  const handleShare = async () => {
+    if (!product) return;
+    const shareData = {
+      title: product.name,
+      text: `Angalia hii bidhaa bomba kutoka Jtex: ${product.name}`,
+      url: window.location.href,
+    };
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        await navigator.clipboard.writeText(window.location.href);
+        alert('Link imekopiwa (Copied to clipboard!)');
+      }
+    } catch (err) {
+      console.log('Error sharing:', err);
+    }
   };
 
   useEffect(() => {
@@ -71,6 +100,7 @@ export default function ProductDetail() {
   const basePrice = product.price;
   const tier2Price = basePrice * 0.95; 
   const tier3Price = basePrice * 0.90; 
+  const isMainProductWishlisted = wishlist.includes(product.id);
 
   const relatedProducts = allProducts
     .filter(p => p.category === product.category && p.id !== product.id)
@@ -106,6 +136,18 @@ export default function ProductDetail() {
     );
   };
 
+  // Helper Function for Condition Colors
+  const getConditionStyles = (condition: string) => {
+    switch (condition?.toLowerCase()) {
+      case 'refurbished':
+        return 'bg-blue-50 text-blue-700';
+      case 'used':
+        return 'bg-orange-50 text-orange-700';
+      default:
+        return 'bg-green-50 text-green-700'; // Default kwa Brand New
+    }
+  };
+
   return (
     <div className="min-h-screen bg-white text-gray-900 font-sans pb-24 lg:pb-0">
       <div className="hidden lg:block">
@@ -113,22 +155,22 @@ export default function ProductDetail() {
       </div>
       
       {/* ========================================================= */}
-      {/* 1. MOBILE HEADER WITH SEARCH BAR (No Carts) */}
+      {/* 1. MOBILE HEADER WITH SEARCH BAR */}
       {/* ========================================================= */}
       <div className="lg:hidden flex items-center gap-3 p-3 bg-white sticky top-0 z-40 shadow-sm">
          <button onClick={() => router.back()} className="text-gray-800 p-1 flex-shrink-0">
             <FiArrowLeft size={24} />
          </button>
          
-         {/* FIX: Search Bar inserted directly in the header */}
          <div className="flex-1 h-10 bg-gray-100 rounded-full flex items-center px-4 overflow-hidden border border-gray-200">
            <FiSearch className="text-gray-500" size={18} />
            <input type="text" placeholder="Search..." className="w-full h-full bg-transparent outline-none px-3 text-sm text-gray-800" />
          </div>
 
          <div className="flex items-center gap-3 text-gray-800 flex-shrink-0">
-            <FiShare size={22} className="cursor-pointer" />
-            <FiMoreVertical size={22} className="cursor-pointer" />
+            {/* Added Heart (Wishlist) to mobile header */}
+            <FiHeart onClick={(e) => toggleWishlist(e, product.id)} size={22} className={`cursor-pointer transition ${isMainProductWishlisted ? 'fill-red-500 text-red-500' : 'hover:text-red-500'}`} />
+            <FiShare onClick={handleShare} size={22} className="cursor-pointer hover:text-[#F2A900] transition" />
          </div>
       </div>
 
@@ -140,8 +182,8 @@ export default function ProductDetail() {
           <FiArrowLeft className="text-lg" /> Back to Store
         </button>
         <div className="flex gap-4 text-xl text-gray-600">
-          <FiShare className="cursor-pointer hover:text-[#F2A900] transition" />
-          <FiHeart className="cursor-pointer hover:text-red-500 transition" />
+          <FiShare onClick={handleShare} className="cursor-pointer hover:text-[#F2A900] transition" />
+          <FiHeart onClick={(e) => toggleWishlist(e, product.id)} className={`cursor-pointer transition ${isMainProductWishlisted ? 'fill-red-500 text-red-500' : 'hover:text-red-500'}`} />
         </div>
       </div>
 
@@ -197,7 +239,16 @@ export default function ProductDetail() {
             {/* Title */}
             <h1 className="text-xl lg:text-2xl font-bold text-gray-900 leading-snug mb-4">{product.name}</h1>
 
-            {/* Ratings and Condition Moved to Top, Price Moved Below */}
+            {/* Price Area (Moved Top) */}
+            <div className="flex flex-col mb-4">
+               <span className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Current Price</span>
+               <div className="flex items-end gap-3">
+                  <span className="text-3xl lg:text-4xl font-black text-gray-900 leading-none">TSH {basePrice.toLocaleString()}</span>
+                  <span className="text-sm text-gray-400 line-through mb-1">TSH {Math.round(basePrice * 1.15).toLocaleString()}</span>
+               </div>
+            </div>
+
+            {/* Ratings and Condition (Moved Below Price) */}
             <div className="flex flex-col gap-2 mb-6 border-b border-gray-100 pb-4">
                {/* Reviews */}
                <div className="flex items-center gap-2 text-sm">
@@ -207,21 +258,12 @@ export default function ProductDetail() {
                  <span className="text-blue-600 font-semibold text-xs hover:underline cursor-pointer">30 Reviews</span>
                </div>
                
-               {/* Condition */}
+               {/* Condition - Imevutwa toka kwenye database */}
                <div className="flex items-center gap-2">
                  <span className="text-xs font-bold text-gray-500">Condition:</span>
-                 <span className="bg-green-50 text-green-700 text-[10px] font-black uppercase px-2 py-0.5 rounded flex items-center gap-1">
+                 <span className={`${getConditionStyles(product.condition)} text-[10px] font-black uppercase px-2 py-0.5 rounded flex items-center gap-1`}>
                    <FiCheckCircle size={12}/> {product.condition || 'Brand New'}
                  </span>
-               </div>
-            </div>
-
-            {/* Price Area (Moved Down) */}
-            <div className="flex flex-col mb-6">
-               <span className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Current Price</span>
-               <div className="flex items-end gap-3">
-                  <span className="text-3xl lg:text-4xl font-black text-gray-900 leading-none">TSH {basePrice.toLocaleString()}</span>
-                  <span className="text-sm text-gray-400 line-through mb-1">TSH {Math.round(basePrice * 1.15).toLocaleString()}</span>
                </div>
             </div>
 
@@ -325,19 +367,21 @@ export default function ProductDetail() {
       {/* 3. MOBILE BOTTOM ACTION BAR (Sticky Bottom) */}
       {/* ========================================================= */}
       <div className="lg:hidden fixed bottom-0 left-0 w-full bg-white border-t border-gray-100 px-3 py-2 flex items-center gap-3 z-50 shadow-[0_-10px_20px_rgba(0,0,0,0.05)] pb-safe">
-         <div onClick={() => router.push('/')} className="flex flex-col items-center justify-center text-gray-500 hover:text-[#F2A900] min-w-[50px] cursor-pointer">
+         <div onClick={() => router.push('/')} className="flex flex-col items-center justify-center text-gray-500 hover:text-[#F2A900] min-w-[50px] cursor-pointer transition">
             <FiHome size={22} className="mb-0.5" />
             <span className="text-[9px] font-medium">Store</span>
          </div>
-         <div className="flex flex-col items-center justify-center text-gray-500 hover:text-[#F2A900] min-w-[50px] cursor-pointer">
+         
+         {/* Kitufe cha WhatsApp */}
+         <div onClick={handleWhatsAppInquiry} className="flex flex-col items-center justify-center text-gray-500 hover:text-[#25D366] min-w-[50px] cursor-pointer transition">
             <FiMessageCircle size={22} className="mb-0.5" />
-            <span className="text-[9px] font-medium">Message</span>
+            <span className="text-[9px] font-medium">WhatsApp</span>
          </div>
          
-         <button onClick={() => addToCart(product)} className="flex-1 bg-[#F2A900] text-black font-bold py-3 rounded-full text-[13px] shadow-sm">
+         <button onClick={() => addToCart(product)} className="flex-1 bg-[#F2A900] text-black font-bold py-3 rounded-full text-[13px] shadow-sm active:scale-95 transition-transform">
             Add To Cart
          </button>
-         <button onClick={() => { addToCart(product); router.push('/checkout'); }} className="flex-1 bg-[#0A101D] text-white font-bold py-3 rounded-full text-[13px] shadow-sm">
+         <button onClick={() => { addToCart(product); router.push('/checkout'); }} className="flex-1 bg-[#0A101D] text-white font-bold py-3 rounded-full text-[13px] shadow-sm active:scale-95 transition-transform">
             Buy Now
          </button>
       </div>

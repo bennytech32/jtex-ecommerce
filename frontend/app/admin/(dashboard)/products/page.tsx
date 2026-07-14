@@ -16,11 +16,12 @@ export default function AdminProducts() {
   const [name, setName] = useState('');
   const [category, setCategory] = useState('Electronics'); // Default English
   const [brand, setBrand] = useState('');
-  const [badge, setBadge] = useState(''); // Mfumo Mpya wa Badge (Hot, Sale etc)
+  const [badge, setBadge] = useState(''); 
+  const [condition, setCondition] = useState('Brand New');
   const [buyingPrice, setBuyingPrice] = useState('');
   const [price, setPrice] = useState('');
   const [stockQuantity, setStockQuantity] = useState('');
-  const [specData, setSpecData] = useState<any>({}); // Hifadhi Specs kama Object
+  const [specData, setSpecData] = useState<any>({}); 
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
 
@@ -31,6 +32,13 @@ export default function AdminProducts() {
   const [editImagePreviews, setEditImagePreviews] = useState<string[]>([]);
 
   const API_URL = 'https://jtex-ecommerce-production.up.railway.app';
+
+  // Orodha rasmi ya kategoria za sasa
+  const STANDARD_CATEGORIES = [
+    "Electronics", "Computers", "Monitors", "Printers", "Accessories", 
+    "Phones", "Smartwatches", "Headphones", "Clothing", "Shoes", 
+    "Home & Kitchen", "Beauty", "Other"
+  ];
 
   // --- AUTO SKU GENERATOR ---
   useEffect(() => {
@@ -116,6 +124,7 @@ export default function AdminProducts() {
     formData.append('category', category); 
     formData.append('brand', brand);
     formData.append('badge', badge); 
+    formData.append('condition', condition);
     formData.append('buyingPrice', buyingPrice); 
     formData.append('price', price);
     formData.append('stockQuantity', stockQuantity); 
@@ -128,7 +137,7 @@ export default function AdminProducts() {
       const data = await res.json();
       if (res.ok) {
         setMessage('Bidhaa imeongezwa kikamilifu!');
-        setSku(''); setName(''); setBrand(''); setBadge(''); setBuyingPrice(''); setPrice(''); setStockQuantity(''); setSpecData({});
+        setSku(''); setName(''); setBrand(''); setBadge(''); setCondition('Brand New'); setBuyingPrice(''); setPrice(''); setStockQuantity(''); setSpecData({});
         setImageFiles([]); setImagePreviews([]);
         if (fileInputRef.current) fileInputRef.current.value = '';
         fetchProducts();
@@ -142,19 +151,44 @@ export default function AdminProducts() {
     }
   };
 
-  const handleDeleteProduct = async (id: string) => {
+  // --- KIPENGELE KILICHOBORESHWA KWA AJILI YA KUFUTA BIDHAA ---
+  const handleDeleteProduct = async (id: string | number) => {
     if (!window.confirm("Una uhakika unataka kufuta bidhaa hii? Kitendo hiki hakirudishwi nyuma!")) return;
     
+    setError('');
+    setMessage('');
+    
     try {
-      const res = await fetch(`${API_URL}/api/products/${id}`, { method: 'DELETE' });
+      const cleanId = String(id);
+      
+      // Tumeondoa headers zisizo za lazima ambazo wakati mwingine zinasababisha CORS kufeli kwenye DELETE
+      const res = await fetch(`${API_URL}/api/products/${cleanId}`, { 
+        method: 'DELETE'
+      });
+      
       if (res.ok) {
         setMessage('Bidhaa imefutwa kikamilifu!');
-        fetchProducts();
+        fetchProducts(); 
       } else {
-        setError('Imeshindwa kufuta bidhaa.');
+        // Tunasoma error kama 'text' ya kawaida kwanza badala ya kulazimisha iwe JSON
+        const errorText = await res.text();
+        console.error("Delete Error Raw Response:", errorText);
+        
+        let errorMsg = res.statusText || 'Server imekataa (Huenda bidhaa hii ipo kwenye rekodi za mauzo au kikapu).';
+        try {
+          // Tunajaribu kuibadili iwe JSON kama inawezekana
+          const parsed = JSON.parse(errorText);
+          if (parsed.error) errorMsg = parsed.error;
+        } catch(e) {
+          // Kama sio JSON, na ni ujumbe mfupi, tunautumia
+          if (errorText && errorText.length < 150) errorMsg = errorText;
+        }
+
+        setError(`Imeshindwa kufuta: ${errorMsg}`);
       }
-    } catch (err) {
-      setError('Tatizo la mtandao wakati wa kufuta.');
+    } catch (err: any) {
+      console.error("Delete Catch Error:", err);
+      setError(`Tatizo la mtandao: ${err.message}`);
     }
   };
 
@@ -184,6 +218,7 @@ export default function AdminProducts() {
     formData.append('category', editingProduct.category); 
     formData.append('brand', editingProduct.brand);
     formData.append('badge', editingProduct.badge || ''); 
+    formData.append('condition', editingProduct.condition || 'Brand New');
     formData.append('buyingPrice', editingProduct.buyingPrice); 
     formData.append('price', editingProduct.price);
     formData.append('stockQuantity', editingProduct.stockQuantity); 
@@ -208,11 +243,10 @@ export default function AdminProducts() {
     }
   };
 
-  // --- DYNAMIC SPECIFICATIONS UI RENDERER (Imeboreshwa Kuwa Super Smart) ---
+  // --- DYNAMIC SPECIFICATIONS UI RENDERER ---
   const renderDynamicSpecs = (cat: string, currentState: any, setState: any) => {
     let fields: string[] = [];
-    
-    const normalizedCat = cat.toLowerCase();
+    const normalizedCat = cat ? cat.toLowerCase() : '';
 
     if (normalizedCat.includes('computer') || normalizedCat.includes('laptop') || normalizedCat.includes('pc')) {
       fields = ['RAM', 'Storage', 'Processor', 'Generation', 'Graphics', 'Display Size', 'Resolution', 'OS', 'Color'];
@@ -228,9 +262,9 @@ export default function AdminProducts() {
       fields = ['RAM', 'Storage', 'Processor', 'Display Size', 'Battery', 'Camera', 'OS', 'Color'];
     } else if (normalizedCat.includes('headphone') || normalizedCat.includes('audio') || normalizedCat.includes('speaker')) {
       fields = ['Color', 'Battery Life', 'Bluetooth Version', 'Noise Cancellation'];
-    } else if (normalizedCat.includes('electronic')) {
+    } else if (normalizedCat.includes('electronic') || normalizedCat.includes('elektroniki')) { 
       fields = ['Power (Watts)', 'Voltage', 'Color', 'Warranty', 'Weight'];
-    } else if (normalizedCat.includes('cloth') || normalizedCat.includes('fashion')) {
+    } else if (normalizedCat.includes('cloth') || normalizedCat.includes('fashion') || normalizedCat.includes('clothing')) {
       fields = ['Size', 'Color', 'Material', 'Gender'];
     } else if (normalizedCat.includes('shoe')) {
       fields = ['Shoe Size', 'Color', 'Material', 'Brand Fit'];
@@ -309,19 +343,9 @@ export default function AdminProducts() {
               <div>
                 <label className="block text-[11px] font-bold text-gray-500 uppercase mb-1">Kategoria</label>
                 <select value={category} onChange={(e) => handleCategoryChange(e, false)} className="w-full bg-gray-50 border rounded-lg px-3 py-2 outline-none text-sm font-medium">
-                  <option value="Electronics">Electronics</option>
-                  <option value="Computers">Computers</option>
-                  <option value="Monitors">Monitors</option>
-                  <option value="Printers">Printers</option>
-                  <option value="Accessories">Accessories</option>
-                  <option value="Phones">Phones</option>
-                  <option value="Smartwatches">Smartwatches</option>
-                  <option value="Headphones">Headphones</option>
-                  <option value="Clothing">Clothing</option>
-                  <option value="Shoes">Shoes</option>
-                  <option value="Home & Kitchen">Home & Kitchen</option>
-                  <option value="Beauty">Beauty</option>
-                  <option value="Other">Other</option>
+                  {STANDARD_CATEGORIES.map(catOpt => (
+                    <option key={catOpt} value={catOpt}>{catOpt}</option>
+                  ))}
                 </select>
               </div>
               <div>
@@ -341,16 +365,26 @@ export default function AdminProducts() {
               </div>
             </div>
 
-            <div>
-              <label className="block text-[11px] font-bold text-gray-500 uppercase mb-1 flex items-center gap-1"><FiTag className="text-[#F2A900]"/> Product Badge</label>
-              <select value={badge} onChange={e => setBadge(e.target.value)} className="w-full bg-gray-50 border rounded-lg px-3 py-2 outline-none text-sm font-medium">
-                <option value="">None (Hakuna)</option>
-                <option value="Hot">🔥 Hot</option>
-                <option value="Sale">🏷️ Sale</option>
-                <option value="New">✨ New Arrival</option>
-                <option value="Clearance">📦 Clearance</option>
-                <option value="Top Rated">⭐ Top Rated</option>
-              </select>
+            <div className="grid grid-cols-2 gap-3 mt-2">
+              <div>
+                <label className="block text-[11px] font-bold text-gray-500 uppercase mb-1 flex items-center gap-1"><FiTag className="text-[#F2A900]"/> Badge</label>
+                <select value={badge} onChange={e => setBadge(e.target.value)} className="w-full bg-gray-50 border rounded-lg px-3 py-2 outline-none text-sm font-medium">
+                  <option value="">Hakuna</option>
+                  <option value="Hot">🔥 Hot</option>
+                  <option value="Sale">🏷️ Sale</option>
+                  <option value="New">✨ New Arrival</option>
+                  <option value="Clearance">📦 Clearance</option>
+                  <option value="Top Rated">⭐ Top Rated</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-[11px] font-bold text-gray-500 uppercase mb-1">Condition</label>
+                <select value={condition} onChange={e => setCondition(e.target.value)} className="w-full bg-gray-50 border rounded-lg px-3 py-2 outline-none text-sm font-medium">
+                  <option value="Brand New">Brand New</option>
+                  <option value="Refurbished">Refurbished</option>
+                  <option value="Used">Used</option>
+                </select>
+              </div>
             </div>
 
             {/* DYNAMIC SPECIFICATIONS UI */}
@@ -386,7 +420,7 @@ export default function AdminProducts() {
               <thead className="bg-gray-50 text-[10px] uppercase text-gray-500 font-bold tracking-wider">
                 <tr>
                   <th className="px-4 py-4">Picha & SKU</th>
-                  <th className="px-4 py-4">Bidhaa & Badge</th>
+                  <th className="px-4 py-4">Bidhaa & Taarifa</th>
                   <th className="px-4 py-4">Bei (Tsh)</th>
                   <th className="px-4 py-4">Stock</th>
                   <th className="px-4 py-4 text-center">Vitendo</th>
@@ -401,9 +435,10 @@ export default function AdminProducts() {
                     </td>
                     <td className="px-4 py-4 font-bold text-gray-800">
                       {p.name} 
-                      <div className="flex items-center gap-2 mt-1">
+                      <div className="flex items-center gap-2 mt-1 flex-wrap">
                          <span className="text-[9px] uppercase text-gray-400 font-bold bg-gray-100 px-1.5 py-0.5 rounded">{p.category}</span>
                          {p.badge && <span className="text-[9px] uppercase text-[#F2A900] font-black bg-yellow-50 px-1.5 py-0.5 rounded">{p.badge}</span>}
+                         {p.condition && <span className="text-[9px] uppercase text-green-600 font-bold bg-green-50 px-1.5 py-0.5 rounded">{p.condition}</span>}
                       </div>
                     </td>
                     <td className="px-4 py-4 text-[#0F172A] font-black">{p.price.toLocaleString()}</td>
@@ -466,19 +501,13 @@ export default function AdminProducts() {
                 <div>
                   <label className="block text-[11px] font-bold text-gray-500 uppercase mb-1">Kategoria</label>
                   <select value={editingProduct.category} onChange={(e) => handleCategoryChange(e, true)} className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 outline-none text-sm font-medium">
-                    <option value="Electronics">Electronics</option>
-                    <option value="Computers">Computers</option>
-                    <option value="Monitors">Monitors</option>
-                    <option value="Printers">Printers</option>
-                    <option value="Accessories">Accessories</option>
-                    <option value="Phones">Phones</option>
-                    <option value="Smartwatches">Smartwatches</option>
-                    <option value="Headphones">Headphones</option>
-                    <option value="Clothing">Clothing</option>
-                    <option value="Shoes">Shoes</option>
-                    <option value="Home & Kitchen">Home & Kitchen</option>
-                    <option value="Beauty">Beauty</option>
-                    <option value="Other">Other</option>
+                    {STANDARD_CATEGORIES.map(catOpt => (
+                      <option key={catOpt} value={catOpt}>{catOpt}</option>
+                    ))}
+                    {/* Fallback ya Legacy Categories */}
+                    {!STANDARD_CATEGORIES.includes(editingProduct.category) && (
+                      <option value={editingProduct.category}>{editingProduct.category} (Legacy)</option>
+                    )}
                   </select>
                 </div>
                 <div><label className="block text-xs font-bold text-gray-500 mb-1">Brand</label><input type="text" value={editingProduct.brand} onChange={e => setEditingProduct({...editingProduct, brand: e.target.value})} className="w-full border rounded-xl px-3 py-2 text-sm" /></div>
@@ -489,16 +518,27 @@ export default function AdminProducts() {
                 <div><label className="block text-xs font-bold text-gray-500 mb-1">Stock</label><input type="number" value={editingProduct.stockQuantity} onChange={e => setEditingProduct({...editingProduct, stockQuantity: e.target.value})} className="w-full border rounded-xl px-3 py-2 text-sm" /></div>
               </div>
 
-              <div>
-                <label className="block text-[11px] font-bold text-gray-500 uppercase mb-1 flex items-center gap-1"><FiTag className="text-[#F2A900]"/> Product Badge</label>
-                <select value={editingProduct.badge || ''} onChange={e => setEditingProduct({...editingProduct, badge: e.target.value})} className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 outline-none text-sm font-medium">
-                  <option value="">None (Hakuna)</option>
-                  <option value="Hot">🔥 Hot</option>
-                  <option value="Sale">🏷️ Sale</option>
-                  <option value="New">✨ New Arrival</option>
-                  <option value="Clearance">📦 Clearance</option>
-                  <option value="Top Rated">⭐ Top Rated</option>
-                </select>
+              {/* SEHEMU YA BADGE NA CONDITION PAMOJA (EDIT) */}
+              <div className="grid grid-cols-2 gap-4 mt-2">
+                <div>
+                  <label className="block text-[11px] font-bold text-gray-500 uppercase mb-1 flex items-center gap-1"><FiTag className="text-[#F2A900]"/> Badge</label>
+                  <select value={editingProduct.badge || ''} onChange={e => setEditingProduct({...editingProduct, badge: e.target.value})} className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 outline-none text-sm font-medium">
+                    <option value="">Hakuna</option>
+                    <option value="Hot">🔥 Hot</option>
+                    <option value="Sale">🏷️ Sale</option>
+                    <option value="New">✨ New Arrival</option>
+                    <option value="Clearance">📦 Clearance</option>
+                    <option value="Top Rated">⭐ Top Rated</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold text-gray-500 uppercase mb-1">Condition</label>
+                  <select value={editingProduct.condition || 'Brand New'} onChange={e => setEditingProduct({...editingProduct, condition: e.target.value})} className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 outline-none text-sm font-medium">
+                    <option value="Brand New">Brand New</option>
+                    <option value="Refurbished">Refurbished</option>
+                    <option value="Used">Used</option>
+                  </select>
+                </div>
               </div>
 
               {/* DYNAMIC EDIT SPECS */}
