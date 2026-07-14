@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
+import { writeFile } from 'fs/promises';
+import path from 'path';
+import fs from 'fs';
 
 const prisma = new PrismaClient();
 
@@ -10,36 +13,15 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
 };
 
-// Kushughulikia Preflight Requests (Kuzuia NetworkError)
 export async function OPTIONS() {
   return NextResponse.json({}, { headers: corsHeaders });
 }
 
-// KUFUTA BIDHAA (DELETE)
-export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function POST(req: Request) {
   try {
-    const { id } = await params;
-    
-    await prisma.product.delete({
-      where: { id: id } // Kama ID yako ni namba, badilisha iwe: parseInt(id)
-    });
-
-    return NextResponse.json({ message: "Bidhaa imefutwa kikamilifu" }, { status: 200, headers: corsHeaders });
-  } catch (error: any) {
-    console.error("Delete Error:", error);
-    return NextResponse.json(
-      { error: "Kosa la kufuta: " + error.message }, 
-      { status: 500, headers: corsHeaders }
-    );
-  }
-}
-
-// KUHARIRI/KUSASISHA BIDHAA (PUT)
-export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
-  try {
-    const { id } = await params;
     const formData = await req.formData();
     
+    // Kuchukua data za kawaida
     const sku = formData.get('sku') as string;
     const name = formData.get('name') as string;
     const category = formData.get('category') as string;
@@ -51,27 +33,73 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     const badge = formData.get('badge') as string;
     const condition = formData.get('condition') as string;
 
-    const updatedProduct = await prisma.product.update({
-      where: { id: id }, // Kama ID yako ni namba, badilisha iwe: parseInt(id)
+    // ==========================================
+    // LOGIC YA KUPOKEA NA KUSAVE PICHA
+    // ==========================================
+    const imageFile = formData.get('images') as File | null;
+    let finalImageUrl = "";
+
+    if (imageFile && imageFile.name) {
+      // Badili file liwe buffer ili kompyuta iweze kulisave
+      const bytes = await imageFile.arrayBuffer();
+      const buffer = Buffer.from(bytes);
+
+      // Tengeneza jina la picha lisijirudie (Mfano: 1689...-picha.jpg)
+      const fileName = `${Date.now()}-${imageFile.name.replace(/\s+/g, '-')}`;
+      
+      // Njia ya kuhifadhi picha kwenye folder la 'public/uploads'
+      const uploadDir = path.join(process.cwd(), 'public/uploads');
+      
+      // Kama folder la 'uploads' halipo, litengenezwe
+      if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true });
+      }
+
+      // Hifadhi picha rasmi kwenye mfumo
+      const filePath = path.join(uploadDir, fileName);
+      await writeFile(filePath, buffer);
+      
+      // Link itakayoenda kwenye Database
+      finalImageUrl = `/uploads/${fileName}`;
+    }
+
+    // Hapa tuna-save kwenye database
+    const newProduct = await prisma.product.create({
       data: {
-        sku,
-        name,
-        category,
-        brand,
+        sku: sku || `SKU-${Date.now()}`,
+        name: name || "Bidhaa Mpya",
+        category: category || "Other",
+        brand: brand || "",
         buyingPrice: parseFloat(buyingPrice) || 0,
         price: parseFloat(price) || 0,
         stockQuantity: parseInt(stockQuantity) || 0,
-        specifications,
+        specifications: specifications || "{}",
         badge: badge || "", 
-        condition: condition || "Brand New"
-      }
+        condition: condition || "Brand New",
+        imageUrl: finalImageUrl // PICHA INAINGIA RASMI HAPA
+      },
     });
 
-    return NextResponse.json(updatedProduct, { status: 200, headers: corsHeaders });
+    return NextResponse.json(newProduct, { status: 201, headers: corsHeaders });
+
   } catch (error: any) {
-    console.error("Update Error:", error);
+    console.error("Backend Error Detail:", error);
     return NextResponse.json(
-      { error: "Kosa la kusasisha: " + error.message }, 
+      { error: "KOSA LA BACKEND: " + error.message }, 
+      { status: 500, headers: corsHeaders }
+    );
+  }
+}
+
+export async function GET() {
+  try {
+    const products = await prisma.product.findMany({
+      orderBy: { createdAt: 'desc' }
+    });
+    return NextResponse.json(products, { headers: corsHeaders });
+  } catch (error: any) {
+    return NextResponse.json(
+      { error: "Imeshindwa kupata bidhaa: " + error.message }, 
       { status: 500, headers: corsHeaders }
     );
   }
