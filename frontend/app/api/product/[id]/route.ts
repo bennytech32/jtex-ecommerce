@@ -2,9 +2,9 @@ import { NextResponse } from 'next/server';
 
 const API_URL = 'https://jtex-ecommerce-production.up.railway.app';
 
-export async function GET(req: Request, { params }: { params: { id: string } }) {
-  const { id } = params;
+export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params;
     const res = await fetch(`${API_URL}/products/${id}`);
     const data = await res.json();
     return NextResponse.json(data, { status: res.status });
@@ -13,9 +13,9 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
   }
 }
 
-export async function PUT(req: Request, { params }: { params: { id: string } }) {
-  const { id } = params;
+export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params;
     const formData = await req.formData();
     const res = await fetch(`${API_URL}/products/${id}`, { 
       method: 'PUT', 
@@ -28,9 +28,9 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
   }
 }
 
-export async function DELETE(req: Request, { params }: { params: { id: string } }) {
-  const { id } = params;
+export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params;
     const res = await fetch(`${API_URL}/products/${id}`, { 
       method: 'DELETE' 
     });
