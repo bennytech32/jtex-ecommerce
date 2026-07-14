@@ -17,28 +17,25 @@ export async function POST(req: Request) {
     const stockQuantity = formData.get('stockQuantity') as string;
     const specifications = formData.get('specifications') as string;
     
-    // --- HIZI NDIO FIELDS MPYA TULIZOONGEZA ---
+    // Fields Mpya
     const badge = formData.get('badge') as string;
     const condition = formData.get('condition') as string;
 
     // Hapa tuna-save kwenye database
     const newProduct = await prisma.product.create({
       data: {
-        sku,
-        name,
-        category,
-        brand,
+        sku: sku || `SKU-${Date.now()}`,
+        name: name || "Bidhaa Mpya",
+        category: category || "Other",
+        brand: brand || "",
         buyingPrice: parseFloat(buyingPrice) || 0,
         price: parseFloat(price) || 0,
         stockQuantity: parseInt(stockQuantity) || 0,
-        specifications,
+        specifications: specifications || "{}",
         
-        // --- HAPA TUNAZIINGIZA KWENYE DATABASE ---
+        // Hapa tunaziingiza kwenye database
         badge: badge || "", 
         condition: condition || "Brand New",
-        
-        // Kumbuka: imageUrl inabidi uwe umeifanyia handling kule juu kabla ya hapa
-        // Kama huna logic ya ku-upload picha bado, unaweza kuweka ""
         imageUrl: "" 
       },
     });
@@ -46,23 +43,22 @@ export async function POST(req: Request) {
     return NextResponse.json(newProduct, { status: 201 });
 
   } catch (error: any) {
-    console.error("Backend Error:", error);
-    // Hapa ndio tunarudisha ujumbe halisi wa kosa (Kuna tatizo kuweka bidhaa)
+    console.error("Backend Error Detail:", error);
+    // TUNAWEKA UJUMBE TOFAUTI ILI TUJUE KAMA CODE MPYA INASOMA
     return NextResponse.json(
-      { error: "Kuna tatizo kuweka bidhaa: " + error.message }, 
+      { error: "KOSA JIPYA LA BACKEND: " + error.message }, 
       { status: 500 }
     );
   }
 }
 
-// Handler ya GET (Kusoma bidhaa)
 export async function GET() {
   try {
     const products = await prisma.product.findMany({
       orderBy: { createdAt: 'desc' }
     });
     return NextResponse.json(products);
-  } catch (error) {
-    return NextResponse.json({ error: "Imeshindwa kupata bidhaa" }, { status: 500 });
+  } catch (error: any) {
+    return NextResponse.json({ error: "Imeshindwa kupata bidhaa: " + error.message }, { status: 500 });
   }
 }
