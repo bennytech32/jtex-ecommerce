@@ -3,6 +3,18 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
+// --- HEADERS ZA CORS ILI MAWASILIANO YASIBLO KIWE NA BROWSER ---
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*', // Inaruhusu domain zote pamoja na jtexafrica.com
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+};
+
+// Kushughulikia Preflight Requests (OPTIONS) - Hii ni lazima kwa sababu ya CORS
+export async function OPTIONS() {
+  return NextResponse.json({}, { headers: corsHeaders });
+}
+
 export async function POST(req: Request) {
   try {
     const formData = await req.formData();
@@ -17,7 +29,6 @@ export async function POST(req: Request) {
     const stockQuantity = formData.get('stockQuantity') as string;
     const specifications = formData.get('specifications') as string;
     
-    // Fields Mpya
     const badge = formData.get('badge') as string;
     const condition = formData.get('condition') as string;
 
@@ -32,22 +43,20 @@ export async function POST(req: Request) {
         price: parseFloat(price) || 0,
         stockQuantity: parseInt(stockQuantity) || 0,
         specifications: specifications || "{}",
-        
-        // Hapa tunaziingiza kwenye database
         badge: badge || "", 
         condition: condition || "Brand New",
         imageUrl: "" 
       },
     });
 
-    return NextResponse.json(newProduct, { status: 201 });
+    // Tunarudisha majibu yakiwa na CORS headers
+    return NextResponse.json(newProduct, { status: 201, headers: corsHeaders });
 
   } catch (error: any) {
     console.error("Backend Error Detail:", error);
-    // TUNAWEKA UJUMBE TOFAUTI ILI TUJUE KAMA CODE MPYA INASOMA
     return NextResponse.json(
-      { error: "KOSA JIPYA LA BACKEND: " + error.message }, 
-      { status: 500 }
+      { error: "KOSA LA BACKEND: " + error.message }, 
+      { status: 500, headers: corsHeaders }
     );
   }
 }
@@ -57,8 +66,11 @@ export async function GET() {
     const products = await prisma.product.findMany({
       orderBy: { createdAt: 'desc' }
     });
-    return NextResponse.json(products);
+    return NextResponse.json(products, { headers: corsHeaders });
   } catch (error: any) {
-    return NextResponse.json({ error: "Imeshindwa kupata bidhaa: " + error.message }, { status: 500 });
+    return NextResponse.json(
+      { error: "Imeshindwa kupata bidhaa: " + error.message }, 
+      { status: 500, headers: corsHeaders }
+    );
   }
 }
