@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { FiPlus, FiBox, FiDatabase, FiAlertTriangle, FiCheckCircle, FiImage, FiX, FiEdit2, FiTrash2, FiSettings, FiTag } from 'react-icons/fi';
+import { FiPlus, FiBox, FiDatabase, FiAlertTriangle, FiCheckCircle, FiImage, FiX, FiEdit2, FiTrash2, FiSettings, FiTag, FiCpu } from 'react-icons/fi';
 
 export default function AdminProducts() {
   const [products, setProducts] = useState<any[]>([]);
@@ -14,8 +14,9 @@ export default function AdminProducts() {
   // Form States (Kwa ajili ya kuweka bidhaa mpya)
   const [sku, setSku] = useState('');
   const [name, setName] = useState('');
-  const [category, setCategory] = useState('Electronics'); // Default English
+  const [category, setCategory] = useState('Electronics'); 
   const [brand, setBrand] = useState('');
+  const [modelName, setModelName] = useState(''); // STATE MPYA YA MODEL
   const [badge, setBadge] = useState(''); 
   const [condition, setCondition] = useState('Brand New');
   const [buyingPrice, setBuyingPrice] = useState('');
@@ -33,14 +34,23 @@ export default function AdminProducts() {
 
   const API_URL = 'https://jtex-ecommerce-production.up.railway.app';
 
-  // Orodha rasmi ya kategoria za sasa
   const STANDARD_CATEGORIES = [
     "Electronics", "Computers", "Monitors", "Printers", "Accessories", 
     "Phones", "Smartwatches", "Headphones", "Clothing", "Shoes", 
     "Home & Kitchen", "Beauty", "Other"
   ];
 
-  // --- AUTO SKU GENERATOR ---
+  // Helper function ya kusoma picha kama Array (kwa sababu sasa zinasave-iwa nyingi)
+  const getImagesArray = (imgData: string) => {
+    if (!imgData) return [];
+    try {
+      const parsed = JSON.parse(imgData);
+      return Array.isArray(parsed) ? parsed : [imgData];
+    } catch(e) {
+      return [imgData]; // Fallback kama ni picha moja ya zamani
+    }
+  };
+
   useEffect(() => {
     if (name && category && !editingProduct) {
       const prefix = category.substring(0, 3).toUpperCase();
@@ -81,23 +91,20 @@ export default function AdminProducts() {
     const files = e.target.files;
     if (files) {
       let filesArray = Array.from(files);
+      const currentPreviews = isEdit ? editImagePreviews : imagePreviews;
+      const spaceLeft = 5 - currentPreviews.length;
+      
+      if (filesArray.length > spaceLeft) {
+        alert(`Mwisho ni picha 5. Unaweza kuongeza picha ${spaceLeft} tu.`);
+        filesArray = filesArray.slice(0, spaceLeft);
+      }
+
+      const newPreviews = filesArray.map(file => URL.createObjectURL(file));
       
       if (isEdit) {
-        const spaceLeft = 5 - editImageFiles.length;
-        if (filesArray.length > spaceLeft) {
-          alert(`Mwisho ni picha 5. Unaweza kuongeza picha ${spaceLeft} tu.`);
-          filesArray = filesArray.slice(0, spaceLeft);
-        }
-        const newPreviews = filesArray.map(file => URL.createObjectURL(file));
         setEditImageFiles(prev => [...prev, ...filesArray]);
         setEditImagePreviews(prev => [...prev, ...newPreviews]);
       } else {
-        const spaceLeft = 5 - imageFiles.length;
-        if (filesArray.length > spaceLeft) {
-          alert(`Mwisho ni picha 5. Unaweza kuongeza picha ${spaceLeft} tu.`);
-          filesArray = filesArray.slice(0, spaceLeft);
-        }
-        const newPreviews = filesArray.map(file => URL.createObjectURL(file));
         setImageFiles(prev => [...prev, ...filesArray]);
         setImagePreviews(prev => [...prev, ...newPreviews]);
       }
@@ -106,17 +113,15 @@ export default function AdminProducts() {
 
   const removeImage = (indexToRemove: number, isEdit: boolean = false) => {
     if (isEdit) {
-      setEditImageFiles(prev => prev.filter((_, index) => index !== indexToRemove));
+      // Kama picha inafutwa ni ya mtandaoni, inabidi tuijulishe backend (hapa tunafuta kwenye UI kwanza)
       setEditImagePreviews(prev => prev.filter((_, index) => index !== indexToRemove));
+      // Kumbuka: Kwa ukamilifu, ingebidi tu-track picha za zamani zilizofutwa. Kwa sasa tunaacha ku-update 'files' maana hizi ni previews.
     } else {
       setImageFiles(prev => prev.filter((_, index) => index !== indexToRemove));
       setImagePreviews(prev => prev.filter((_, index) => index !== indexToRemove));
     }
   };
 
-  // ==========================================
-  // MABORESHO YAMEFANYIKA HAPA KUDAKA ERROR HALISI
-  // ==========================================
   const handleAddProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true); setMessage(''); setError('');
@@ -126,6 +131,7 @@ export default function AdminProducts() {
     formData.append('name', name);
     formData.append('category', category); 
     formData.append('brand', brand);
+    formData.append('model', modelName); // TUNAONGEZA MODEL
     formData.append('badge', badge); 
     formData.append('condition', condition);
     formData.append('buyingPrice', buyingPrice); 
@@ -133,34 +139,25 @@ export default function AdminProducts() {
     formData.append('stockQuantity', stockQuantity); 
     formData.append('specifications', JSON.stringify(specData));
     
+    // TUNAWEKA PICHA ZOTE
     imageFiles.forEach((file) => formData.append('images', file));
 
     try {
       const res = await fetch(`${API_URL}/api/products`, { method: 'POST', body: formData });
-      
-      // Tunasoma jibu kama "text" kwanza ili kudaka errors zinazokuja kama HTML toka kwa server
       const rawText = await res.text();
       let data: any = {};
-      try {
-         data = JSON.parse(rawText);
-      } catch(e) {
-         data = { error: rawText };
-      }
+      try { data = JSON.parse(rawText); } catch(e) { data = { error: rawText }; }
 
       if (res.ok) {
         setMessage('Bidhaa imeongezwa kikamilifu!');
-        setSku(''); setName(''); setBrand(''); setBadge(''); setCondition('Brand New'); setBuyingPrice(''); setPrice(''); setStockQuantity(''); setSpecData({});
+        setSku(''); setName(''); setBrand(''); setModelName(''); setBadge(''); setCondition('Brand New'); setBuyingPrice(''); setPrice(''); setStockQuantity(''); setSpecData({});
         setImageFiles([]); setImagePreviews([]);
         if (fileInputRef.current) fileInputRef.current.value = '';
         fetchProducts();
       } else {
-        // Hapa itatuonyesha error halisi toka Database
-        const errorMsg = data.error || data.message || "Server imekataa kupokea data.";
-        console.error("MAJIBU YA SERVER YALIYOGOMA:", rawText);
-        setError(`Imeshindwa: ${errorMsg}`);
+        setError(`Imeshindwa: ${data.error || "Server imekataa kupokea data."}`);
       }
     } catch (err: any) {
-      console.error("NETWORK ERROR:", err);
       setError(`Tatizo la mtandao: ${err.message}`);
     } finally {
       setIsLoading(false);
@@ -168,31 +165,17 @@ export default function AdminProducts() {
   };
 
   const handleDeleteProduct = async (id: string | number) => {
-    if (!window.confirm("Una uhakika unataka kufuta bidhaa hii? Kitendo hiki hakirudishwi nyuma!")) return;
-    
-    setError('');
-    setMessage('');
-    
+    if (!window.confirm("Una uhakika unataka kufuta bidhaa hii?")) return;
+    setError(''); setMessage('');
     try {
-      const cleanId = String(id);
-      const res = await fetch(`${API_URL}/api/products/${cleanId}`, { 
-        method: 'DELETE'
-      });
-      
+      const res = await fetch(`${API_URL}/api/products/${id}`, { method: 'DELETE' });
       const errorText = await res.text();
-      
       if (res.ok) {
         setMessage('Bidhaa imefutwa kikamilifu!');
         fetchProducts(); 
       } else {
-        console.error("Delete Error Raw Response:", errorText);
         let errorMsg = res.statusText;
-        try {
-          const parsed = JSON.parse(errorText);
-          if (parsed.error) errorMsg = parsed.error;
-        } catch(e) {
-          if (errorText && errorText.length < 150) errorMsg = errorText;
-        }
+        try { const parsed = JSON.parse(errorText); if (parsed.error) errorMsg = parsed.error; } catch(e) { if (errorText && errorText.length < 150) errorMsg = errorText; }
         setError(`Imeshindwa kufuta: ${errorMsg}`);
       }
     } catch (err: any) {
@@ -203,14 +186,13 @@ export default function AdminProducts() {
   const openEditModal = (product: any) => {
     setEditingProduct({ ...product });
     setEditImageFiles([]);
-    setEditImagePreviews(product.imageUrl ? [`${API_URL}${product.imageUrl}`] : []);
+    
+    // Tunasoma picha zote (Kama ni Array au String)
+    const existingImages = getImagesArray(product.imageUrl).map((img: string) => `${API_URL}${img}`);
+    setEditImagePreviews(existingImages);
     
     if (product.specifications) {
-      try {
-        setEditSpecData(JSON.parse(product.specifications));
-      } catch (e) {
-        setEditSpecData({});
-      }
+      try { setEditSpecData(JSON.parse(product.specifications)); } catch (e) { setEditSpecData({}); }
     } else {
       setEditSpecData({});
     }
@@ -225,6 +207,7 @@ export default function AdminProducts() {
     formData.append('name', editingProduct.name);
     formData.append('category', editingProduct.category); 
     formData.append('brand', editingProduct.brand);
+    formData.append('model', editingProduct.model || ''); // EDIT MODEL
     formData.append('badge', editingProduct.badge || ''); 
     formData.append('condition', editingProduct.condition || 'Brand New');
     formData.append('buyingPrice', editingProduct.buyingPrice); 
@@ -232,27 +215,21 @@ export default function AdminProducts() {
     formData.append('stockQuantity', editingProduct.stockQuantity); 
     formData.append('specifications', JSON.stringify(editSpecData));
     
+    // TUNAWEKA PICHA MPYA ZILIZOONGEZWA WAKATI WA EDIT
     editImageFiles.forEach((file) => formData.append('images', file));
 
     try {
       const res = await fetch(`${API_URL}/api/products/${editingProduct.id}`, { method: 'PUT', body: formData });
-      
       const rawText = await res.text();
       let data: any = {};
-      try {
-         data = JSON.parse(rawText);
-      } catch(e) {
-         data = { error: rawText };
-      }
+      try { data = JSON.parse(rawText); } catch(e) { data = { error: rawText }; }
 
       if (res.ok) {
         setMessage('Bidhaa imesasishwa kikamilifu!');
         setEditingProduct(null);
         fetchProducts();
       } else {
-        const errorMsg = data.error || data.message || "Server imekataa kusasisha data.";
-        console.error("MAJIBU YA SERVER YALIYOGOMA KUSASISHA:", rawText);
-        setError(`Imeshindwa: ${errorMsg}`);
+        setError(`Imeshindwa: ${data.error || "Server imekataa kusasisha data."}`);
       }
     } catch (err: any) {
       setError(`Tatizo la mtandao: ${err.message}`);
@@ -261,7 +238,6 @@ export default function AdminProducts() {
     }
   };
 
-  // --- DYNAMIC SPECIFICATIONS UI RENDERER ---
   const renderDynamicSpecs = (cat: string, currentState: any, setState: any) => {
     let fields: string[] = [];
     const normalizedCat = cat ? cat.toLowerCase() : '';
@@ -327,7 +303,7 @@ export default function AdminProducts() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
-        {/* FOMU YA KUONGEZA BIDHAA (ADD NEW) */}
+        {/* FOMU YA KUONGEZA BIDHAA */}
         <div className="lg:col-span-1 bg-white p-6 rounded-2xl shadow-sm border border-gray-100 h-max">
           <h2 className="font-bold mb-4 flex items-center gap-2 border-b pb-3">
             <FiPlus className="text-[#F2A900]" /> Weka Bidhaa Mpya
@@ -347,7 +323,7 @@ export default function AdminProducts() {
                   ))}
                 </div>
               )}
-              {imageFiles.length < 5 && (
+              {imagePreviews.length < 5 && (
                 <input type="file" accept="image/*" multiple onChange={(e) => handleImageChange(e, false)} ref={fileInputRef} className="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-[#F2A900]/10 file:text-[#0F172A] hover:file:bg-[#F2A900]/20 transition cursor-pointer" />
               )}
             </div>
@@ -358,7 +334,7 @@ export default function AdminProducts() {
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              <div>
+              <div className="col-span-2">
                 <label className="block text-[11px] font-bold text-gray-500 uppercase mb-1">Kategoria</label>
                 <select value={category} onChange={(e) => handleCategoryChange(e, false)} className="w-full bg-gray-50 border rounded-lg px-3 py-2 outline-none text-sm font-medium">
                   {STANDARD_CATEGORIES.map(catOpt => (
@@ -366,15 +342,21 @@ export default function AdminProducts() {
                   ))}
                 </select>
               </div>
+              
+              {/* BRAND NA MODEL ZIMEKAA PAMOJA */}
               <div>
                 <label className="block text-[11px] font-bold text-gray-500 uppercase mb-1">Brand</label>
-                <input type="text" value={brand} onChange={e => setBrand(e.target.value)} className="w-full bg-gray-50 border rounded-lg px-3 py-2 outline-none text-sm" placeholder="Apple / HP / Dell" />
+                <input type="text" value={brand} onChange={e => setBrand(e.target.value)} className="w-full bg-gray-50 border rounded-lg px-3 py-2 outline-none text-sm" placeholder="Apple / HP" />
+              </div>
+              <div>
+                <label className="block text-[11px] font-bold text-gray-500 uppercase mb-1 flex items-center gap-1"><FiCpu className="text-gray-400"/> Model</label>
+                <input type="text" value={modelName} onChange={e => setModelName(e.target.value)} className="w-full bg-gray-50 border rounded-lg px-3 py-2 outline-none text-sm border-blue-200 focus:border-[#F2A900]" placeholder="Mf: ProBook 840 G8" />
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3 mt-2">
               <div>
-                <label className="block text-[11px] font-bold text-gray-500 uppercase mb-1">SKU (Auto-Generated)</label>
+                <label className="block text-[11px] font-bold text-gray-500 uppercase mb-1">SKU (Auto)</label>
                 <div className="flex items-center bg-gray-100 border border-gray-200 rounded-lg px-3 py-2"><FiDatabase className="text-gray-400 mr-2" /><input type="text" required value={sku} onChange={e => setSku(e.target.value)} className="w-full bg-transparent outline-none text-sm text-gray-600" placeholder="SKU-001" /></div>
               </div>
               <div>
@@ -405,7 +387,6 @@ export default function AdminProducts() {
               </div>
             </div>
 
-            {/* DYNAMIC SPECIFICATIONS UI */}
             <div>
               {renderDynamicSpecs(category, specData, setSpecData)}
             </div>
@@ -445,14 +426,22 @@ export default function AdminProducts() {
                 </tr>
               </thead>
               <tbody className="text-sm divide-y divide-gray-100">
-                {products.map((p) => (
+                {products.map((p) => {
+                  // Tunachukua picha ya kwanza kwenye Array kuonyesha kwenye Table
+                  const displayImage = getImagesArray(p.imageUrl)[0];
+                  
+                  return (
                   <tr key={p.id} className="hover:bg-gray-50 transition">
                     <td className="px-4 py-4 flex items-center gap-3">
-                      {p.imageUrl ? ( <img src={`${API_URL}${p.imageUrl}`} className="w-10 h-10 object-cover rounded border border-gray-200 bg-white" /> ) : ( <div className="w-10 h-10 bg-gray-100 rounded flex items-center justify-center text-xl">{p.imageEmoji || '📦'}</div> )}
+                      {displayImage ? ( <img src={`${API_URL}${displayImage}`} className="w-10 h-10 object-cover rounded border border-gray-200 bg-white" /> ) : ( <div className="w-10 h-10 bg-gray-100 rounded flex items-center justify-center text-xl">{p.imageEmoji || '📦'}</div> )}
                       <span className="font-mono text-xs font-bold text-gray-500 bg-gray-100 px-2 py-1 rounded">{p.sku}</span>
                     </td>
                     <td className="px-4 py-4 font-bold text-gray-800">
                       {p.name} 
+                      {/* TUNAONYESHA BRAND NA MODEL HAPA CHINI YA JINA */}
+                      <div className="text-[10px] text-gray-500 font-medium mt-0.5">
+                        {p.brand} {p.model ? <span className="text-blue-600 font-bold ml-1">| Model: {p.model}</span> : ''}
+                      </div>
                       <div className="flex items-center gap-2 mt-1 flex-wrap">
                          <span className="text-[9px] uppercase text-gray-400 font-bold bg-gray-100 px-1.5 py-0.5 rounded">{p.category}</span>
                          {p.badge && <span className="text-[9px] uppercase text-[#F2A900] font-black bg-yellow-50 px-1.5 py-0.5 rounded">{p.badge}</span>}
@@ -476,13 +465,12 @@ export default function AdminProducts() {
                       </div>
                     </td>
                   </tr>
-                ))}
+                )})}
                 {products.length === 0 && <tr><td colSpan={5} className="p-12 text-center text-gray-400 font-medium">Hakuna bidhaa kwenye Database.</td></tr>}
               </tbody>
             </table>
           </div>
         </div>
-
       </div>
 
       {/* MODAL YA KUEDIT BIDHAA */}
@@ -497,7 +485,7 @@ export default function AdminProducts() {
             <form onSubmit={handleUpdateProduct} className="p-4 sm:p-6 space-y-4">
               
               <div>
-                <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Badili au Ongeza Picha (Mwisho 5)</label>
+                <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Picha (Hizi ni zilizopo. Ukiongeza mpya zitachukua nafasi ya hizi)</label>
                 {editImagePreviews.length > 0 && (
                   <div className="flex flex-wrap gap-2 mb-3">
                     {editImagePreviews.map((preview, index) => (
@@ -516,19 +504,19 @@ export default function AdminProducts() {
               <div><label className="block text-xs font-bold text-gray-500 mb-1">Jina la Bidhaa</label><input type="text" value={editingProduct.name} onChange={e => setEditingProduct({...editingProduct, name: e.target.value})} className="w-full border rounded-xl px-3 py-2 text-sm" /></div>
               
               <div className="grid grid-cols-2 gap-4">
-                <div>
+                <div className="col-span-2">
                   <label className="block text-[11px] font-bold text-gray-500 uppercase mb-1">Kategoria</label>
                   <select value={editingProduct.category} onChange={(e) => handleCategoryChange(e, true)} className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 outline-none text-sm font-medium">
                     {STANDARD_CATEGORIES.map(catOpt => (
                       <option key={catOpt} value={catOpt}>{catOpt}</option>
                     ))}
-                    {/* Fallback ya Legacy Categories */}
                     {!STANDARD_CATEGORIES.includes(editingProduct.category) && (
                       <option value={editingProduct.category}>{editingProduct.category} (Legacy)</option>
                     )}
                   </select>
                 </div>
                 <div><label className="block text-xs font-bold text-gray-500 mb-1">Brand</label><input type="text" value={editingProduct.brand} onChange={e => setEditingProduct({...editingProduct, brand: e.target.value})} className="w-full border rounded-xl px-3 py-2 text-sm" /></div>
+                <div><label className="block text-xs font-bold text-blue-500 mb-1 flex items-center gap-1"><FiCpu/> Model Name</label><input type="text" value={editingProduct.model || ''} onChange={e => setEditingProduct({...editingProduct, model: e.target.value})} className="w-full border border-blue-200 focus:border-[#F2A900] rounded-xl px-3 py-2 text-sm" /></div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -536,7 +524,6 @@ export default function AdminProducts() {
                 <div><label className="block text-xs font-bold text-gray-500 mb-1">Stock</label><input type="number" value={editingProduct.stockQuantity} onChange={e => setEditingProduct({...editingProduct, stockQuantity: e.target.value})} className="w-full border rounded-xl px-3 py-2 text-sm" /></div>
               </div>
 
-              {/* SEHEMU YA BADGE NA CONDITION PAMOJA (EDIT) */}
               <div className="grid grid-cols-2 gap-4 mt-2">
                 <div>
                   <label className="block text-[11px] font-bold text-gray-500 uppercase mb-1 flex items-center gap-1"><FiTag className="text-[#F2A900]"/> Badge</label>
@@ -559,7 +546,6 @@ export default function AdminProducts() {
                 </div>
               </div>
 
-              {/* DYNAMIC EDIT SPECS */}
               <div>
                 {renderDynamicSpecs(editingProduct.category, editSpecData, setEditSpecData)}
               </div>
