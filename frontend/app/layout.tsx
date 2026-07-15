@@ -1,6 +1,6 @@
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { CartProvider } from "../context/CartContext";
+import { CartProvider } from "./context/CartContext"; // Tumesahihisha njia hapa (Nukta moja)
 
 const inter = Inter({ subsets: ["latin"] });
 
