@@ -54,6 +54,19 @@ export default function HomePage() {
     return url.startsWith('http') ? url : `${getApiUrl()}${url}`;
   };
 
+  // ==========================================
+  // FIX: HELPER MPYA YA KUSOMA ARRAY YA PICHA
+  // ==========================================
+  const getImagesArray = (imgData: string) => {
+    if (!imgData) return [];
+    try {
+      const parsed = JSON.parse(imgData);
+      return Array.isArray(parsed) ? parsed : [imgData];
+    } catch(e) {
+      return [imgData];
+    }
+  };
+
   const getDeterministicDiscount = (id: string) => {
     if (!id) return 15; 
     let hash = 0;
@@ -335,12 +348,11 @@ export default function HomePage() {
       </header>
 
       {/* ========================================================= */}
-      {/* 2. MOBILE HEADER (IMEREKEBISHWA KUFANANA NA PICHA YAKO) */}
+      {/* 2. MOBILE HEADER */}
       {/* ========================================================= */}
       <header className="lg:hidden bg-[#0A101D] text-white pt-4 pb-3 sticky top-0 z-50">
         <div className="px-4 flex items-center justify-between mb-3">
           
-          {/* Deliver To Section (Kushoto) */}
           <div className="flex items-center gap-1.5 cursor-pointer">
              <div className="w-6 h-6 rounded-full border border-gray-700 flex items-center justify-center bg-gray-800/50">
                 <FiMapPin className="text-[#F2A900]" size={12}/>
@@ -351,14 +363,12 @@ export default function HomePage() {
              </div>
           </div>
 
-          {/* Language Icon (Kulia) */}
           <button className="flex items-center gap-1 bg-gray-800/60 px-2 py-1 rounded-md border border-gray-700 hover:bg-gray-700 transition">
             <FiGlobe size={14} className="text-gray-300"/> 
             <span className="text-[10px] font-bold text-gray-300">EN</span>
           </button>
         </div>
         
-        {/* ACTIVE SEARCH MOBILE - Imewekwa ndani ya container moja ili ikae sawa na picha yako */}
         <div className="px-4">
           <form onSubmit={handleSearch} className="flex items-center h-12 bg-white rounded-xl overflow-hidden shadow-sm">
             <div className="pl-4 pr-2 border-r border-gray-200">
@@ -415,7 +425,6 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Mobile Categories Row - Hii ipo kama ilivyokuwa, chini ya Search */}
           <div className="lg:hidden flex overflow-x-auto hide-scrollbar gap-4 px-4 py-5 bg-white mb-4 shadow-sm">
             {dbCategories.map((cat, idx) => (
               <div key={idx} onClick={handleCategoryClick} className="flex flex-col items-center gap-2 flex-shrink-0 cursor-pointer group">
@@ -474,7 +483,6 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Desktop Features Row & Mobile Features Row */}
           <div className="px-4 lg:px-0 mb-8 lg:mb-10">
              <div className="flex overflow-x-auto hide-scrollbar gap-4 lg:gap-6 bg-white lg:bg-transparent lg:border-t lg:border-b lg:border-gray-200 lg:py-6 rounded-2xl lg:rounded-none p-4 lg:p-0 shadow-sm lg:shadow-none border border-gray-100 lg:border-none">
                 <div className="flex items-center gap-3 lg:gap-4 flex-shrink-0 flex-1 min-w-[200px]">
@@ -525,7 +533,6 @@ export default function HomePage() {
              </div>
           </div>
 
-          {/* 5 ITEMS PER ROW NA MANENO YASIYOKATIKA (Flash Sales) */}
           <div className="px-4 lg:px-0 mb-12">
              {isLoading ? (
                <div className="flex justify-center py-10"><div className="w-8 h-8 border-4 border-[#F2A900] border-t-transparent rounded-full animate-spin"></div></div>
@@ -545,8 +552,9 @@ export default function HomePage() {
                            <span className="absolute top-2 left-2 bg-[#FF7A00] text-white text-[10px] font-black px-1.5 py-0.5 rounded z-20">-{visualDiscount}%</span>
                            <button className="absolute top-2 right-2 text-gray-400 hover:text-red-500 lg:hidden z-20" onClick={(e) => { e.stopPropagation(); }}><FiHeart/></button>
                            
-                           {product.imageUrl ? (
-                              <img src={getImageUrl(product.imageUrl)} alt={product.name} className="absolute inset-0 w-full h-full object-contain mix-blend-multiply p-4 group-hover:scale-105 transition-transform duration-300" />
+                           {/* FIX YA PICHA KWENYE FLASH SALES */}
+                           {getImagesArray(product.imageUrl)[0] ? (
+                              <img src={getImageUrl(getImagesArray(product.imageUrl)[0])} alt={product.name} className="absolute inset-0 w-full h-full object-contain mix-blend-multiply p-4 group-hover:scale-105 transition-transform duration-300" />
                            ) : (
                               <div className="absolute inset-0 flex items-center justify-center text-5xl">📦</div>
                            )}
@@ -597,14 +605,14 @@ export default function HomePage() {
                        onClick={() => router.push(`/product/${product.id}`)} 
                        className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm flex flex-col h-full group hover:border-[#F2A900] transition cursor-pointer relative"
                      >
-                        {/* New Badge */}
                         <div className="absolute top-0 right-0 bg-green-500 text-white text-[9px] font-black px-3 py-1 rounded-bl-xl z-20 shadow-sm uppercase tracking-wider">
                            NEW
                         </div>
 
                         <div className="relative w-full pt-[100%] bg-gray-50/50 rounded-xl mb-4 overflow-hidden border border-gray-50 flex-shrink-0">
-                           {product.imageUrl ? (
-                              <img src={getImageUrl(product.imageUrl)} alt={product.name} className="absolute inset-0 w-full h-full object-contain mix-blend-multiply p-4 group-hover:scale-105 transition-transform duration-300" />
+                           {/* FIX YA PICHA KWENYE NEW ARRIVALS */}
+                           {getImagesArray(product.imageUrl)[0] ? (
+                              <img src={getImageUrl(getImagesArray(product.imageUrl)[0])} alt={product.name} className="absolute inset-0 w-full h-full object-contain mix-blend-multiply p-4 group-hover:scale-105 transition-transform duration-300" />
                            ) : (
                               <div className="absolute inset-0 flex items-center justify-center text-5xl">📦</div>
                            )}
@@ -653,13 +661,13 @@ export default function HomePage() {
                        className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm flex flex-col h-full group hover:border-[#F2A900] transition cursor-pointer"
                      >
                         <div className="relative w-full pt-[100%] bg-gray-50/50 rounded-xl mb-4 overflow-hidden border border-gray-50 flex-shrink-0">
-                           {/* Custom Hot Badge */}
                            <div className="absolute top-2 left-2 w-8 h-8 bg-white rounded-full shadow flex items-center justify-center z-20">
                              <span className="text-[#F2A900] text-lg">🔥</span>
                            </div>
 
-                           {product.imageUrl ? (
-                              <img src={getImageUrl(product.imageUrl)} alt={product.name} className="absolute inset-0 w-full h-full object-contain mix-blend-multiply p-4 group-hover:scale-105 transition-transform duration-300" />
+                           {/* FIX YA PICHA KWENYE TRENDING NOW */}
+                           {getImagesArray(product.imageUrl)[0] ? (
+                              <img src={getImageUrl(getImagesArray(product.imageUrl)[0])} alt={product.name} className="absolute inset-0 w-full h-full object-contain mix-blend-multiply p-4 group-hover:scale-105 transition-transform duration-300" />
                            ) : (
                               <div className="absolute inset-0 flex items-center justify-center text-5xl">📦</div>
                            )}
@@ -683,9 +691,6 @@ export default function HomePage() {
         </main>
       </div>
 
-      {/* ========================================================= */}
-      {/* 4. FULL WIDTH TOP BRANDS MARQUEE */}
-      {/* ========================================================= */}
       <style>{`
         @keyframes slideLeftToRight {
           0% { transform: translateX(-50%); }
@@ -702,7 +707,6 @@ export default function HomePage() {
       `}</style>
 
       <div className="w-full bg-[#0A101D] border-t border-b border-gray-800 py-5 lg:py-6 overflow-hidden relative flex flex-col md:flex-row items-center gap-4 mb-20 lg:mb-28">
-         
          <div className="md:absolute md:left-0 md:top-0 md:bottom-0 md:z-20 md:bg-gradient-to-r md:from-[#0A101D] md:via-[#0A101D] md:to-transparent w-full md:w-80 flex items-center px-6 md:px-10 justify-between md:justify-start">
             <div className="flex flex-col">
                <h3 className="text-xl lg:text-2xl font-black text-white leading-tight flex items-center gap-2">Top <span className="text-[#F2A900]">Brands</span></h3>
@@ -733,9 +737,6 @@ export default function HomePage() {
          <div className="hidden md:block absolute right-0 top-0 bottom-0 z-20 bg-gradient-to-l from-[#0A101D] to-transparent w-32 pointer-events-none"></div>
       </div>
 
-      {/* ========================================================= */}
-      {/* 5. PROFESSIONAL FOOTER */}
-      {/* ========================================================= */}
       <footer className="bg-[#0A101D] text-gray-300 py-12 lg:py-16 pb-28 lg:pb-16">
         <div className="max-w-[1500px] mx-auto px-6 lg:px-8">
           <div className="flex flex-col lg:flex-row items-center justify-between border-b border-gray-800 pb-10 mb-10 gap-6">
@@ -811,9 +812,6 @@ export default function HomePage() {
         </div>
       </footer>
 
-      {/* ========================================================= */}
-      {/* 6. MOBILE BOTTOM NAVIGATION */}
-      {/* ========================================================= */}
       <div className="lg:hidden fixed bottom-0 left-0 w-full bg-white border-t border-gray-100 flex justify-around items-center h-[60px] px-2 z-50 shadow-[0_-10px_20px_rgba(0,0,0,0.03)] pb-safe">
          <button onClick={() => router.push('/')} className="flex flex-col items-center gap-1 text-[#F2A900]">
             <FiHome size={22} className="fill-current"/>
