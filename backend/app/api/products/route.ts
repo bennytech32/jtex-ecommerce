@@ -30,24 +30,24 @@ export async function POST(req: Request) {
     const specifications = formData.get('specifications') as string;
     const badge = formData.get('badge') as string;
     const condition = formData.get('condition') as string;
-    
-    // TUNAIPOKEA MODEL
     const model = formData.get('model') as string; 
 
-    // ==========================================
-    // LOGIC MPYA YA KUPOKEA PICHA NYINGI PAMOJA
-    // ==========================================
-    const imageFiles = formData.getAll('images') as File[]; 
+    // LOGIC IMARA YA KUPOKEA PICHA HATA KAMA JINA LIMEFICHWA
+    const imageFiles = formData.getAll('images'); 
     let uploadedUrls: string[] = [];
 
     if (imageFiles && imageFiles.length > 0) {
-      for (const imageFile of imageFiles) {
-        if (imageFile.name) {
-          const bytes = await imageFile.arrayBuffer();
+      for (const file of imageFiles) {
+        // Kuhakikisha file lina arrayBuffer (Ni faili kamili)
+        if (typeof file === 'object' && file !== null && 'arrayBuffer' in file) {
+          const bytes = await (file as any).arrayBuffer();
           const buffer = Buffer.from(bytes);
-          const fileName = `${Date.now()}-${imageFile.name.replace(/\s+/g, '-')}`;
-          const uploadDir = path.join(process.cwd(), 'public/uploads');
           
+          // Jina la dharura endapo Next.js itaficha jina halisi la picha
+          const originalName = (file as any).name || `jtex-img-${Math.floor(Math.random() * 10000)}.jpg`;
+          const fileName = `${Date.now()}-${originalName.replace(/\s+/g, '-')}`;
+          
+          const uploadDir = path.join(process.cwd(), 'public/uploads');
           if (!fs.existsSync(uploadDir)) {
             fs.mkdirSync(uploadDir, { recursive: true });
           }
@@ -55,7 +55,6 @@ export async function POST(req: Request) {
           const filePath = path.join(uploadDir, fileName);
           await writeFile(filePath, buffer);
           
-          // MABADILIKO YA API YAMEFANYIKA HAPA CHINI
           uploadedUrls.push(`/api/uploads/${fileName}`);
         }
       }
@@ -64,12 +63,8 @@ export async function POST(req: Request) {
     const finalImageUrl = uploadedUrls.length > 0 ? JSON.stringify(uploadedUrls) : "";
 
     let finalSpecs = {};
-    try {
-        finalSpecs = JSON.parse(specifications || '{}');
-    } catch(e) {}
-    if (model) {
-        (finalSpecs as any).Model = model;
-    }
+    try { finalSpecs = JSON.parse(specifications || '{}'); } catch(e) {}
+    if (model) { (finalSpecs as any).Model = model; }
 
     const newProduct = await prisma.product.create({
       data: {
