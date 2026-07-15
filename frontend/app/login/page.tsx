@@ -19,12 +19,9 @@ export default function CustomerLoginPage() {
     const cleanEmail = email.trim();
     const cleanPassword = password.trim();
 
-    // HAPA WEKA LOGIC YAKO YA KULOGIN MTEJA WA KAWAIDA API
-    // Kwa sasa tunatumia mfano huu (Simulation)
     if (cleanEmail && cleanPassword) {
         const mockToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.jtex-customer-token";
         
-        // Hifadhi Token PAMOJA na taarifa za User ili Checkout itambue
         localStorage.setItem('jtex_token', mockToken); 
         localStorage.setItem('jtex_user', JSON.stringify({
             id: "123",
@@ -33,7 +30,6 @@ export default function CustomerLoginPage() {
         }));
         
         setTimeout(() => {
-            // FIX: Impeleke mteja kwenye Shop baada ya kulogin ili aendelee na Checkout
             window.location.href = '/shop'; 
         }, 1200);
     } else {
@@ -45,15 +41,15 @@ export default function CustomerLoginPage() {
   return (
     <div className="min-h-screen bg-[#060B19] text-white relative font-sans selection:bg-[#F2A900] selection:text-black overflow-x-hidden flex justify-center">
       
-      {/* BACKGROUND IMAGE - INAONEKANA NYUMA (Mobile na Desktop) */}
-      <div className="absolute top-0 left-0 w-full lg:w-[60%] h-[50vh] lg:h-full z-0 overflow-hidden pointer-events-none">
+      {/* BACKGROUND IMAGE - IMEONGEZEWA OPACITY ILI IONEKANE ZAIDI */}
+      <div className="absolute top-0 left-0 w-full lg:w-[65%] h-[50vh] lg:h-full z-0 overflow-hidden pointer-events-none">
         <img 
-            src="https://images.unsplash.com/photo-1586528116311-ad8ed7c80a30?auto=format&fit=crop&q=80&w=2000" 
-            alt="Jtex Logistics Background" 
-            className="w-full h-full object-cover opacity-40 mix-blend-screen"
+            src="/login.png" 
+            alt="Jtex Login Background" 
+            className="w-full h-full object-cover opacity-70 mix-blend-screen" 
         />
-        {/* Gradient za kufifisha picha (Fade to dark) */}
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#060B19]/80 to-[#060B19] lg:bg-gradient-to-r lg:from-[#060B19]/20 lg:via-[#060B19]/90 lg:to-[#060B19]"></div>
+        {/* Gradient imepunguzwa giza kidogo ili kuruhusu picha kuonekana safi */}
+        <div className="absolute inset-0 bg-gradient-to-b from-[#060B19]/10 via-[#060B19]/60 to-[#060B19] lg:bg-gradient-to-r lg:from-[#060B19]/10 lg:via-[#060B19]/70 lg:to-[#060B19]"></div>
       </div>
 
       {/* MUUNDO MKUU WA KIOO */}
@@ -64,66 +60,66 @@ export default function CustomerLoginPage() {
             
             {/* Header / Top Navigation (Mobile & Desktop) */}
             <div className="flex justify-between items-center w-full">
-                <Link href="/" className="p-2.5 bg-white/5 hover:bg-white/10 rounded-xl transition backdrop-blur-md border border-white/10">
+                <Link href="/" className="p-2.5 bg-[#060B19]/40 hover:bg-[#060B19]/60 rounded-xl transition backdrop-blur-md border border-white/10">
                     <FiChevronLeft size={20} />
                 </Link>
                 
                 {/* Logo */}
-                <div className="text-3xl sm:text-4xl font-black tracking-tighter flex items-center">
+                <div className="text-3xl sm:text-4xl font-black tracking-tighter flex items-center drop-shadow-lg">
                     <span className="text-[#FF9900]">X</span><span className="text-white ml-0.5">Jtex</span>
                     <span className="text-[10px] bg-white/10 text-gray-300 px-1.5 py-0.5 rounded ml-1 self-start mt-1">®</span>
                 </div>
 
                 <div className="flex items-center gap-3">
-                    <button className="flex items-center gap-2 text-sm font-bold bg-white/5 hover:bg-white/10 border border-white/10 px-4 py-2.5 rounded-full transition backdrop-blur-md">
+                    <button className="flex items-center gap-2 text-sm font-bold bg-[#060B19]/40 hover:bg-[#060B19]/60 border border-white/10 px-4 py-2.5 rounded-full transition backdrop-blur-md">
                         🌐 EN <span className="text-gray-400">⌄</span>
                     </button>
-                    <span className="hidden lg:block text-sm font-medium text-gray-400 cursor-pointer hover:text-white transition">Need Help?</span>
+                    <span className="hidden lg:block text-sm font-medium text-gray-200 cursor-pointer hover:text-white transition drop-shadow-md">Need Help?</span>
                 </div>
             </div>
 
             {/* Maneno ya Kukaribisha (Welcome Texts) */}
             <div className="mt-12 lg:mt-0 text-center lg:text-left max-w-xl mx-auto lg:mx-0">
-                <h1 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-black text-white leading-tight mb-3">
+                <h1 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-black text-white leading-tight mb-3 drop-shadow-xl">
                     Welcome Back!
                 </h1>
-                <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-300 mb-4">
+                <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-200 mb-4 drop-shadow-md">
                     Log in to your Jtex account
                 </h2>
-                <p className="text-sm sm:text-base text-gray-400 leading-relaxed hidden lg:block max-w-md">
+                <p className="text-sm sm:text-base text-gray-300 leading-relaxed hidden lg:block max-w-md drop-shadow-md bg-[#060B19]/30 p-4 rounded-xl backdrop-blur-sm border border-white/5">
                     Access your orders, track shipments, make payments and enjoy exclusive member benefits.
                 </p>
             </div>
 
-            {/* Features (Desktop Only) */}
+            {/* Features (Desktop Only) - Backgrounds zimefanywa zionekane kwenye picha */}
             <div className="hidden lg:grid grid-cols-4 gap-6 max-w-3xl mt-12">
-                <div className="space-y-3">
-                    <div className="w-12 h-12 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400"><FiShield size={24}/></div>
-                    <h3 className="font-bold text-sm text-white">Secure & Safe</h3>
-                    <p className="text-xs text-gray-500 leading-relaxed">Your data is protected with top security</p>
+                <div className="space-y-3 bg-[#060B19]/40 p-4 rounded-2xl backdrop-blur-sm border border-white/5">
+                    <div className="w-12 h-12 rounded-2xl bg-blue-500/20 border border-blue-500/30 flex items-center justify-center text-blue-400"><FiShield size={24}/></div>
+                    <h3 className="font-bold text-sm text-white drop-shadow-md">Secure & Safe</h3>
+                    <p className="text-xs text-gray-300 leading-relaxed">Your data is protected with top security</p>
                 </div>
-                <div className="space-y-3">
-                    <div className="w-12 h-12 rounded-2xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-center text-orange-400"><FiBox size={24}/></div>
-                    <h3 className="font-bold text-sm text-white">Track Orders</h3>
-                    <p className="text-xs text-gray-500 leading-relaxed">Real-time updates on every shipment</p>
+                <div className="space-y-3 bg-[#060B19]/40 p-4 rounded-2xl backdrop-blur-sm border border-white/5">
+                    <div className="w-12 h-12 rounded-2xl bg-orange-500/20 border border-orange-500/30 flex items-center justify-center text-orange-400"><FiBox size={24}/></div>
+                    <h3 className="font-bold text-sm text-white drop-shadow-md">Track Orders</h3>
+                    <p className="text-xs text-gray-300 leading-relaxed">Real-time updates on every shipment</p>
                 </div>
-                <div className="space-y-3">
-                    <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400"><FiCreditCard size={24}/></div>
-                    <h3 className="font-bold text-sm text-white">Easy Payments</h3>
-                    <p className="text-xs text-gray-500 leading-relaxed">Multiple payment options available</p>
+                <div className="space-y-3 bg-[#060B19]/40 p-4 rounded-2xl backdrop-blur-sm border border-white/5">
+                    <div className="w-12 h-12 rounded-2xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400"><FiCreditCard size={24}/></div>
+                    <h3 className="font-bold text-sm text-white drop-shadow-md">Easy Payments</h3>
+                    <p className="text-xs text-gray-300 leading-relaxed">Multiple payment options available</p>
                 </div>
-                <div className="space-y-3">
-                    <div className="w-12 h-12 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400"><FiStar size={24}/></div>
-                    <h3 className="font-bold text-sm text-white">Exclusive Deals</h3>
-                    <p className="text-xs text-gray-500 leading-relaxed">Special offers for our members</p>
+                <div className="space-y-3 bg-[#060B19]/40 p-4 rounded-2xl backdrop-blur-sm border border-white/5">
+                    <div className="w-12 h-12 rounded-2xl bg-purple-500/20 border border-purple-500/30 flex items-center justify-center text-purple-400"><FiStar size={24}/></div>
+                    <h3 className="font-bold text-sm text-white drop-shadow-md">Exclusive Deals</h3>
+                    <p className="text-xs text-gray-300 leading-relaxed">Special offers for our members</p>
                 </div>
             </div>
 
             {/* Footer ya Kushoto (Desktop Only) */}
-            <div className="hidden lg:flex items-center gap-8 mt-auto pt-10 text-xs font-bold text-gray-400">
-                <span className="flex items-center gap-2"><FiShield className="text-gray-500"/> SSL Encrypted</span>
-                <span className="flex items-center gap-2"><FiLock className="text-gray-500"/> Privacy Protected</span>
-                <span className="flex items-center gap-2"><FiCheckCircle className="text-gray-500"/> Trusted by 50K+ Customers</span>
+            <div className="hidden lg:flex items-center gap-8 mt-auto pt-10 text-xs font-bold text-gray-300 drop-shadow-md">
+                <span className="flex items-center gap-2"><FiShield className="text-gray-400"/> SSL Encrypted</span>
+                <span className="flex items-center gap-2"><FiLock className="text-gray-400"/> Privacy Protected</span>
+                <span className="flex items-center gap-2"><FiCheckCircle className="text-gray-400"/> Trusted by 50K+ Customers</span>
             </div>
         </div>
 
@@ -131,7 +127,7 @@ export default function CustomerLoginPage() {
         <div className="w-full lg:w-[45%] xl:w-[40%] px-4 pb-8 lg:p-12 flex flex-col justify-center mt-6 lg:mt-0 relative z-20">
             
             {/* Kadi Kuu ya Login */}
-            <div className="bg-[#0F172A]/90 border border-gray-800/80 rounded-[2rem] p-6 sm:p-10 shadow-2xl backdrop-blur-xl">
+            <div className="bg-[#0F172A]/95 border border-gray-800/80 rounded-[2rem] p-6 sm:p-10 shadow-2xl backdrop-blur-xl">
                 
                 <div className="hidden lg:block mb-8">
                     <h2 className="text-2xl font-black text-white mb-2">Login to Your Account</h2>

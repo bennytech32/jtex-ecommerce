@@ -335,46 +335,50 @@ export default function HomePage() {
       </header>
 
       {/* ========================================================= */}
-      {/* 2. MOBILE HEADER */}
+      {/* 2. MOBILE HEADER (IMEREKEBISHWA KUFANANA NA PICHA YAKO) */}
       {/* ========================================================= */}
-      <header className="lg:hidden bg-[#0A101D] text-white px-4 py-3 sticky top-0 z-50">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2 w-1/2">
-             <button onClick={() => router.back()} className="p-1"><FiArrowLeft className="text-xl text-gray-300"/></button>
-             <div className="h-8 w-24 relative flex items-center">
-                 <img src="/logo.png" alt="Jtex Logo" className="max-h-full max-w-full object-contain brightness-0 invert cursor-pointer" onClick={() => router.push('/')} />
+      <header className="lg:hidden bg-[#0A101D] text-white pt-4 pb-3 sticky top-0 z-50">
+        <div className="px-4 flex items-center justify-between mb-3">
+          
+          {/* Deliver To Section (Kushoto) */}
+          <div className="flex items-center gap-1.5 cursor-pointer">
+             <div className="w-6 h-6 rounded-full border border-gray-700 flex items-center justify-center bg-gray-800/50">
+                <FiMapPin className="text-[#F2A900]" size={12}/>
+             </div>
+             <div className="flex flex-col">
+               <span className="text-[9px] text-gray-400 leading-tight">Deliver to</span>
+               <span className="text-xs font-bold flex items-center gap-1 leading-tight">{userLocation.split(',')[0]} <FiChevronDown size={14}/></span>
              </div>
           </div>
-          <div className="flex items-center gap-4 justify-end w-1/2">
-             <button className="flex items-center gap-1 text-sm font-bold text-gray-300 hover:text-white transition">
-                <FiGlobe size={18}/> EN <FiChevronDown size={14}/>
-             </button>
 
-             {user ? (
-                <div className="w-8 h-8 bg-[#F2A900] text-black rounded-full flex items-center justify-center font-bold text-[10px] shadow-sm" onClick={() => router.push('/profile')}>{user?.name?.charAt(0) || 'U'}</div>
-             ) : (
-                <FiUser className="text-xl text-gray-300" onClick={() => router.push('/login')} />
-             )}
-          </div>
+          {/* Language Icon (Kulia) */}
+          <button className="flex items-center gap-1 bg-gray-800/60 px-2 py-1 rounded-md border border-gray-700 hover:bg-gray-700 transition">
+            <FiGlobe size={14} className="text-gray-300"/> 
+            <span className="text-[10px] font-bold text-gray-300">EN</span>
+          </button>
         </div>
         
-        {/* ACTIVE SEARCH MOBILE */}
-        <form onSubmit={handleSearch} className="flex items-center h-11 bg-white rounded-xl overflow-hidden shadow-sm">
-          <input 
-            type="text" 
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search Jtex" 
-            className="flex-1 h-full px-4 text-sm text-gray-900 outline-none" 
-          />
-          <div className="flex items-center gap-3 px-3 text-gray-400">
-            <FiMic size={18} className="cursor-pointer"/>
-            <FiCamera size={18} className="cursor-pointer"/>
-          </div>
-          <button type="submit" className="h-full px-5 bg-[#F2A900] text-black">
-            <FiSearch size={18} />
-          </button>
-        </form>
+        {/* ACTIVE SEARCH MOBILE - Imewekwa ndani ya container moja ili ikae sawa na picha yako */}
+        <div className="px-4">
+          <form onSubmit={handleSearch} className="flex items-center h-12 bg-white rounded-xl overflow-hidden shadow-sm">
+            <div className="pl-4 pr-2 border-r border-gray-200">
+               <span className="text-xs text-gray-500 font-medium">Search Jtex</span>
+            </div>
+            <input 
+              type="text" 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="flex-1 h-full px-3 text-sm text-gray-900 outline-none bg-transparent" 
+            />
+            <div className="flex items-center gap-3 px-2 text-gray-400">
+              <FiMic size={18} className="cursor-pointer hover:text-gray-600"/>
+              <FiCamera size={18} className="cursor-pointer hover:text-gray-600"/>
+            </div>
+            <button type="submit" className="h-full px-5 bg-[#F2A900] text-black flex items-center justify-center hover:bg-yellow-500 transition">
+              <FiSearch size={20} />
+            </button>
+          </form>
+        </div>
       </header>
 
       {/* ========================================================= */}
@@ -411,8 +415,8 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Mobile Categories Row */}
-          <div className="lg:hidden flex overflow-x-auto hide-scrollbar gap-4 px-4 py-5 bg-white border-b border-gray-100 mb-4">
+          {/* Mobile Categories Row - Hii ipo kama ilivyokuwa, chini ya Search */}
+          <div className="lg:hidden flex overflow-x-auto hide-scrollbar gap-4 px-4 py-5 bg-white mb-4 shadow-sm">
             {dbCategories.map((cat, idx) => (
               <div key={idx} onClick={handleCategoryClick} className="flex flex-col items-center gap-2 flex-shrink-0 cursor-pointer group">
                 <div className={`w-14 h-14 rounded-full flex items-center justify-center transition-all ${idx === 0 ? 'bg-yellow-50 text-[#F2A900] border border-yellow-200' : 'bg-gray-50 text-gray-600 border border-gray-100 group-hover:bg-gray-100'}`}>
