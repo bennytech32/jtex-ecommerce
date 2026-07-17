@@ -50,11 +50,22 @@ export default function CheckoutSystem() {
   const router = useRouter();
   const { cart, removeFromCart, cartTotal, clearCart } = useCart();
   
-  const getApiUrl = () => 'https://jtex-ecommerce-production.up.railway.app';
+  const getApiUrl = () => process.env.NEXT_PUBLIC_API_URL || 'https://jtex-ecommerce-production.up.railway.app';
   
   const getImageUrl = (url: string) => {
     if (!url) return '';
     return url.startsWith('http') ? url : `${getApiUrl()}${url}`;
+  };
+
+  // HELPER: Kusoma picha iwe Array ili zionekane vizuri kwenye kikapu
+  const getImagesArray = (imgData: string) => {
+    if (!imgData) return [];
+    try {
+      const parsed = JSON.parse(imgData);
+      return Array.isArray(parsed) ? parsed : [imgData];
+    } catch(e) {
+      return [imgData];
+    }
   };
   
   // States
@@ -127,7 +138,6 @@ export default function CheckoutSystem() {
     setCurrentStep(2);
   };
 
-  // WhatsApp Order Submission (Takes over the Final Button)
   const handleWhatsAppOrder = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     
@@ -155,26 +165,35 @@ export default function CheckoutSystem() {
     router.push('/');
   };
 
+  // Stepper Mpya (Bila Namba 1, 2, 3... Inatumia Checks tu ikipita)
   const renderStepper = () => (
-    <div className="flex items-center justify-center gap-2 sm:gap-4 mb-8 relative px-4">
+    <div className="flex items-center justify-center gap-2 sm:gap-4 mb-8 relative px-4 max-w-lg mx-auto">
       <div className="absolute top-1/2 left-[15%] right-[15%] h-0.5 bg-gray-200 -z-10 -translate-y-1/2"></div>
+      
+      {/* Cart Step */}
       <div className="flex flex-col items-center gap-2 bg-white px-2">
-        <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-bold text-sm sm:text-base ${currentStep >= 1 ? 'bg-[#F2A900] text-white shadow-md' : 'bg-gray-200 text-gray-500'}`}>
-          {currentStep > 1 ? <FiCheckCircle size={20} /> : '1'}
+        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${currentStep >= 1 ? 'bg-[#F2A900] text-white shadow-md' : 'bg-gray-200 text-gray-400'}`}>
+           <FiShoppingCart size={14} />
         </div>
-        <span className={`text-[10px] sm:text-xs font-bold ${currentStep >= 1 ? 'text-gray-900' : 'text-gray-400'}`}>My Cart</span>
+        <span className={`text-[10px] sm:text-xs font-bold ${currentStep >= 1 ? 'text-gray-900' : 'text-gray-400'}`}>Cart</span>
       </div>
+      
       <div className={`flex-1 h-0.5 ${currentStep >= 2 ? 'bg-[#F2A900]' : 'bg-transparent'}`}></div>
+      
+      {/* Shipping Step */}
       <div className="flex flex-col items-center gap-2 bg-white px-2">
-        <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-bold text-sm sm:text-base ${currentStep >= 2 ? 'bg-[#F2A900] text-white shadow-md' : 'bg-gray-200 text-gray-500'}`}>
-          {currentStep > 2 ? <FiCheckCircle size={20} /> : '2'}
+        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${currentStep >= 2 ? 'bg-[#F2A900] text-white shadow-md' : 'bg-gray-200 text-gray-400'}`}>
+          <FiTruck size={14} />
         </div>
-        <span className={`text-[10px] sm:text-xs font-bold ${currentStep >= 2 ? 'text-gray-900' : 'text-gray-400'}`}>Checkout</span>
+        <span className={`text-[10px] sm:text-xs font-bold ${currentStep >= 2 ? 'text-gray-900' : 'text-gray-400'}`}>Shipping</span>
       </div>
+      
       <div className={`flex-1 h-0.5 ${currentStep >= 3 ? 'bg-[#F2A900]' : 'bg-transparent'}`}></div>
+      
+      {/* Payment Step */}
       <div className="flex flex-col items-center gap-2 bg-white px-2">
-        <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-bold text-sm sm:text-base ${currentStep >= 3 ? 'bg-[#F2A900] text-white shadow-md' : 'bg-gray-200 text-gray-500'}`}>
-          3
+        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${currentStep >= 3 ? 'bg-[#F2A900] text-white shadow-md' : 'bg-gray-200 text-gray-400'}`}>
+          <FiCreditCard size={14} />
         </div>
         <span className={`text-[10px] sm:text-xs font-bold ${currentStep >= 3 ? 'text-gray-900' : 'text-gray-400'}`}>Payment</span>
       </div>
@@ -188,8 +207,11 @@ export default function CheckoutSystem() {
           <FiArrowLeft size={24} className="text-gray-800" />
         </button>
         <div className="text-center">
-          <h1 className="text-xl font-black text-gray-900">{currentStep === 3 ? 'Payment' : 'Checkout'}</h1>
-          <span className="text-xs font-bold text-[#F2A900] bg-yellow-50 px-2 py-0.5 rounded-full">Step {currentStep} of 3</span>
+          <h1 className="text-lg font-black text-gray-900 tracking-wide uppercase">
+             {currentStep === 1 && 'Shopping Cart'}
+             {currentStep === 2 && 'Shipping Details'}
+             {currentStep === 3 && 'Secure Payment'}
+          </h1>
         </div>
         <div className="flex items-center gap-1 text-green-600 text-[10px] font-bold bg-green-50 px-2 py-1.5 rounded-lg">
           <FiShield /> <span className="hidden sm:inline">Secure Checkout</span>
@@ -198,14 +220,6 @@ export default function CheckoutSystem() {
 
       <main className="max-w-6xl mx-auto pt-6 px-4">
         {renderStepper()}
-
-        <div className="text-center mb-6">
-          <p className="text-gray-500 text-sm">
-            {currentStep === 1 && "Review your cart items before checkout."}
-            {currentStep === 2 && "Please fill in your details and complete your order."}
-            {currentStep === 3 && "Review and confirm your payment."}
-          </p>
-        </div>
 
         <div className="flex flex-col lg:flex-row gap-6">
           {/* ======================= LEFT COLUMN ======================= */}
@@ -220,27 +234,30 @@ export default function CheckoutSystem() {
                 </div>
                 
                 <div className="space-y-4">
-                  {cart?.length > 0 ? cart.map((item: any) => (
-                    <div key={item.id} className="flex flex-col sm:flex-row gap-4 p-4 border border-gray-100 rounded-xl relative hover:border-[#F2A900] transition group">
-                      <div className="w-20 h-20 bg-gray-50 rounded-lg flex items-center justify-center flex-shrink-0 p-2 border border-gray-200">
-                        {item.imageUrl ? <img src={getImageUrl(item.imageUrl)} alt={item.name} className="object-contain w-full h-full mix-blend-multiply" /> : <span className="text-3xl">{item.imageEmoji || '📦'}</span>}
-                      </div>
-                      <div className="flex-1 flex flex-col justify-center">
-                        <h3 className="font-bold text-sm text-gray-900 pr-8 line-clamp-2">{item.name}</h3>
-                        <p className="text-xs text-gray-500 mt-1 flex items-center gap-2">
-                          {item.color && <><span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-gray-800 border border-gray-300"></span> {item.color}</span><span className="text-gray-300">|</span></>}
-                          {item.storage && <span>{item.storage}</span>}
-                        </p>
-                        <div className="flex items-center justify-between mt-3">
-                          <span className="font-black text-gray-900">TZS {item.price?.toLocaleString()}</span>
-                          <div className="flex items-center gap-3 bg-gray-50 border border-gray-200 rounded-lg px-2 py-1">
-                            <span className="text-xs font-black px-2 py-0.5 text-center">Qty: {item.quantity}</span>
+                  {cart?.length > 0 ? cart.map((item: any) => {
+                    const displayImage = getImagesArray(item.imageUrl)[0];
+                    return (
+                      <div key={item.id} className="flex flex-col sm:flex-row gap-4 p-4 border border-gray-100 rounded-xl relative hover:border-[#F2A900] transition group">
+                        <div className="w-20 h-20 bg-gray-50 rounded-lg flex items-center justify-center flex-shrink-0 p-2 border border-gray-200">
+                          {displayImage ? <img src={getImageUrl(displayImage)} alt={item.name} className="object-contain w-full h-full mix-blend-multiply" /> : <span className="text-3xl">{item.imageEmoji || '📦'}</span>}
+                        </div>
+                        <div className="flex-1 flex flex-col justify-center">
+                          <h3 className="font-bold text-sm text-gray-900 pr-8 line-clamp-2">{item.name}</h3>
+                          <p className="text-xs text-gray-500 mt-1 flex items-center gap-2">
+                            {item.color && <><span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-gray-800 border border-gray-300"></span> {item.color}</span><span className="text-gray-300">|</span></>}
+                            {item.storage && <span>{item.storage}</span>}
+                          </p>
+                          <div className="flex items-center justify-between mt-3">
+                            <span className="font-black text-gray-900">TZS {item.price?.toLocaleString()}</span>
+                            <div className="flex items-center gap-3 bg-gray-50 border border-gray-200 rounded-lg px-2 py-1">
+                              <span className="text-xs font-black px-2 py-0.5 text-center">Qty: {item.quantity}</span>
+                            </div>
                           </div>
                         </div>
+                        <button onClick={() => removeFromCart(item.id)} className="absolute top-4 right-4 text-gray-300 hover:text-red-500 transition"><FiTrash2 size={16}/></button>
                       </div>
-                      <button onClick={() => removeFromCart(item.id)} className="absolute top-4 right-4 text-gray-300 hover:text-red-500 transition"><FiTrash2 size={16}/></button>
-                    </div>
-                  )) : (
+                    )
+                  }) : (
                     <div className="text-center py-10">
                       <FiShoppingCart className="mx-auto text-4xl text-gray-300 mb-4"/>
                       <p className="text-gray-500 font-medium mb-4">Your cart is empty</p>
@@ -255,7 +272,7 @@ export default function CheckoutSystem() {
             {currentStep === 2 && (
               <div className="space-y-6">
                 <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100">
-                  <h2 className="font-black text-base flex items-center gap-2 mb-4"><FiUser className="text-[#F2A900]"/> 1. Shipping Details</h2>
+                  <h2 className="font-black text-base flex items-center gap-2 mb-4"><FiUser className="text-[#F2A900]"/> Shipping Details</h2>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-bold text-gray-600 mb-1.5">Full Name <span className="text-red-500">*</span></label>
@@ -296,7 +313,7 @@ export default function CheckoutSystem() {
                 </div>
 
                 <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100">
-                  <h2 className="font-black text-base flex items-center gap-2 mb-4"><FiTruck className="text-[#F2A900]"/> 2. Shipping Method</h2>
+                  <h2 className="font-black text-base flex items-center gap-2 mb-4"><FiTruck className="text-[#F2A900]"/> Shipping Method</h2>
                   <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                     {availableShippingMethods.map((method) => (
                       <div 
@@ -328,7 +345,7 @@ export default function CheckoutSystem() {
                 
                 {/* 1. Payment Type */}
                 <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100">
-                   <h2 className="font-black text-base flex items-center gap-2 mb-4">💳 1. Payment Type</h2>
+                   <h2 className="font-black text-base flex items-center gap-2 mb-4">💳 Payment Type</h2>
                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
                      {PAYMENT_TYPES.map((type) => (
                        <div 
@@ -360,7 +377,7 @@ export default function CheckoutSystem() {
 
                 {/* 2. Payment Method */}
                 <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100">
-                   <h2 className="font-black text-base flex items-center gap-2 mb-4"><FiCreditCard className="text-[#F2A900]"/> 2. Payment Method</h2>
+                   <h2 className="font-black text-base flex items-center gap-2 mb-4"><FiCreditCard className="text-[#F2A900]"/> Payment Method</h2>
                    
                    {/* Main Gateway Selection */}
                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
@@ -481,7 +498,7 @@ export default function CheckoutSystem() {
 
                 {/* Pricing Summary (Mobile only visual match) */}
                 <div className="lg:hidden bg-white rounded-2xl p-4 shadow-sm border border-gray-100 mb-6">
-                   <h2 className="font-black text-base flex items-center gap-2 mb-4">📝 3. Pricing Summary</h2>
+                   <h2 className="font-black text-base flex items-center gap-2 mb-4">📝 Pricing Summary</h2>
                    <div className="space-y-2 text-sm">
                       <div className="flex justify-between text-gray-600 font-medium"><span>Subtotal</span><span>TZS {subtotal.toLocaleString()}</span></div>
                       <div className="flex justify-between text-gray-600 font-medium"><span>Delivery ({selectedShipping?.name})</span><span>TZS {deliveryFee.toLocaleString()}</span></div>
@@ -519,10 +536,12 @@ export default function CheckoutSystem() {
               </div>
               
               <div className="space-y-3 mb-6 max-h-[250px] overflow-y-auto custom-scrollbar pr-2">
-                 {cart.map((item: any) => (
+                 {cart.map((item: any) => {
+                   const displayImage = getImagesArray(item.imageUrl)[0];
+                   return (
                    <div key={item.id} className="flex gap-3">
                      <div className="w-10 h-10 bg-gray-50 rounded border border-gray-100 flex items-center justify-center flex-shrink-0 p-1">
-                       {item.imageUrl ? <img src={getImageUrl(item.imageUrl)} alt={item.name} className="object-contain w-full h-full mix-blend-multiply" /> : <span className="text-lg">{item.imageEmoji || '📦'}</span>}
+                       {displayImage ? <img src={getImageUrl(displayImage)} alt={item.name} className="object-contain w-full h-full mix-blend-multiply" /> : <span className="text-lg">{item.imageEmoji || '📦'}</span>}
                      </div>
                      <div className="flex-1">
                        <h4 className="text-xs font-bold text-gray-900 line-clamp-1">{item.name}</h4>
@@ -530,7 +549,7 @@ export default function CheckoutSystem() {
                      </div>
                      <div className="text-xs font-black">TZS {(item.price * item.quantity).toLocaleString()}</div>
                    </div>
-                 ))}
+                 )})}
               </div>
 
               <div className="space-y-3 text-sm mb-6 border-t border-gray-100 pt-4">
