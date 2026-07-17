@@ -369,6 +369,7 @@ export default function HomePage() {
           </button>
         </div>
         
+        {/* MOBILE SEARCH BAR */}
         <div className="px-4">
           <form onSubmit={handleSearch} className="flex items-center h-12 bg-white rounded-xl overflow-hidden shadow-sm">
             <div className="pl-4 pr-2 border-r border-gray-200">
