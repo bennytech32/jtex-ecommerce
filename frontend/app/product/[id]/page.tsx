@@ -76,17 +76,28 @@ export default function ProductDetail() {
     }
   };
 
-  // Mobile Image Scroll Logic (Kuweka dots update automatically)
+  // Slider Scroll Logic (Inafanya kazi Simu na Desktop sasa)
   const handleScroll = () => {
     if (sliderRef.current) {
       const scrollPosition = sliderRef.current.scrollLeft;
       const width = sliderRef.current.clientWidth;
       const newIndex = Math.round(scrollPosition / width);
-      setCurrentImageIndex(newIndex);
+      if (newIndex !== currentImageIndex) {
+        setCurrentImageIndex(newIndex);
+      }
     }
   };
 
-  // Helper ya kusoma picha kwenye database iwe ni Array
+  const scrollToImage = (index: number) => {
+    setCurrentImageIndex(index);
+    if (sliderRef.current) {
+      sliderRef.current.scrollTo({
+        left: sliderRef.current.clientWidth * index,
+        behavior: 'smooth'
+      });
+    }
+  };
+
   const getImagesArray = (imgData: string) => {
     if (!imgData) return [];
     try {
@@ -186,10 +197,10 @@ export default function ProductDetail() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50/30 text-gray-900 font-sans pb-24 lg:pb-0">
+    <div className="min-h-screen bg-gray-50/30 text-gray-900 font-sans pb-24 lg:pb-0 overflow-x-hidden">
       
       {/* ========================================================= */}
-      {/* 1. PROFESSIONAL DESKTOP HEADER (No Account Icon) */}
+      {/* 1. PROFESSIONAL DESKTOP HEADER */}
       {/* ========================================================= */}
       <header className="hidden lg:block bg-[#0A101D] text-white border-b border-gray-800 sticky top-0 z-40">
         <div className="max-w-[1600px] mx-auto px-6 h-24 flex items-center justify-between gap-6">
@@ -211,7 +222,6 @@ export default function ProductDetail() {
           </form>
 
           <div className="flex items-center gap-4 flex-shrink-0">
-            {/* Removed Account Icon */}
             <button onClick={() => router.push('/checkout')} className="relative flex flex-col items-center hover:bg-gray-800/50 p-2 rounded-lg transition">
               <FiShoppingCart size={24} className="text-gray-300"/>
               <span className="text-[10px] font-semibold mt-1">Cart</span>
@@ -251,16 +261,16 @@ export default function ProductDetail() {
         <div className="flex flex-col lg:flex-row gap-0 lg:gap-10 mb-8 lg:mb-12 bg-white lg:rounded-3xl lg:border border-gray-100 lg:p-6 lg:shadow-sm">
           
           {/* ========================================================= */}
-          {/* IMAGE SECTION (SLIDER KWENYE SIMU, GALLERY KWENYE DESKTOP) */}
+          {/* IMAGE SECTION - SLIDER IMERUHUSIWA KUFANYA KAZI KOTE */}
           {/* ========================================================= */}
-          <div className="w-full lg:w-1/2 flex flex-col-reverse lg:flex-row gap-4 relative">
+          <div className="w-full lg:w-1/2 lg:max-w-[50%] flex flex-col-reverse lg:flex-row gap-4 relative overflow-hidden">
             
-            {/* Desktop Side Thumbnails */}
-            <div className="hidden lg:flex flex-col gap-3 w-20">
+            {/* Desktop Side Thumbnails (Optonal sasa, ila zinasaidia kwa fast jump) */}
+            <div className="hidden lg:flex flex-col gap-3 w-20 flex-shrink-0">
               {images.map((imgStr, idx) => (
                 <div 
                    key={idx} 
-                   onClick={() => setCurrentImageIndex(idx)} 
+                   onClick={() => scrollToImage(idx)} 
                    className={`w-20 h-20 bg-gray-50 rounded-lg border p-2 cursor-pointer transition ${currentImageIndex === idx ? 'border-[#F2A900]' : 'border-gray-200 hover:border-[#F2A900]/50'}`}
                 >
                   <img src={imgStr} className="w-full h-full object-contain mix-blend-multiply" />
@@ -269,21 +279,21 @@ export default function ProductDetail() {
             </div>
             
             {/* Main Image Slider View */}
-            <div className="flex-1 bg-white lg:bg-gray-50 lg:rounded-2xl lg:border border-gray-100 relative min-h-[350px] lg:min-h-[500px]">
+            <div className="flex-1 w-full bg-white lg:bg-gray-50 lg:rounded-2xl lg:border border-gray-100 relative min-h-[350px] lg:min-h-[500px] overflow-hidden group">
               
               <button onClick={(e) => toggleWishlist(e, product.id)} className="absolute top-4 right-4 z-20 w-10 h-10 bg-white/90 backdrop-blur rounded-full flex items-center justify-center text-gray-400 hover:text-red-500 shadow-md transition">
                   <FiHeart className={`text-lg ${isMainProductWishlisted ? "fill-red-500 text-red-500" : ""}`} />
               </button>
 
-              {/* Slider Container */}
+              {/* Slider Container - Active For Desktop & Mobile */}
               <div 
                 ref={sliderRef}
                 onScroll={handleScroll}
-                className="w-full h-[350px] lg:h-[500px] flex overflow-x-auto snap-x snap-mandatory hide-scrollbar smooth-scroll"
+                className="w-full h-[350px] lg:h-[500px] flex overflow-x-auto snap-x snap-mandatory hide-scrollbar smooth-scroll scroll-smooth"
               >
                  {images.length > 0 ? (
                     images.map((imgStr, idx) => (
-                      <div key={idx} className="w-full h-full flex-shrink-0 snap-center flex items-center justify-center p-8 bg-white lg:bg-transparent mix-blend-multiply">
+                      <div key={idx} className="w-full h-full flex-shrink-0 snap-center flex items-center justify-center p-8 bg-white lg:bg-transparent mix-blend-multiply relative">
                           <img src={imgStr} alt={product.name} className="max-w-full max-h-full object-contain mix-blend-multiply" />
                       </div>
                     ))
@@ -292,16 +302,33 @@ export default function ProductDetail() {
                  )}
               </div>
 
-              {/* Custom Dots Navigation (Simu na Desktop) */}
+              {/* Slider Arrow Buttons (Desktop Hover) */}
+              {images.length > 1 && (
+                 <>
+                   <button 
+                     onClick={() => scrollToImage(Math.max(0, currentImageIndex - 1))}
+                     className={`absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/80 backdrop-blur border border-gray-200 rounded-full flex items-center justify-center text-gray-800 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-0 hidden lg:flex`}
+                     disabled={currentImageIndex === 0}
+                   >
+                     <FiChevronRight className="rotate-180" size={20}/>
+                   </button>
+                   <button 
+                     onClick={() => scrollToImage(Math.min(images.length - 1, currentImageIndex + 1))}
+                     className={`absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/80 backdrop-blur border border-gray-200 rounded-full flex items-center justify-center text-gray-800 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-0 hidden lg:flex`}
+                     disabled={currentImageIndex === images.length - 1}
+                   >
+                     <FiChevronRight size={20}/>
+                   </button>
+                 </>
+              )}
+
+              {/* Custom Dots Navigation */}
               {images.length > 1 && (
                 <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 z-10 bg-white/50 backdrop-blur px-3 py-1.5 rounded-full border border-gray-200/50 shadow-sm">
                    {images.map((_, idx) => (
                      <div 
                         key={idx} 
-                        onClick={() => {
-                          setCurrentImageIndex(idx);
-                          sliderRef.current?.scrollTo({ left: sliderRef.current.clientWidth * idx, behavior: 'smooth' });
-                        }}
+                        onClick={() => scrollToImage(idx)}
                         className={`h-1.5 rounded-full cursor-pointer transition-all ${currentImageIndex === idx ? 'w-4 bg-[#F2A900]' : 'w-1.5 bg-gray-400'}`}
                      ></div>
                    ))}
@@ -313,12 +340,10 @@ export default function ProductDetail() {
           {/* ========================================================= */}
           {/* PRODUCT DETAILS SECTION */}
           {/* ========================================================= */}
-          <div className="w-full lg:w-1/2 flex flex-col px-4 lg:px-0 py-6 lg:py-4">
+          <div className="w-full lg:w-1/2 lg:flex-1 flex flex-col px-4 lg:px-0 py-6 lg:py-4">
             
-            {/* Title (Imeondolewa boldness nyingi) */}
             <h1 className="text-xl sm:text-2xl lg:text-3xl font-semibold text-[#0A101D] leading-tight mb-4">{product.name}</h1>
 
-            {/* Price Area (Bei Kuu tu na Badges za Punguzo) */}
             <div className="flex flex-col mb-2 bg-gray-50/50 border border-gray-100 p-4 rounded-2xl">
                <div className="flex items-center gap-3">
                   <span className="text-3xl lg:text-4xl font-bold text-[#0A101D] leading-none">TSH {basePrice.toLocaleString()}</span>
@@ -326,13 +351,11 @@ export default function ProductDetail() {
                </div>
             </div>
 
-            {/* Ratings (Imeshushwa chini ya Bei) */}
             <div className="flex items-center gap-2 mb-6 border-b border-gray-100 pb-4">
                <div className="flex text-[#F2A900] text-sm"><FiStar className="fill-current" /><FiStar className="fill-current" /><FiStar className="fill-current" /><FiStar className="fill-current" /><FiStar className="fill-current text-gray-300" /></div>
-               <span className="text-blue-600 font-semibold text-xs hover:underline cursor-pointer">30 Reviews</span>
+               <span className="text-blue-600 font-medium text-xs hover:underline cursor-pointer">30 Reviews</span>
             </div>
 
-            {/* Condition */}
             <div className="flex items-center gap-3 mb-6">
                <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Condition:</span>
                <span className={`${getConditionStyles(product.condition)} border text-[11px] font-semibold uppercase px-3 py-1 rounded-md flex items-center gap-1.5 shadow-sm`}>
@@ -340,7 +363,6 @@ export default function ProductDetail() {
                </span>
             </div>
 
-            {/* Tier Pricing (Wholesale) */}
             <div className="bg-white rounded-2xl p-4 border border-gray-200 mb-5 shadow-sm">
               <p className="text-xs font-semibold text-gray-600 uppercase tracking-wider mb-3 flex items-center gap-2"><FiPackage className="text-[#F2A900]"/> Wholesale Pricing</p>
               <div className="grid grid-cols-3 divide-x divide-gray-100 bg-gray-50 rounded-xl border border-gray-100 overflow-hidden">
@@ -359,7 +381,6 @@ export default function ProductDetail() {
               </div>
             </div>
 
-            {/* Shipping Info */}
             <div className="mb-6 bg-green-50/50 border border-green-100 p-4 rounded-2xl flex items-start gap-3">
               <FiTruck className="text-green-600 mt-0.5 flex-shrink-0" size={20} />
               <div>
@@ -370,7 +391,6 @@ export default function ProductDetail() {
               </div>
             </div>
 
-            {/* Desktop Action Buttons */}
             <div className="hidden lg:flex gap-3 mt-auto pt-4 border-t border-gray-100">
               <button onClick={() => { addToCart(product); alert('Imewekwa kwenye kikapu!'); }} className="flex-1 bg-[#F2A900] hover:bg-yellow-500 text-black font-semibold py-4 rounded-xl text-sm transition flex justify-center items-center gap-2 shadow-[0_4px_14px_rgba(242,169,0,0.3)]">
                 <FiShoppingCart size={18}/> Add To Cart
@@ -382,9 +402,7 @@ export default function ProductDetail() {
           </div>
         </div>
 
-        {/* ========================================================= */}
-        {/* SEHEMU YA KATI: MAELEZO NA SPECIFICATIONS */}
-        {/* ========================================================= */}
+        {/* DETAILS SECTION BELOW */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-10 mb-12 px-4 lg:px-0">
           <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
             <h3 className="text-lg font-semibold text-[#0A101D] mb-4 flex items-center gap-2"><span className="w-1 h-5 bg-[#F2A900] rounded-full"></span> Product Overview</h3>
@@ -420,9 +438,7 @@ export default function ProductDetail() {
           </div>
         </div>
 
-        {/* ========================================================= */}
-        {/* SEHEMU YA CHINI: RELATED PRODUCTS */}
-        {/* ========================================================= */}
+        {/* RELATED PRODUCTS */}
         {relatedProducts.length > 0 && (
           <div className="mb-10 px-4 lg:px-0">
             <div className="flex items-center justify-between mb-6">
@@ -438,9 +454,6 @@ export default function ProductDetail() {
 
       <div className="hidden lg:block"><Footer /></div>
 
-      {/* ========================================================= */}
-      {/* 3. MOBILE BOTTOM ACTION BAR */}
-      {/* ========================================================= */}
       <div className="lg:hidden fixed bottom-0 left-0 w-full bg-white border-t border-gray-100 px-3 py-3 flex items-center gap-2 z-50 shadow-[0_-10px_30px_rgba(0,0,0,0.08)] pb-safe">
          <div onClick={() => router.push('/')} className="flex flex-col items-center justify-center text-gray-400 hover:text-[#0A101D] w-12 cursor-pointer">
             <FiHome size={22} className="mb-0.5" />
@@ -462,13 +475,10 @@ export default function ProductDetail() {
          </div>
       </div>
 
-      {/* Fixed global style tag for hide-scrollbar */}
       <style>{`
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        .smooth-scroll { scroll-behavior: smooth; }
       `}</style>
-
     </div>
   );
 }
