@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { 
   FiArrowLeft, FiHeart, FiShare, FiShoppingCart, FiStar, 
   FiChevronRight, FiSearch, FiMic, FiCamera, FiHome, 
-  FiCheckCircle, FiMapPin, FiChevronDown, FiUser, FiPackage,
+  FiCheckCircle, FiMapPin, FiChevronDown, FiPackage,
   FiGlobe, FiTruck
 } from 'react-icons/fi';
 import { useCart } from '../../context/CartContext';
@@ -189,7 +189,7 @@ export default function ProductDetail() {
     <div className="min-h-screen bg-gray-50/30 text-gray-900 font-sans pb-24 lg:pb-0">
       
       {/* ========================================================= */}
-      {/* 1. PROFESSIONAL DESKTOP HEADER (Kama Home Page) */}
+      {/* 1. PROFESSIONAL DESKTOP HEADER (No Account Icon) */}
       {/* ========================================================= */}
       <header className="hidden lg:block bg-[#0A101D] text-white border-b border-gray-800 sticky top-0 z-40">
         <div className="max-w-[1600px] mx-auto px-6 h-24 flex items-center justify-between gap-6">
@@ -211,7 +211,7 @@ export default function ProductDetail() {
           </form>
 
           <div className="flex items-center gap-4 flex-shrink-0">
-            {/* Account Icon imeondolewa hapa */}
+            {/* Removed Account Icon */}
             <button onClick={() => router.push('/checkout')} className="relative flex flex-col items-center hover:bg-gray-800/50 p-2 rounded-lg transition">
               <FiShoppingCart size={24} className="text-gray-300"/>
               <span className="text-[10px] font-semibold mt-1">Cart</span>
@@ -315,21 +315,21 @@ export default function ProductDetail() {
           {/* ========================================================= */}
           <div className="w-full lg:w-1/2 flex flex-col px-4 lg:px-0 py-6 lg:py-4">
             
-            {/* Title (Boldness imepunguzwa kuwa semibold) */}
+            {/* Title (Imeondolewa boldness nyingi) */}
             <h1 className="text-xl sm:text-2xl lg:text-3xl font-semibold text-[#0A101D] leading-tight mb-4">{product.name}</h1>
 
-            {/* Price Area (Boldness imepunguzwa kidogo) */}
+            {/* Price Area (Bei Kuu tu na Badges za Punguzo) */}
             <div className="flex flex-col mb-2 bg-gray-50/50 border border-gray-100 p-4 rounded-2xl">
-               <div className="flex items-end gap-3">
+               <div className="flex items-center gap-3">
                   <span className="text-3xl lg:text-4xl font-bold text-[#0A101D] leading-none">TSH {basePrice.toLocaleString()}</span>
                   <span className="bg-red-100 text-red-600 text-[10px] font-semibold px-2 py-1 rounded">-15%</span>
                </div>
             </div>
 
-            {/* Ratings */}
+            {/* Ratings (Imeshushwa chini ya Bei) */}
             <div className="flex items-center gap-2 mb-6 border-b border-gray-100 pb-4">
                <div className="flex text-[#F2A900] text-sm"><FiStar className="fill-current" /><FiStar className="fill-current" /><FiStar className="fill-current" /><FiStar className="fill-current" /><FiStar className="fill-current text-gray-300" /></div>
-               <span className="text-blue-600 font-medium text-xs hover:underline cursor-pointer">30 Reviews</span>
+               <span className="text-blue-600 font-semibold text-xs hover:underline cursor-pointer">30 Reviews</span>
             </div>
 
             {/* Condition */}
@@ -340,7 +340,7 @@ export default function ProductDetail() {
                </span>
             </div>
 
-            {/* Tier Pricing (Wholesale) - Full price imewekwa */}
+            {/* Tier Pricing (Wholesale) */}
             <div className="bg-white rounded-2xl p-4 border border-gray-200 mb-5 shadow-sm">
               <p className="text-xs font-semibold text-gray-600 uppercase tracking-wider mb-3 flex items-center gap-2"><FiPackage className="text-[#F2A900]"/> Wholesale Pricing</p>
               <div className="grid grid-cols-3 divide-x divide-gray-100 bg-gray-50 rounded-xl border border-gray-100 overflow-hidden">
@@ -359,7 +359,7 @@ export default function ProductDetail() {
               </div>
             </div>
 
-            {/* Shipping Info - Imerudishwa hapa chini ya Wholesale Pricing */}
+            {/* Shipping Info */}
             <div className="mb-6 bg-green-50/50 border border-green-100 p-4 rounded-2xl flex items-start gap-3">
               <FiTruck className="text-green-600 mt-0.5 flex-shrink-0" size={20} />
               <div>
@@ -462,8 +462,8 @@ export default function ProductDetail() {
          </div>
       </div>
 
-      {/* Global styles for hide-scrollbar */}
-      <style dangerouslySetOrigin>{`
+      {/* Fixed global style tag for hide-scrollbar */}
+      <style>{`
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         .smooth-scroll { scroll-behavior: smooth; }
