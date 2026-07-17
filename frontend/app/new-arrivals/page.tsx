@@ -34,6 +34,19 @@ export default function NewArrivalsPage() {
     return url.startsWith('http') ? url : `${getApiUrl()}${url}`;
   };
 
+  // ==========================================
+  // HELPER MPYA YA KUSOMA ARRAY YA PICHA
+  // ==========================================
+  const getImagesArray = (imgData: string) => {
+    if (!imgData) return [];
+    try {
+      const parsed = JSON.parse(imgData);
+      return Array.isArray(parsed) ? parsed : [imgData];
+    } catch(e) {
+      return [imgData];
+    }
+  };
+
   useEffect(() => {
     const savedUser = localStorage.getItem('jtex_user');
     if (savedUser) {
@@ -84,6 +97,9 @@ export default function NewArrivalsPage() {
 
   const ProductCard = ({ product }: { product: any }) => {
     const isWishlisted = wishlist.includes(product.id);
+    
+    // TUNATUMIA HELPER FUNCTION HAPA
+    const displayImage = getImagesArray(product.imageUrl)[0];
 
     return (
       <div onClick={() => router.push(`/product/${product.id}`)} className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm flex flex-col h-full group hover:border-green-500 transition cursor-pointer relative overflow-hidden">
@@ -94,7 +110,8 @@ export default function NewArrivalsPage() {
 
         <div className="relative w-full pt-[100%] bg-gray-50/50 rounded-xl mb-4 overflow-hidden border border-gray-50 flex-shrink-0">
             <button onClick={(e) => toggleWishlist(e, product.id)} className="absolute top-2 left-2 text-gray-400 hover:text-red-500 lg:hidden z-20"><FiHeart className={isWishlisted ? "fill-red-500 text-red-500" : ""}/></button>
-            {product.imageUrl ? <img src={getImageUrl(product.imageUrl)} alt={product.name} className="absolute inset-0 w-full h-full object-contain mix-blend-multiply p-4 group-hover:scale-105 transition-transform duration-300" /> : <div className="absolute inset-0 flex items-center justify-center text-5xl">📦</div>}
+            {/* TUNAPITisha PICHA ILIYOSOMWA HAPA */}
+            {displayImage ? <img src={getImageUrl(displayImage)} alt={product.name} className="absolute inset-0 w-full h-full object-contain mix-blend-multiply p-4 group-hover:scale-105 transition-transform duration-300" /> : <div className="absolute inset-0 flex items-center justify-center text-5xl">📦</div>}
         </div>
         <div className="flex flex-col flex-grow">
             <h4 className="font-bold text-xs lg:text-sm text-gray-800 mb-2 line-clamp-2 leading-snug group-hover:text-green-600 transition">{product.name}</h4>

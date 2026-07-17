@@ -38,6 +38,19 @@ export default function DealsPage() {
     return url.startsWith('http') ? url : `${getApiUrl()}${url}`;
   };
 
+  // ==========================================
+  // HELPER MPYA YA KUSOMA ARRAY YA PICHA
+  // ==========================================
+  const getImagesArray = (imgData: string) => {
+    if (!imgData) return [];
+    try {
+      const parsed = JSON.parse(imgData);
+      return Array.isArray(parsed) ? parsed : [imgData];
+    } catch(e) {
+      return [imgData];
+    }
+  };
+
   // Mfumo wa kupata discount kulingana na ID
   const getDeterministicDiscount = (id: string) => {
     if (!id) return 15; 
@@ -126,6 +139,9 @@ export default function DealsPage() {
     const isWishlisted = wishlist.includes(product.id);
     const visualDiscount = getDeterministicDiscount(product.id); 
     const oldPrice = Math.round(product.price / (1 - (visualDiscount/100)));
+    
+    // TUNAITUMIA HELPER FUNCTION HAPA
+    const displayImage = getImagesArray(product.imageUrl)[0];
 
     if (viewMode === 'list') {
       return (
@@ -135,7 +151,7 @@ export default function DealsPage() {
           </div>
           <div className="relative w-32 h-32 bg-gray-50/50 rounded-xl flex items-center justify-center flex-shrink-0 p-2 overflow-hidden border border-gray-50">
             <span className="absolute top-2 left-2 bg-[#FF7A00] text-white text-[10px] font-black px-1.5 py-0.5 rounded z-20">-{visualDiscount}%</span>
-            {product.imageUrl ? <img src={getImageUrl(product.imageUrl)} alt={product.name} className="absolute inset-0 w-full h-full object-contain mix-blend-multiply p-2 group-hover:scale-105 transition-transform" /> : <span className="text-4xl">📦</span>}
+            {displayImage ? <img src={getImageUrl(displayImage)} alt={product.name} className="absolute inset-0 w-full h-full object-contain mix-blend-multiply p-2 group-hover:scale-105 transition-transform" /> : <span className="text-4xl">📦</span>}
           </div>
           <div className="flex-1 flex flex-col justify-center">
             <h4 className="font-bold text-sm text-gray-800 mb-1 leading-snug line-clamp-2 pr-12">{product.name}</h4>
@@ -162,7 +178,7 @@ export default function DealsPage() {
         <div className="relative w-full pt-[100%] bg-gray-50/50 rounded-xl mb-4 overflow-hidden border border-gray-50 flex-shrink-0">
             <span className="absolute top-2 left-2 bg-[#FF7A00] text-white text-[11px] font-black px-2 py-0.5 rounded z-20 shadow-sm">-{visualDiscount}%</span>
             <button onClick={(e) => toggleWishlist(e, product.id)} className="absolute top-2 right-2 text-gray-400 hover:text-red-500 lg:hidden z-20"><FiHeart className={isWishlisted ? "fill-red-500 text-red-500" : ""}/></button>
-            {product.imageUrl ? <img src={getImageUrl(product.imageUrl)} alt={product.name} className="absolute inset-0 w-full h-full object-contain mix-blend-multiply p-4 group-hover:scale-105 transition-transform duration-300" /> : <div className="absolute inset-0 flex items-center justify-center text-5xl">📦</div>}
+            {displayImage ? <img src={getImageUrl(displayImage)} alt={product.name} className="absolute inset-0 w-full h-full object-contain mix-blend-multiply p-4 group-hover:scale-105 transition-transform duration-300" /> : <div className="absolute inset-0 flex items-center justify-center text-5xl">📦</div>}
         </div>
         <div className="flex flex-col flex-grow">
             <h4 className="font-bold text-xs lg:text-sm text-gray-800 mb-2 line-clamp-2 leading-snug">{product.name}</h4>
