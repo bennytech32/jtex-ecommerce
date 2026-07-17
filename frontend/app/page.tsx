@@ -55,15 +55,15 @@ export default function HomePage() {
   };
 
   // ==========================================
-  // FIX: HELPER MPYA YA KUSOMA ARRAY YA PICHA
+  // FIX: HELPER YA KUSOMA ARRAY YA PICHA SALAMA
   // ==========================================
-  const getImagesArray = (imgData: string) => {
-    if (!imgData) return [];
+  const getDisplayImage = (imgData: string) => {
+    if (!imgData) return '';
     try {
       const parsed = JSON.parse(imgData);
-      return Array.isArray(parsed) ? parsed : [imgData];
+      return Array.isArray(parsed) && parsed.length > 0 ? parsed[0] : imgData;
     } catch(e) {
-      return [imgData];
+      return imgData; // Ikiwa sio JSON array, itarudisha string ilivyo (kama picha moja)
     }
   };
 
@@ -284,7 +284,7 @@ export default function HomePage() {
       </div>
 
       {/* ========================================================= */}
-      {/* 1. DESKTOP HEADER */}
+      {/* 1. DESKTOP HEADER - Logo inabaki hapa */}
       {/* ========================================================= */}
       <header className="hidden lg:block bg-[#0A101D] text-white border-b border-gray-800 sticky top-0 z-40">
         <div className="max-w-[1600px] mx-auto px-6 h-24 flex items-center justify-between gap-6">
@@ -292,7 +292,7 @@ export default function HomePage() {
             <img 
               src="/logo.png" 
               alt="Jtex Logo" 
-              className="h-20 lg:h-28 cursor-pointer object-contain" 
+              className="h-16 lg:h-20 cursor-pointer object-contain" 
               onClick={() => router.push('/')} 
             />
             <div className="flex items-center gap-2 cursor-pointer hover:bg-gray-800/50 p-2 rounded-lg transition">
@@ -348,7 +348,7 @@ export default function HomePage() {
       </header>
 
       {/* ========================================================= */}
-      {/* 2. MOBILE HEADER */}
+      {/* 2. MOBILE HEADER - Logo Imeondolewa hapa kama ulivyotaka */}
       {/* ========================================================= */}
       <header className="lg:hidden bg-[#0A101D] text-white pt-4 pb-3 sticky top-0 z-50">
         <div className="px-4 flex items-center justify-between mb-3">
@@ -371,21 +371,22 @@ export default function HomePage() {
         
         {/* MOBILE SEARCH BAR */}
         <div className="px-4">
-          <form onSubmit={handleSearch} className="flex items-center h-12 bg-white rounded-xl overflow-hidden shadow-sm">
-            <div className="pl-4 pr-2 border-r border-gray-200">
-               <span className="text-xs text-gray-500 font-medium">Search Jtex</span>
+          <form onSubmit={handleSearch} className="flex items-center h-12 bg-white rounded-xl overflow-hidden shadow-sm border border-gray-200">
+            <div className="pl-4 pr-3 flex items-center border-r border-gray-200 h-full bg-gray-50">
+               <span className="text-xs text-gray-600 font-bold">Search Jtex</span>
             </div>
             <input 
               type="text" 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="flex-1 h-full px-3 text-sm text-gray-900 outline-none bg-transparent" 
+              placeholder="What are you looking for?"
+              className="flex-1 h-full px-3 text-sm text-gray-900 outline-none bg-transparent placeholder-gray-400" 
             />
-            <div className="flex items-center gap-3 px-2 text-gray-400">
+            <div className="flex items-center gap-2 px-2 text-gray-400 bg-white">
               <FiMic size={18} className="cursor-pointer hover:text-gray-600"/>
               <FiCamera size={18} className="cursor-pointer hover:text-gray-600"/>
             </div>
-            <button type="submit" className="h-full px-5 bg-[#F2A900] text-black flex items-center justify-center hover:bg-yellow-500 transition">
+            <button type="submit" className="h-full px-4 bg-[#F2A900] text-black flex items-center justify-center hover:bg-yellow-500 transition border-l border-[#F2A900]">
               <FiSearch size={20} />
             </button>
           </form>
@@ -553,9 +554,9 @@ export default function HomePage() {
                            <span className="absolute top-2 left-2 bg-[#FF7A00] text-white text-[10px] font-black px-1.5 py-0.5 rounded z-20">-{visualDiscount}%</span>
                            <button className="absolute top-2 right-2 text-gray-400 hover:text-red-500 lg:hidden z-20" onClick={(e) => { e.stopPropagation(); }}><FiHeart/></button>
                            
-                           {/* FIX YA PICHA KWENYE FLASH SALES */}
-                           {getImagesArray(product.imageUrl)[0] ? (
-                              <img src={getImageUrl(getImagesArray(product.imageUrl)[0])} alt={product.name} className="absolute inset-0 w-full h-full object-contain mix-blend-multiply p-4 group-hover:scale-105 transition-transform duration-300" />
+                           {/* FIX YA PICHA: TUMIA GET_DISPLAY_IMAGE MPYA */}
+                           {getDisplayImage(product.imageUrl) ? (
+                              <img src={getImageUrl(getDisplayImage(product.imageUrl))} alt={product.name} className="absolute inset-0 w-full h-full object-contain mix-blend-multiply p-4 group-hover:scale-105 transition-transform duration-300" />
                            ) : (
                               <div className="absolute inset-0 flex items-center justify-center text-5xl">📦</div>
                            )}
@@ -612,8 +613,8 @@ export default function HomePage() {
 
                         <div className="relative w-full pt-[100%] bg-gray-50/50 rounded-xl mb-4 overflow-hidden border border-gray-50 flex-shrink-0">
                            {/* FIX YA PICHA KWENYE NEW ARRIVALS */}
-                           {getImagesArray(product.imageUrl)[0] ? (
-                              <img src={getImageUrl(getImagesArray(product.imageUrl)[0])} alt={product.name} className="absolute inset-0 w-full h-full object-contain mix-blend-multiply p-4 group-hover:scale-105 transition-transform duration-300" />
+                           {getDisplayImage(product.imageUrl) ? (
+                              <img src={getImageUrl(getDisplayImage(product.imageUrl))} alt={product.name} className="absolute inset-0 w-full h-full object-contain mix-blend-multiply p-4 group-hover:scale-105 transition-transform duration-300" />
                            ) : (
                               <div className="absolute inset-0 flex items-center justify-center text-5xl">📦</div>
                            )}
@@ -667,8 +668,8 @@ export default function HomePage() {
                            </div>
 
                            {/* FIX YA PICHA KWENYE TRENDING NOW */}
-                           {getImagesArray(product.imageUrl)[0] ? (
-                              <img src={getImageUrl(getImagesArray(product.imageUrl)[0])} alt={product.name} className="absolute inset-0 w-full h-full object-contain mix-blend-multiply p-4 group-hover:scale-105 transition-transform duration-300" />
+                           {getDisplayImage(product.imageUrl) ? (
+                              <img src={getImageUrl(getDisplayImage(product.imageUrl))} alt={product.name} className="absolute inset-0 w-full h-full object-contain mix-blend-multiply p-4 group-hover:scale-105 transition-transform duration-300" />
                            ) : (
                               <div className="absolute inset-0 flex items-center justify-center text-5xl">📦</div>
                            )}
