@@ -15,7 +15,7 @@ export default function AdminLoginPage() {
     setIsLoading(true);
     setError('');
     
-    // Tunasafisha email na password kutoa 'spaces' zilizojificha (Kama za Autofill)
+    // Trim invisible spaces (Autofill prevention)
     const cleanEmail = email.trim();
     const cleanPassword = password.trim();
 
@@ -25,80 +25,80 @@ export default function AdminLoginPage() {
         localStorage.setItem('jtex_admin_token', mockToken);
         
         setTimeout(() => {
-            // Hii inailazimisha browser ku-load page mpya bila kujali Next.js Cache
+            // Force reload to bypass Next.js cache
             window.location.href = '/admin/dashboard';
         }, 800);
     } else {
         setTimeout(() => {
             setIsLoading(false);
-            setError('Nenosiri au Barua pepe si sahihi. Jaribu kuandika kwa mkono.');
+            setError('Invalid email or password. Please try again.');
         }, 800);
     }
   };
 
   return (
-    <div className="min-h-screen flex bg-white font-sans">
+    // 'h-screen' and 'overflow-hidden' ensure the page does not scroll
+    <div className="h-screen w-full flex bg-white font-sans overflow-hidden">
       
-      {/* LEFT PANEL - BRANDING (Inaonekana kwenye PC tu) */}
-      <div className="hidden lg:flex lg:w-1/2 bg-[#0F172A] relative flex-col justify-between p-12 overflow-hidden">
+      {/* LEFT PANEL - BRANDING (Desktop Only) */}
+      <div className="hidden lg:flex lg:w-1/2 bg-[#0F172A] relative flex-col justify-between p-12 overflow-hidden h-full">
         {/* Background Decorations */}
         <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0 pointer-events-none">
             <div className="absolute -top-24 -left-24 w-96 h-96 bg-blue-600/20 rounded-full blur-3xl"></div>
             <div className="absolute bottom-10 -right-10 w-72 h-72 bg-[#F2A900]/20 rounded-full blur-3xl"></div>
         </div>
 
-        {/* LOGO MPYA - DESKTOP */}
-        <div className="relative z-10 flex flex-col items-start">
+        {/* LOGO - DESKTOP */}
+        <div className="relative z-10 flex flex-col items-start mt-4">
             <img 
               src="/logo.png" 
               alt="Jtex Logo" 
-              className="h-16 lg:h-20 object-contain brightness-0 invert" 
-              // Tunatumia 'brightness-0 invert' kuifanya iwe nyeupe kabisa kwenye dark background
+              className="h-14 lg:h-16 object-contain brightness-0 invert" 
             />
-            <div className="mt-2 inline-flex items-center">
+            <div className="mt-3 inline-flex items-center">
               <span className="text-gray-400 font-bold tracking-widest uppercase text-xs">Enterprise Admin Portal</span>
               <span className="ml-3 bg-[#F2A900] text-black text-[9px] font-black px-2 py-0.5 rounded-sm">SECURE</span>
             </div>
         </div>
 
-        <div className="relative z-10 mb-20">
-            <h1 className="text-4xl xl:text-5xl font-black text-white leading-tight mb-4">
+        <div className="relative z-10 flex-grow flex flex-col justify-center max-w-md">
+            <h1 className="text-4xl xl:text-5xl font-black text-white leading-tight mb-6">
                 Manage your store <br/> <span className="text-[#F2A900]">efficiently & securely.</span>
             </h1>
-            <p className="text-gray-400 text-base max-w-md leading-relaxed">
-                Pata uwezo kamili wa kusimamia bidhaa, oda, wateja na mipangilio ya mfumo wako kwa urahisi zaidi ukiwa popote pale.
+            <p className="text-gray-400 text-sm leading-relaxed">
+                Gain full control to manage products, monitor orders, handle customers, and configure system settings with ease from anywhere.
             </p>
         </div>
 
-        <div className="relative z-10 flex items-center gap-4 text-sm text-gray-500 font-medium">
+        <div className="relative z-10 flex items-center gap-4 text-xs text-gray-500 font-medium mb-4">
             <span>&copy; {new Date().getFullYear()} Jtex E-Commerce</span>
             <span className="w-1.5 h-1.5 rounded-full bg-gray-600"></span>
             <span>All rights reserved</span>
         </div>
       </div>
 
-      {/* RIGHT PANEL - LOGIN FORM (Full width kwenye simu, nusu kwenye PC) */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 bg-gray-50/50 relative">
+      {/* RIGHT PANEL - LOGIN FORM */}
+      <div className="w-full lg:w-1/2 h-full flex flex-col items-center justify-center p-6 sm:p-12 bg-gray-50/50 relative overflow-y-auto">
         
-        {/* LOGO MPYA - MOBILE ONLY */}
+        {/* LOGO - MOBILE ONLY */}
         <div className="absolute top-6 left-6 lg:hidden flex items-center gap-2">
             <img 
               src="/logo.png" 
               alt="Jtex Logo" 
-              className="h-10 object-contain" 
+              className="h-8 object-contain" 
             />
             <span className="bg-[#0F172A] text-white text-[9px] font-black px-2 py-0.5 rounded-sm mt-1">ADMIN</span>
         </div>
 
-        <div className="w-full max-w-md mt-10 lg:mt-0">
+        <div className="w-full max-w-md my-auto">
             
-            {/* Header ya Fomu */}
+            {/* Form Header */}
             <div className="mb-10 text-center lg:text-left">
-                <h2 className="text-3xl font-black text-gray-900 mb-2">Karibu Tena 👋</h2>
-                <p className="text-gray-500 text-sm font-medium">Tafadhali ingiza taarifa zako za siri kuendelea.</p>
+                <h2 className="text-3xl font-black text-gray-900 mb-2">Welcome Back 👋</h2>
+                <p className="text-gray-500 text-sm font-medium">Please enter your secure credentials to continue.</p>
             </div>
 
-            {/* Error Alert yenye muonekano mzuri */}
+            {/* Error Alert */}
             {error && (
                 <div className="bg-red-50 text-red-600 p-4 rounded-2xl text-sm font-bold mb-6 flex items-start gap-3 border border-red-100 shadow-sm animate-fade-in">
                     <FiShield className="text-xl flex-shrink-0 mt-0.5"/> 
@@ -107,9 +107,9 @@ export default function AdminLoginPage() {
             )}
 
             {/* Form */}
-            <form onSubmit={handleLogin} className="space-y-5">
+            <form onSubmit={handleLogin} className="space-y-6">
                 <div>
-                    <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Barua Pepe (Email)</label>
+                    <label className="block text-[11px] font-bold text-gray-700 uppercase tracking-wider mb-2">Email Address</label>
                     <div className="relative group">
                         <FiMail className="absolute left-4 top-3.5 text-gray-400 group-focus-within:text-[#F2A900] transition-colors" size={20}/>
                         <input 
@@ -117,7 +117,7 @@ export default function AdminLoginPage() {
                             required
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            className="w-full pl-12 pr-4 py-3.5 bg-white border border-gray-200 rounded-2xl outline-none focus:ring-4 focus:ring-[#F2A900]/10 focus:border-[#F2A900] transition-all text-sm font-medium text-gray-900 shadow-sm"
+                            className="w-full pl-12 pr-4 py-3.5 bg-white border border-gray-200 rounded-2xl outline-none focus:ring-4 focus:ring-[#F2A900]/10 focus:border-[#F2A900] transition-all text-sm font-medium text-gray-900 shadow-sm placeholder-gray-400"
                             placeholder="admin@jtex.co.tz"
                         />
                     </div>
@@ -125,8 +125,8 @@ export default function AdminLoginPage() {
 
                 <div>
                     <div className="flex justify-between items-center mb-2">
-                        <label className="text-xs font-bold text-gray-700 uppercase tracking-wider">Nywila (Password)</label>
-                        <button type="button" className="text-xs font-bold text-blue-600 hover:text-[#F2A900] transition-colors">Umesahau?</button>
+                        <label className="text-[11px] font-bold text-gray-700 uppercase tracking-wider">Password</label>
+                        <button type="button" className="text-xs font-bold text-blue-600 hover:text-[#F2A900] transition-colors">Forgot?</button>
                     </div>
                     <div className="relative group">
                         <FiLock className="absolute left-4 top-3.5 text-gray-400 group-focus-within:text-[#F2A900] transition-colors" size={20}/>
@@ -135,7 +135,7 @@ export default function AdminLoginPage() {
                             required
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            className="w-full pl-12 pr-12 py-3.5 bg-white border border-gray-200 rounded-2xl outline-none focus:ring-4 focus:ring-[#F2A900]/10 focus:border-[#F2A900] transition-all text-sm font-medium text-gray-900 shadow-sm"
+                            className="w-full pl-12 pr-12 py-3.5 bg-white border border-gray-200 rounded-2xl outline-none focus:ring-4 focus:ring-[#F2A900]/10 focus:border-[#F2A900] transition-all text-sm font-medium text-gray-900 shadow-sm placeholder-gray-400"
                             placeholder="••••••••"
                         />
                         <button 
@@ -150,21 +150,21 @@ export default function AdminLoginPage() {
 
                 <button 
                     disabled={isLoading}
-                    className="w-full bg-[#0F172A] hover:bg-black text-white py-4 rounded-2xl font-black text-sm uppercase tracking-wide transition-all flex items-center justify-center gap-2 shadow-lg shadow-gray-900/20 disabled:opacity-70 disabled:cursor-not-allowed mt-4 group"
+                    className="w-full bg-[#0F172A] hover:bg-black text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2 shadow-lg shadow-gray-900/20 disabled:opacity-70 disabled:cursor-not-allowed mt-2 group"
                 >
                     {isLoading ? (
                         <span className="flex items-center gap-2">
                            <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-                           Inaingia...
+                           Authenticating...
                         </span>
                     ) : (
-                        <>Ingia Kwenye Mfumo <FiArrowRight className="group-hover:translate-x-1 transition-transform" size={18}/></>
+                        <>Access Portal <FiArrowRight className="group-hover:translate-x-1 transition-transform" size={16}/></>
                     )}
                 </button>
             </form>
 
-            <div className="mt-10 lg:hidden text-center">
-                <p className="text-[11px] text-gray-400 font-medium">
+            <div className="mt-12 lg:hidden text-center">
+                <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">
                     &copy; {new Date().getFullYear()} Jtex. All rights reserved.
                 </p>
             </div>
