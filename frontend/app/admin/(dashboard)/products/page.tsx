@@ -11,12 +11,13 @@ export default function AdminProducts() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const editFileInputRef = useRef<HTMLInputElement>(null);
 
-  // Form States (Kwa ajili ya kuweka bidhaa mpya)
+  // Form States
   const [sku, setSku] = useState('');
   const [name, setName] = useState('');
-  const [category, setCategory] = useState('Electronics'); 
+  const [category, setCategory] = useState('Laptops'); 
+  const [accessoryType, setAccessoryType] = useState(''); // NEW: Kwa ajili ya Accessories tu
   const [brand, setBrand] = useState('');
-  const [modelName, setModelName] = useState(''); // STATE MPYA YA MODEL
+  const [modelName, setModelName] = useState(''); 
   const [badge, setBadge] = useState(''); 
   const [condition, setCondition] = useState('Brand New');
   const [buyingPrice, setBuyingPrice] = useState('');
@@ -32,22 +33,30 @@ export default function AdminProducts() {
   const [editImageFiles, setEditImageFiles] = useState<File[]>([]);
   const [editImagePreviews, setEditImagePreviews] = useState<string[]>([]);
 
-  const API_URL = 'https://jtex-ecommerce-production.up.railway.app';
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://jtex-ecommerce-production.up.railway.app';
 
+  // Orodha mpya (Accessories imeunganishwa kuwa moja)
   const STANDARD_CATEGORIES = [
-    "Electronics", "Computers", "Monitors", "Printers", "Accessories", 
-    "Phones", "Smartwatches", "Headphones", "Clothing", "Shoes", 
-    "Home & Kitchen", "Beauty", "Other"
+    "Laptops", "Desktop Computers", "All-in-One PCs", "Mini PCs", "Workstations", 
+    "Servers", "Monitors", "Printers", "Scanners", "Projectors", 
+    "TVs", "Smart TVs", "Digital Signage Displays", "Mobile Phones", "Smartphones", 
+    "Tablets", "E-Readers", "Smartwatches", "Fitness Trackers", 
+    "Accessories", // <--- HII NDIO YA AKILI MNEMBA (INTELLIGENT)
+    "Gaming Consoles", "VR Headsets", "Home & Kitchen", "Beauty", "Other"
   ];
 
-  // Helper function ya kusoma picha kama Array (kwa sababu sasa zinasave-iwa nyingi)
+  // Aina za Accessories zitakazotokea ukichagua Category "Accessories"
+  const ACCESSORY_TYPES = [
+    "Phone / Tablet", "Computer / Laptop", "Gaming", "Audio / Studio", "Automotive", "Other"
+  ];
+
   const getImagesArray = (imgData: string) => {
     if (!imgData) return [];
     try {
       const parsed = JSON.parse(imgData);
       return Array.isArray(parsed) ? parsed : [imgData];
     } catch(e) {
-      return [imgData]; // Fallback kama ni picha moja ya zamani
+      return [imgData]; 
     }
   };
 
@@ -79,10 +88,22 @@ export default function AdminProducts() {
   const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>, isEdit: boolean = false) => {
     const val = e.target.value;
     if (isEdit) {
-      setEditingProduct({ ...editingProduct, category: val });
+      setEditingProduct({ ...editingProduct, category: val, accessoryType: '' });
       setEditSpecData({});
     } else {
       setCategory(val);
+      setAccessoryType(''); // Reset accessory type
+      setSpecData({});
+    }
+  };
+
+  const handleAccessoryTypeChange = (e: React.ChangeEvent<HTMLSelectElement>, isEdit: boolean = false) => {
+    const val = e.target.value;
+    if (isEdit) {
+      setEditingProduct({ ...editingProduct, accessoryType: val });
+      setEditSpecData({});
+    } else {
+      setAccessoryType(val);
       setSpecData({});
     }
   };
@@ -95,7 +116,7 @@ export default function AdminProducts() {
       const spaceLeft = 5 - currentPreviews.length;
       
       if (filesArray.length > spaceLeft) {
-        alert(`Mwisho ni picha 5. Unaweza kuongeza picha ${spaceLeft} tu.`);
+        alert(`Limit is 5 images. You can only add ${spaceLeft} more.`);
         filesArray = filesArray.slice(0, spaceLeft);
       }
 
@@ -113,9 +134,7 @@ export default function AdminProducts() {
 
   const removeImage = (indexToRemove: number, isEdit: boolean = false) => {
     if (isEdit) {
-      // Kama picha inafutwa ni ya mtandaoni, inabidi tuijulishe backend (hapa tunafuta kwenye UI kwanza)
       setEditImagePreviews(prev => prev.filter((_, index) => index !== indexToRemove));
-      // Kumbuka: Kwa ukamilifu, ingebidi tu-track picha za zamani zilizofutwa. Kwa sasa tunaacha ku-update 'files' maana hizi ni previews.
     } else {
       setImageFiles(prev => prev.filter((_, index) => index !== indexToRemove));
       setImagePreviews(prev => prev.filter((_, index) => index !== indexToRemove));
@@ -126,12 +145,17 @@ export default function AdminProducts() {
     e.preventDefault();
     setIsLoading(true); setMessage(''); setError('');
 
+    // Iwapo ni Accessory, tunaunganisha jina la category na accessory type backend ihifadhi vizuri
+    const finalCategory = category === 'Accessories' && accessoryType 
+      ? `Accessories - ${accessoryType}` 
+      : category;
+
     const formData = new FormData();
     formData.append('sku', sku); 
     formData.append('name', name);
-    formData.append('category', category); 
+    formData.append('category', finalCategory); 
     formData.append('brand', brand);
-    formData.append('model', modelName); // TUNAONGEZA MODEL
+    formData.append('model', modelName); 
     formData.append('badge', badge); 
     formData.append('condition', condition);
     formData.append('buyingPrice', buyingPrice); 
@@ -139,7 +163,6 @@ export default function AdminProducts() {
     formData.append('stockQuantity', stockQuantity); 
     formData.append('specifications', JSON.stringify(specData));
     
-    // TUNAWEKA PICHA ZOTE
     imageFiles.forEach((file) => formData.append('images', file));
 
     try {
@@ -149,45 +172,53 @@ export default function AdminProducts() {
       try { data = JSON.parse(rawText); } catch(e) { data = { error: rawText }; }
 
       if (res.ok) {
-        setMessage('Bidhaa imeongezwa kikamilifu!');
-        setSku(''); setName(''); setBrand(''); setModelName(''); setBadge(''); setCondition('Brand New'); setBuyingPrice(''); setPrice(''); setStockQuantity(''); setSpecData({});
+        setMessage('Product added successfully!');
+        setSku(''); setName(''); setBrand(''); setModelName(''); setBadge(''); setCondition('Brand New'); setBuyingPrice(''); setPrice(''); setStockQuantity(''); setSpecData({}); setAccessoryType('');
         setImageFiles([]); setImagePreviews([]);
         if (fileInputRef.current) fileInputRef.current.value = '';
         fetchProducts();
       } else {
-        setError(`Imeshindwa: ${data.error || "Server imekataa kupokea data."}`);
+        setError(`Failed: ${data.error || "Server rejected the data."}`);
       }
     } catch (err: any) {
-      setError(`Tatizo la mtandao: ${err.message}`);
+      setError(`Network error: ${err.message}`);
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleDeleteProduct = async (id: string | number) => {
-    if (!window.confirm("Una uhakika unataka kufuta bidhaa hii?")) return;
+    if (!window.confirm("Are you sure you want to delete this product?")) return;
     setError(''); setMessage('');
     try {
       const res = await fetch(`${API_URL}/api/products/${id}`, { method: 'DELETE' });
       const errorText = await res.text();
       if (res.ok) {
-        setMessage('Bidhaa imefutwa kikamilifu!');
+        setMessage('Product deleted successfully!');
         fetchProducts(); 
       } else {
         let errorMsg = res.statusText;
         try { const parsed = JSON.parse(errorText); if (parsed.error) errorMsg = parsed.error; } catch(e) { if (errorText && errorText.length < 150) errorMsg = errorText; }
-        setError(`Imeshindwa kufuta: ${errorMsg}`);
+        setError(`Delete failed: ${errorMsg}`);
       }
     } catch (err: any) {
-      setError(`Tatizo la mtandao: ${err.message}`);
+      setError(`Network error: ${err.message}`);
     }
   };
 
   const openEditModal = (product: any) => {
-    setEditingProduct({ ...product });
+    // Check kama hii product ni Accessory iliyounganishwa awali
+    let baseCategory = product.category;
+    let accType = '';
+    
+    if (product.category && product.category.startsWith('Accessories - ')) {
+       baseCategory = 'Accessories';
+       accType = product.category.replace('Accessories - ', '');
+    }
+
+    setEditingProduct({ ...product, category: baseCategory, accessoryType: accType });
     setEditImageFiles([]);
     
-    // Tunasoma picha zote (Kama ni Array au String)
     const existingImages = getImagesArray(product.imageUrl).map((img: string) => `${API_URL}${img}`);
     setEditImagePreviews(existingImages);
     
@@ -202,12 +233,16 @@ export default function AdminProducts() {
     e.preventDefault();
     setIsLoading(true); setMessage(''); setError('');
 
+    const finalCategory = editingProduct.category === 'Accessories' && editingProduct.accessoryType 
+      ? `Accessories - ${editingProduct.accessoryType}` 
+      : editingProduct.category;
+
     const formData = new FormData();
     formData.append('sku', editingProduct.sku); 
     formData.append('name', editingProduct.name);
-    formData.append('category', editingProduct.category); 
+    formData.append('category', finalCategory); 
     formData.append('brand', editingProduct.brand);
-    formData.append('model', editingProduct.model || ''); // EDIT MODEL
+    formData.append('model', editingProduct.model || ''); 
     formData.append('badge', editingProduct.badge || ''); 
     formData.append('condition', editingProduct.condition || 'Brand New');
     formData.append('buyingPrice', editingProduct.buyingPrice); 
@@ -215,7 +250,6 @@ export default function AdminProducts() {
     formData.append('stockQuantity', editingProduct.stockQuantity); 
     formData.append('specifications', JSON.stringify(editSpecData));
     
-    // TUNAWEKA PICHA MPYA ZILIZOONGEZWA WAKATI WA EDIT
     editImageFiles.forEach((file) => formData.append('images', file));
 
     try {
@@ -225,52 +259,67 @@ export default function AdminProducts() {
       try { data = JSON.parse(rawText); } catch(e) { data = { error: rawText }; }
 
       if (res.ok) {
-        setMessage('Bidhaa imesasishwa kikamilifu!');
+        setMessage('Product updated successfully!');
         setEditingProduct(null);
         fetchProducts();
       } else {
-        setError(`Imeshindwa: ${data.error || "Server imekataa kusasisha data."}`);
+        setError(`Failed: ${data.error || "Server rejected the data."}`);
       }
     } catch (err: any) {
-      setError(`Tatizo la mtandao: ${err.message}`);
+      setError(`Network error: ${err.message}`);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const renderDynamicSpecs = (cat: string, currentState: any, setState: any) => {
+  // ======================================================================
+  // DYNAMIC SPECIFICATIONS LOGIC (INTELLIGENT ACCESSORIES INCLUDED)
+  // ======================================================================
+  const renderDynamicSpecs = (cat: string, currentState: any, setState: any, accType?: string) => {
     let fields: string[] = [];
     const normalizedCat = cat ? cat.toLowerCase() : '';
 
-    if (normalizedCat.includes('computer') || normalizedCat.includes('laptop') || normalizedCat.includes('pc')) {
-      fields = ['RAM', 'Storage', 'Processor', 'Generation', 'Graphics', 'Display Size', 'Resolution', 'OS', 'Color'];
-    } else if (normalizedCat.includes('monitor')) {
-      fields = ['Display Size', 'Resolution', 'Refresh Rate (Hz)', 'Panel Type', 'Ports'];
-    } else if (normalizedCat.includes('printer')) {
-      fields = ['Printer Type', 'Print Speed', 'Color Output', 'Connectivity', 'Paper Size'];
-    } else if (normalizedCat.includes('accessor')) {
-      fields = ['Connection Type', 'Compatibility', 'Color', 'Features'];
-    } else if (normalizedCat.includes('smartwatch') || normalizedCat.includes('watch')) {
-      fields = ['Screen Size', 'Battery Life', 'Water Resistance', 'OS Compatibility', 'Color'];
-    } else if (normalizedCat.includes('phone') || normalizedCat.includes('mobile') || normalizedCat.includes('tablet')) {
-      fields = ['RAM', 'Storage', 'Processor', 'Display Size', 'Battery', 'Camera', 'OS', 'Color'];
-    } else if (normalizedCat.includes('headphone') || normalizedCat.includes('audio') || normalizedCat.includes('speaker')) {
-      fields = ['Color', 'Battery Life', 'Bluetooth Version', 'Noise Cancellation'];
-    } else if (normalizedCat.includes('electronic') || normalizedCat.includes('elektroniki')) { 
-      fields = ['Power (Watts)', 'Voltage', 'Color', 'Warranty', 'Weight'];
-    } else if (normalizedCat.includes('cloth') || normalizedCat.includes('fashion') || normalizedCat.includes('clothing')) {
-      fields = ['Size', 'Color', 'Material', 'Gender'];
-    } else if (normalizedCat.includes('shoe')) {
-      fields = ['Shoe Size', 'Color', 'Material', 'Brand Fit'];
-    } else if (normalizedCat.includes('kitchen') || normalizedCat.includes('home')) {
+    if (normalizedCat === 'accessories') {
+       // INTELLIGENT ACCESSORIES SWITCH
+       const type = accType?.toLowerCase() || '';
+       if (type.includes('phone') || type.includes('tablet')) {
+          fields = ['Connection Type', 'Cable Length / Capacity', 'Fast Charging Support', 'Color', 'Material'];
+       } else if (type.includes('computer') || type.includes('laptop')) {
+          fields = ['Interface (USB/Type-C)', 'DPI/Sensitivity', 'Cable Length', 'Ergonomics', 'Color'];
+       } else if (type.includes('gaming')) {
+          fields = ['Compatibility', 'Connection Type', 'Feedback/Vibration', 'RGB Lighting', 'Color'];
+       } else if (type.includes('audio') || type.includes('studio')) {
+          fields = ['Connection Type', 'Frequency Response', 'Microphone Type', 'Cable Length', 'Color'];
+       } else if (type.includes('automotive')) {
+          fields = ['Voltage/Power Output', 'Mounting Type', 'Connectivity (e.g. 4G/GSM)', 'Cable Length', 'Material'];
+       } else {
+          fields = ['Connection Type', 'Compatibility', 'Color', 'Material', 'Special Features'];
+       }
+    } 
+    // STANDARD CATEGORIES
+    else if (normalizedCat.includes('laptop') || normalizedCat.includes('desktop computer') || normalizedCat.includes('pc') || normalizedCat.includes('workstation') || normalizedCat.includes('server')) {
+      fields = ['Processor (CPU)', 'RAM', 'Storage', 'Graphics (GPU)', 'Display Size', 'Resolution', 'Operating System', 'Color'];
+    } else if (normalizedCat.includes('monitor') || normalizedCat.includes('display') || normalizedCat.includes('tv') || normalizedCat.includes('projector')) {
+      fields = ['Display Size', 'Resolution', 'Refresh Rate (Hz)', 'Panel Type', 'Connectivity/Ports'];
+    } else if (normalizedCat.includes('printer') || normalizedCat.includes('scanner')) {
+      fields = ['Printer Type', 'Print Speed', 'Color Output', 'Connectivity', 'Paper Size', 'Functions (Print, Scan, Copy)'];
+    } else if (normalizedCat.includes('phone') || normalizedCat.includes('tablet') || normalizedCat.includes('e-reader')) {
+      fields = ['RAM', 'Storage', 'Processor', 'Display Size', 'Battery Capacity', 'Main Camera', 'Selfie Camera', 'OS', 'Color'];
+    } else if (normalizedCat.includes('smartwatch') || normalizedCat.includes('fitness tracker')) {
+      fields = ['Screen Size', 'Battery Life', 'Water Resistance', 'OS Compatibility', 'Color', 'Sensors (Heart rate, etc)'];
+    } else if (normalizedCat.includes('console') || normalizedCat.includes('vr')) {
+      fields = ['Storage', 'Resolution Output', 'Included Controllers', 'Color'];
+    } else if (normalizedCat.includes('home') || normalizedCat.includes('kitchen')) {
       fields = ['Material', 'Power (Watts)', 'Color', 'Dimensions'];
     } else {
       fields = ['Feature 1', 'Feature 2', 'Color', 'Weight'];
     }
 
+    const title = cat === 'Accessories' && accType ? `${accType} Specs` : `${cat} Specs`;
+
     return (
       <div className="bg-gray-50/50 p-4 rounded-xl border border-gray-100 mt-2">
-        <h3 className="text-xs font-black text-gray-700 mb-3 flex items-center gap-2"><FiSettings/> {cat} Specifications</h3>
+        <h3 className="text-xs font-black text-gray-700 mb-3 flex items-center gap-2"><FiSettings/> {title}</h3>
         <div className="grid grid-cols-2 gap-3">
           {fields.map(field => (
             <div key={field}>
@@ -280,7 +329,7 @@ export default function AdminProducts() {
                 value={currentState[field] || ''} 
                 onChange={e => setState({...currentState, [field]: e.target.value})} 
                 className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 outline-none text-sm focus:border-[#F2A900] transition" 
-                placeholder={`Weka ${field}`} 
+                placeholder={`Enter ${field}`} 
               />
             </div>
           ))}
@@ -293,8 +342,8 @@ export default function AdminProducts() {
     <div>
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-2xl font-black text-gray-900">Bidhaa & Inventory</h1>
-          <p className="text-sm text-gray-500">Dhibiti stock, SKU, picha na bei za bidhaa zako.</p>
+          <h1 className="text-2xl font-black text-gray-900">Products & Inventory</h1>
+          <p className="text-sm text-gray-500">Manage your stock, SKUs, images, and pricing here.</p>
         </div>
       </div>
 
@@ -303,16 +352,16 @@ export default function AdminProducts() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
-        {/* FOMU YA KUONGEZA BIDHAA */}
+        {/* ADD PRODUCT FORM */}
         <div className="lg:col-span-1 bg-white p-6 rounded-2xl shadow-sm border border-gray-100 h-max">
           <h2 className="font-bold mb-4 flex items-center gap-2 border-b pb-3">
-            <FiPlus className="text-[#F2A900]" /> Weka Bidhaa Mpya
+            <FiPlus className="text-[#F2A900]" /> Add New Product
           </h2>
 
           <form onSubmit={handleAddProduct} className="space-y-4">
             
             <div>
-              <label className="block text-[11px] font-bold text-gray-500 uppercase mb-2">Picha za Bidhaa (Mwisho 5)</label>
+              <label className="block text-[11px] font-bold text-gray-500 uppercase mb-2">Product Images (Max 5)</label>
               {imagePreviews.length > 0 && (
                 <div className="flex flex-wrap gap-2 mb-3">
                   {imagePreviews.map((preview, index) => (
@@ -329,13 +378,13 @@ export default function AdminProducts() {
             </div>
 
             <div>
-              <label className="block text-[11px] font-bold text-gray-500 uppercase mb-1">Jina la Bidhaa</label>
-              <div className="flex items-center bg-gray-50 border rounded-lg px-3 py-2"><FiBox className="text-gray-400 mr-2" /><input type="text" required value={name} onChange={e => setName(e.target.value)} className="w-full bg-transparent outline-none text-sm" placeholder="Mf: HP LaserJet Pro / iPhone 15" /></div>
+              <label className="block text-[11px] font-bold text-gray-500 uppercase mb-1">Product Name</label>
+              <div className="flex items-center bg-gray-50 border rounded-lg px-3 py-2"><FiBox className="text-gray-400 mr-2" /><input type="text" required value={name} onChange={e => setName(e.target.value)} className="w-full bg-transparent outline-none text-sm" placeholder="e.g. HP LaserJet Pro / iPhone 15" /></div>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div className="col-span-2">
-                <label className="block text-[11px] font-bold text-gray-500 uppercase mb-1">Kategoria</label>
+                <label className="block text-[11px] font-bold text-gray-500 uppercase mb-1">Category</label>
                 <select value={category} onChange={(e) => handleCategoryChange(e, false)} className="w-full bg-gray-50 border rounded-lg px-3 py-2 outline-none text-sm font-medium">
                   {STANDARD_CATEGORIES.map(catOpt => (
                     <option key={catOpt} value={catOpt}>{catOpt}</option>
@@ -343,14 +392,26 @@ export default function AdminProducts() {
                 </select>
               </div>
               
-              {/* BRAND NA MODEL ZIMEKAA PAMOJA */}
+              {/* ACCESSORY TYPE DROPDOWN (ONLY SHOWS IF ACCESSORIES IS SELECTED) */}
+              {category === 'Accessories' && (
+                <div className="col-span-2 animate-fade-in">
+                  <label className="block text-[11px] font-bold text-blue-500 uppercase mb-1 flex items-center gap-1">Accessory For?</label>
+                  <select required value={accessoryType} onChange={(e) => handleAccessoryTypeChange(e, false)} className="w-full bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 outline-none text-sm font-medium text-blue-800 focus:border-blue-400">
+                    <option value="">Select Accessory Type</option>
+                    {ACCESSORY_TYPES.map(accOpt => (
+                      <option key={accOpt} value={accOpt}>{accOpt}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
               <div>
                 <label className="block text-[11px] font-bold text-gray-500 uppercase mb-1">Brand</label>
                 <input type="text" value={brand} onChange={e => setBrand(e.target.value)} className="w-full bg-gray-50 border rounded-lg px-3 py-2 outline-none text-sm" placeholder="Apple / HP" />
               </div>
               <div>
                 <label className="block text-[11px] font-bold text-gray-500 uppercase mb-1 flex items-center gap-1"><FiCpu className="text-gray-400"/> Model</label>
-                <input type="text" value={modelName} onChange={e => setModelName(e.target.value)} className="w-full bg-gray-50 border rounded-lg px-3 py-2 outline-none text-sm border-blue-200 focus:border-[#F2A900]" placeholder="Mf: ProBook 840 G8" />
+                <input type="text" value={modelName} onChange={e => setModelName(e.target.value)} className="w-full bg-gray-50 border rounded-lg px-3 py-2 outline-none text-sm focus:border-[#F2A900]" placeholder="e.g. ProBook 840 G8" />
               </div>
             </div>
 
@@ -369,7 +430,7 @@ export default function AdminProducts() {
               <div>
                 <label className="block text-[11px] font-bold text-gray-500 uppercase mb-1 flex items-center gap-1"><FiTag className="text-[#F2A900]"/> Badge</label>
                 <select value={badge} onChange={e => setBadge(e.target.value)} className="w-full bg-gray-50 border rounded-lg px-3 py-2 outline-none text-sm font-medium">
-                  <option value="">Hakuna</option>
+                  <option value="">None</option>
                   <option value="Hot">🔥 Hot</option>
                   <option value="Sale">🏷️ Sale</option>
                   <option value="New">✨ New Arrival</option>
@@ -388,46 +449,46 @@ export default function AdminProducts() {
             </div>
 
             <div>
-              {renderDynamicSpecs(category, specData, setSpecData)}
+              {/* Intelligent Dynamic Specs */}
+              {renderDynamicSpecs(category, specData, setSpecData, accessoryType)}
             </div>
 
             <div className="grid grid-cols-2 gap-3 mt-4">
               <div>
-                <label className="block text-[11px] font-bold text-gray-500 uppercase mb-1">Bei ya Kununua</label>
+                <label className="block text-[11px] font-bold text-gray-500 uppercase mb-1">Buying Price</label>
                 <input type="number" value={buyingPrice} onChange={e => setBuyingPrice(e.target.value)} className="w-full bg-gray-50 border rounded-lg px-3 py-2 outline-none text-sm font-black" placeholder="200000" />
               </div>
               <div>
-                <label className="block text-[11px] font-bold text-gray-500 uppercase mb-1">Bei ya Kuuza</label>
+                <label className="block text-[11px] font-bold text-gray-500 uppercase mb-1">Selling Price</label>
                 <input type="number" required value={price} onChange={e => setPrice(e.target.value)} className="w-full bg-gray-50 border rounded-lg px-3 py-2 outline-none text-sm font-black text-[#0F172A]" placeholder="250000" />
               </div>
             </div>
 
             <button type="submit" disabled={isLoading} className="w-full bg-[#0F172A] hover:bg-gray-800 text-white font-bold py-3.5 rounded-xl text-sm transition mt-4 shadow-md">
-              {isLoading ? 'Inasindika...' : 'Hifadhi Bidhaa'}
+              {isLoading ? 'Processing...' : 'Save Product'}
             </button>
           </form>
         </div>
 
-        {/* ORODHA YA BIDHAA NA STOCK (TABLE) */}
+        {/* INVENTORY LIST TABLE */}
         <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden h-max">
           <div className="p-6 border-b border-gray-100 flex justify-between items-center">
-            <h2 className="font-bold">Orodha ya Inventory</h2>
-            <span className="bg-blue-50 text-blue-600 text-xs font-bold px-3 py-1 rounded-full">Jumla: {products.length}</span>
+            <h2 className="font-bold">Inventory List</h2>
+            <span className="bg-blue-50 text-blue-600 text-xs font-bold px-3 py-1 rounded-full">Total: {products.length}</span>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead className="bg-gray-50 text-[10px] uppercase text-gray-500 font-bold tracking-wider">
                 <tr>
-                  <th className="px-4 py-4">Picha & SKU</th>
-                  <th className="px-4 py-4">Bidhaa & Taarifa</th>
-                  <th className="px-4 py-4">Bei (Tsh)</th>
+                  <th className="px-4 py-4">Image & SKU</th>
+                  <th className="px-4 py-4">Product Details</th>
+                  <th className="px-4 py-4">Price (Tsh)</th>
                   <th className="px-4 py-4">Stock</th>
-                  <th className="px-4 py-4 text-center">Vitendo</th>
+                  <th className="px-4 py-4 text-center">Actions</th>
                 </tr>
               </thead>
               <tbody className="text-sm divide-y divide-gray-100">
                 {products.map((p) => {
-                  // Tunachukua picha ya kwanza kwenye Array kuonyesha kwenye Table
                   const displayImage = getImagesArray(p.imageUrl)[0];
                   
                   return (
@@ -438,7 +499,6 @@ export default function AdminProducts() {
                     </td>
                     <td className="px-4 py-4 font-bold text-gray-800">
                       {p.name} 
-                      {/* TUNAONYESHA BRAND NA MODEL HAPA CHINI YA JINA */}
                       <div className="text-[10px] text-gray-500 font-medium mt-0.5">
                         {p.brand} {p.model ? <span className="text-blue-600 font-bold ml-1">| Model: {p.model}</span> : ''}
                       </div>
@@ -466,26 +526,26 @@ export default function AdminProducts() {
                     </td>
                   </tr>
                 )})}
-                {products.length === 0 && <tr><td colSpan={5} className="p-12 text-center text-gray-400 font-medium">Hakuna bidhaa kwenye Database.</td></tr>}
+                {products.length === 0 && <tr><td colSpan={5} className="p-12 text-center text-gray-400 font-medium">No products in database.</td></tr>}
               </tbody>
             </table>
           </div>
         </div>
       </div>
 
-      {/* MODAL YA KUEDIT BIDHAA */}
+      {/* EDIT PRODUCT MODAL */}
       {editingProduct && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-fade-in">
           <div className="bg-white w-full max-w-2xl rounded-2xl shadow-2xl relative max-h-[90vh] overflow-y-auto">
             <div className="sticky top-0 bg-white border-b border-gray-100 p-4 sm:p-6 flex justify-between items-center z-10">
-              <h2 className="text-xl font-black flex items-center gap-2"><FiEdit2 className="text-blue-500" /> Hariri Bidhaa</h2>
+              <h2 className="text-xl font-black flex items-center gap-2"><FiEdit2 className="text-blue-500" /> Edit Product</h2>
               <button onClick={() => setEditingProduct(null)} className="p-2 bg-gray-100 hover:bg-gray-200 rounded-full transition"><FiX size={20} /></button>
             </div>
             
             <form onSubmit={handleUpdateProduct} className="p-4 sm:p-6 space-y-4">
               
               <div>
-                <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Picha (Hizi ni zilizopo. Ukiongeza mpya zitachukua nafasi ya hizi)</label>
+                <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Images (Adding new replaces all)</label>
                 {editImagePreviews.length > 0 && (
                   <div className="flex flex-wrap gap-2 mb-3">
                     {editImagePreviews.map((preview, index) => (
@@ -501,11 +561,11 @@ export default function AdminProducts() {
                 )}
               </div>
 
-              <div><label className="block text-xs font-bold text-gray-500 mb-1">Jina la Bidhaa</label><input type="text" value={editingProduct.name} onChange={e => setEditingProduct({...editingProduct, name: e.target.value})} className="w-full border rounded-xl px-3 py-2 text-sm" /></div>
+              <div><label className="block text-xs font-bold text-gray-500 mb-1">Product Name</label><input type="text" value={editingProduct.name} onChange={e => setEditingProduct({...editingProduct, name: e.target.value})} className="w-full border rounded-xl px-3 py-2 text-sm" /></div>
               
               <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2">
-                  <label className="block text-[11px] font-bold text-gray-500 uppercase mb-1">Kategoria</label>
+                  <label className="block text-[11px] font-bold text-gray-500 uppercase mb-1">Category</label>
                   <select value={editingProduct.category} onChange={(e) => handleCategoryChange(e, true)} className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 outline-none text-sm font-medium">
                     {STANDARD_CATEGORIES.map(catOpt => (
                       <option key={catOpt} value={catOpt}>{catOpt}</option>
@@ -515,6 +575,20 @@ export default function AdminProducts() {
                     )}
                   </select>
                 </div>
+                
+                {/* ACCESSORY TYPE DROPDOWN FOR EDIT */}
+                {editingProduct.category === 'Accessories' && (
+                  <div className="col-span-2 animate-fade-in">
+                    <label className="block text-[11px] font-bold text-blue-500 uppercase mb-1 flex items-center gap-1">Accessory For?</label>
+                    <select required value={editingProduct.accessoryType || ''} onChange={(e) => handleAccessoryTypeChange(e, true)} className="w-full bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 outline-none text-sm font-medium text-blue-800 focus:border-blue-400">
+                      <option value="">Select Accessory Type</option>
+                      {ACCESSORY_TYPES.map(accOpt => (
+                        <option key={accOpt} value={accOpt}>{accOpt}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
                 <div><label className="block text-xs font-bold text-gray-500 mb-1">Brand</label><input type="text" value={editingProduct.brand} onChange={e => setEditingProduct({...editingProduct, brand: e.target.value})} className="w-full border rounded-xl px-3 py-2 text-sm" /></div>
                 <div><label className="block text-xs font-bold text-blue-500 mb-1 flex items-center gap-1"><FiCpu/> Model Name</label><input type="text" value={editingProduct.model || ''} onChange={e => setEditingProduct({...editingProduct, model: e.target.value})} className="w-full border border-blue-200 focus:border-[#F2A900] rounded-xl px-3 py-2 text-sm" /></div>
               </div>
@@ -528,7 +602,7 @@ export default function AdminProducts() {
                 <div>
                   <label className="block text-[11px] font-bold text-gray-500 uppercase mb-1 flex items-center gap-1"><FiTag className="text-[#F2A900]"/> Badge</label>
                   <select value={editingProduct.badge || ''} onChange={e => setEditingProduct({...editingProduct, badge: e.target.value})} className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 outline-none text-sm font-medium">
-                    <option value="">Hakuna</option>
+                    <option value="">None</option>
                     <option value="Hot">🔥 Hot</option>
                     <option value="Sale">🏷️ Sale</option>
                     <option value="New">✨ New Arrival</option>
@@ -547,18 +621,19 @@ export default function AdminProducts() {
               </div>
 
               <div>
-                {renderDynamicSpecs(editingProduct.category, editSpecData, setEditSpecData)}
+                {/* Intelligent Dynamic Specs for Edit Mode */}
+                {renderDynamicSpecs(editingProduct.category, editSpecData, setEditSpecData, editingProduct.accessoryType)}
               </div>
 
               <div className="grid grid-cols-2 gap-4 mt-4">
-                <div><label className="block text-xs font-bold text-gray-500 mb-1">Bei Kununua</label><input type="number" value={editingProduct.buyingPrice} onChange={e => setEditingProduct({...editingProduct, buyingPrice: e.target.value})} className="w-full border rounded-xl px-3 py-2 text-sm" /></div>
-                <div><label className="block text-xs font-bold text-gray-500 mb-1">Bei Kuuza</label><input type="number" value={editingProduct.price} onChange={e => setEditingProduct({...editingProduct, price: e.target.value})} className="w-full border rounded-xl px-3 py-2 text-sm" /></div>
+                <div><label className="block text-xs font-bold text-gray-500 mb-1">Buying Price</label><input type="number" value={editingProduct.buyingPrice} onChange={e => setEditingProduct({...editingProduct, buyingPrice: e.target.value})} className="w-full border rounded-xl px-3 py-2 text-sm" /></div>
+                <div><label className="block text-xs font-bold text-gray-500 mb-1">Selling Price</label><input type="number" value={editingProduct.price} onChange={e => setEditingProduct({...editingProduct, price: e.target.value})} className="w-full border rounded-xl px-3 py-2 text-sm" /></div>
               </div>
 
               <div className="sticky bottom-0 bg-white pt-4 mt-6 border-t border-gray-100 flex gap-3">
-                <button type="button" onClick={() => setEditingProduct(null)} className="px-6 py-3 bg-gray-100 text-gray-600 font-bold rounded-xl text-sm hover:bg-gray-200">Ghairi</button>
+                <button type="button" onClick={() => setEditingProduct(null)} className="px-6 py-3 bg-gray-100 text-gray-600 font-bold rounded-xl text-sm hover:bg-gray-200">Cancel</button>
                 <button type="submit" disabled={isLoading} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl text-sm shadow-md">
-                  {isLoading ? 'Inasasisha...' : 'Hifadhi Mabadiliko'}
+                  {isLoading ? 'Updating...' : 'Save Changes'}
                 </button>
               </div>
             </form>
