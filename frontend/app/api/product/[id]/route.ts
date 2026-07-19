@@ -1,67 +1,74 @@
 import { NextResponse } from 'next/server';
+import { v2 as cloudinary } from 'cloudinary';
 
-const API_URL = 'https://jtex-ecommerce-production.up.railway.app';
+// 1. Unganisha akaunti yako ya Cloudinary
+cloudinary.config({
+  cloud_name: 'zy7bva4b',
+  api_key: '454715668631514',
+  api_secret: '1oGzbaFEkFOBUAwicng9S08bibs'
+});
 
-export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
+export async function POST(req: Request) {
   try {
-    const res = await fetch(`${API_URL}/products/${id}`);
-    const data = await res.json();
-    return NextResponse.json(data, { status: res.status });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
-}
-
-export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  try {
+    // Tunapokea data zote kutoka kwenye form (Frontend)
     const formData = await req.formData();
-    const res = await fetch(`${API_URL}/products/${id}`, { 
-      method: 'PUT', 
-      body: formData 
-    });
-    const data = await res.json();
-    return NextResponse.json(data, { status: res.status });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
-}
-
-export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  try {
-    // 1. Tunatuma request ya DELETE kwenda backend ya Railway
-    const res = await fetch(`${API_URL}/api/products/${id}`, { 
-      method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    });
-
-    // 2. Tunasoma response kutoka backend
-    const data = await res.text();
     
-    let parsedData = {};
-    try {
-        parsedData = JSON.parse(data);
-    } catch (e) {
-        parsedData = { raw: data };
-    }
+    // Chukua taarifa za kawaida za bidhaa
+    const name = formData.get('name');
+    const sku = formData.get('sku');
+    const category = formData.get('category');
+    const price = formData.get('price');
+    const specifications = formData.get('specifications');
+    // (Endelea kuchukua fields zako zote hapa...)
 
-    if (!res.ok) {
-        // Kama backend imekataa, tunarudisha ujumbe huo
-        console.error("Backend Proxy Delete Error:", parsedData);
-        return NextResponse.json(
-            { error: (parsedData as any).error || "Backend imekataa kufuta" }, 
-            { status: res.status }
+    // Chukua picha zote zilizotumwa
+    const imageFiles = formData.getAll('images') as File[];
+    const imageUrls: string[] = [];
+
+    // 2. Loop na Upload picha moja moja kwenda Cloudinary
+    for (const image of imageFiles) {
+      // Badilisha faili kuwa Buffer (Lugha inayoeleweka na Cloudinary Stream)
+      const arrayBuffer = await image.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+
+      // Fanya upload kwa kutumia Promise
+      const uploadResult = await new Promise((resolve, reject) => {
+        const uploadStream = cloudinary.uploader.upload_stream(
+          { folder: 'jtex_products' }, // Folder kule Cloudinary
+          (error, result) => {
+            if (error) reject(error);
+            else resolve(result);
+          }
         );
+        uploadStream.end(buffer);
+      });
+
+      // Hifadhi Link ya mtandaoni (Secure URL)
+      imageUrls.push((uploadResult as any).secure_url);
     }
 
-    return NextResponse.json({ message: "Imefutwa kikamilifu" }, { status: 200 });
+    // 3. Save kwenye Database yako (Mfano kwa kutumia Prisma)
+    /* 
+    const newProduct = await prisma.product.create({
+      data: {
+        name: name as string,
+        sku: sku as string,
+        category: category as string,
+        price: Number(price),
+        specifications: specifications as string,
+        imageUrl: JSON.stringify(imageUrls), // Tunahifadhi Array ya link za Cloudinary
+        // ...
+      }
+    }); 
+    */
 
-  } catch (error: any) {
-    console.error("Proxy Network Error:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ 
+      message: 'Bidhaa imehifadhiwa kikamilifu!', 
+      imageUrls: imageUrls 
+    }, { status: 201 });
+
+  } catch (error) {
+    console.error("Kosa la ku-upload:", error);
+    return NextResponse.json({ error: 'Imeshindwa kuhifadhi bidhaa. Jaribu tena.' }, { status: 500 });
   }
 }

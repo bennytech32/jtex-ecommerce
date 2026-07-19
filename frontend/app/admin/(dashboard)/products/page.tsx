@@ -15,7 +15,8 @@ export default function AdminProducts() {
   const [sku, setSku] = useState('');
   const [name, setName] = useState('');
   const [category, setCategory] = useState('Laptops'); 
-  const [accessoryType, setAccessoryType] = useState(''); // NEW: Kwa ajili ya Accessories tu
+  const [customCategory, setCustomCategory] = useState(''); 
+  const [accessoryType, setAccessoryType] = useState('');
   const [brand, setBrand] = useState('');
   const [modelName, setModelName] = useState(''); 
   const [badge, setBadge] = useState(''); 
@@ -24,28 +25,28 @@ export default function AdminProducts() {
   const [price, setPrice] = useState('');
   const [stockQuantity, setStockQuantity] = useState('');
   const [specData, setSpecData] = useState<any>({}); 
+  const [customSpecs, setCustomSpecs] = useState<{key: string, value: string}[]>([]); 
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
 
   // Edit States
   const [editingProduct, setEditingProduct] = useState<any | null>(null);
   const [editSpecData, setEditSpecData] = useState<any>({});
+  const [editCustomSpecs, setEditCustomSpecs] = useState<{key: string, value: string}[]>([]); 
   const [editImageFiles, setEditImageFiles] = useState<File[]>([]);
   const [editImagePreviews, setEditImagePreviews] = useState<string[]>([]);
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://jtex-ecommerce-production.up.railway.app';
 
-  // Orodha mpya (Accessories imeunganishwa kuwa moja)
   const STANDARD_CATEGORIES = [
     "Laptops", "Desktop Computers", "All-in-One PCs", "Mini PCs", "Workstations", 
     "Servers", "Monitors", "Printers", "Scanners", "Projectors", 
     "TVs", "Smart TVs", "Digital Signage Displays", "Mobile Phones", "Smartphones", 
     "Tablets", "E-Readers", "Smartwatches", "Fitness Trackers", 
-    "Accessories", // <--- HII NDIO YA AKILI MNEMBA (INTELLIGENT)
+    "Accessories", 
     "Gaming Consoles", "VR Headsets", "Home & Kitchen", "Beauty", "Other"
   ];
 
-  // Aina za Accessories zitakazotokea ukichagua Category "Accessories"
   const ACCESSORY_TYPES = [
     "Phone / Tablet", "Computer / Laptop", "Gaming", "Audio / Studio", "Automotive", "Other"
   ];
@@ -62,12 +63,13 @@ export default function AdminProducts() {
 
   useEffect(() => {
     if (name && category && !editingProduct) {
-      const prefix = category.substring(0, 3).toUpperCase();
+      const catToUse = category === 'Other' && customCategory ? customCategory : category;
+      const prefix = catToUse.substring(0, 3).toUpperCase();
       const namePart = name.substring(0, 3).toUpperCase();
       const randomId = Math.floor(1000 + Math.random() * 9000);
       setSku(`${prefix}-${namePart}-${randomId}`);
     }
-  }, [name, category, editingProduct]);
+  }, [name, category, customCategory, editingProduct]);
 
   const fetchProducts = async () => {
     try {
@@ -89,10 +91,10 @@ export default function AdminProducts() {
     const val = e.target.value;
     if (isEdit) {
       setEditingProduct({ ...editingProduct, category: val, accessoryType: '' });
-      setEditSpecData({});
     } else {
       setCategory(val);
-      setAccessoryType(''); // Reset accessory type
+      setAccessoryType('');
+      setCustomCategory(''); 
       setSpecData({});
     }
   };
@@ -141,14 +143,52 @@ export default function AdminProducts() {
     }
   };
 
+  const handleAddCustomSpec = (isEdit: boolean = false) => {
+    if (isEdit) {
+      setEditCustomSpecs([...editCustomSpecs, { key: '', value: '' }]);
+    } else {
+      setCustomSpecs([...customSpecs, { key: '', value: '' }]);
+    }
+  };
+
+  const handleCustomSpecChange = (index: number, field: 'key' | 'value', val: string, isEdit: boolean = false) => {
+    if (isEdit) {
+      const updated = [...editCustomSpecs];
+      updated[index][field] = val;
+      setEditCustomSpecs(updated);
+    } else {
+      const updated = [...customSpecs];
+      updated[index][field] = val;
+      setCustomSpecs(updated);
+    }
+  };
+
+  const removeCustomSpec = (index: number, isEdit: boolean = false) => {
+    if (isEdit) {
+      setEditCustomSpecs(editCustomSpecs.filter((_, i) => i !== index));
+    } else {
+      setCustomSpecs(customSpecs.filter((_, i) => i !== index));
+    }
+  };
+
   const handleAddProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true); setMessage(''); setError('');
 
-    // Iwapo ni Accessory, tunaunganisha jina la category na accessory type backend ihifadhi vizuri
-    const finalCategory = category === 'Accessories' && accessoryType 
-      ? `Accessories - ${accessoryType}` 
-      : category;
+    let finalCategory = category;
+    
+    if (category === 'Accessories' && accessoryType) {
+       finalCategory = `Accessories - ${accessoryType}`;
+    } else if (category === 'Other' && customCategory.trim() !== '') {
+       finalCategory = customCategory.trim();
+    }
+
+    const finalSpecs = { ...specData };
+    customSpecs.forEach(spec => {
+      if (spec.key.trim() !== '') {
+        finalSpecs[spec.key.trim()] = spec.value;
+      }
+    });
 
     const formData = new FormData();
     formData.append('sku', sku); 
@@ -161,7 +201,7 @@ export default function AdminProducts() {
     formData.append('buyingPrice', buyingPrice); 
     formData.append('price', price);
     formData.append('stockQuantity', stockQuantity); 
-    formData.append('specifications', JSON.stringify(specData));
+    formData.append('specifications', JSON.stringify(finalSpecs));
     
     imageFiles.forEach((file) => formData.append('images', file));
 
@@ -173,7 +213,8 @@ export default function AdminProducts() {
 
       if (res.ok) {
         setMessage('Product added successfully!');
-        setSku(''); setName(''); setBrand(''); setModelName(''); setBadge(''); setCondition('Brand New'); setBuyingPrice(''); setPrice(''); setStockQuantity(''); setSpecData({}); setAccessoryType('');
+        setSku(''); setName(''); setBrand(''); setModelName(''); setBadge(''); setCondition('Brand New'); setBuyingPrice(''); setPrice(''); setStockQuantity(''); 
+        setSpecData({}); setCustomSpecs([]); setAccessoryType(''); setCustomCategory('');
         setImageFiles([]); setImagePreviews([]);
         if (fileInputRef.current) fileInputRef.current.value = '';
         fetchProducts();
@@ -207,13 +248,17 @@ export default function AdminProducts() {
   };
 
   const openEditModal = (product: any) => {
-    // Check kama hii product ni Accessory iliyounganishwa awali
     let baseCategory = product.category;
     let accType = '';
     
-    if (product.category && product.category.startsWith('Accessories - ')) {
+    if (baseCategory && baseCategory.startsWith('Accessories - ')) {
        baseCategory = 'Accessories';
        accType = product.category.replace('Accessories - ', '');
+    } else if (!STANDARD_CATEGORIES.includes(baseCategory)) {
+       baseCategory = 'Other';
+       setCustomCategory(product.category);
+    } else {
+       setCustomCategory('');
     }
 
     setEditingProduct({ ...product, category: baseCategory, accessoryType: accType });
@@ -223,9 +268,31 @@ export default function AdminProducts() {
     setEditImagePreviews(existingImages);
     
     if (product.specifications) {
-      try { setEditSpecData(JSON.parse(product.specifications)); } catch (e) { setEditSpecData({}); }
+      try { 
+        const parsedSpecs = JSON.parse(product.specifications); 
+        
+        const knownFields = getStandardFields(baseCategory, accType);
+        const stSpecs: any = {};
+        const cuSpecs: {key: string, value: string}[] = [];
+
+        Object.keys(parsedSpecs).forEach(key => {
+           if (knownFields.includes(key)) {
+             stSpecs[key] = parsedSpecs[key];
+           } else {
+             cuSpecs.push({ key, value: parsedSpecs[key] });
+           }
+        });
+
+        setEditSpecData(stSpecs);
+        setEditCustomSpecs(cuSpecs);
+
+      } catch (e) { 
+        setEditSpecData({}); 
+        setEditCustomSpecs([]);
+      }
     } else {
       setEditSpecData({});
+      setEditCustomSpecs([]);
     }
   };
 
@@ -233,9 +300,19 @@ export default function AdminProducts() {
     e.preventDefault();
     setIsLoading(true); setMessage(''); setError('');
 
-    const finalCategory = editingProduct.category === 'Accessories' && editingProduct.accessoryType 
-      ? `Accessories - ${editingProduct.accessoryType}` 
-      : editingProduct.category;
+    let finalCategory = editingProduct.category;
+    if (editingProduct.category === 'Accessories' && editingProduct.accessoryType) {
+      finalCategory = `Accessories - ${editingProduct.accessoryType}`;
+    } else if (editingProduct.category === 'Other' && customCategory.trim() !== '') {
+      finalCategory = customCategory.trim();
+    }
+
+    const finalSpecs = { ...editSpecData };
+    editCustomSpecs.forEach(spec => {
+      if (spec.key.trim() !== '') {
+        finalSpecs[spec.key.trim()] = spec.value;
+      }
+    });
 
     const formData = new FormData();
     formData.append('sku', editingProduct.sku); 
@@ -248,7 +325,7 @@ export default function AdminProducts() {
     formData.append('buyingPrice', editingProduct.buyingPrice); 
     formData.append('price', editingProduct.price);
     formData.append('stockQuantity', editingProduct.stockQuantity); 
-    formData.append('specifications', JSON.stringify(editSpecData));
+    formData.append('specifications', JSON.stringify(finalSpecs));
     
     editImageFiles.forEach((file) => formData.append('images', file));
 
@@ -273,47 +350,69 @@ export default function AdminProducts() {
   };
 
   // ======================================================================
-  // DYNAMIC SPECIFICATIONS LOGIC (INTELLIGENT ACCESSORIES INCLUDED)
+  // DYNAMIC SPECIFICATIONS KUTOKA KWENYE PICHA ZAKO
   // ======================================================================
-  const renderDynamicSpecs = (cat: string, currentState: any, setState: any, accType?: string) => {
+  const getStandardFields = (cat: string, accType?: string) => {
     let fields: string[] = [];
     const normalizedCat = cat ? cat.toLowerCase() : '';
 
     if (normalizedCat === 'accessories') {
-       // INTELLIGENT ACCESSORIES SWITCH
        const type = accType?.toLowerCase() || '';
-       if (type.includes('phone') || type.includes('tablet')) {
-          fields = ['Connection Type', 'Cable Length / Capacity', 'Fast Charging Support', 'Color', 'Material'];
-       } else if (type.includes('computer') || type.includes('laptop')) {
-          fields = ['Interface (USB/Type-C)', 'DPI/Sensitivity', 'Cable Length', 'Ergonomics', 'Color'];
-       } else if (type.includes('gaming')) {
-          fields = ['Compatibility', 'Connection Type', 'Feedback/Vibration', 'RGB Lighting', 'Color'];
-       } else if (type.includes('audio') || type.includes('studio')) {
-          fields = ['Connection Type', 'Frequency Response', 'Microphone Type', 'Cable Length', 'Color'];
-       } else if (type.includes('automotive')) {
-          fields = ['Voltage/Power Output', 'Mounting Type', 'Connectivity (e.g. 4G/GSM)', 'Cable Length', 'Material'];
-       } else {
-          fields = ['Connection Type', 'Compatibility', 'Color', 'Material', 'Special Features'];
-       }
+       if (type.includes('phone') || type.includes('tablet')) fields = ['Connection Type', 'Cable Length / Capacity', 'Fast Charging Support', 'Color', 'Material'];
+       else if (type.includes('computer') || type.includes('laptop')) fields = ['Interface (USB/Type-C)', 'DPI/Sensitivity', 'Cable Length', 'Ergonomics', 'Color'];
+       else if (type.includes('gaming')) fields = ['Compatibility', 'Connection Type', 'Feedback/Vibration', 'RGB Lighting', 'Color'];
+       else if (type.includes('audio') || type.includes('studio')) fields = ['Connection Type', 'Frequency Response', 'Microphone Type', 'Cable Length', 'Color'];
+       else if (type.includes('automotive')) fields = ['Voltage/Power Output', 'Mounting Type', 'Connectivity (e.g. 4G/GSM)', 'Cable Length', 'Material'];
+       else fields = ['Connection Type', 'Compatibility', 'Color', 'Material', 'Special Features'];
     } 
-    // STANDARD CATEGORIES
-    else if (normalizedCat.includes('laptop') || normalizedCat.includes('desktop computer') || normalizedCat.includes('pc') || normalizedCat.includes('workstation') || normalizedCat.includes('server')) {
-      fields = ['Processor (CPU)', 'RAM', 'Storage', 'Graphics (GPU)', 'Display Size', 'Resolution', 'Operating System', 'Color'];
-    } else if (normalizedCat.includes('monitor') || normalizedCat.includes('display') || normalizedCat.includes('tv') || normalizedCat.includes('projector')) {
-      fields = ['Display Size', 'Resolution', 'Refresh Rate (Hz)', 'Panel Type', 'Connectivity/Ports'];
-    } else if (normalizedCat.includes('printer') || normalizedCat.includes('scanner')) {
-      fields = ['Printer Type', 'Print Speed', 'Color Output', 'Connectivity', 'Paper Size', 'Functions (Print, Scan, Copy)'];
-    } else if (normalizedCat.includes('phone') || normalizedCat.includes('tablet') || normalizedCat.includes('e-reader')) {
-      fields = ['RAM', 'Storage', 'Processor', 'Display Size', 'Battery Capacity', 'Main Camera', 'Selfie Camera', 'OS', 'Color'];
-    } else if (normalizedCat.includes('smartwatch') || normalizedCat.includes('fitness tracker')) {
-      fields = ['Screen Size', 'Battery Life', 'Water Resistance', 'OS Compatibility', 'Color', 'Sensors (Heart rate, etc)'];
-    } else if (normalizedCat.includes('console') || normalizedCat.includes('vr')) {
-      fields = ['Storage', 'Resolution Output', 'Included Controllers', 'Color'];
-    } else if (normalizedCat.includes('home') || normalizedCat.includes('kitchen')) {
-      fields = ['Material', 'Power (Watts)', 'Color', 'Dimensions'];
-    } else {
+    else if (normalizedCat.includes('server')) {
+      fields = ['Server Type', 'Processor', 'Processor Speed', 'Memory', 'Storage', 'RAID Controller', 'Network', 'Operating System', 'Ports', 'Color'];
+    } 
+    else if (normalizedCat.includes('mini pc') || normalizedCat.includes('desktop computer') || normalizedCat.includes('all-in-one') || normalizedCat.includes('workstation')) {
+      fields = ['Desktop Type', 'Processor', 'Processor Speed', 'RAM', 'Storage', 'Graphics', 'Resolution', 'Connectivity', 'Ports', 'Color'];
+    } 
+    else if (normalizedCat.includes('laptop')) {
+      fields = ['Processor', 'Processor Speed', 'RAM', 'Storage', 'Graphics', 'Display Size', 'Resolution', 'Operating System', 'Connectivity', 'Ports', 'Battery', 'Color'];
+    } 
+    else if (normalizedCat.includes('monitor')) {
+      fields = ['Screen Size', 'Display Type', 'Resolution', 'Refresh Rate', 'Response Time', 'Brightness', 'Connectivity', 'Ports', 'Features', 'Color'];
+    } 
+    else if (normalizedCat.includes('digital signage')) {
+      fields = ['Display Type', 'Screen Size', 'Resolution', 'Brightness', 'Refresh Rate', 'Operating System', 'Connectivity', 'Features', 'Color'];
+    } 
+    else if (normalizedCat.includes('tv') || normalizedCat.includes('smart tv')) {
+      fields = ['Display Technology', 'Screen Size', 'Resolution', 'Refresh Rate', 'HDR', 'Audio', 'Connectivity', 'Features', 'Operating System', 'Color'];
+    } 
+    else if (normalizedCat.includes('projector')) {
+      fields = ['Display Technology', 'Resolution', 'Brightness', 'Contrast Ratio', 'Lamp Life', 'Projection Size', 'Connectivity', 'Features', 'Color'];
+    } 
+    else if (normalizedCat.includes('printer')) {
+      fields = ['Printer Type', 'Functions', 'Print Technology', 'Print Speed', 'Print Resolution', 'Paper Size', 'Paper Capacity', 'Connectivity', 'Features', 'Color'];
+    } 
+    else if (normalizedCat.includes('scanner')) {
+      fields = ['Scanner Type', 'Scan Speed', 'Scan Resolution', 'Document Feeder', 'Display', 'Connectivity', 'Features', 'Color'];
+    } 
+    else if (normalizedCat.includes('phone') || normalizedCat.includes('smartphone') || normalizedCat.includes('tablet') || normalizedCat.includes('e-reader')) {
+      fields = ['Network', 'SIM', 'Display', 'Resolution', 'Processor', 'Memory', 'Storage', 'Expandable Storage', 'Battery', 'Connectivity', 'Features', 'Color'];
+    } 
+    else if (normalizedCat.includes('smartwatch') || normalizedCat.includes('fitness tracker')) {
+      fields = ['Screen Size', 'Battery Life', 'Water Resistance', 'OS Compatibility', 'Connectivity', 'Features', 'Color'];
+    } 
+    else if (normalizedCat.includes('console') || normalizedCat.includes('vr')) {
+      fields = ['Storage', 'Resolution Output', 'Included Controllers', 'Connectivity', 'Features', 'Color'];
+    } 
+    else if (normalizedCat.includes('home') || normalizedCat.includes('kitchen')) {
+      fields = ['Material', 'Power (Watts)', 'Color', 'Dimensions', 'Features'];
+    } 
+    else if (normalizedCat !== 'other') {
       fields = ['Feature 1', 'Feature 2', 'Color', 'Weight'];
     }
+    return fields;
+  };
+
+  const renderDynamicSpecs = (cat: string, currentState: any, setState: any, accType?: string) => {
+    const fields = getStandardFields(cat, accType);
+    if (fields.length === 0) return null; 
 
     const title = cat === 'Accessories' && accType ? `${accType} Specs` : `${cat} Specs`;
 
@@ -338,12 +437,51 @@ export default function AdminProducts() {
     );
   };
 
+  const renderCustomSpecsBuilder = (customArray: {key: string, value: string}[], isEdit: boolean) => {
+    return (
+      <div className="mt-4 p-4 border border-dashed border-gray-300 rounded-xl bg-gray-50/30">
+        <div className="flex justify-between items-center mb-3">
+          <h3 className="text-xs font-bold text-gray-700">Custom Specifications</h3>
+          <button type="button" onClick={() => handleAddCustomSpec(isEdit)} className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded hover:bg-blue-100 transition flex items-center gap-1">
+            <FiPlus/> Add Field
+          </button>
+        </div>
+        
+        {customArray.length === 0 && <p className="text-[10px] text-gray-400 italic">No custom specifications added.</p>}
+
+        <div className="space-y-2">
+          {customArray.map((spec, index) => (
+            <div key={index} className="flex items-center gap-2">
+              <input 
+                type="text" 
+                placeholder="Spec Name (e.g. Warranty)" 
+                value={spec.key} 
+                onChange={e => handleCustomSpecChange(index, 'key', e.target.value, isEdit)} 
+                className="w-1/3 bg-white border border-gray-200 rounded-lg px-2 py-1.5 outline-none text-[11px] focus:border-[#F2A900]" 
+              />
+              <input 
+                type="text" 
+                placeholder="Value (e.g. 1 Year)" 
+                value={spec.value} 
+                onChange={e => handleCustomSpecChange(index, 'value', e.target.value, isEdit)} 
+                className="flex-1 bg-white border border-gray-200 rounded-lg px-2 py-1.5 outline-none text-[11px] focus:border-[#F2A900]" 
+              />
+              <button type="button" onClick={() => removeCustomSpec(index, isEdit)} className="text-red-500 hover:bg-red-50 p-1.5 rounded-md transition">
+                <FiTrash2 size={14}/>
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-2xl font-black text-gray-900">Products & Inventory</h1>
-          <p className="text-sm text-gray-500">Manage your stock, SKUs, images, and pricing here.</p>
+          <p className="text-sm text-gray-500">Manage your stock, custom categories, SKUs, and specs here.</p>
         </div>
       </div>
 
@@ -392,7 +530,6 @@ export default function AdminProducts() {
                 </select>
               </div>
               
-              {/* ACCESSORY TYPE DROPDOWN (ONLY SHOWS IF ACCESSORIES IS SELECTED) */}
               {category === 'Accessories' && (
                 <div className="col-span-2 animate-fade-in">
                   <label className="block text-[11px] font-bold text-blue-500 uppercase mb-1 flex items-center gap-1">Accessory For?</label>
@@ -402,6 +539,13 @@ export default function AdminProducts() {
                       <option key={accOpt} value={accOpt}>{accOpt}</option>
                     ))}
                   </select>
+                </div>
+              )}
+
+              {category === 'Other' && (
+                <div className="col-span-2 animate-fade-in">
+                  <label className="block text-[11px] font-bold text-purple-600 uppercase mb-1 flex items-center gap-1">Custom Category Name</label>
+                  <input type="text" required value={customCategory} onChange={e => setCustomCategory(e.target.value)} className="w-full bg-purple-50 border border-purple-200 rounded-lg px-3 py-2 outline-none text-sm focus:border-purple-500" placeholder="e.g. Solar Panels" />
                 </div>
               )}
 
@@ -449,8 +593,8 @@ export default function AdminProducts() {
             </div>
 
             <div>
-              {/* Intelligent Dynamic Specs */}
               {renderDynamicSpecs(category, specData, setSpecData, accessoryType)}
+              {renderCustomSpecsBuilder(customSpecs, false)}
             </div>
 
             <div className="grid grid-cols-2 gap-3 mt-4">
@@ -576,7 +720,6 @@ export default function AdminProducts() {
                   </select>
                 </div>
                 
-                {/* ACCESSORY TYPE DROPDOWN FOR EDIT */}
                 {editingProduct.category === 'Accessories' && (
                   <div className="col-span-2 animate-fade-in">
                     <label className="block text-[11px] font-bold text-blue-500 uppercase mb-1 flex items-center gap-1">Accessory For?</label>
@@ -586,6 +729,13 @@ export default function AdminProducts() {
                         <option key={accOpt} value={accOpt}>{accOpt}</option>
                       ))}
                     </select>
+                  </div>
+                )}
+
+                {editingProduct.category === 'Other' && (
+                  <div className="col-span-2 animate-fade-in">
+                    <label className="block text-[11px] font-bold text-purple-600 uppercase mb-1 flex items-center gap-1">Custom Category Name</label>
+                    <input type="text" required value={customCategory} onChange={e => setCustomCategory(e.target.value)} className="w-full bg-purple-50 border border-purple-200 rounded-lg px-3 py-2 outline-none text-sm focus:border-purple-500" placeholder="e.g. Solar Panels" />
                   </div>
                 )}
 
@@ -621,8 +771,8 @@ export default function AdminProducts() {
               </div>
 
               <div>
-                {/* Intelligent Dynamic Specs for Edit Mode */}
                 {renderDynamicSpecs(editingProduct.category, editSpecData, setEditSpecData, editingProduct.accessoryType)}
+                {renderCustomSpecsBuilder(editCustomSpecs, true)}
               </div>
 
               <div className="grid grid-cols-2 gap-4 mt-4">
