@@ -13,8 +13,6 @@ import {
   FiBell, FiSettings, FiArrowLeft, FiGlobe, FiMoreHorizontal, FiTag
 } from 'react-icons/fi';
 
-import Footer from '../components/common/Footer';
-
 const translations = {
   en: {
     shop: "All Products",
@@ -79,6 +77,17 @@ export default function ShopPage() {
     if (!url) return '';
     if (url.startsWith('http')) return url;
     return `${getApiUrl().replace(/\/$/, '')}${url}`;
+  };
+
+  // Helper Mpya Inayohakikisha picha inatoka vizuri kama Array JSON au String ya kawaida
+  const getDisplayImage = (imgData: string) => {
+    if (!imgData) return '';
+    try {
+      const parsed = JSON.parse(imgData);
+      return Array.isArray(parsed) && parsed.length > 0 ? parsed[0] : imgData;
+    } catch(e) {
+      return imgData; 
+    }
   };
 
   const getDeterministicDiscount = (id: string) => {
@@ -228,7 +237,7 @@ export default function ShopPage() {
             <img 
               src="/logo.png" 
               alt="Jtex Logo" 
-              className="h-20 lg:h-28 cursor-pointer object-contain" 
+              className="h-16 lg:h-20 cursor-pointer object-contain" 
               onClick={() => router.push('/')} 
             />
             <div className="flex items-center gap-2 cursor-pointer hover:bg-gray-800/50 p-2 rounded-lg transition">
@@ -273,37 +282,45 @@ export default function ShopPage() {
       </header>
 
       {/* ========================================================= */}
-      {/* 2. MOBILE HEADER */}
+      {/* 2. MOBILE HEADER PROFESSIONAL (Icon za Cart na Lugha tu + Search Bar chini yake) */}
       {/* ========================================================= */}
-      <header className="lg:hidden bg-[#0A101D] text-white px-4 py-3 sticky top-0 z-50">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2 w-1/2">
-             <button onClick={() => router.back()} className="p-1"><FiArrowLeft className="text-xl text-gray-300"/></button>
-             <div className="h-8 w-32 relative flex items-center">
-                 <img src="/logo.png" alt="Jtex Logo" className="max-h-full max-w-full object-contain brightness-0 invert cursor-pointer" onClick={() => router.push('/')} />
-             </div>
+      <header className="lg:hidden bg-[#0A101D] text-white pt-4 pb-3 sticky top-0 z-50 shadow-md">
+        <div className="px-4 flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+             <button onClick={() => router.back()} className="p-1 hover:bg-gray-800 rounded-full transition"><FiArrowLeft className="text-xl text-gray-300"/></button>
+             <img src="/logo.png" alt="Jtex Logo" className="h-8 object-contain brightness-0 invert cursor-pointer" onClick={() => router.push('/')} />
           </div>
-          <div className="flex items-center gap-4 justify-end w-1/2">
-             <button onClick={toggleLanguage} className="flex items-center gap-1 text-sm font-bold text-gray-300 hover:text-white transition">
-                <FiGlobe size={18}/> {lang.toUpperCase()} <FiChevronDown size={14}/>
+          
+          <div className="flex items-center gap-5">
+             <button onClick={toggleLanguage} className="flex items-center gap-1 text-xs font-bold text-gray-300 hover:text-white transition">
+                <FiGlobe size={16}/> {lang.toUpperCase()}
              </button>
 
-             {user ? (
-                <div className="w-8 h-8 bg-[#F2A900] text-black rounded-full flex items-center justify-center font-bold text-[10px] shadow-sm" onClick={() => router.push('/profile')}>{user?.name?.charAt(0) || 'U'}</div>
-             ) : (
-                <FiUser className="text-xl text-gray-300" onClick={() => router.push('/login')} />
-             )}
+             <div className="relative cursor-pointer" onClick={() => router.push('/checkout')}>
+                 <FiShoppingCart size={22} className="text-gray-300 hover:text-white transition"/>
+                 {cartCount > 0 && <span className="absolute -top-1.5 -right-1.5 bg-[#F2A900] text-black text-[9px] font-black w-4 h-4 flex items-center justify-center rounded-full shadow-sm">{cartCount}</span>}
+             </div>
           </div>
         </div>
-        <div className="flex items-center h-11 bg-white rounded-xl overflow-hidden shadow-sm">
-          <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder={t.search} className="flex-1 h-full px-4 text-sm text-gray-900 outline-none" />
-          <div className="flex items-center gap-3 px-3 text-gray-400">
-            <FiMic size={18} className="cursor-pointer"/>
-            <FiCamera size={18} className="cursor-pointer"/>
+        
+        {/* MOBILE SEARCH BAR */}
+        <div className="px-4">
+          <div className="flex items-center h-12 bg-white rounded-xl overflow-hidden shadow-sm border border-gray-200">
+            <input 
+               type="text" 
+               value={searchQuery} 
+               onChange={(e) => setSearchQuery(e.target.value)} 
+               placeholder="Search products..." 
+               className="flex-1 h-full px-4 text-sm text-gray-900 outline-none bg-transparent placeholder-gray-400" 
+            />
+            <div className="flex items-center gap-3 px-2 text-gray-400 bg-white">
+              <FiMic size={18} className="cursor-pointer hover:text-[#F2A900] transition"/>
+              <FiCamera size={18} className="cursor-pointer hover:text-[#F2A900] transition"/>
+            </div>
+            <button className="h-full px-5 bg-[#F2A900] text-black hover:bg-yellow-500 transition border-l border-[#F2A900]/20">
+              <FiSearch size={20} />
+            </button>
           </div>
-          <button className="h-full px-5 bg-[#F2A900] text-black">
-            <FiSearch size={18} />
-          </button>
         </div>
       </header>
 
@@ -351,7 +368,7 @@ export default function ShopPage() {
         </aside>
 
         {/* MAIN CONTENT AREA */}
-        <main className="flex-1 min-w-0 pb-6 relative">
+        <main className="flex-1 min-w-0 pb-6 relative mt-4 lg:mt-0">
           
           {/* CATEGORIES HEADER ICONS */}
           <div className="flex items-center bg-white lg:rounded-2xl lg:border border-b border-gray-100 px-4 py-4 lg:shadow-sm mb-4 lg:mb-6 overflow-hidden">
@@ -421,8 +438,9 @@ export default function ShopPage() {
                               <FiHeart className={isWishlisted ? "fill-red-500 text-red-500" : ""} />
                            </button>
                            
-                           {product.imageUrl ? (
-                              <img src={getImageUrl(product.imageUrl)} alt={product.name} className="absolute inset-0 w-full h-full object-contain mix-blend-multiply p-4 group-hover:scale-105 transition-transform duration-300" />
+                           {/* FIX YA PICHA KWENYE DUKA */}
+                           {getDisplayImage(product.imageUrl) ? (
+                              <img src={getImageUrl(getDisplayImage(product.imageUrl))} alt={product.name} className="absolute inset-0 w-full h-full object-contain mix-blend-multiply p-4 group-hover:scale-105 transition-transform duration-300" />
                            ) : (
                               <div className="absolute inset-0 flex items-center justify-center text-5xl">📦</div>
                            )}
@@ -522,37 +540,10 @@ export default function ShopPage() {
         </div>
       </footer>
 
-      {/* ========================================================= */}
-      {/* MOBILE BOTTOM NAVIGATION */}
-      {/* ========================================================= */}
-      <div className="lg:hidden fixed bottom-0 left-0 w-full bg-white border-t border-gray-100 px-6 py-3 flex justify-between items-center z-50 shadow-[0_-10px_20px_rgba(0,0,0,0.03)] pb-safe">
-         <button onClick={() => router.push('/')} className="flex flex-col items-center gap-1 text-gray-400 hover:text-gray-800 transition">
-            <FiHome size={22}/>
-            <span className="text-[10px] font-bold">Home</span>
-         </button>
-         <button onClick={() => router.push('/shop')} className="flex flex-col items-center gap-1 text-[#F2A900]">
-            <FiGrid size={22} className="fill-current"/>
-            <span className="text-[10px] font-black">Shop</span>
-         </button>
-         
-         <div className="relative -top-6">
-            <button className="w-14 h-14 bg-[#0A101D] text-white rounded-full flex items-center justify-center shadow-lg border-4 border-white hover:scale-105 transition-transform" onClick={() => router.push('/categories')}>
-               <FiZap size={24} className="fill-current text-[#F2A900]"/>
-            </button>
-            <span className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[10px] font-bold text-gray-800 whitespace-nowrap">Flash Sales</span>
-         </div>
-
-         <button onClick={() => router.push('/checkout')} className="flex flex-col items-center gap-1 text-gray-400 hover:text-gray-800 transition relative">
-            <FiShoppingCart size={22}/>
-            <span className="text-[10px] font-bold">Cart</span>
-            {cartCount > 0 && <span className="absolute -top-1.5 -right-1.5 bg-[#F2A900] text-black text-[10px] font-black w-4 h-4 flex items-center justify-center rounded-full">{cartCount}</span>}
-         </button>
-         <button onClick={() => router.push(isLoggedIn ? '/profile' : '/login')} className="flex flex-col items-center gap-1 text-gray-400 hover:text-gray-800 transition">
-            <FiUser size={22}/>
-            <span className="text-[10px] font-bold">Account</span>
-         </button>
-      </div>
-
+      <style>{`
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      `}</style>
     </div>
   );
 }
