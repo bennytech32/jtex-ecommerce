@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { FiPlus, FiBox, FiDatabase, FiAlertTriangle, FiCheckCircle, FiX, FiSettings, FiTag, FiCpu, FiTruck, FiAnchor, FiLayers, FiTrash2 } from 'react-icons/fi';
+import { FiPlus, FiBox, FiDatabase, FiAlertTriangle, FiCheckCircle, FiX, FiSettings, FiTag, FiCpu, FiTruck, FiAnchor, FiLayers, FiTrash2, FiPackage } from 'react-icons/fi';
 
 export default function AdminProducts() {
   const [isLoading, setIsLoading] = useState(false);
@@ -43,6 +43,11 @@ export default function AdminProducts() {
   const [isPreOrder, setIsPreOrder] = useState(false);
   const [shippingOrigin, setShippingOrigin] = useState<'Dubai' | 'China'>('Dubai');
   const [freightType, setFreightType] = useState<'Air' | 'Sea'>('Air');
+
+  // Wholesale States (NEW)
+  const [isWholesale, setIsWholesale] = useState(false);
+  const [wholesaleTier2Price, setWholesaleTier2Price] = useState('');
+  const [wholesaleTier3Price, setWholesaleTier3Price] = useState('');
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://jtex-ecommerce-production.up.railway.app';
 
@@ -104,12 +109,10 @@ export default function AdminProducts() {
     const cat = categoryName.toLowerCase();
     let autoFields: string[] = [];
 
-    // Fallback kwenye Database Templates kama ipo inayofanana na Category Name
     const dbTemplate = dbSpecTemplates.find(t => t.title.toLowerCase() === cat);
     if (dbTemplate) {
       autoFields = dbTemplate.fields;
     } 
-    // Vinginevyo tumia AI/Hardcoded Logic
     else if (cat.includes('laptop') || cat.includes('computer') || cat.includes('desktop') || cat.includes('mini pc')) {
       autoFields = ['Processor', 'Processor Speed', 'RAM', 'Storage', 'Graphics', 'Display Size', 'Operating System', 'Battery Life'];
     } 
@@ -140,7 +143,6 @@ export default function AdminProducts() {
     }
   };
 
-  // Watcher inayofanya kazi Mtu akibadili Kategoria
   useEffect(() => {
     if (selectedCategoryId) {
       const catObj = dbCategories.find(c => c.id === selectedCategoryId || c.name === selectedCategoryId);
@@ -245,7 +247,6 @@ export default function AdminProducts() {
     setImagePreviews(prev => prev.filter((_, index) => index !== indexToRemove));
   };
 
-  // --- Custom Specs Logic ---
   const handleAddCustomSpec = () => {
     setCustomSpecs([...customSpecs, { key: '', value: '' }]);
   };
@@ -276,6 +277,13 @@ export default function AdminProducts() {
     // Injiza Rangi kwenye Specifications kama ipo
     if (colors.trim() !== '') {
        finalSpecs['Color'] = colors.trim();
+    }
+
+    // Injiza Wholesale kwenye Specifications
+    if (isWholesale) {
+      finalSpecs['isWholesale'] = 'Yes';
+      if(wholesaleTier2Price) finalSpecs['wholesaleTier2Price'] = wholesaleTier2Price;
+      if(wholesaleTier3Price) finalSpecs['wholesaleTier3Price'] = wholesaleTier3Price;
     }
 
     customSpecs.forEach(spec => {
@@ -316,9 +324,9 @@ export default function AdminProducts() {
         setSku(''); setName(''); setBrand(''); setModelName(''); setBadge(''); setCondition('Brand New'); setColors(''); setBuyingPrice(''); setPrice(''); setStockQuantity(''); 
         setSelectedCategoryId(''); setSpecData({}); setCustomSpecs([]);
         setImageFiles([]); setImagePreviews([]);
-        setIsPreOrder(false);
+        setIsPreOrder(false); setIsWholesale(false); setWholesaleTier2Price(''); setWholesaleTier3Price('');
         if (fileInputRef.current) fileInputRef.current.value = '';
-        window.scrollTo(0,0); // Scroll juu kuona meseji
+        window.scrollTo(0,0); 
       } else {
         setError(`Failed: ${data.error || "Server rejected the data."}`);
       }
@@ -331,7 +339,7 @@ export default function AdminProducts() {
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-2xl font-black text-gray-900">Add New Product</h1>
-          <p className="text-sm text-gray-500">Add stock, set categories, multicolours, and Pre-Orders.</p>
+          <p className="text-sm text-gray-500">Add stock, categories, colours, wholesale and Pre-Orders.</p>
         </div>
         <button onClick={() => setShowManager(!showManager)} className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition ${showManager ? 'bg-gray-200 text-gray-800' : 'bg-[#0F172A] text-white'}`}>
           <FiLayers/> {showManager ? 'Close Manager' : 'Manage Cats & Specs'}
@@ -464,6 +472,33 @@ export default function AdminProducts() {
                   <label className="block text-[11px] font-bold text-green-600 uppercase mb-1">Selling Price</label>
                   <input type="number" required value={price} onChange={e => setPrice(e.target.value)} className="w-full bg-green-50 border border-green-200 rounded-lg px-3 py-2 outline-none text-sm font-black text-[#0A101D] focus:border-green-500" placeholder="250000" />
                 </div>
+              </div>
+
+              {/* WHOLESALE PRICING SECTION (NEW) */}
+              <div className="border border-green-100 rounded-2xl overflow-hidden mt-4">
+                <div className="bg-green-50/30 p-4 flex items-center justify-between border-b border-green-100">
+                    <div className="flex items-center gap-3">
+                        <div className={`p-2 rounded-lg ${isWholesale ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-400'}`}><FiPackage size={20}/></div>
+                        <div>
+                            <label className="block text-sm font-bold text-gray-800">Wholesale Pricing</label>
+                            <p className="text-[10px] text-gray-500">Washa kama bidhaa inauzwa kwa bei ya jumla.</p>
+                        </div>
+                    </div>
+                    <input type="checkbox" checked={isWholesale} onChange={e => setIsWholesale(e.target.checked)} className="w-6 h-6 accent-green-600 cursor-pointer"/>
+                </div>
+
+                {isWholesale && (
+                  <div className="bg-white p-4 grid grid-cols-2 gap-3 animate-fade-in">
+                    <div>
+                      <label className="block text-[10px] font-bold text-green-700 uppercase mb-1">Price for 2-5 Pcs (Optional)</label>
+                      <input type="number" value={wholesaleTier2Price} onChange={e => setWholesaleTier2Price(e.target.value)} className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 outline-none text-sm font-semibold text-gray-800 focus:border-green-400" placeholder="e.g. 240000" />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-green-700 uppercase mb-1">Price for &gt;5 Pcs (Optional)</label>
+                      <input type="number" value={wholesaleTier3Price} onChange={e => setWholesaleTier3Price(e.target.value)} className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 outline-none text-sm font-semibold text-gray-800 focus:border-green-400" placeholder="e.g. 230000" />
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
