@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { FiPlus, FiBox, FiDatabase, FiAlertTriangle, FiCheckCircle, FiX, FiSettings, FiTag, FiCpu, FiTruck, FiAnchor, FiLayers } from 'react-icons/fi';
+import { FiPlus, FiBox, FiDatabase, FiAlertTriangle, FiCheckCircle, FiX, FiSettings, FiTag, FiCpu, FiTruck, FiAnchor, FiLayers, FiTrash2 } from 'react-icons/fi';
 
 export default function AdminProducts() {
   const [isLoading, setIsLoading] = useState(false);
@@ -27,12 +27,15 @@ export default function AdminProducts() {
   const [modelName, setModelName] = useState(''); 
   const [badge, setBadge] = useState(''); 
   const [condition, setCondition] = useState('Brand New');
-  const [colors, setColors] = useState(''); // NEW: Multi-colour support
+  const [colors, setColors] = useState(''); // Multi-colour support
   const [buyingPrice, setBuyingPrice] = useState('');
   const [price, setPrice] = useState('');
   const [stockQuantity, setStockQuantity] = useState('');
+  
+  // Spec States
   const [specData, setSpecData] = useState<any>({}); 
   const [customSpecs, setCustomSpecs] = useState<{key: string, value: string}[]>([]); 
+  
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
 
@@ -77,7 +80,8 @@ export default function AdminProducts() {
           fetchedCats = [
               { id: '1', name: 'Smartphones' }, { id: '2', name: 'Laptops' },
               { id: '3', name: 'Monitors' }, { id: '4', name: 'Printers' },
-              { id: '5', name: 'Accessories' }
+              { id: '5', name: 'Accessories' }, { id: '6', name: 'Servers' },
+              { id: '7', name: 'Desktop Computers' }, { id: '8', name: 'Smart TVs' }
           ];
       }
       setDbCategories(fetchedCats);
@@ -92,6 +96,62 @@ export default function AdminProducts() {
   useEffect(() => {
     fetchInitialData();
   }, []);
+
+  // ==========================================
+  // SMART AI SPECIFICATIONS GENERATOR
+  // ==========================================
+  const generateSmartSpecs = (categoryName: string) => {
+    const cat = categoryName.toLowerCase();
+    let autoFields: string[] = [];
+
+    // Fallback kwenye Database Templates kama ipo inayofanana na Category Name
+    const dbTemplate = dbSpecTemplates.find(t => t.title.toLowerCase() === cat);
+    if (dbTemplate) {
+      autoFields = dbTemplate.fields;
+    } 
+    // Vinginevyo tumia AI/Hardcoded Logic
+    else if (cat.includes('laptop') || cat.includes('computer') || cat.includes('desktop') || cat.includes('mini pc')) {
+      autoFields = ['Processor', 'Processor Speed', 'RAM', 'Storage', 'Graphics', 'Display Size', 'Operating System', 'Battery Life'];
+    } 
+    else if (cat.includes('phone') || cat.includes('smartphone') || cat.includes('tablet')) {
+      autoFields = ['Display', 'Resolution', 'Processor', 'RAM', 'Storage', 'Main Camera', 'Selfie Camera', 'Battery Capacity', 'Network'];
+    }
+    else if (cat.includes('server')) {
+      autoFields = ['Server Type', 'Processor', 'Memory', 'Storage Controller', 'Drive Bays', 'Network', 'Power Supply'];
+    }
+    else if (cat.includes('monitor') || cat.includes('tv') || cat.includes('display')) {
+      autoFields = ['Screen Size', 'Resolution', 'Panel Type', 'Refresh Rate', 'Response Time', 'Connectivity', 'Smart Features'];
+    }
+    else if (cat.includes('printer') || cat.includes('scanner')) {
+      autoFields = ['Print Technology', 'Print Speed', 'Resolution', 'Connectivity', 'Paper Capacity', 'Functions'];
+    }
+    else if (cat.includes('accessory') || cat.includes('accessories')) {
+      autoFields = ['Type', 'Connectivity', 'Compatibility', 'Material', 'Cable Length'];
+    }
+
+    if (autoFields.length > 0) {
+      const newSpecObj: any = {};
+      autoFields.forEach(field => {
+        newSpecObj[field] = '';
+      });
+      setSpecData(newSpecObj);
+    } else {
+      setSpecData({});
+    }
+  };
+
+  // Watcher inayofanya kazi Mtu akibadili Kategoria
+  useEffect(() => {
+    if (selectedCategoryId) {
+      const catObj = dbCategories.find(c => c.id === selectedCategoryId || c.name === selectedCategoryId);
+      if (catObj) {
+        generateSmartSpecs(catObj.name);
+      }
+    } else {
+      setSpecData({});
+    }
+  }, [selectedCategoryId, dbCategories, dbSpecTemplates]);
+
 
   // --- Management Logic ---
   const handleSaveCategory = async () => {
@@ -112,13 +172,13 @@ export default function AdminProducts() {
         const newCat = { id: Date.now().toString(), name: newCatName.trim() };
         setDbCategories([...dbCategories, newCat]);
         setNewCatName('');
-        setMessage('Category added locally (API missing).');
+        setMessage('Kategoria imehifadhiwa kwa muda (API missing).');
       }
     } catch (err) { 
         const newCat = { id: Date.now().toString(), name: newCatName.trim() };
         setDbCategories([...dbCategories, newCat]);
         setNewCatName('');
-        setMessage('Category added locally (API offline).');
+        setMessage('Kategoria imehifadhiwa kwa muda (API offline).');
     }
     setIsLoading(false);
   };
@@ -258,6 +318,7 @@ export default function AdminProducts() {
         setImageFiles([]); setImagePreviews([]);
         setIsPreOrder(false);
         if (fileInputRef.current) fileInputRef.current.value = '';
+        window.scrollTo(0,0); // Scroll juu kuona meseji
       } else {
         setError(`Failed: ${data.error || "Server rejected the data."}`);
       }
@@ -277,8 +338,8 @@ export default function AdminProducts() {
         </button>
       </div>
 
-      {message && <div className="mb-4 p-4 bg-green-50 text-green-600 text-sm rounded-xl flex items-center gap-2 font-bold shadow-sm"><FiCheckCircle className="text-lg" /> {message}</div>}
-      {error && <div className="mb-4 p-4 bg-red-50 text-red-600 text-sm rounded-xl flex items-center gap-2 font-bold shadow-sm break-words"><FiAlertTriangle className="text-lg" /> {error}</div>}
+      {message && <div className="mb-4 p-4 bg-green-50 text-green-600 text-sm rounded-xl flex items-center gap-2 font-bold shadow-sm border border-green-100"><FiCheckCircle className="text-lg" /> {message}</div>}
+      {error && <div className="mb-4 p-4 bg-red-50 text-red-600 text-sm rounded-xl flex items-center gap-2 font-bold shadow-sm border border-red-100"><FiAlertTriangle className="text-lg" /> {error}</div>}
 
       {/* MANAGER */}
       {showManager && (
@@ -324,12 +385,12 @@ export default function AdminProducts() {
             <div className="space-y-4">
               <div>
                 <label className="block text-[11px] font-bold text-gray-500 uppercase mb-1">Product Name</label>
-                <div className="flex items-center bg-gray-50 border rounded-lg px-3 py-2"><FiBox className="text-gray-400 mr-2" /><input type="text" required value={name} onChange={e => setName(e.target.value)} className="w-full bg-transparent outline-none text-sm" placeholder="e.g. iPhone 15 Pro Max" /></div>
+                <div className="flex items-center bg-gray-50 border rounded-lg px-3 py-2"><FiBox className="text-gray-400 mr-2" /><input type="text" required value={name} onChange={e => setName(e.target.value)} className="w-full bg-transparent outline-none text-sm font-semibold text-gray-900" placeholder="e.g. iPhone 15 Pro Max" /></div>
               </div>
 
               <div>
-                  <label className="block text-[11px] font-bold text-gray-500 uppercase mb-1">Category</label>
-                  <select required value={selectedCategoryId} onChange={(e) => setSelectedCategoryId(e.target.value)} className="w-full bg-gray-50 border rounded-lg px-3 py-2 outline-none text-sm font-medium focus:border-[#F2A900]">
+                  <label className="block text-[11px] font-bold text-gray-500 uppercase mb-1 flex items-center gap-2">Category <span className="text-[9px] text-[#F2A900] bg-yellow-50 px-2 py-0.5 rounded-full lowercase">Auto-loads Specs</span></label>
+                  <select required value={selectedCategoryId} onChange={(e) => setSelectedCategoryId(e.target.value)} className="w-full bg-gray-50 border rounded-lg px-3 py-2 outline-none text-sm font-bold text-gray-800 focus:border-[#F2A900]">
                     <option value="">-- Select Category --</option>
                     {dbCategories.map(cat => (
                       <option key={cat.id} value={cat.id}>{cat.name}</option>
@@ -345,18 +406,18 @@ export default function AdminProducts() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-[11px] font-bold text-gray-500 uppercase mb-1">Brand</label>
-                  <input type="text" value={brand} onChange={e => setBrand(e.target.value)} className="w-full bg-gray-50 border rounded-lg px-3 py-2 outline-none text-sm" placeholder="Apple" />
+                  <input type="text" value={brand} onChange={e => setBrand(e.target.value)} className="w-full bg-gray-50 border rounded-lg px-3 py-2 outline-none text-sm font-semibold text-gray-800" placeholder="Apple" />
                 </div>
                 <div>
                   <label className="block text-[11px] font-bold text-gray-500 uppercase mb-1 flex items-center gap-1"><FiCpu className="text-gray-400"/> Model</label>
-                  <input type="text" value={modelName} onChange={e => setModelName(e.target.value)} className="w-full bg-gray-50 border rounded-lg px-3 py-2 outline-none text-sm" placeholder="A2849" />
+                  <input type="text" value={modelName} onChange={e => setModelName(e.target.value)} className="w-full bg-gray-50 border rounded-lg px-3 py-2 outline-none text-sm font-semibold text-gray-800" placeholder="A2849" />
                 </div>
               </div>
 
               {/* RANGI (MULTICOLOUR SUPPORT) */}
               <div>
                 <label className="block text-[11px] font-bold text-gray-500 uppercase mb-1">Available Colors (Comma Separated)</label>
-                <input type="text" value={colors} onChange={e => setColors(e.target.value)} className="w-full bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 outline-none text-sm text-blue-900 focus:border-blue-500" placeholder="e.g. Black, Silver, Titanium" />
+                <input type="text" value={colors} onChange={e => setColors(e.target.value)} className="w-full bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 outline-none text-sm font-bold text-blue-900 focus:border-blue-500" placeholder="e.g. Black, Silver, Titanium" />
                 <p className="text-[10px] text-gray-400 mt-1">Hizi zitatengeneza vitufe vya rangi kule mbele.</p>
               </div>
 
@@ -386,22 +447,22 @@ export default function AdminProducts() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-[11px] font-bold text-gray-500 uppercase mb-1">SKU (Auto)</label>
-                  <div className="flex items-center bg-gray-100 border border-gray-200 rounded-lg px-3 py-2"><FiDatabase className="text-gray-400 mr-2" /><input type="text" required value={sku} onChange={e => setSku(e.target.value)} className="w-full bg-transparent outline-none text-sm text-gray-600" /></div>
+                  <div className="flex items-center bg-gray-100 border border-gray-200 rounded-lg px-3 py-2"><FiDatabase className="text-gray-400 mr-2" /><input type="text" required value={sku} onChange={e => setSku(e.target.value)} className="w-full bg-transparent outline-none text-sm text-gray-600 font-mono" /></div>
                 </div>
                 <div>
                   <label className="block text-[11px] font-bold text-gray-500 uppercase mb-1">Physical Stock</label>
-                  <input type="number" required={!isPreOrder} disabled={isPreOrder} value={stockQuantity} onChange={e => setStockQuantity(e.target.value)} className="w-full bg-gray-50 border rounded-lg px-3 py-2 outline-none text-sm disabled:bg-gray-100" placeholder={isPreOrder ? "N/A" : "50"} />
+                  <input type="number" required={!isPreOrder} disabled={isPreOrder} value={stockQuantity} onChange={e => setStockQuantity(e.target.value)} className="w-full bg-gray-50 border rounded-lg px-3 py-2 outline-none text-sm font-bold text-gray-900 disabled:bg-gray-100 disabled:text-gray-400" placeholder={isPreOrder ? "N/A" : "50"} />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-[11px] font-bold text-gray-500 uppercase mb-1">Buying Price</label>
-                  <input type="number" value={buyingPrice} onChange={e => setBuyingPrice(e.target.value)} className="w-full bg-gray-50 border rounded-lg px-3 py-2 outline-none text-sm font-black" placeholder="200000" />
+                  <input type="number" value={buyingPrice} onChange={e => setBuyingPrice(e.target.value)} className="w-full bg-gray-50 border rounded-lg px-3 py-2 outline-none text-sm font-black text-gray-600" placeholder="200000" />
                 </div>
                 <div>
-                  <label className="block text-[11px] font-bold text-gray-500 uppercase mb-1">Selling Price</label>
-                  <input type="number" required value={price} onChange={e => setPrice(e.target.value)} className="w-full bg-gray-50 border rounded-lg px-3 py-2 outline-none text-sm font-black text-[#0F172A]" placeholder="250000" />
+                  <label className="block text-[11px] font-bold text-green-600 uppercase mb-1">Selling Price</label>
+                  <input type="number" required value={price} onChange={e => setPrice(e.target.value)} className="w-full bg-green-50 border border-green-200 rounded-lg px-3 py-2 outline-none text-sm font-black text-[#0A101D] focus:border-green-500" placeholder="250000" />
                 </div>
               </div>
             </div>
@@ -410,7 +471,7 @@ export default function AdminProducts() {
           <div className="border-b border-gray-100 pb-6">
             <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 flex items-center justify-between mb-2">
                 <div className="flex items-center gap-3">
-                    <FiTruck className={`${isPreOrder ? 'text-blue-600' : 'text-gray-400'}`} size={24}/>
+                    <div className={`p-2 rounded-lg ${isPreOrder ? 'bg-blue-100 text-blue-600' : 'bg-gray-200 text-gray-500'}`}><FiTruck size={20}/></div>
                     <div>
                         <label className="block text-sm font-bold text-gray-800">Available for Pre-Order</label>
                         <p className="text-[11px] text-gray-500">Enable this if the product is out of stock or requires special ordering.</p>
@@ -425,14 +486,14 @@ export default function AdminProducts() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-[11px] font-bold text-blue-700 uppercase mb-1">Shipping Origin</label>
-                    <select value={shippingOrigin} onChange={e => setShippingOrigin(e.target.value as any)} className="w-full bg-white border border-blue-200 rounded-lg px-3 py-2.5 outline-none text-sm focus:border-blue-400 transition">
+                    <select value={shippingOrigin} onChange={e => setShippingOrigin(e.target.value as any)} className="w-full bg-white border border-blue-200 rounded-lg px-3 py-2.5 outline-none text-sm font-semibold text-gray-800 focus:border-blue-400 transition">
                       <option value="Dubai">🇦🇪 Dubai → TZ</option>
                       <option value="China">🇨🇳 China → TZ</option>
                     </select>
                   </div>
                   <div>
                     <label className="block text-[11px] font-bold text-blue-700 uppercase mb-1">Freight Type</label>
-                    <select value={freightType} onChange={e => setFreightType(e.target.value as any)} className="w-full bg-white border border-blue-200 rounded-lg px-3 py-2.5 outline-none text-sm focus:border-blue-400 transition">
+                    <select value={freightType} onChange={e => setFreightType(e.target.value as any)} className="w-full bg-white border border-blue-200 rounded-lg px-3 py-2.5 outline-none text-sm font-semibold text-gray-800 focus:border-blue-400 transition">
                       <option value="Air">✈️ Air Freight (Fast)</option>
                       <option value="Sea">🚢 Sea Freight (Slower)</option>
                     </select>
@@ -442,21 +503,27 @@ export default function AdminProducts() {
             )}
           </div>
 
+          {/* SMART AI & CUSTOM SPECS */}
           <div className="space-y-4">
-            <h3 className="text-lg font-bold text-gray-900 border-b pb-2">Specifications</h3>
+            <div className="flex items-center justify-between border-b pb-2">
+               <h3 className="text-lg font-bold text-gray-900">Specifications</h3>
+               {Object.keys(specData).length > 0 && <span className="bg-green-100 text-green-700 text-[10px] font-bold px-2 py-1 rounded flex items-center gap-1"><FiCheckCircle/> Auto-Loaded</span>}
+            </div>
             
+            {/* Template Overrider (Kama AI imekosea) */}
             <div>
-              <label className="block text-[11px] font-bold text-gray-500 uppercase mb-1">Load Template</label>
-              <select onChange={(e) => applySpecTemplate(e.target.value)} className="w-full max-w-md bg-gray-50 border rounded-lg px-3 py-2 outline-none text-sm text-blue-700 font-bold focus:border-blue-300">
-                <option value="">-- Apply Saved Spec Template --</option>
+              <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Override Template (Optional)</label>
+              <select onChange={(e) => applySpecTemplate(e.target.value)} className="w-full max-w-xs bg-gray-50 border rounded-lg px-3 py-1.5 outline-none text-xs text-gray-600 font-medium focus:border-[#F2A900]">
+                <option value="">-- Change Template Manually --</option>
                 {dbSpecTemplates.map(temp => (
                     <option key={temp.id} value={temp.id}>{temp.title}</option>
                 ))}
               </select>
             </div>
             
+            {/* Auto-Loaded Specs Fields */}
             {Object.keys(specData).length > 0 && (
-              <div className="bg-gray-50 p-5 rounded-xl border border-gray-200">
+              <div className="bg-gray-50 p-5 rounded-2xl border border-gray-200">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {Object.keys(specData).map(field => (
                     <div key={field}>
@@ -465,7 +532,7 @@ export default function AdminProducts() {
                         type="text" 
                         value={specData[field] || ''} 
                         onChange={e => setSpecData({...specData, [field]: e.target.value})} 
-                        className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 outline-none text-sm focus:border-[#F2A900]" 
+                        className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 outline-none text-sm font-medium focus:border-[#F2A900] transition-colors" 
                       />
                     </div>
                   ))}
@@ -474,22 +541,22 @@ export default function AdminProducts() {
             )}
 
             {/* Custom Specs Builder */}
-            <div className="p-5 border border-dashed border-gray-300 rounded-xl bg-gray-50/50">
+            <div className="p-5 border border-dashed border-gray-300 rounded-2xl bg-gray-50/50">
               <div className="flex justify-between items-center mb-4">
-                <h3 className="text-sm font-bold text-gray-700">Custom Fields</h3>
-                <button type="button" onClick={() => handleAddCustomSpec()} className="text-[11px] font-bold text-blue-600 bg-blue-50 px-3 py-1.5 rounded-lg hover:bg-blue-100 transition flex items-center gap-1">
+                <h3 className="text-sm font-bold text-gray-700">Custom Extra Fields</h3>
+                <button type="button" onClick={() => handleAddCustomSpec()} className="text-[11px] font-bold text-[#0A101D] bg-gray-200 px-3 py-1.5 rounded-lg hover:bg-[#F2A900] hover:text-black transition flex items-center gap-1">
                   <FiPlus/> Add Field
                 </button>
               </div>
               
-              {customSpecs.length === 0 && <p className="text-xs text-gray-400 italic">No custom fields added.</p>}
+              {customSpecs.length === 0 && <p className="text-xs text-gray-400 italic">No custom fields added yet.</p>}
 
               <div className="space-y-3">
                 {customSpecs.map((spec, index) => (
                   <div key={index} className="flex flex-col sm:flex-row items-center gap-3">
-                    <input type="text" placeholder="Field Name (e.g. Warranty)" value={spec.key} onChange={e => handleCustomSpecChange(index, 'key', e.target.value)} className="w-full sm:w-1/3 bg-white border border-gray-200 rounded-lg px-3 py-2 outline-none text-sm focus:border-[#F2A900]" />
+                    <input type="text" placeholder="Field Name (e.g. Warranty)" value={spec.key} onChange={e => handleCustomSpecChange(index, 'key', e.target.value)} className="w-full sm:w-1/3 bg-white border border-gray-200 rounded-lg px-3 py-2 outline-none text-sm font-bold focus:border-[#F2A900]" />
                     <input type="text" placeholder="Value (e.g. 1 Year)" value={spec.value} onChange={e => handleCustomSpecChange(index, 'value', e.target.value)} className="w-full sm:flex-1 bg-white border border-gray-200 rounded-lg px-3 py-2 outline-none text-sm focus:border-[#F2A900]" />
-                    <button type="button" onClick={() => removeCustomSpec(index)} className="w-full sm:w-auto text-red-500 bg-red-50 hover:bg-red-100 px-3 py-2 rounded-lg transition font-bold text-sm flex justify-center items-center gap-2"><FiTrash2/> <span className="sm:hidden">Remove</span></button>
+                    <button type="button" onClick={() => removeCustomSpec(index)} className="w-full sm:w-auto text-red-500 bg-red-50 hover:bg-red-100 p-2.5 rounded-lg transition font-bold text-sm flex justify-center items-center"><FiTrash2/></button>
                   </div>
                 ))}
               </div>
@@ -497,8 +564,8 @@ export default function AdminProducts() {
 
           </div>
 
-          <button type="submit" disabled={isLoading} className="w-full bg-[#0F172A] hover:bg-gray-800 text-white font-black py-4 rounded-xl text-base transition mt-8 shadow-md disabled:bg-gray-400">
-            {isLoading ? 'Processing...' : 'Save Product & List Online'}
+          <button type="submit" disabled={isLoading} className="w-full bg-[#0A101D] hover:bg-gray-800 text-white font-black py-4 rounded-xl text-base transition mt-8 shadow-xl disabled:bg-gray-400 disabled:shadow-none flex items-center justify-center gap-2">
+            {isLoading ? <><div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div> Processing...</> : 'Save Product & List Online'}
           </button>
         </form>
       </div>

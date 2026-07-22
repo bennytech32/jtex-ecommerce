@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { FiSearch, FiEdit2, FiTrash2, FiX, FiCheckCircle, FiAlertTriangle, FiTruck, FiAnchor, FiTag, FiCpu, FiFilter, FiImage } from 'react-icons/fi';
+import { FiSearch, FiEdit2, FiTrash2, FiX, FiCheckCircle, FiAlertTriangle, FiTruck, FiAnchor, FiTag, FiCpu, FiFilter, FiImage, FiSettings, FiPlus } from 'react-icons/fi';
 
 export default function AdminInventory() {
   const [products, setProducts] = useState<any[]>([]);
@@ -528,7 +528,7 @@ export default function AdminInventory() {
                   <div className="p-5 border border-dashed border-gray-300 rounded-2xl bg-gray-50/30">
                     <div className="flex justify-between items-center mb-4">
                       <h3 className="text-xs font-bold text-gray-700">Custom Fields</h3>
-                      <button type="button" onClick={() => setEditCustomSpecs([...editCustomSpecs, {key:'', value:''}])} className="text-[11px] font-bold text-[#0A101D] bg-gray-200 px-3 py-1.5 rounded-lg hover:bg-[#F2A900] hover:text-black transition flex items-center gap-1">+ Add Field</button>
+                      <button type="button" onClick={() => setEditCustomSpecs([...editCustomSpecs, {key:'', value:''}])} className="text-[11px] font-bold text-[#0A101D] bg-gray-200 px-3 py-1.5 rounded-lg hover:bg-[#F2A900] hover:text-black transition flex items-center gap-1"><FiPlus/> Add Field</button>
                     </div>
                     {editCustomSpecs.length === 0 && <p className="text-xs text-gray-400 italic">No extra custom fields.</p>}
                     <div className="space-y-3">
