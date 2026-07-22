@@ -1,96 +1,118 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
+// ====================================================================
+// JTEX E-COMMERCE - PRISMA SCHEMA
+// ====================================================================
 
 generator client {
   provider = "prisma-client-js"
 }
 
-// Hakikisha provider ni sahihi na aina ya database yako (Mfano: "postgresql" au "mysql")
 datasource db {
-  provider = "postgresql" 
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id        String     @id @default(cuid())
-  name      String?
-  email     String     @unique
-  password  String?
-  phone     String?
-  role      String     @default("USER") // Inaweza kuwa "ADMIN" au "USER"
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-
-  orders    Order[]
-  cartItems CartItem[]
-}
+// ====================================================================
+// 1. PRODUCTS & INVENTORY MODELS
+// ====================================================================
 
 model Product {
-  id             String      @id @default(cuid())
-  sku            String      @unique
-  name           String
-  category       String
-  brand          String?
+  id              String      @id @default(uuid())
+  sku             String      @unique
+  name            String
+  category        String      // Jina la kategoria
+  brand           String?
+  model           String?
+  badge           String?     // Mfano: Hot, Sale, Pre-Order
+  condition       String?     @default("Brand New")
+  buyingPrice     Float?      // Bei ya kununulia (Admin only)
+  price           Float       // Bei ya kuuzia (Public)
+  stockQuantity   Int         @default(0)
   
-  // === MABORESHO MPYA KWA AJILI YA HOME PAGE ===
-  badge          String?     @default("")
-  condition      String?     @default("Brand New")
+  // Taarifa za ziada zilizohifadhiwa kama JSON String
+  specifications  String?     @db.Text // Huhifadhi rangi, RAM, n.k.
+  preOrderInfo    String?     @db.Text // Huhifadhi taarifa za Dubai/China & Freight
+  imageUrl        String?     @db.Text // Array ya link za Cloudinary
   
-  description    String?     @db.Text
-  buyingPrice    Float       @default(0)
-  price          Float
-  stockQuantity  Int         @default(0)
-  specifications String?     @db.Text // Inahifadhi JSON string ya features
-  imageUrl       String?
-  imageEmoji     String?
-  createdAt      DateTime    @default(now())
-  updatedAt      DateTime    @updatedAt
+  // Relations
+  orderItems      OrderItem[] // Inaunganisha bidhaa na oda za wateja
 
-  // Mahusiano na meza nyingine
-  cartItems      CartItem[]
-  orderItems     OrderItem[]
-}
-
-model CartItem {
-  id        String   @id @default(cuid())
-  userId    String?  // Ikiwa null inamaanisha mteja anatumia Session/hajalogin
-  productId String
-  quantity  Int      @default(1)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  // === SULUHISHO LA KUFUTA BIDHAA (Cascade Delete) ===
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-}
-
-model Order {
-  id              String      @id @default(cuid())
-  userId          String
-  totalAmount     Float
-  shippingAddress String?     @db.Text
-  shippingMethod  String?
-  paymentType     String?
-  paymentMethod   String?
-  status          String      @default("PENDING") // PENDING, COMPLETED, CANCELLED
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
+}
 
-  user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  orderItems      OrderItem[]
+model Category {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+}
+
+model SpecTemplate {
+  id        String   @id @default(uuid())
+  title     String
+  fields    String[] // Array ya strings (PostgreSQL inasupport hii moja kwa moja)
+  createdAt DateTime @default(now())
+}
+
+// ====================================================================
+// 2. USERS & AUTHENTICATION MODELS
+// ====================================================================
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String   // Hashed password
+  phone     String?
+  role      Role     @default(CUSTOMER) // Admin au Mteja
+  
+  orders    Order[]  // Oda zilizofanywa na mteja huyu
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum Role {
+  CUSTOMER
+  ADMIN
+}
+
+// ====================================================================
+// 3. ORDERS & TRANSACTIONS MODELS
+// ====================================================================
+
+model Order {
+  id            String      @id @default(uuid())
+  orderNumber   String      @unique // Mfano: ORD-2026-001
+  userId        String?
+  user          User?       @relation(fields: [userId], references: [id])
+  
+  status        OrderStatus @default(PENDING)
+  totalAmount   Float
+  shippingInfo  String?     @db.Text // Jina, Anwani, Namba ya simu ya mteja (JSON)
+  
+  items         OrderItem[] // Bidhaa zilizo ndani ya hii oda
+
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
 }
 
 model OrderItem {
-  id        String   @id @default(cuid())
-  orderId   String
-  productId String
-  quantity  Int
-  price     Float    // Bei ya bidhaa wakati inanunuliwa
-  createdAt DateTime @default(now())
-
-  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  id          String   @id @default(uuid())
+  orderId     String
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
   
-  // === SULUHISHO LA KUFUTA BIDHAA (Cascade Delete) ===
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id])
+  
+  quantity    Int
+  priceAtTime Float    // Bei iliyotumika wakati oda inafanywa
+  colorOption String?  // Kama mteja alichagua rangi maalum (Multi-color support)
+}
+
+enum OrderStatus {
+  PENDING
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
 }

@@ -6,7 +6,7 @@ import {
   FiArrowLeft, FiHeart, FiShare, FiShoppingCart, FiStar, 
   FiChevronRight, FiSearch, FiMic, FiCamera, FiHome, 
   FiCheckCircle, FiMapPin, FiChevronDown, FiPackage,
-  FiGlobe, FiTruck
+  FiGlobe, FiTruck, FiAnchor
 } from 'react-icons/fi';
 import { useCart } from '../../context/CartContext';
 import Footer from '../../components/common/Footer';
@@ -29,6 +29,10 @@ export default function ProductDetail() {
   const [wishlist, setWishlist] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
 
+  // Multi-Color Options State
+  const [selectedColor, setSelectedColor] = useState<string>('');
+  const [colorOptions, setColorOptions] = useState<string[]>([]);
+
   const [userLocation, setUserLocation] = useState('Dar es Salaam, Tanzania'); 
   const [countryCode, setCountryCode] = useState('tz');
   const [user, setUser] = useState<any>(null);
@@ -46,7 +50,8 @@ export default function ProductDetail() {
   const handleWhatsAppInquiry = () => {
     if (!product) return;
     const businessPhone = "255767949581"; 
-    const message = `Habari Jtex,%0ANinaulizia kuhusu hii bidhaa:%0A*${product.name}*%0A*Bei:* TZS ${product.price.toLocaleString()}%0A%0A*Link:* ${window.location.href}`;
+    const colorText = selectedColor ? `%0A*Rangi:* ${selectedColor}` : '';
+    const message = `Habari Jtex,%0ANinaulizia kuhusu hii bidhaa:%0A*${product.name}*${colorText}%0A*Bei:* TZS ${product.price.toLocaleString()}%0A%0A*Link:* ${window.location.href}`;
     window.open(`https://wa.me/${businessPhone}?text=${message}`, '_blank');
   };
 
@@ -76,7 +81,6 @@ export default function ProductDetail() {
     }
   };
 
-  // Slider Scroll Logic (Inafanya kazi Simu na Desktop sasa)
   const handleScroll = () => {
     if (sliderRef.current) {
       const scrollPosition = sliderRef.current.scrollLeft;
@@ -138,7 +142,21 @@ export default function ProductDetail() {
           setImages(parsedImages);
           
           if (foundProduct.specifications) {
-            try { setSpecs(JSON.parse(foundProduct.specifications)); } catch (e) {}
+            try { 
+              const parsedSpecs = JSON.parse(foundProduct.specifications); 
+              setSpecs(parsedSpecs);
+
+              // Tafuta Rangi kwenye Specs ili kutengeneza Options
+              const rawColor = parsedSpecs.Color || parsedSpecs.color || parsedSpecs.Colors || parsedSpecs.colors;
+              if (rawColor) {
+                 const colorsArr = rawColor.split(/[\/,]/).map((c: string) => c.trim()).filter(Boolean);
+                 if (colorsArr.length > 0) {
+                    setColorOptions(colorsArr);
+                    setSelectedColor(colorsArr[0]);
+                 }
+              }
+
+            } catch (e) {}
           }
         }
       } catch (err) {
@@ -164,8 +182,15 @@ export default function ProductDetail() {
   const tier3Price = basePrice * 0.90; 
   const isMainProductWishlisted = wishlist.includes(product.id);
 
-  const { Model, ...otherSpecs } = specs;
+  // Tunatoa Model na Color kwenye general specs list ili isijirudie
+  const { Model, Color, color, Colors, colors, ...otherSpecs } = specs;
   const displayModel = Model || product.model || 'N/A';
+
+  // Parse Pre-Order Info
+  let preInfo: any = null;
+  if (product.preOrderInfo) {
+    try { preInfo = JSON.parse(product.preOrderInfo); } catch(e) {}
+  }
 
   const relatedProducts = allProducts.filter(p => p.category === product.category && p.id !== product.id).slice(0, 5);
 
@@ -177,7 +202,7 @@ export default function ProductDetail() {
     return (
       <div className="w-full bg-white rounded-xl p-3 border border-gray-100 shadow-sm hover:shadow-lg transition-all relative group flex flex-col cursor-pointer" onClick={() => router.push(`/product/${item.id}`)}>
         <button onClick={(e) => toggleWishlist(e, item.id)} className="absolute top-2 right-2 z-20"><FiHeart className={`text-sm ${isWishlisted ? "fill-red-500 text-red-500" : "text-gray-400 hover:text-red-500"}`} /></button>
-        <div className="aspect-square bg-gray-50/50 border border-gray-50 rounded-lg mb-3 p-2 relative overflow-hidden mix-blend-multiply">
+        <div className="aspect-square bg-gray-50/50 border border-gray-50 rounded-lg mb-3 p-2 relative overflow-hidden mix-blend-multiply flex items-center justify-center">
           {imgUrl ? <img src={imgUrl} alt={item.name} className="object-contain w-full h-full mix-blend-multiply group-hover:scale-105 transition duration-300" /> : <span className="text-4xl m-auto">📦</span>}
         </div>
         <h3 className="text-xs font-semibold text-gray-800 leading-tight mb-2 line-clamp-2">{item.name}</h3>
@@ -258,43 +283,42 @@ export default function ProductDetail() {
 
       <main className="max-w-[1400px] mx-auto lg:px-6 lg:py-8 mt-2 lg:mt-0">
         
-        <div className="flex flex-col lg:flex-row gap-0 lg:gap-10 mb-8 lg:mb-12 bg-white lg:rounded-3xl lg:border border-gray-100 lg:p-6 lg:shadow-sm">
+        <div className="flex flex-col lg:flex-row gap-0 lg:gap-8 mb-8 lg:mb-12 bg-white lg:rounded-3xl lg:border border-gray-100 lg:p-6 lg:shadow-sm">
           
           {/* ========================================================= */}
-          {/* IMAGE SECTION - SLIDER IMERUHUSIWA KUFANYA KAZI KOTE */}
+          {/* IMAGE SECTION - PERFECT FIT LAYOUT */}
           {/* ========================================================= */}
-          <div className="w-full lg:w-1/2 lg:max-w-[50%] flex flex-col-reverse lg:flex-row gap-4 relative overflow-hidden">
+          <div className="w-full lg:w-[55%] flex flex-col-reverse lg:flex-row gap-4 relative px-4 lg:px-0">
             
-            {/* Desktop Side Thumbnails (Optonal sasa, ila zinasaidia kwa fast jump) */}
-            <div className="hidden lg:flex flex-col gap-3 w-20 flex-shrink-0">
+            {/* Desktop Side Thumbnails */}
+            <div className="hidden lg:flex flex-col gap-3 w-20 flex-shrink-0 max-h-[500px] overflow-y-auto hide-scrollbar">
               {images.map((imgStr, idx) => (
                 <div 
                    key={idx} 
                    onClick={() => scrollToImage(idx)} 
-                   className={`w-20 h-20 bg-gray-50 rounded-lg border p-2 cursor-pointer transition ${currentImageIndex === idx ? 'border-[#F2A900]' : 'border-gray-200 hover:border-[#F2A900]/50'}`}
+                   className={`w-20 h-20 bg-white rounded-xl border-2 p-2 cursor-pointer transition-all flex items-center justify-center ${currentImageIndex === idx ? 'border-[#F2A900]' : 'border-gray-100 hover:border-gray-300'}`}
                 >
                   <img src={imgStr} className="w-full h-full object-contain mix-blend-multiply" />
                 </div>
               ))}
             </div>
             
-            {/* Main Image Slider View */}
-            <div className="flex-1 w-full bg-white lg:bg-gray-50 lg:rounded-2xl lg:border border-gray-100 relative min-h-[350px] lg:min-h-[500px] overflow-hidden group">
+            {/* Main Image Slider View (Perfect Fit Box) */}
+            <div className="flex-1 w-full bg-gray-50/50 rounded-2xl border border-gray-100 relative h-[350px] lg:h-[500px] overflow-hidden group">
               
               <button onClick={(e) => toggleWishlist(e, product.id)} className="absolute top-4 right-4 z-20 w-10 h-10 bg-white/90 backdrop-blur rounded-full flex items-center justify-center text-gray-400 hover:text-red-500 shadow-md transition">
                   <FiHeart className={`text-lg ${isMainProductWishlisted ? "fill-red-500 text-red-500" : ""}`} />
               </button>
 
-              {/* Slider Container - Active For Desktop & Mobile */}
               <div 
                 ref={sliderRef}
                 onScroll={handleScroll}
-                className="w-full h-[350px] lg:h-[500px] flex overflow-x-auto snap-x snap-mandatory hide-scrollbar smooth-scroll scroll-smooth"
+                className="w-full h-full flex overflow-x-auto snap-x snap-mandatory hide-scrollbar smooth-scroll scroll-smooth"
               >
                  {images.length > 0 ? (
                     images.map((imgStr, idx) => (
-                      <div key={idx} className="w-full h-full flex-shrink-0 snap-center flex items-center justify-center p-8 bg-white lg:bg-transparent mix-blend-multiply relative">
-                          <img src={imgStr} alt={product.name} className="max-w-full max-h-full object-contain mix-blend-multiply" />
+                      <div key={idx} className="w-full h-full flex-shrink-0 snap-center flex items-center justify-center p-6 lg:p-12 relative">
+                          <img src={imgStr} alt={product.name} className="w-full h-full object-contain mix-blend-multiply" />
                       </div>
                     ))
                  ) : (
@@ -340,21 +364,38 @@ export default function ProductDetail() {
           {/* ========================================================= */}
           {/* PRODUCT DETAILS SECTION */}
           {/* ========================================================= */}
-          <div className="w-full lg:w-1/2 lg:flex-1 flex flex-col px-4 lg:px-0 py-6 lg:py-4">
+          <div className="w-full lg:w-[45%] flex flex-col px-4 lg:px-0 py-6 lg:py-0">
             
             <h1 className="text-xl sm:text-2xl lg:text-3xl font-semibold text-[#0A101D] leading-tight mb-4">{product.name}</h1>
 
             <div className="flex flex-col mb-2 bg-gray-50/50 border border-gray-100 p-4 rounded-2xl">
                <div className="flex items-center gap-3">
                   <span className="text-3xl lg:text-4xl font-bold text-[#0A101D] leading-none">TSH {basePrice.toLocaleString()}</span>
-                  <span className="bg-red-100 text-red-600 text-[10px] font-semibold px-2 py-1 rounded">-15%</span>
                </div>
             </div>
 
-            <div className="flex items-center gap-2 mb-6 border-b border-gray-100 pb-4">
+            <div className="flex items-center gap-2 mb-4 border-b border-gray-100 pb-4">
                <div className="flex text-[#F2A900] text-sm"><FiStar className="fill-current" /><FiStar className="fill-current" /><FiStar className="fill-current" /><FiStar className="fill-current" /><FiStar className="fill-current text-gray-300" /></div>
-               <span className="text-blue-600 font-medium text-xs hover:underline cursor-pointer">30 Reviews</span>
+               <span className="text-blue-600 font-medium text-xs hover:underline cursor-pointer">Verified Ratings</span>
             </div>
+
+            {/* COLOR OPTIONS */}
+            {colorOptions.length > 0 && (
+               <div className="mb-5">
+                 <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Color: <span className="text-gray-900 font-bold capitalize">{selectedColor}</span></h4>
+                 <div className="flex flex-wrap gap-2">
+                   {colorOptions.map((c, i) => (
+                     <button
+                       key={i}
+                       onClick={() => setSelectedColor(c)}
+                       className={`px-4 py-1.5 rounded-xl border text-xs font-semibold transition ${selectedColor === c ? 'border-[#F2A900] bg-yellow-50 text-[#F2A900] shadow-sm' : 'border-gray-200 text-gray-600 hover:border-gray-300 bg-white'}`}
+                     >
+                       {c}
+                     </button>
+                   ))}
+                 </div>
+               </div>
+            )}
 
             <div className="flex items-center gap-3 mb-6">
                <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Condition:</span>
@@ -381,15 +422,29 @@ export default function ProductDetail() {
               </div>
             </div>
 
-            <div className="mb-6 bg-green-50/50 border border-green-100 p-4 rounded-2xl flex items-start gap-3">
-              <FiTruck className="text-green-600 mt-0.5 flex-shrink-0" size={20} />
-              <div>
-                <p className="font-semibold text-sm text-green-700 mb-1">In Stock - Ready to Ship</p>
-                <p className="text-xs text-green-800 leading-relaxed font-normal">
-                  Delivery within 24 hours in Dar es Salaam. For other regions, shipping takes 2-3 business days. Free pickup available at our store.
-                </p>
+            {/* DYNAMIC STOCK / PRE-ORDER STATUS */}
+            {preInfo && preInfo.isPreOrder ? (
+              <div className="mb-6 bg-blue-50/50 border border-blue-100 p-4 rounded-2xl flex items-start gap-3">
+                 <FiTruck className="text-blue-600 mt-0.5 flex-shrink-0" size={20} />
+                 <div>
+                   <p className="font-bold text-sm text-blue-800 mb-1">Available for Pre-Order</p>
+                   <p className="text-xs text-blue-900 leading-relaxed font-medium">
+                     Shipping from <span className="font-bold">{preInfo.origin === 'Dubai' ? '🇦🇪 Dubai' : '🇨🇳 China'}</span> via <span className="font-bold">{preInfo.freight} Freight</span>.<br/> 
+                     Estimated Delivery: <span className="font-bold">{preInfo.estDays}</span>.
+                   </p>
+                 </div>
               </div>
-            </div>
+            ) : (
+              <div className="mb-6 bg-green-50/50 border border-green-100 p-4 rounded-2xl flex items-start gap-3">
+                <FiTruck className="text-green-600 mt-0.5 flex-shrink-0" size={20} />
+                <div>
+                  <p className="font-bold text-sm text-green-700 mb-1">In Stock - Ready to Ship</p>
+                  <p className="text-xs text-green-800 leading-relaxed font-medium">
+                    Delivery within 24 hours in Dar es Salaam. For other regions, shipping takes 2-3 business days. Free pickup available at our store.
+                  </p>
+                </div>
+              </div>
+            )}
 
             <div className="hidden lg:flex gap-3 mt-auto pt-4 border-t border-gray-100">
               <button onClick={() => { addToCart(product); alert('Imewekwa kwenye kikapu!'); }} className="flex-1 bg-[#F2A900] hover:bg-yellow-500 text-black font-semibold py-4 rounded-xl text-sm transition flex justify-center items-center gap-2 shadow-[0_4px_14px_rgba(242,169,0,0.3)]">
@@ -454,6 +509,7 @@ export default function ProductDetail() {
 
       <div className="hidden lg:block"><Footer /></div>
 
+      {/* MOBILE BOTTOM NAV */}
       <div className="lg:hidden fixed bottom-0 left-0 w-full bg-white border-t border-gray-100 px-3 py-3 flex items-center gap-2 z-50 shadow-[0_-10px_30px_rgba(0,0,0,0.08)] pb-safe">
          <div onClick={() => router.push('/')} className="flex flex-col items-center justify-center text-gray-400 hover:text-[#0A101D] w-12 cursor-pointer">
             <FiHome size={22} className="mb-0.5" />
