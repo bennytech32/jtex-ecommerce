@@ -4,12 +4,24 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { 
   FiArrowLeft, FiHeart, FiShare, FiShoppingCart, FiStar, 
-  FiChevronRight, FiSearch, FiMic, FiCamera, FiHome, 
-  FiCheckCircle, FiMapPin, FiChevronDown, FiPackage,
-  FiGlobe, FiTruck, FiAnchor
+  FiChevronRight, FiSearch, FiCheckCircle, FiMapPin, 
+  FiChevronDown, FiPackage, FiTruck, FiMinus, FiPlus, FiCheck, FiHome
 } from 'react-icons/fi';
 import { useCart } from '../../context/CartContext';
 import Footer from '../../components/common/Footer';
+
+// Helper Function: Convert color names to CSS hex codes
+const getColorCode = (colorName: string) => {
+  const c = colorName.toLowerCase().trim();
+  const colorsMap: any = {
+    'black': '#000000', 'white': '#FFFFFF', 'silver': '#C0C0C0', 'gray': '#808080', 'grey': '#808080',
+    'titanium': '#878681', 'natural titanium': '#878681', 'blue titanium': '#2F3C4D',
+    'red': '#FF0000', 'blue': '#0000FF', 'green': '#008000', 'yellow': '#FFFF00',
+    'gold': '#FFD700', 'rose gold': '#B76E79', 'purple': '#800080', 'pink': '#FFC0CB',
+    'midnight': '#191970', 'starlight': '#F8F9FA'
+  };
+  return colorsMap[c] || c;
+};
 
 export default function ProductDetail() {
   const { id } = useParams();
@@ -20,23 +32,23 @@ export default function ProductDetail() {
   const [allProducts, setAllProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   
-  // Slider & Images States
+  // Slider States
   const [images, setImages] = useState<string[]>([]);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const sliderRef = useRef<HTMLDivElement>(null);
   
+  // Product Data States
   const [specs, setSpecs] = useState<any>({});
   const [wishlist, setWishlist] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [showAllSpecs, setShowAllSpecs] = useState(false);
 
-  // Multi-Color Options State
+  // User Selection States
   const [selectedColor, setSelectedColor] = useState<string>('');
   const [colorOptions, setColorOptions] = useState<string[]>([]);
+  const [quantity, setQuantity] = useState(1);
 
   const [userLocation, setUserLocation] = useState('Dar es Salaam, Tanzania'); 
-  const [countryCode, setCountryCode] = useState('tz');
-  const [user, setUser] = useState<any>(null);
-
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://jtex-ecommerce-production.up.railway.app';
 
   const cartCount = cart?.length || 0;
@@ -50,35 +62,27 @@ export default function ProductDetail() {
   const handleWhatsAppInquiry = () => {
     if (!product) return;
     const businessPhone = "255767949581"; 
-    const colorText = selectedColor ? `%0A*Rangi:* ${selectedColor}` : '';
-    const message = `Habari Jtex,%0ANinaulizia kuhusu hii bidhaa:%0A*${product.name}*${colorText}%0A*Bei:* TZS ${product.price.toLocaleString()}%0A%0A*Link:* ${window.location.href}`;
+    const colorText = selectedColor ? `%0A*Color:* ${selectedColor}` : '';
+    const qtyText = quantity > 1 ? `%0A*Quantity:* ${quantity}` : '';
+    const message = `Hello Jtex,%0AI am inquiring about this product:%0A*${product.name}*${colorText}${qtyText}%0A*Price:* TZS ${product.price.toLocaleString()}%0A%0A*Link:* ${window.location.href}`;
     window.open(`https://wa.me/${businessPhone}?text=${message}`, '_blank');
   };
 
   const handleShare = async () => {
     if (!product) return;
-    const shareData = {
-      title: product.name,
-      text: `Angalia hii bidhaa bomba kutoka Jtex: ${product.name}`,
-      url: window.location.href,
-    };
     try {
       if (navigator.share) {
-        await navigator.share(shareData);
+        await navigator.share({ title: product.name, url: window.location.href });
       } else {
         await navigator.clipboard.writeText(window.location.href);
-        alert('Link imekopiwa (Copied to clipboard!)');
+        alert('Link copied to clipboard!');
       }
-    } catch (err) {
-      console.log('Error sharing:', err);
-    }
+    } catch (err) {}
   };
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    if (searchQuery.trim() !== '') {
-      router.push(`/categories?search=${encodeURIComponent(searchQuery)}`);
-    }
+    if (searchQuery.trim() !== '') router.push(`/categories?search=${encodeURIComponent(searchQuery)}`);
   };
 
   const handleScroll = () => {
@@ -86,43 +90,40 @@ export default function ProductDetail() {
       const scrollPosition = sliderRef.current.scrollLeft;
       const width = sliderRef.current.clientWidth;
       const newIndex = Math.round(scrollPosition / width);
-      if (newIndex !== currentImageIndex) {
-        setCurrentImageIndex(newIndex);
-      }
+      if (newIndex !== currentImageIndex) setCurrentImageIndex(newIndex);
     }
   };
 
   const scrollToImage = (index: number) => {
     setCurrentImageIndex(index);
     if (sliderRef.current) {
-      sliderRef.current.scrollTo({
-        left: sliderRef.current.clientWidth * index,
-        behavior: 'smooth'
-      });
+      sliderRef.current.scrollTo({ left: sliderRef.current.clientWidth * index, behavior: 'smooth' });
     }
   };
 
-  const getImagesArray = (imgData: string) => {
-    if (!imgData) return [];
-    try {
-      const parsed = JSON.parse(imgData);
-      return Array.isArray(parsed) ? parsed : [imgData];
-    } catch(e) {
-      return [imgData];
+  const handleAddToCart = (redirect: boolean = false) => {
+    const productToAdd = {
+      ...product,
+      cartId: `${product.id}-${selectedColor}`,
+      selectedColor: selectedColor,
+      quantityToAdd: quantity
+    };
+
+    addToCart(productToAdd); 
+    
+    if (redirect) {
+      router.push('/checkout');
+    } else {
+      alert(`${quantity} item(s) of ${selectedColor || product.name} added to cart!`);
+      setQuantity(1);
     }
   };
 
   useEffect(() => {
-    const savedUser = localStorage.getItem('jtex_user');
-    if (savedUser) { try { setUser(JSON.parse(savedUser)); } catch (e) {} }
-
     fetch('https://ipapi.co/json/')
       .then(res => res.json())
       .then(data => {
-        if (data && data.city && data.country_name) {
-          setUserLocation(`${data.city}, ${data.country_name}`);
-          setCountryCode(data.country_code.toLowerCase());
-        }
+        if (data && data.city && data.country_name) setUserLocation(`${data.city}, ${data.country_name}`);
       }).catch(() => {});
 
     const fetchProduct = async () => {
@@ -132,21 +133,22 @@ export default function ProductDetail() {
         setAllProducts(data);
         
         const foundProduct = data.find((p: any) => p.id === id);
-        
         if (foundProduct) {
           setProduct(foundProduct);
           
-          const parsedImages = getImagesArray(foundProduct.imageUrl).map((img: string) => 
-              img.startsWith('http') ? img : `${API_URL}${img}`
-          );
-          setImages(parsedImages);
+          let parsedImages = [];
+          try {
+            const imgs = JSON.parse(foundProduct.imageUrl);
+            parsedImages = Array.isArray(imgs) ? imgs : [imgs];
+          } catch(e) { parsedImages = [foundProduct.imageUrl]; }
+
+          setImages(parsedImages.filter(Boolean).map((img: string) => img.startsWith('http') ? img : `${API_URL}${img}`));
           
           if (foundProduct.specifications) {
             try { 
               const parsedSpecs = JSON.parse(foundProduct.specifications); 
               setSpecs(parsedSpecs);
 
-              // Tafuta Rangi kwenye Specs ili kutengeneza Options
               const rawColor = parsedSpecs.Color || parsedSpecs.color || parsedSpecs.Colors || parsedSpecs.colors;
               if (rawColor) {
                  const colorsArr = rawColor.split(/[\/,]/).map((c: string) => c.trim()).filter(Boolean);
@@ -155,15 +157,10 @@ export default function ProductDetail() {
                     setSelectedColor(colorsArr[0]);
                  }
               }
-
             } catch (e) {}
           }
         }
-      } catch (err) {
-        console.error("Kosa:", err);
-      } finally {
-        setLoading(false);
-      }
+      } catch (err) {} finally { setLoading(false); }
     };
     fetchProduct();
   }, [id]);
@@ -171,66 +168,48 @@ export default function ProductDetail() {
   if (loading) return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-white gap-4">
       <div className="w-12 h-12 border-4 border-[#F2A900] border-t-transparent rounded-full animate-spin"></div>
-      <p className="text-sm font-medium text-gray-500 animate-pulse">Loading Product Details...</p>
+      <p className="text-sm font-medium text-gray-500 animate-pulse">Loading product details...</p>
     </div>
   );
   
-  if (!product) return <div className="min-h-screen flex items-center justify-center font-bold text-red-500">Bidhaa haijapatikana!</div>;
+  if (!product) return <div className="min-h-screen flex items-center justify-center font-bold text-red-500">Product not found!</div>;
 
   const basePrice = product.price;
-  const tier2Price = basePrice * 0.95; 
-  const tier3Price = basePrice * 0.90; 
   const isMainProductWishlisted = wishlist.includes(product.id);
 
-  // Tunatoa Model na Color kwenye general specs list ili isijirudie
-  const { Model, Color, color, Colors, colors, ...otherSpecs } = specs;
+  const { 
+    Model, Color, color, Colors, colors, 
+    isWholesale, wholesaleTier2Price, wholesaleTier3Price, 
+    ...otherSpecs 
+  } = specs;
+  
   const displayModel = Model || product.model || 'N/A';
+  const hasWholesale = isWholesale === 'Yes';
+  
+  const tier2Price = wholesaleTier2Price ? Number(wholesaleTier2Price) : basePrice * 0.95; 
+  const tier3Price = wholesaleTier3Price ? Number(wholesaleTier3Price) : basePrice * 0.90; 
 
-  // Parse Pre-Order Info
   let preInfo: any = null;
   if (product.preOrderInfo) {
     try { preInfo = JSON.parse(product.preOrderInfo); } catch(e) {}
   }
 
   const relatedProducts = allProducts.filter(p => p.category === product.category && p.id !== product.id).slice(0, 5);
+  const otherSpecsKeys = Object.keys(otherSpecs);
+  const visibleSpecsKeys = showAllSpecs ? otherSpecsKeys : otherSpecsKeys.slice(0, 5);
 
-  const RelatedProductCard = ({ item }: { item: any }) => {
-    const isWishlisted = wishlist.includes(item.id);
-    const itemFirstImage = getImagesArray(item.imageUrl)[0];
-    const imgUrl = itemFirstImage ? (itemFirstImage.startsWith('http') ? itemFirstImage : `${API_URL}${itemFirstImage}`) : '';
-    
-    return (
-      <div className="w-full bg-white rounded-xl p-3 border border-gray-100 shadow-sm hover:shadow-lg transition-all relative group flex flex-col cursor-pointer" onClick={() => router.push(`/product/${item.id}`)}>
-        <button onClick={(e) => toggleWishlist(e, item.id)} className="absolute top-2 right-2 z-20"><FiHeart className={`text-sm ${isWishlisted ? "fill-red-500 text-red-500" : "text-gray-400 hover:text-red-500"}`} /></button>
-        <div className="aspect-square bg-gray-50/50 border border-gray-50 rounded-lg mb-3 p-2 relative overflow-hidden mix-blend-multiply flex items-center justify-center">
-          {imgUrl ? <img src={imgUrl} alt={item.name} className="object-contain w-full h-full mix-blend-multiply group-hover:scale-105 transition duration-300" /> : <span className="text-4xl m-auto">📦</span>}
-        </div>
-        <h3 className="text-xs font-semibold text-gray-800 leading-tight mb-2 line-clamp-2">{item.name}</h3>
-        <div className="mt-auto">
-          <span className="text-sm font-bold text-[#0A101D]">TZS {item.price.toLocaleString()}</span>
-        </div>
-      </div>
-    );
-  };
-
-  const getConditionStyles = (condition: string) => {
-    switch (condition?.toLowerCase()) {
-      case 'refurbished': return 'bg-blue-50 text-blue-700 border-blue-200';
-      case 'used': return 'bg-orange-50 text-orange-700 border-orange-200';
-      default: return 'bg-green-50 text-green-700 border-green-200';
-    }
-  };
+  const maxStock = preInfo?.isPreOrder ? 999 : product.stockQuantity;
 
   return (
     <div className="min-h-screen bg-gray-50/30 text-gray-900 font-sans pb-24 lg:pb-0 overflow-x-hidden">
       
       {/* ========================================================= */}
-      {/* 1. PROFESSIONAL DESKTOP HEADER */}
+      {/* HEADERS (DESKTOP & MOBILE) */}
       {/* ========================================================= */}
       <header className="hidden lg:block bg-[#0A101D] text-white border-b border-gray-800 sticky top-0 z-40">
         <div className="max-w-[1600px] mx-auto px-6 h-24 flex items-center justify-between gap-6">
           <div className="flex items-center gap-8 flex-shrink-0">
-            <img src="/logo.png" alt="Jtex Logo" className="h-20 lg:h-28 cursor-pointer object-contain" onClick={() => router.push('/')} />
+            <img src="/logo.png" alt="Jtex Logo" className="h-20 cursor-pointer object-contain" onClick={() => router.push('/')} />
             <div className="flex items-center gap-2 cursor-pointer hover:bg-gray-800/50 p-2 rounded-lg transition">
               <FiMapPin className="text-gray-400" size={20}/>
               <div className="flex flex-col leading-tight">
@@ -239,31 +218,25 @@ export default function ProductDetail() {
               </div>
             </div>
           </div>
-
           <form onSubmit={handleSearch} className="flex-1 max-w-2xl flex items-center h-12 bg-white rounded-lg overflow-hidden shadow-sm">
-            <button type="button" className="h-full px-4 text-gray-600 text-sm font-medium bg-gray-100 border-r border-gray-200 flex items-center gap-1">All <FiChevronDown/></button>
             <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search products..." className="flex-1 h-full px-4 text-sm text-gray-900 outline-none" />
             <button type="submit" className="h-full px-8 bg-[#F2A900] text-black hover:bg-yellow-500 transition"><FiSearch size={20} /></button>
           </form>
-
           <div className="flex items-center gap-4 flex-shrink-0">
             <button onClick={() => router.push('/checkout')} className="relative flex flex-col items-center hover:bg-gray-800/50 p-2 rounded-lg transition">
               <FiShoppingCart size={24} className="text-gray-300"/>
-              <span className="text-[10px] font-semibold mt-1">Cart</span>
+              <span className="text-[10px] font-medium mt-1">Cart</span>
               {cartCount > 0 && <span className="absolute top-0 right-1 bg-[#F2A900] text-black text-[10px] font-bold w-4 h-4 flex items-center justify-center rounded-full">{cartCount}</span>}
             </button>
           </div>
         </div>
       </header>
 
-      {/* ========================================================= */}
-      {/* 2. MOBILE HEADER WITH SEARCH BAR */}
-      {/* ========================================================= */}
       <header className="lg:hidden bg-[#0A101D] text-white pt-4 pb-3 sticky top-0 z-50">
         <div className="px-4 flex items-center justify-between mb-3">
           <div className="flex items-center gap-1.5 cursor-pointer" onClick={() => router.back()}>
              <FiArrowLeft size={20} className="text-gray-300"/>
-             <span className="text-sm font-semibold text-gray-300">Back</span>
+             <span className="text-sm font-medium text-gray-300">Back</span>
           </div>
           <div className="flex items-center gap-4">
              <FiShare onClick={handleShare} size={20} className="text-gray-300 cursor-pointer" />
@@ -282,79 +255,41 @@ export default function ProductDetail() {
       </header>
 
       <main className="max-w-[1400px] mx-auto lg:px-6 lg:py-8 mt-2 lg:mt-0">
-        
         <div className="flex flex-col lg:flex-row gap-0 lg:gap-8 mb-8 lg:mb-12 bg-white lg:rounded-3xl lg:border border-gray-100 lg:p-6 lg:shadow-sm">
           
           {/* ========================================================= */}
-          {/* IMAGE SECTION - PERFECT FIT LAYOUT */}
+          {/* IMAGE SECTION */}
           {/* ========================================================= */}
           <div className="w-full lg:w-[55%] flex flex-col-reverse lg:flex-row gap-4 relative px-4 lg:px-0">
-            
-            {/* Desktop Side Thumbnails */}
             <div className="hidden lg:flex flex-col gap-3 w-20 flex-shrink-0 max-h-[500px] overflow-y-auto hide-scrollbar">
               {images.map((imgStr, idx) => (
-                <div 
-                   key={idx} 
-                   onClick={() => scrollToImage(idx)} 
-                   className={`w-20 h-20 bg-white rounded-xl border-2 p-2 cursor-pointer transition-all flex items-center justify-center ${currentImageIndex === idx ? 'border-[#F2A900]' : 'border-gray-100 hover:border-gray-300'}`}
-                >
+                <div key={idx} onClick={() => scrollToImage(idx)} className={`w-20 h-20 bg-white rounded-xl border-2 p-2 cursor-pointer transition-all flex items-center justify-center ${currentImageIndex === idx ? 'border-[#F2A900]' : 'border-gray-100 hover:border-gray-300'}`}>
                   <img src={imgStr} className="w-full h-full object-contain mix-blend-multiply" />
                 </div>
               ))}
             </div>
             
-            {/* Main Image Slider View (Perfect Fit Box) */}
             <div className="flex-1 w-full bg-gray-50/50 rounded-2xl border border-gray-100 relative h-[350px] lg:h-[500px] overflow-hidden group">
-              
               <button onClick={(e) => toggleWishlist(e, product.id)} className="absolute top-4 right-4 z-20 w-10 h-10 bg-white/90 backdrop-blur rounded-full flex items-center justify-center text-gray-400 hover:text-red-500 shadow-md transition">
                   <FiHeart className={`text-lg ${isMainProductWishlisted ? "fill-red-500 text-red-500" : ""}`} />
               </button>
 
-              <div 
-                ref={sliderRef}
-                onScroll={handleScroll}
-                className="w-full h-full flex overflow-x-auto snap-x snap-mandatory hide-scrollbar smooth-scroll scroll-smooth"
-              >
+              <div ref={sliderRef} onScroll={handleScroll} className="w-full h-full flex overflow-x-auto snap-x snap-mandatory hide-scrollbar smooth-scroll scroll-smooth">
                  {images.length > 0 ? (
                     images.map((imgStr, idx) => (
                       <div key={idx} className="w-full h-full flex-shrink-0 snap-center flex items-center justify-center p-6 lg:p-12 relative">
-                          <img src={imgStr} alt={product.name} className="w-full h-full object-contain mix-blend-multiply" />
+                          <img src={imgStr} className="w-full h-full object-contain mix-blend-multiply" />
                       </div>
                     ))
                  ) : (
                     <div className="w-full h-full flex items-center justify-center bg-gray-50"><span className="text-9xl">📦</span></div>
                  )}
               </div>
-
-              {/* Slider Arrow Buttons (Desktop Hover) */}
-              {images.length > 1 && (
-                 <>
-                   <button 
-                     onClick={() => scrollToImage(Math.max(0, currentImageIndex - 1))}
-                     className={`absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/80 backdrop-blur border border-gray-200 rounded-full flex items-center justify-center text-gray-800 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-0 hidden lg:flex`}
-                     disabled={currentImageIndex === 0}
-                   >
-                     <FiChevronRight className="rotate-180" size={20}/>
-                   </button>
-                   <button 
-                     onClick={() => scrollToImage(Math.min(images.length - 1, currentImageIndex + 1))}
-                     className={`absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/80 backdrop-blur border border-gray-200 rounded-full flex items-center justify-center text-gray-800 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-0 hidden lg:flex`}
-                     disabled={currentImageIndex === images.length - 1}
-                   >
-                     <FiChevronRight size={20}/>
-                   </button>
-                 </>
-              )}
-
-              {/* Custom Dots Navigation */}
+              
               {images.length > 1 && (
                 <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 z-10 bg-white/50 backdrop-blur px-3 py-1.5 rounded-full border border-gray-200/50 shadow-sm">
                    {images.map((_, idx) => (
-                     <div 
-                        key={idx} 
-                        onClick={() => scrollToImage(idx)}
-                        className={`h-1.5 rounded-full cursor-pointer transition-all ${currentImageIndex === idx ? 'w-4 bg-[#F2A900]' : 'w-1.5 bg-gray-400'}`}
-                     ></div>
+                     <div key={idx} onClick={() => scrollToImage(idx)} className={`h-1.5 rounded-full cursor-pointer transition-all ${currentImageIndex === idx ? 'w-4 bg-[#F2A900]' : 'w-1.5 bg-gray-400'}`}></div>
                    ))}
                 </div>
               )}
@@ -362,84 +297,88 @@ export default function ProductDetail() {
           </div>
 
           {/* ========================================================= */}
-          {/* PRODUCT DETAILS SECTION */}
+          {/* PRODUCT DETAILS & BUYING OPTIONS */}
           {/* ========================================================= */}
           <div className="w-full lg:w-[45%] flex flex-col px-4 lg:px-0 py-6 lg:py-0">
             
             <h1 className="text-xl sm:text-2xl lg:text-3xl font-semibold text-[#0A101D] leading-tight mb-4">{product.name}</h1>
 
-            <div className="flex flex-col mb-2 bg-gray-50/50 border border-gray-100 p-4 rounded-2xl">
-               <div className="flex items-center gap-3">
-                  <span className="text-3xl lg:text-4xl font-bold text-[#0A101D] leading-none">TSH {basePrice.toLocaleString()}</span>
-               </div>
+            <div className="flex flex-col mb-4 bg-gray-50/50 border border-gray-100 p-4 rounded-2xl">
+               <span className="text-3xl lg:text-4xl font-bold text-[#0A101D] leading-none tracking-tight">TSH {basePrice.toLocaleString()}</span>
+               {hasWholesale && <span className="text-[11px] text-gray-500 font-medium mt-1">Discounts available for bulk orders</span>}
             </div>
 
-            <div className="flex items-center gap-2 mb-4 border-b border-gray-100 pb-4">
-               <div className="flex text-[#F2A900] text-sm"><FiStar className="fill-current" /><FiStar className="fill-current" /><FiStar className="fill-current" /><FiStar className="fill-current" /><FiStar className="fill-current text-gray-300" /></div>
-               <span className="text-blue-600 font-medium text-xs hover:underline cursor-pointer">Verified Ratings</span>
-            </div>
-
-            {/* COLOR OPTIONS */}
             {colorOptions.length > 0 && (
-               <div className="mb-5">
-                 <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Color: <span className="text-gray-900 font-bold capitalize">{selectedColor}</span></h4>
-                 <div className="flex flex-wrap gap-2">
-                   {colorOptions.map((c, i) => (
-                     <button
-                       key={i}
-                       onClick={() => setSelectedColor(c)}
-                       className={`px-4 py-1.5 rounded-xl border text-xs font-semibold transition ${selectedColor === c ? 'border-[#F2A900] bg-yellow-50 text-[#F2A900] shadow-sm' : 'border-gray-200 text-gray-600 hover:border-gray-300 bg-white'}`}
-                     >
-                       {c}
-                     </button>
-                   ))}
+               <div className="mb-6">
+                 <h4 className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-2">Select Color: <span className="text-blue-600 font-medium capitalize">{selectedColor}</span></h4>
+                 <div className="flex flex-wrap gap-3">
+                   {colorOptions.map((c, i) => {
+                     const isSelected = selectedColor === c;
+                     const cssColor = getColorCode(c);
+                     const isWhite = cssColor === '#FFFFFF' || cssColor.toLowerCase() === 'white';
+                     
+                     return (
+                       <div key={i} className="flex flex-col items-center gap-1.5 cursor-pointer group" onClick={() => setSelectedColor(c)}>
+                         <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 ${isSelected ? 'ring-2 ring-offset-2 ring-[#F2A900] scale-110' : 'ring-1 ring-gray-200 hover:ring-gray-300'}`} style={{ backgroundColor: cssColor }}>
+                           {isSelected && <FiCheck className={isWhite ? 'text-black' : 'text-white'} size={18} />}
+                         </div>
+                         <span className={`text-[10px] font-medium ${isSelected ? 'text-[#0A101D]' : 'text-gray-500 group-hover:text-gray-700'}`}>{c}</span>
+                       </div>
+                     );
+                   })}
                  </div>
                </div>
             )}
 
-            <div className="flex items-center gap-3 mb-6">
-               <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Condition:</span>
-               <span className={`${getConditionStyles(product.condition)} border text-[11px] font-semibold uppercase px-3 py-1 rounded-md flex items-center gap-1.5 shadow-sm`}>
-                 <FiCheckCircle size={12}/> {product.condition || 'Brand New'}
-               </span>
-            </div>
-
-            <div className="bg-white rounded-2xl p-4 border border-gray-200 mb-5 shadow-sm">
-              <p className="text-xs font-semibold text-gray-600 uppercase tracking-wider mb-3 flex items-center gap-2"><FiPackage className="text-[#F2A900]"/> Wholesale Pricing</p>
-              <div className="grid grid-cols-3 divide-x divide-gray-100 bg-gray-50 rounded-xl border border-gray-100 overflow-hidden">
-                <div className="p-3 text-center bg-white">
-                  <p className="text-[10px] font-medium text-gray-500 mb-1 uppercase">1 Piece</p>
-                  <p className="font-semibold text-sm text-[#0A101D]">TSH {basePrice.toLocaleString()}</p>
+            <div className="mb-6">
+              <h4 className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-3">Quantity</h4>
+              <div className="flex items-center gap-4">
+                <div className="flex items-center bg-gray-50 border border-gray-200 rounded-xl overflow-hidden h-12 w-32">
+                  <button onClick={() => setQuantity(prev => Math.max(1, prev - 1))} className="flex-1 flex items-center justify-center text-gray-600 hover:bg-gray-100 hover:text-black transition h-full"><FiMinus size={18}/></button>
+                  <div className="flex-1 flex items-center justify-center font-bold text-[#0A101D] text-lg bg-white h-full border-x border-gray-100">{quantity}</div>
+                  <button onClick={() => setQuantity(prev => Math.min(maxStock, prev + 1))} className="flex-1 flex items-center justify-center text-gray-600 hover:bg-gray-100 hover:text-black transition h-full"><FiPlus size={18}/></button>
                 </div>
-                <div className="p-3 text-center">
-                  <p className="text-[10px] font-medium text-gray-500 mb-1 uppercase">2-5 Pcs</p>
-                  <p className="font-semibold text-sm text-[#0A101D]">TSH {tier2Price.toLocaleString()}</p>
-                </div>
-                <div className="p-3 text-center">
-                  <p className="text-[10px] font-medium text-gray-500 mb-1 uppercase">&gt;5 Pcs</p>
-                  <p className="font-semibold text-sm text-red-600">TSH {tier3Price.toLocaleString()}</p>
+                <div className="text-[11px] font-medium text-gray-500 leading-tight">
+                  <p>You can mix colors in</p>
+                  <p>your cart.</p>
                 </div>
               </div>
             </div>
 
-            {/* DYNAMIC STOCK / PRE-ORDER STATUS */}
+            {hasWholesale && (
+              <div className="bg-gradient-to-br from-[#0A101D] to-gray-900 rounded-2xl p-4 border border-gray-800 mb-6 shadow-md text-white">
+                <p className="text-[11px] font-medium text-[#F2A900] uppercase tracking-widest mb-3 flex items-center gap-2"><FiPackage size={14}/> Wholesale Pricing</p>
+                <div className="grid grid-cols-3 divide-x divide-gray-700">
+                  <div className="text-center px-2">
+                    <p className="text-[10px] font-medium text-gray-400 mb-0.5">1 Piece</p>
+                    <p className="font-semibold text-xs text-white">TZS {basePrice.toLocaleString()}</p>
+                  </div>
+                  <div className="text-center px-2">
+                    <p className="text-[10px] font-medium text-gray-400 mb-0.5">2-5 Pcs</p>
+                    <p className="font-semibold text-xs text-green-400">TZS {tier2Price.toLocaleString()}</p>
+                  </div>
+                  <div className="text-center px-2">
+                    <p className="text-[10px] font-medium text-gray-400 mb-0.5">5+ Pcs</p>
+                    <p className="font-semibold text-xs text-[#F2A900]">TZS {tier3Price.toLocaleString()}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {preInfo && preInfo.isPreOrder ? (
               <div className="mb-6 bg-blue-50/50 border border-blue-100 p-4 rounded-2xl flex items-start gap-3">
                  <FiTruck className="text-blue-600 mt-0.5 flex-shrink-0" size={20} />
                  <div>
-                   <p className="font-bold text-sm text-blue-800 mb-1">Available for Pre-Order</p>
-                   <p className="text-xs text-blue-900 leading-relaxed font-medium">
-                     Shipping from <span className="font-bold">{preInfo.origin === 'Dubai' ? '🇦🇪 Dubai' : '🇨🇳 China'}</span> via <span className="font-bold">{preInfo.freight} Freight</span>.<br/> 
-                     Estimated Delivery: <span className="font-bold">{preInfo.estDays}</span>.
-                   </p>
+                   <p className="font-semibold text-sm text-blue-800 mb-1">Available for Pre-Order</p>
+                   <p className="text-xs text-blue-900 leading-relaxed font-medium">Shipping from <span className="font-semibold">{preInfo.origin}</span>. Est Delivery: <span className="font-semibold">{preInfo.estDays}</span>.</p>
                  </div>
               </div>
             ) : (
               <div className="mb-6 bg-green-50/50 border border-green-100 p-4 rounded-2xl flex items-start gap-3">
                 <FiTruck className="text-green-600 mt-0.5 flex-shrink-0" size={20} />
                 <div>
-                  <p className="font-bold text-sm text-green-700 mb-1">In Stock - Ready to Ship</p>
-                  <p className="text-xs text-green-800 leading-relaxed font-medium">
+                  <p className="font-semibold text-sm text-green-700 mb-1">In Stock</p>
+                  <p className="text-[11px] font-medium text-green-800 leading-relaxed">
                     Delivery within 24 hours in Dar es Salaam. For other regions, shipping takes 2-3 business days. Free pickup available at our store.
                   </p>
                 </div>
@@ -447,10 +386,10 @@ export default function ProductDetail() {
             )}
 
             <div className="hidden lg:flex gap-3 mt-auto pt-4 border-t border-gray-100">
-              <button onClick={() => { addToCart(product); alert('Imewekwa kwenye kikapu!'); }} className="flex-1 bg-[#F2A900] hover:bg-yellow-500 text-black font-semibold py-4 rounded-xl text-sm transition flex justify-center items-center gap-2 shadow-[0_4px_14px_rgba(242,169,0,0.3)]">
+              <button onClick={() => handleAddToCart(false)} className="flex-1 bg-[#F2A900] hover:bg-yellow-500 text-black font-semibold py-4 rounded-xl text-sm transition flex justify-center items-center gap-2 shadow-[0_4px_14px_rgba(242,169,0,0.3)] hover:scale-[1.02]">
                 <FiShoppingCart size={18}/> Add To Cart
               </button>
-              <button onClick={() => { addToCart(product); router.push('/checkout'); }} className="flex-1 bg-[#0A101D] hover:bg-gray-800 text-white font-semibold py-4 rounded-xl text-sm transition flex justify-center items-center gap-2 shadow-lg">
+              <button onClick={() => handleAddToCart(true)} className="flex-1 bg-[#0A101D] hover:bg-gray-800 text-white font-semibold py-4 rounded-xl text-sm transition flex justify-center items-center gap-2 shadow-md hover:scale-[1.02]">
                 Buy It Now <FiChevronRight size={18}/>
               </button>
             </div>
@@ -459,52 +398,51 @@ export default function ProductDetail() {
 
         {/* DETAILS SECTION BELOW */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-10 mb-12 px-4 lg:px-0">
-          <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
-            <h3 className="text-lg font-semibold text-[#0A101D] mb-4 flex items-center gap-2"><span className="w-1 h-5 bg-[#F2A900] rounded-full"></span> Product Overview</h3>
+          <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm h-max">
+            <h3 className="text-lg font-semibold text-[#0A101D] mb-4 flex items-center gap-2"><span className="w-1.5 h-5 bg-[#F2A900] rounded-full"></span> Product Overview</h3>
             <p className="text-gray-600 text-sm leading-relaxed whitespace-pre-line font-normal">
-              {product.description || `Elevate your productivity with the ${product.name}. Featuring a premium display, powerful processor, and lightning-fast storage. Sleek, portable, and designed for high performance and durability in any environment.`}
+              {product.description || `Elevate your experience with the ${product.name}. Designed to withstand daily use while providing optimal performance. Shop now and enjoy true quality from Jtex.`}
             </p>
           </div>
           
           <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
-            <h3 className="text-lg font-semibold text-[#0A101D] mb-4 flex items-center gap-2"><span className="w-1 h-5 bg-[#F2A900] rounded-full"></span> Specifications</h3>
+            <h3 className="text-lg font-semibold text-[#0A101D] mb-4 flex items-center gap-2"><span className="w-1.5 h-5 bg-[#F2A900] rounded-full"></span> Specifications</h3>
             
-            <div className="border border-gray-100 rounded-xl overflow-hidden">
+            <div className="border border-gray-100 rounded-xl overflow-hidden flex flex-col">
               <div className="flex items-center justify-between py-3 px-4 border-b border-gray-100 bg-gray-50/50 text-sm">
                 <span className="font-semibold text-gray-500 uppercase tracking-wider text-[10px] w-1/3">Brand</span>
                 <span className="font-semibold text-gray-900 w-2/3">{product.brand || 'N/A'}</span>
               </div>
               <div className="flex items-center justify-between py-3 px-4 border-b border-gray-100 text-sm">
                 <span className="font-semibold text-gray-500 uppercase tracking-wider text-[10px] w-1/3">Model</span>
-                <span className="font-semibold text-blue-600 w-2/3">{displayModel}</span>
+                <span className="font-medium text-blue-600 w-2/3">{displayModel}</span>
               </div>
 
-              {Object.keys(otherSpecs).length > 0 ? (
-                Object.keys(otherSpecs).map((key, index, arr) => (
-                  <div key={key} className={`flex items-center justify-between py-3 px-4 text-sm ${index % 2 !== 0 ? 'bg-white' : 'bg-gray-50/50'} ${index !== arr.length - 1 ? 'border-b border-gray-100' : ''}`}>
-                    <span className="font-semibold text-gray-500 uppercase tracking-wider text-[10px] w-1/3">{key}</span>
-                    <span className="font-semibold text-gray-900 w-2/3">{otherSpecs[key]}</span>
-                  </div>
-                ))
+              {otherSpecsKeys.length > 0 ? (
+                <>
+                  {visibleSpecsKeys.map((key, index) => (
+                    <div key={key} className={`flex items-center justify-between py-3 px-4 text-sm ${index % 2 !== 0 ? 'bg-white' : 'bg-gray-50/50'} border-b border-gray-100`}>
+                      <span className="font-semibold text-gray-500 uppercase tracking-wider text-[10px] w-1/3">{key}</span>
+                      <span className="font-medium text-gray-900 w-2/3">{otherSpecs[key]}</span>
+                    </div>
+                  ))}
+                  
+                  {otherSpecsKeys.length > 5 && (
+                    <button 
+                      onClick={() => setShowAllSpecs(!showAllSpecs)}
+                      className="w-full py-4 text-xs font-semibold text-blue-600 bg-blue-50/50 hover:bg-blue-50 transition-colors flex items-center justify-center gap-1 mt-auto border-t border-blue-100"
+                    >
+                      {showAllSpecs ? 'View Less' : `See All Specifications (${otherSpecsKeys.length - 5} More)`} 
+                      <FiChevronDown className={`transition-transform ${showAllSpecs ? 'rotate-180' : ''}`} />
+                    </button>
+                  )}
+                </>
               ) : (
-                <div className="py-4 text-xs font-semibold text-gray-400 px-4 text-center bg-gray-50">No additional specifications provided.</div>
+                <div className="py-4 text-xs font-medium text-gray-400 px-4 text-center bg-gray-50">No additional specifications.</div>
               )}
             </div>
           </div>
         </div>
-
-        {/* RELATED PRODUCTS */}
-        {relatedProducts.length > 0 && (
-          <div className="mb-10 px-4 lg:px-0">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl lg:text-2xl font-semibold text-[#0A101D] flex items-center gap-2"><span className="w-1.5 h-6 bg-[#F2A900] rounded-full"></span> Recommended</h3>
-              <button onClick={() => router.push('/')} className="text-sm font-semibold text-blue-600 hover:underline">View All</button>
-            </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
-              {relatedProducts.map(item => <RelatedProductCard key={item.id} item={item} />)}
-            </div>
-          </div>
-        )}
       </main>
 
       <div className="hidden lg:block"><Footer /></div>
@@ -522,10 +460,10 @@ export default function ProductDetail() {
          </div>
          
          <div className="flex-1 flex gap-2 ml-1">
-            <button onClick={() => addToCart(product)} className="flex-1 bg-[#F2A900] text-[#0A101D] font-semibold py-3 rounded-xl text-xs shadow-[0_4px_10px_rgba(242,169,0,0.3)] active:scale-95 transition-transform flex items-center justify-center gap-1.5">
-               <FiShoppingCart size={14}/> Add
+            <button onClick={() => handleAddToCart(false)} className="flex-1 bg-[#F2A900] text-[#0A101D] font-semibold py-3.5 rounded-xl text-xs shadow-[0_4px_10px_rgba(242,169,0,0.3)] active:scale-95 transition-transform flex items-center justify-center gap-1.5">
+               <FiShoppingCart size={14}/> Add to Cart
             </button>
-            <button onClick={() => { addToCart(product); router.push('/checkout'); }} className="flex-1 bg-[#0A101D] text-white font-semibold py-3 rounded-xl text-xs shadow-lg active:scale-95 transition-transform">
+            <button onClick={() => handleAddToCart(true)} className="flex-1 bg-[#0A101D] text-white font-semibold py-3.5 rounded-xl text-xs shadow-md active:scale-95 transition-transform">
                Buy Now
             </button>
          </div>
