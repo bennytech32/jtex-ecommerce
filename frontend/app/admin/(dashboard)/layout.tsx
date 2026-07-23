@@ -2,7 +2,10 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { FiHome, FiBox, FiShoppingCart, FiUsers, FiSettings, FiMenu, FiX, FiLogOut, FiLoader, FiList } from 'react-icons/fi';
+import { 
+  FiHome, FiBox, FiShoppingCart, FiUsers, FiSettings, 
+  FiMenu, FiX, FiLogOut, FiLoader, FiList, FiGrid, FiBarChart2, FiGlobe 
+} from 'react-icons/fi';
 import Link from 'next/link';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -25,13 +28,32 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     }
   }, [router, pathname]);
 
-  const navLinks = [
-    { name: 'Dashboard', path: '/admin/dashboard', icon: <FiHome /> },
-    { name: 'Add Product', path: '/admin/products', icon: <FiBox /> },
-    { name: 'Inventory List', path: '/admin/inventory', icon: <FiList /> },
-    { name: 'Orders', path: '/admin/orders', icon: <FiShoppingCart /> },
-    { name: 'Customers', path: '/admin/users', icon: <FiUsers /> },
-    { name: 'Settings', path: '/admin/settings', icon: <FiSettings /> },
+  // CATEGORIZED NAV LINKS FOR A PROFESSIONAL LOOK
+  const menuGroups = [
+    {
+      title: "Overview",
+      links: [
+        { name: 'Dashboard', path: '/admin/dashboard', icon: <FiHome /> },
+        { name: 'Analytics', path: '/admin/analytics', icon: <FiBarChart2 /> }, // Optional/Future
+      ]
+    },
+    {
+      title: "Store Management",
+      links: [
+        { name: 'Orders', path: '/admin/orders', icon: <FiShoppingCart /> },
+        { name: 'Inventory List', path: '/admin/inventory', icon: <FiList /> },
+        { name: 'Add Product', path: '/admin/products', icon: <FiBox /> },
+        { name: 'Categories', path: '/admin/categories', icon: <FiGrid /> }, // Optional/Future
+      ]
+    },
+    {
+      title: "System",
+      links: [
+        { name: 'Customers', path: '/admin/users', icon: <FiUsers /> },
+        { name: 'Marketing', path: '/admin/marketing', icon: <FiGlobe /> }, // Optional/Future
+        { name: 'Settings', path: '/admin/settings', icon: <FiSettings /> },
+      ]
+    }
   ];
 
   const handleLogout = () => {
@@ -50,19 +72,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const SidebarContent = () => (
     <div className="flex flex-col h-full bg-[#0A101D] text-gray-300 shadow-2xl border-r border-gray-800/50">
       
-      {/* BRAND & LOGO SECTION - LATEST FIX */}
-      <div className="p-6 border-b border-gray-800/80 flex items-center justify-center min-h-[100px] relative">
-        {/* Neno admin limetolewa, Logo imekuzwa na kuwekwa katikati (centered) */}
-        <img 
-          src="/logo.png" 
-          alt="Jtex Logo" 
-          className="h-14 object-contain brightness-0 invert opacity-95 cursor-pointer hover:opacity-100 hover:scale-105 transition-all duration-300 drop-shadow-md" 
-          onClick={() => router.push('/admin/dashboard')}
-        />
-        
-        {/* Kitufe cha kufunga menu simu */}
-        <button 
-          className="md:hidden absolute right-4 text-gray-400 hover:text-white bg-gray-800/50 p-2 rounded-lg transition" 
+      {/* MOBILE CLOSE BUTTON (ONLY VISIBLE ON MOBILE) */}
+      <div className="md:hidden flex justify-end p-4 border-b border-gray-800/80">
+         <button 
+          className="text-gray-400 hover:text-white bg-gray-800/50 p-2 rounded-lg transition" 
           onClick={() => setIsMobileMenuOpen(false)}
         >
           <FiX size={20} />
@@ -70,28 +83,32 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </div>
       
       {/* NAVIGATION LINKS WITH PREMIUM HOVER EFFECTS */}
-      <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto custom-scrollbar">
-        <p className="px-4 text-[10px] font-black uppercase tracking-widest text-gray-500/70 mb-4 mt-2">Main Menu</p>
-        {navLinks.map((link) => {
-          const isActive = pathname === link.path;
-          return (
-            <Link key={link.name} href={link.path} onClick={() => setIsMobileMenuOpen(false)}>
-              <div className={`relative flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all duration-300 group overflow-hidden ${isActive ? 'bg-gradient-to-r from-[#F2A900] to-yellow-400 text-[#0A101D] font-black shadow-[0_4px_20px_rgba(242,169,0,0.3)]' : 'text-gray-400 hover:bg-gray-800/60 hover:text-white font-bold'}`}>
-                
-                {/* Active Indicator Line */}
-                {isActive && <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-white/30 rounded-l-2xl"></div>}
-                
-                <span className={`text-xl transition-transform duration-300 z-10 ${isActive ? 'scale-110 drop-shadow-sm' : 'group-hover:scale-110 group-hover:-rotate-3 group-hover:text-[#F2A900]'}`}>
-                   {link.icon}
-                </span>
-                <span className="text-sm tracking-wide z-10">{link.name}</span>
-                
-                {/* Subtle hover background effect */}
-                {!isActive && <div className="absolute inset-0 bg-gradient-to-r from-gray-800/0 via-gray-800/10 to-gray-800/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 translate-x-[-100%] group-hover:translate-x-[100%]"></div>}
-              </div>
-            </Link>
-          );
-        })}
+      <nav className="flex-1 px-4 py-6 space-y-6 overflow-y-auto custom-scrollbar">
+        {menuGroups.map((group, groupIdx) => (
+          <div key={groupIdx} className="space-y-1.5">
+             <p className="px-4 text-[10px] font-black uppercase tracking-widest text-gray-500/70 mb-3">{group.title}</p>
+             {group.links.map((link) => {
+               const isActive = pathname === link.path;
+               return (
+                 <Link key={link.name} href={link.path} onClick={() => setIsMobileMenuOpen(false)}>
+                   <div className={`relative flex items-center gap-4 px-4 py-3 rounded-2xl transition-all duration-300 group overflow-hidden ${isActive ? 'bg-gradient-to-r from-[#F2A900] to-yellow-400 text-[#0A101D] font-black shadow-[0_4px_20px_rgba(242,169,0,0.3)]' : 'text-gray-400 hover:bg-gray-800/60 hover:text-white font-bold'}`}>
+                     
+                     {/* Active Indicator Line */}
+                     {isActive && <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-white/30 rounded-l-2xl"></div>}
+                     
+                     <span className={`text-[18px] transition-transform duration-300 z-10 ${isActive ? 'scale-110 drop-shadow-sm' : 'group-hover:scale-110 group-hover:-rotate-3 group-hover:text-[#F2A900]'}`}>
+                        {link.icon}
+                     </span>
+                     <span className="text-xs tracking-wide z-10">{link.name}</span>
+                     
+                     {/* Subtle hover background effect */}
+                     {!isActive && <div className="absolute inset-0 bg-gradient-to-r from-gray-800/0 via-gray-800/10 to-gray-800/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 translate-x-[-100%] group-hover:translate-x-[100%]"></div>}
+                   </div>
+                 </Link>
+               );
+             })}
+          </div>
+        ))}
       </nav>
 
       {/* USER & LOGOUT SECTION */}
@@ -120,7 +137,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     <div className="flex h-screen bg-[#F4F7F9] overflow-hidden font-sans antialiased">
       
       {/* SIDEBAR YA DESKTOP */}
-      <aside className="hidden md:flex w-[280px] flex-col fixed inset-y-0 z-50">
+      <aside className="hidden md:flex w-[260px] flex-col fixed inset-y-0 z-50">
         <SidebarContent />
       </aside>
 
@@ -133,8 +150,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </aside>
 
       {/* ENEO LA MAUDHUI (Main Content) */}
-      <main className="flex-1 flex flex-col min-w-0 overflow-hidden md:ml-[280px]">
+      <main className="flex-1 flex flex-col min-w-0 overflow-hidden md:ml-[260px]">
         
+        {/* DESKTOP HEADER (Subtle Topbar) */}
+        <header className="hidden md:flex bg-white/60 backdrop-blur-xl border-b border-gray-200/50 h-16 items-center px-8 justify-end sticky top-0 z-30">
+            <Link href="/" target="_blank" className="text-xs font-bold text-gray-500 hover:text-[#0A101D] transition flex items-center gap-2 bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-lg">
+                View Live Store <FiGlobe />
+            </Link>
+        </header>
+
         {/* MOBILE HEADER */}
         <header className="md:hidden bg-white/80 backdrop-blur-md border-b border-gray-200/80 h-16 flex items-center px-5 justify-between sticky top-0 z-30 shadow-sm">
           <div className="flex items-center gap-3">
@@ -142,7 +166,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <FiMenu size={20} />
             </button>
           </div>
-          {/* Mobile header logo now perfectly centered with no text */}
           <div className="flex-1 flex justify-end">
             <img src="/logo.png" alt="Jtex Logo" className="h-6 object-contain" />
           </div>
