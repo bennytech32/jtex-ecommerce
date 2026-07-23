@@ -4,12 +4,13 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 
-// NJIA ZIMEREKEBISHWA (Paths Fixed from '../../' to '../')
+// NJIA ZIMEREKEBISHWA & ICONS ZOTE (Pamoja na FiMinus na FiPlus) ZIMEWEKWA
 import { useCart } from '../context/CartContext';
 import { 
   FiArrowLeft, FiHeart, FiShare, FiShare2, FiShoppingCart, FiStar, 
   FiChevronRight, FiChevronLeft, FiSearch, FiCheckCircle, FiMapPin, 
-  FiChevronDown, FiPackage, FiTruck, FiCheck, FiHome, FiAward
+  FiChevronDown, FiPackage, FiTruck, FiCheck, FiHome, FiAward,
+  FiMinus, FiPlus // ICONS HIZI ZILIKUWA ZIMESAHAULIKA
 } from 'react-icons/fi';
 
 import TopTicker from '../components/navigation/TopTicker';
@@ -161,6 +162,31 @@ export default function ProductDetailsPage() {
     setWishlist(prev => prev.includes(productId) ? prev.filter(vid => vid !== productId) : [...prev, productId]);
   };
 
+  const slideNext = () => {
+    if (currentImageIndex < images.length - 1) scrollToImage(currentImageIndex + 1);
+  };
+
+  const slidePrev = () => {
+    if (currentImageIndex > 0) scrollToImage(currentImageIndex - 1);
+  };
+
+  const handleScroll = () => {
+    if (sliderRef.current) {
+      const scrollPosition = sliderRef.current.scrollLeft;
+      const width = sliderRef.current.clientWidth;
+      const newIndex = Math.round(scrollPosition / width);
+      if (newIndex !== currentImageIndex) setCurrentImageIndex(newIndex);
+    }
+  };
+
+  const scrollToImage = (index: number) => {
+    if (index < 0 || index >= images.length) return;
+    setCurrentImageIndex(index);
+    if (sliderRef.current) {
+      sliderRef.current.scrollTo({ left: sliderRef.current.clientWidth * index, behavior: 'smooth' });
+    }
+  };
+
   if (loading) return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-[#F3F4F6] gap-4">
       <div className="w-12 h-12 border-4 border-[#F2A900] border-t-transparent rounded-full animate-spin"></div>
@@ -223,9 +249,6 @@ export default function ProductDetailsPage() {
                   {product.badge}
                 </span>
               )}
-              <button onClick={(e) => toggleWishlist(e, product.id)} className="absolute top-4 right-4 z-20 w-10 h-10 bg-white/90 backdrop-blur rounded-full flex items-center justify-center text-gray-400 hover:text-red-500 shadow-md transition">
-                  <FiHeart className={`text-lg ${isMainProductWishlisted ? "fill-red-500 text-red-500" : ""}`} />
-              </button>
               {mainImage ? (
                  <img src={mainImage} alt={product.name} className="w-full h-full object-contain mix-blend-multiply p-8 transition-transform duration-500 group-hover:scale-105" />
               ) : (
@@ -233,7 +256,7 @@ export default function ProductDetailsPage() {
               )}
             </div>
             
-            {/* Picha Ndogo (Thumbnails) */}
+            {/* Picha Ndogo (Thumbnails - Dynamic) */}
             {images.length > 1 && (
               <div className="flex gap-3 overflow-x-auto hide-scrollbar pb-2">
                 {images.map((img, idx) => (
@@ -304,9 +327,9 @@ export default function ProductDetailsPage() {
             {/* Vitufe vya Manunuzi */}
             <div className="flex flex-col sm:flex-row items-center gap-4 border-t border-gray-100 pt-6 mt-2 mb-6">
               <div className="flex items-center border border-gray-200 rounded-xl overflow-hidden h-14 w-full sm:w-32 bg-gray-50 flex-shrink-0">
-                <button onClick={() => setQty(qty > 1 ? qty - 1 : 1)} className="px-4 h-full text-gray-600 hover:bg-gray-200 transition"><FiMinus /></button>
+                <button type="button" onClick={() => setQty(qty > 1 ? qty - 1 : 1)} className="px-4 h-full text-gray-600 hover:bg-gray-200 transition"><FiMinus /></button>
                 <span className="flex-1 h-full flex items-center justify-center font-bold text-gray-900 border-x border-gray-200 bg-white">{qty}</span>
-                <button onClick={() => setQty(qty + 1)} className="px-4 h-full text-gray-600 hover:bg-gray-200 transition"><FiPlus /></button>
+                <button type="button" onClick={() => setQty(qty + 1)} className="px-4 h-full text-gray-600 hover:bg-gray-200 transition"><FiPlus /></button>
               </div>
 
               <button onClick={() => handleAddToCart(false)} className="flex-1 w-full h-14 bg-gradient-to-r from-[#F2A900] to-yellow-500 text-[#0A101D] font-black rounded-xl transition flex items-center justify-center gap-2 shadow-lg hover:shadow-xl hover:scale-[1.02]">
@@ -362,25 +385,12 @@ export default function ProductDetailsPage() {
                   <span className="font-bold text-gray-500 uppercase text-[11px] tracking-wider">Model</span>
                   <span className="font-bold text-[#F2A900]">{product.model || 'Standard'}</span>
                 </div>
-                {otherSpecsKeys.length > 0 ? (
-                  <>
-                    {visibleSpecsKeys.map((key) => (
-                      <div key={key} className="flex items-center justify-between py-3 border-b border-gray-100">
-                        <span className="font-bold text-gray-500 uppercase text-[11px] tracking-wider">{key}</span>
-                        <span className="font-bold text-gray-900 text-right w-1/2 line-clamp-1">{displaySpecs[key]}</span>
-                      </div>
-                    ))}
-                    {otherSpecsKeys.length > 5 && (
-                      <button 
-                        onClick={() => setShowAllSpecs(!showAllSpecs)}
-                        className="col-span-1 md:col-span-2 py-4 text-xs font-bold text-blue-600 bg-blue-50/50 hover:bg-blue-50 transition-colors flex items-center justify-center gap-1 mt-4 rounded-xl border border-blue-100"
-                      >
-                        {showAllSpecs ? 'View Less' : `See All Specifications (${otherSpecsKeys.length - 5} More)`} 
-                        <FiChevronDown className={`transition-transform ${showAllSpecs ? 'rotate-180' : ''}`} />
-                      </button>
-                    )}
-                  </>
-                ) : (
+                {Object.keys(displaySpecs).length > 0 ? Object.keys(displaySpecs).map((key) => (
+                  <div key={key} className="flex items-center justify-between py-3 border-b border-gray-100">
+                    <span className="font-bold text-gray-500 uppercase text-[11px] tracking-wider">{key}</span>
+                    <span className="font-bold text-gray-900 text-right w-1/2 line-clamp-1">{displaySpecs[key]}</span>
+                  </div>
+                )) : (
                   <div className="col-span-1 md:col-span-2 py-4 text-gray-400 italic">No additional specifications available for this product.</div>
                 )}
               </div>
