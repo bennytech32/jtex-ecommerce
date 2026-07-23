@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   FiGrid, FiPlus, FiFolder, FiBox, FiTrash2, 
-  FiEdit2, FiMoreVertical, FiAlertCircle, FiCheckCircle, FiSearch, FiLayers 
+  FiEdit2, FiMoreVertical, FiAlertCircle, FiCheckCircle, FiSearch, FiLayers, FiX 
 } from 'react-icons/fi';
 
 export default function AdminCategories() {
