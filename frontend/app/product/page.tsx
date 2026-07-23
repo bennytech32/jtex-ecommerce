@@ -1,19 +1,21 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { useCart } from '../../context/CartContext';
+
+// NJIA ZIMEREKEBISHWA (Paths Fixed from '../../' to '../')
+import { useCart } from '../context/CartContext';
 import { 
-  FiHeart, FiShoppingCart, FiShare2, FiShield, 
-  FiTruck, FiCheck, FiMinus, FiPlus, FiStar, FiPackage 
+  FiArrowLeft, FiHeart, FiShare, FiShare2, FiShoppingCart, FiStar, 
+  FiChevronRight, FiChevronLeft, FiSearch, FiCheckCircle, FiMapPin, 
+  FiChevronDown, FiPackage, FiTruck, FiCheck, FiHome, FiAward
 } from 'react-icons/fi';
 
-// Components zako za Layout (Hakikisha njia/paths ziko sawa)
-import TopTicker from '../../components/navigation/TopTicker';
-import MainHeader from '../../components/navigation/MainHeader';
-import NavbarLinks from '../../components/navigation/NavbarLinks';
-import Footer from '../../components/common/Footer';
+import TopTicker from '../components/navigation/TopTicker';
+import MainHeader from '../components/navigation/MainHeader';
+import NavbarLinks from '../components/navigation/NavbarLinks';
+import Footer from '../components/common/Footer';
 
 // === HELPER FUNCTION: KUBADILI JINA LA RANGI KUWA RANGI HALISI ===
 const getColorCode = (colorName: string) => {
@@ -32,7 +34,7 @@ const getColorCode = (colorName: string) => {
 export default function ProductDetailsPage() {
   const { id } = useParams();
   const router = useRouter();
-  const { addToCart } = useCart();
+  const { cart, addToCart } = useCart();
   
   const [product, setProduct] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -47,20 +49,32 @@ export default function ProductDetailsPage() {
   const [specs, setSpecs] = useState<any>({});
   const [colorOptions, setColorOptions] = useState<string[]>([]);
   const [selectedColor, setSelectedColor] = useState<string>('');
+  const [userLocation, setUserLocation] = useState('Dar es Salaam, Tanzania'); 
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showAllSpecs, setShowAllSpecs] = useState(false);
+  const [wishlist, setWishlist] = useState<string[]>([]);
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://jtex-ecommerce-production.up.railway.app';
+  const cartCount = cart?.length || 0;
 
   useEffect(() => {
+    fetch('https://ipapi.co/json/')
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.city && data.country_name) setUserLocation(`${data.city}, ${data.country_name}`);
+      }).catch(() => {});
+
     const fetchProduct = async () => {
+      // Kama hakuna ID (kwa sababu faili lipo app/product/page.tsx), itafute bidhaa ya kwanza kama mfano
       try {
         const res = await fetch(`${API_URL}/api/products`);
         const data = await res.json();
         
-        const foundProduct = data.find((p: any) => p.id === id);
+        const foundProduct = id ? data.find((p: any) => p.id === id) : data[0]; 
+        
         if (foundProduct) {
           setProduct(foundProduct);
           
-          // Image Parsing
           let parsedImages = [];
           try {
             const imgs = JSON.parse(foundProduct.imageUrl);
@@ -71,7 +85,6 @@ export default function ProductDetailsPage() {
           setImages(finalImages);
           if (finalImages.length > 0) setMainImage(finalImages[0]);
           
-          // Specs & Colors Parsing (Deep Parse)
           if (foundProduct.specifications) {
             try { 
               let parsedSpecs = foundProduct.specifications;
@@ -86,7 +99,7 @@ export default function ProductDetailsPage() {
                  const colorsArr = String(parsedSpecs[colorKey]).split(/[\/,|]/).map(c => c.trim()).filter(Boolean);
                  if (colorsArr.length > 0) {
                     setColorOptions(colorsArr);
-                    setSelectedColor(colorsArr[0]); // Auto-select first color
+                    setSelectedColor(colorsArr[0]); 
                  }
               }
             } catch (e) { console.error(e); }
@@ -101,7 +114,8 @@ export default function ProductDetailsPage() {
     fetchProduct();
   }, [id, API_URL]);
 
-  const handleAddToCart = () => {
+  // --- ACTIONS ---
+  const handleAddToCart = (redirect: boolean = false) => {
     if (!product) return;
     const productToAdd = {
       ...product,
@@ -110,7 +124,12 @@ export default function ProductDetailsPage() {
       quantityToAdd: qty
     };
     addToCart(productToAdd);
-    alert(`${qty} x ${product.name} imeongezwa kwenye kikapu!`);
+    
+    if (redirect) {
+      router.push('/checkout');
+    } else {
+      alert(`${qty} x ${product.name} imeongezwa kwenye kikapu!`);
+    }
   };
 
   const handleShare = async () => {
@@ -122,6 +141,24 @@ export default function ProductDetailsPage() {
         alert('Link imekopiwa!');
       }
     } catch (err) {}
+  };
+
+  const handleWhatsAppInquiry = () => {
+    if (!product) return;
+    const businessPhone = "255767949581"; 
+    const colorText = selectedColor ? `%0A*Color:* ${selectedColor}` : '';
+    const message = `Hello Jtex,%0AI am inquiring about this product:%0A*${product.name}*${colorText}%0A*Price:* TZS ${product.price.toLocaleString()}%0A%0A*Link:* ${window.location.href}`;
+    window.open(`https://wa.me/${businessPhone}?text=${message}`, '_blank');
+  };
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim() !== '') router.push(`/categories?search=${encodeURIComponent(searchQuery)}`);
+  };
+
+  const toggleWishlist = (e: React.MouseEvent, productId: string) => {
+    e.stopPropagation();
+    setWishlist(prev => prev.includes(productId) ? prev.filter(vid => vid !== productId) : [...prev, productId]);
   };
 
   if (loading) return (
@@ -139,11 +176,21 @@ export default function ProductDetailsPage() {
   );
 
   const basePrice = Number(product.price);
-  const oldPrice = product.buyingPrice ? Number(product.buyingPrice) : basePrice * 1.15; // Fake original price if missing
+  const oldPrice = product.buyingPrice ? Number(product.buyingPrice) : basePrice * 1.15;
   const hasWholesale = specs?.isWholesale === 'Yes';
   
-  // Kuondoa baadhi ya keys kwenye specs ambazo hazihitaji kuonekana kwenye table
   const { isWholesale, wholesaleTier2Price, wholesaleTier3Price, Color, color, Colors, colors, Colour, colour, ...displaySpecs } = specs;
+  const tier2Price = wholesaleTier2Price ? Number(wholesaleTier2Price) : basePrice * 0.95; 
+  const tier3Price = wholesaleTier3Price ? Number(wholesaleTier3Price) : basePrice * 0.90; 
+
+  let preInfo: any = null;
+  if (product.preOrderInfo) {
+    try { preInfo = JSON.parse(product.preOrderInfo); } catch(e) {}
+  }
+
+  const isMainProductWishlisted = wishlist.includes(product.id);
+  const otherSpecsKeys = Object.keys(displaySpecs);
+  const visibleSpecsKeys = showAllSpecs ? otherSpecsKeys : otherSpecsKeys.slice(0, 5);
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-gray-900 font-sans antialiased flex flex-col">
@@ -176,6 +223,9 @@ export default function ProductDetailsPage() {
                   {product.badge}
                 </span>
               )}
+              <button onClick={(e) => toggleWishlist(e, product.id)} className="absolute top-4 right-4 z-20 w-10 h-10 bg-white/90 backdrop-blur rounded-full flex items-center justify-center text-gray-400 hover:text-red-500 shadow-md transition">
+                  <FiHeart className={`text-lg ${isMainProductWishlisted ? "fill-red-500 text-red-500" : ""}`} />
+              </button>
               {mainImage ? (
                  <img src={mainImage} alt={product.name} className="w-full h-full object-contain mix-blend-multiply p-8 transition-transform duration-500 group-hover:scale-105" />
               ) : (
@@ -183,7 +233,7 @@ export default function ProductDetailsPage() {
               )}
             </div>
             
-            {/* Picha Ndogo (Thumbnails - Dynamic) */}
+            {/* Picha Ndogo (Thumbnails) */}
             {images.length > 1 && (
               <div className="flex gap-3 overflow-x-auto hide-scrollbar pb-2">
                 {images.map((img, idx) => (
@@ -259,7 +309,7 @@ export default function ProductDetailsPage() {
                 <button onClick={() => setQty(qty + 1)} className="px-4 h-full text-gray-600 hover:bg-gray-200 transition"><FiPlus /></button>
               </div>
 
-              <button onClick={handleAddToCart} className="flex-1 w-full h-14 bg-gradient-to-r from-[#F2A900] to-yellow-500 text-[#0A101D] font-black rounded-xl transition flex items-center justify-center gap-2 shadow-lg hover:shadow-xl hover:scale-[1.02]">
+              <button onClick={() => handleAddToCart(false)} className="flex-1 w-full h-14 bg-gradient-to-r from-[#F2A900] to-yellow-500 text-[#0A101D] font-black rounded-xl transition flex items-center justify-center gap-2 shadow-lg hover:shadow-xl hover:scale-[1.02]">
                 <FiShoppingCart size={20} /> Add to Cart
               </button>
 
@@ -270,7 +320,7 @@ export default function ProductDetailsPage() {
 
             {/* Badges za Uaminifu */}
             <div className="grid grid-cols-2 gap-4 text-xs font-bold text-gray-600 pt-4 border-t border-gray-100">
-              <div className="flex items-center gap-2.5"><div className="bg-gray-100 p-1.5 rounded-md text-gray-500"><FiTruck size={16} /></div> Delivery in Dar es Salaam</div>
+              <div className="flex items-center gap-2.5"><div className="bg-gray-100 p-1.5 rounded-md text-gray-500"><FiTruck size={16} /></div> Delivery Nationwide</div>
               <div className="flex items-center gap-2.5"><div className="bg-gray-100 p-1.5 rounded-md text-gray-500"><FiShield size={16} /></div> Quality Assured</div>
               <div className="flex items-center gap-2.5"><div className="bg-gray-100 p-1.5 rounded-md text-gray-500"><FiCheck size={16} /></div> 100% Genuine Product</div>
               <div className="flex items-center gap-2.5"><div className="bg-gray-100 p-1.5 rounded-md text-gray-500"><FiPackage size={16} /></div> Secure Packaging</div>
@@ -312,12 +362,25 @@ export default function ProductDetailsPage() {
                   <span className="font-bold text-gray-500 uppercase text-[11px] tracking-wider">Model</span>
                   <span className="font-bold text-[#F2A900]">{product.model || 'Standard'}</span>
                 </div>
-                {Object.keys(displaySpecs).length > 0 ? Object.keys(displaySpecs).map((key) => (
-                  <div key={key} className="flex items-center justify-between py-3 border-b border-gray-100">
-                    <span className="font-bold text-gray-500 uppercase text-[11px] tracking-wider">{key}</span>
-                    <span className="font-bold text-gray-900 text-right w-1/2 line-clamp-1">{displaySpecs[key]}</span>
-                  </div>
-                )) : (
+                {otherSpecsKeys.length > 0 ? (
+                  <>
+                    {visibleSpecsKeys.map((key) => (
+                      <div key={key} className="flex items-center justify-between py-3 border-b border-gray-100">
+                        <span className="font-bold text-gray-500 uppercase text-[11px] tracking-wider">{key}</span>
+                        <span className="font-bold text-gray-900 text-right w-1/2 line-clamp-1">{displaySpecs[key]}</span>
+                      </div>
+                    ))}
+                    {otherSpecsKeys.length > 5 && (
+                      <button 
+                        onClick={() => setShowAllSpecs(!showAllSpecs)}
+                        className="col-span-1 md:col-span-2 py-4 text-xs font-bold text-blue-600 bg-blue-50/50 hover:bg-blue-50 transition-colors flex items-center justify-center gap-1 mt-4 rounded-xl border border-blue-100"
+                      >
+                        {showAllSpecs ? 'View Less' : `See All Specifications (${otherSpecsKeys.length - 5} More)`} 
+                        <FiChevronDown className={`transition-transform ${showAllSpecs ? 'rotate-180' : ''}`} />
+                      </button>
+                    )}
+                  </>
+                ) : (
                   <div className="col-span-1 md:col-span-2 py-4 text-gray-400 italic">No additional specifications available for this product.</div>
                 )}
               </div>
@@ -329,6 +392,28 @@ export default function ProductDetailsPage() {
       
       {/* Global Footer */}
       <Footer />
+
+      {/* MOBILE BOTTOM NAV */}
+      <div className="lg:hidden fixed bottom-0 left-0 w-full bg-white border-t border-gray-100 px-3 py-3 flex items-center gap-2 z-50 shadow-[0_-10px_30px_rgba(0,0,0,0.08)] pb-safe">
+         <div onClick={() => router.push('/')} className="flex flex-col items-center justify-center text-gray-400 hover:text-[#0A101D] w-12 cursor-pointer">
+            <FiHome size={22} className="mb-0.5" />
+            <span className="text-[9px] font-semibold">Store</span>
+         </div>
+         
+         <div onClick={handleWhatsAppInquiry} className="flex flex-col items-center justify-center text-gray-400 hover:text-[#25D366] w-12 cursor-pointer">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mb-0.5"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+            <span className="text-[9px] font-semibold">Chat</span>
+         </div>
+         
+         <div className="flex-1 flex gap-2 ml-1">
+            <button onClick={() => handleAddToCart(false)} className="flex-1 bg-[#F2A900] text-[#0A101D] font-semibold py-3.5 rounded-xl text-xs shadow-[0_4px_10px_rgba(242,169,0,0.3)] active:scale-95 transition-transform flex items-center justify-center gap-1.5">
+               <FiShoppingCart size={14}/> Add to Cart
+            </button>
+            <button onClick={() => handleAddToCart(true)} className="flex-1 bg-[#0A101D] text-white font-semibold py-3.5 rounded-xl text-xs shadow-md active:scale-95 transition-transform">
+               Buy Now
+            </button>
+         </div>
+      </div>
 
       <style>{`
         .hide-scrollbar::-webkit-scrollbar { display: none; }
