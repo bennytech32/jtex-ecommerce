@@ -6,8 +6,21 @@ import { useCart } from '../context/CartContext';
 import { 
   FiArrowLeft, FiShoppingCart, FiMapPin, FiCreditCard, 
   FiTrash2, FiChevronRight, FiShield, FiCheckCircle, 
-  FiTruck, FiBox, FiPhone, FiUser, FiStar, FiLock, FiInfo
+  FiTruck, FiBox, FiPhone, FiUser, FiStar, FiLock, FiInfo, FiMinus, FiPlus
 } from 'react-icons/fi';
+
+// === HELPER FUNCTION: KUBADILI JINA LA RANGI KUWA RANGI HALISI ===
+const getColorCode = (colorName: string) => {
+  const c = colorName.toLowerCase().trim();
+  const colorsMap: any = {
+    'black': '#000000', 'white': '#FFFFFF', 'silver': '#C0C0C0', 'gray': '#808080', 'grey': '#808080',
+    'titanium': '#878681', 'natural titanium': '#878681', 'blue titanium': '#2F3C4D',
+    'red': '#FF0000', 'blue': '#0000FF', 'green': '#008000', 'yellow': '#FFFF00',
+    'gold': '#FFD700', 'rose gold': '#B76E79', 'purple': '#800080', 'pink': '#FFC0CB',
+    'midnight': '#191970', 'starlight': '#F8F9FA'
+  };
+  return colorsMap[c] || c; 
+};
 
 // === SHIPPING OPTIONS ===
 const ALL_SHIPPING_METHODS = [
@@ -48,7 +61,10 @@ const ISLAND_REGIONS = [
 
 export default function CheckoutSystem() {
   const router = useRouter();
-  const { cart, removeFromCart, cartTotal, clearCart } = useCart();
+  
+  // Tumeondoa updateQuantity ili kuzuia error. Tutatumia addToCart na removeFromCart kufanya modifications zote.
+  const { cart, removeFromCart, clearCart, addToCart } = useCart();
+  const [mounted, setMounted] = useState(false); 
   
   const getApiUrl = () => process.env.NEXT_PUBLIC_API_URL || 'https://jtex-ecommerce-production.up.railway.app';
   
@@ -57,7 +73,6 @@ export default function CheckoutSystem() {
     return url.startsWith('http') ? url : `${getApiUrl()}${url}`;
   };
 
-  // HELPER: Kusoma picha iwe Array ili zionekane vizuri kwenye kikapu
   const getImagesArray = (imgData: string) => {
     if (!imgData) return [];
     try {
@@ -67,7 +82,57 @@ export default function CheckoutSystem() {
       return [imgData];
     }
   };
+
+  const getItemQuantity = (item: any) => {
+    return Number(item.quantity || item.quantityToAdd || item.qty || 1);
+  };
   
+  const getColorOptions = (item: any) => {
+    let options: string[] = [];
+    if (item.specifications) {
+      try {
+        const parsed = typeof item.specifications === 'string' ? JSON.parse(item.specifications) : item.specifications;
+        const rawColor = parsed.Color || parsed.color || parsed.Colors || parsed.colors;
+        if (rawColor) {
+          options = rawColor.split(/[\/,]/).map((c: string) => c.trim()).filter(Boolean);
+        }
+      } catch(e) {}
+    }
+    return options;
+  };
+
+  // Kubadili Rangi salama (Tunaondoa ya zamani, tunaweka mpya)
+  const handleColorChange = (item: any, newColor: string) => {
+    if (item.selectedColor === newColor) return;
+    const oldCartId = item.cartId || `${item.id}-${item.selectedColor || 'default'}`;
+    const qty = getItemQuantity(item);
+    const updatedItem = {
+      ...item,
+      selectedColor: newColor,
+      cartId: `${item.id}-${newColor}`,
+      quantity: qty,
+      quantityToAdd: qty,
+      qty: qty
+    };
+    if (removeFromCart) removeFromCart(oldCartId);
+    setTimeout(() => { if (addToCart) addToCart(updatedItem); }, 0);
+  };
+
+  // Kubadili Idadi salama (+ / -) (Tunaondoa ya zamani, tunaweka mpya yenye idadi sahihi)
+  const handleQuantityChange = (item: any, newQty: number) => {
+    if (newQty < 1) return;
+    const targetCartId = item.cartId || `${item.id}-${item.selectedColor || 'default'}`;
+    const updatedItem = {
+      ...item,
+      quantity: newQty,
+      quantityToAdd: newQty,
+      qty: newQty,
+      cartId: targetCartId
+    };
+    if (removeFromCart) removeFromCart(targetCartId);
+    setTimeout(() => { if (addToCart) addToCart(updatedItem); }, 0);
+  };
+
   // States
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1);
   const [selectedPaymentType, setSelectedPaymentType] = useState(PAYMENT_TYPES[1]); 
@@ -97,6 +162,7 @@ export default function CheckoutSystem() {
   const [selectedShipping, setSelectedShipping] = useState(availableShippingMethods[0]);
 
   useEffect(() => {
+    setMounted(true); 
     if (!availableShippingMethods.find(m => m.id === selectedShipping?.id)) {
       setSelectedShipping(availableShippingMethods[0]);
     }
@@ -112,13 +178,11 @@ export default function CheckoutSystem() {
           fullName: parsedUser.name || '',
           phone: parsedUser.phone || '',
         }));
-      } catch (e) {
-        console.error("Error parsing user data");
-      }
+      } catch (e) {}
     }
   }, []);
 
-  const subtotal = cartTotal || 0; 
+  const subtotal = cart?.reduce((acc: number, item: any) => acc + (Number(item.price) * getItemQuantity(item)), 0) || 0; 
   const deliveryFee = currentStep > 1 && selectedShipping ? selectedShipping.price : 0;
   const totalAmount = subtotal + deliveryFee;
   
@@ -140,17 +204,18 @@ export default function CheckoutSystem() {
 
   const handleWhatsAppOrder = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    
     if (!formData.fullName || !formData.phone || !formData.address) {
       alert("Tafadhali kamilisha kujaza taarifa zako za makazi kwanza.");
       setCurrentStep(2);
       return;
     }
 
-    const businessPhone = "255767949581"; // Namba ya Jtex
-    let itemsText = cart.map((item: any, index: number) => 
-      `${index + 1}. ${item.name} - Qty: ${item.quantity} (TZS ${(item.price * item.quantity).toLocaleString()})`
-    ).join('%0A');
+    const businessPhone = "255767949581"; 
+    let itemsText = cart.map((item: any, index: number) => {
+      const qty = getItemQuantity(item);
+      const colorText = item.selectedColor ? ` (Color: ${item.selectedColor})` : '';
+      return `${index + 1}. ${item.name}${colorText} - Qty: ${qty} (TZS ${(Number(item.price) * qty).toLocaleString()})`;
+    }).join('%0A');
 
     const paymentInfo = selectedPaymentType.id === 'cod' 
       ? `Nimelipia Kianzio (Advance): TZS ${advancePayment.toLocaleString()}%0ASalia langu ni: TZS ${remainingBalance.toLocaleString()} (Nitalipa nikipokea mzigo)` 
@@ -159,18 +224,15 @@ export default function CheckoutSystem() {
     const message = `Habari Jtex, nimefanya manunuzi mtandaoni.%0A%0A*BIDHAA ZANGU:*%0A${itemsText}%0A%0A*TAARIFA ZANGU:*%0AJina: ${formData.fullName}%0ASimu: ${formData.phone}%0AMkoa: ${formData.region}%0AAnwani: ${formData.address}%0A%0A*NJIA YA KUSAFIRISHA:*%0A${selectedShipping.name} (TZS ${deliveryFee.toLocaleString()})%0A%0A*JUMLA KUU:* TZS ${totalAmount.toLocaleString()}%0A%0A*MALIPO YALIYOTEULIWA:*%0ANjia: ${selectedPaymentMethod.name}%0A${paymentInfo}%0A%0ATafadhali thibitisha order yangu.`;
 
     const whatsappUrl = `https://wa.me/${businessPhone}?text=${message}`;
-    
     clearCart();
     window.open(whatsappUrl, '_blank');
     router.push('/');
   };
 
-  // Stepper Mpya (Bila Namba 1, 2, 3... Inatumia Checks tu ikipita)
   const renderStepper = () => (
     <div className="flex items-center justify-center gap-2 sm:gap-4 mb-8 relative px-4 max-w-lg mx-auto">
       <div className="absolute top-1/2 left-[15%] right-[15%] h-0.5 bg-gray-200 -z-10 -translate-y-1/2"></div>
       
-      {/* Cart Step */}
       <div className="flex flex-col items-center gap-2 bg-white px-2">
         <div className={`w-8 h-8 rounded-full flex items-center justify-center ${currentStep >= 1 ? 'bg-[#F2A900] text-white shadow-md' : 'bg-gray-200 text-gray-400'}`}>
            <FiShoppingCart size={14} />
@@ -180,7 +242,6 @@ export default function CheckoutSystem() {
       
       <div className={`flex-1 h-0.5 ${currentStep >= 2 ? 'bg-[#F2A900]' : 'bg-transparent'}`}></div>
       
-      {/* Shipping Step */}
       <div className="flex flex-col items-center gap-2 bg-white px-2">
         <div className={`w-8 h-8 rounded-full flex items-center justify-center ${currentStep >= 2 ? 'bg-[#F2A900] text-white shadow-md' : 'bg-gray-200 text-gray-400'}`}>
           <FiTruck size={14} />
@@ -190,7 +251,6 @@ export default function CheckoutSystem() {
       
       <div className={`flex-1 h-0.5 ${currentStep >= 3 ? 'bg-[#F2A900]' : 'bg-transparent'}`}></div>
       
-      {/* Payment Step */}
       <div className="flex flex-col items-center gap-2 bg-white px-2">
         <div className={`w-8 h-8 rounded-full flex items-center justify-center ${currentStep >= 3 ? 'bg-[#F2A900] text-white shadow-md' : 'bg-gray-200 text-gray-400'}`}>
           <FiCreditCard size={14} />
@@ -199,6 +259,8 @@ export default function CheckoutSystem() {
       </div>
     </div>
   );
+
+  if (!mounted) return null;
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] pb-24 md:pb-12">
@@ -222,7 +284,6 @@ export default function CheckoutSystem() {
         {renderStepper()}
 
         <div className="flex flex-col lg:flex-row gap-6">
-          {/* ======================= LEFT COLUMN ======================= */}
           <div className="flex-1 space-y-6">
             
             {/* STEP 1: CART */}
@@ -236,25 +297,61 @@ export default function CheckoutSystem() {
                 <div className="space-y-4">
                   {cart?.length > 0 ? cart.map((item: any) => {
                     const displayImage = getImagesArray(item.imageUrl)[0];
+                    const qty = getItemQuantity(item);
+                    const uniqueId = item.cartId || `${item.id}-${item.selectedColor || 'default'}`;
+                    const colorOptions = getColorOptions(item);
+
                     return (
-                      <div key={item.id} className="flex flex-col sm:flex-row gap-4 p-4 border border-gray-100 rounded-xl relative hover:border-[#F2A900] transition group">
-                        <div className="w-20 h-20 bg-gray-50 rounded-lg flex items-center justify-center flex-shrink-0 p-2 border border-gray-200">
+                      <div key={uniqueId} className="flex flex-col sm:flex-row gap-4 p-4 border border-gray-100 rounded-xl relative hover:border-[#F2A900] transition group">
+                        <div className="w-20 h-20 bg-gray-50 rounded-lg flex items-center justify-center flex-shrink-0 p-2 border border-gray-200 mx-auto sm:mx-0">
                           {displayImage ? <img src={getImageUrl(displayImage)} alt={item.name} className="object-contain w-full h-full mix-blend-multiply" /> : <span className="text-3xl">{item.imageEmoji || '📦'}</span>}
                         </div>
-                        <div className="flex-1 flex flex-col justify-center">
-                          <h3 className="font-bold text-sm text-gray-900 pr-8 line-clamp-2">{item.name}</h3>
-                          <p className="text-xs text-gray-500 mt-1 flex items-center gap-2">
-                            {item.color && <><span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-gray-800 border border-gray-300"></span> {item.color}</span><span className="text-gray-300">|</span></>}
-                            {item.storage && <span>{item.storage}</span>}
-                          </p>
-                          <div className="flex items-center justify-between mt-3">
-                            <span className="font-black text-gray-900">TZS {item.price?.toLocaleString()}</span>
-                            <div className="flex items-center gap-3 bg-gray-50 border border-gray-200 rounded-lg px-2 py-1">
-                              <span className="text-xs font-black px-2 py-0.5 text-center">Qty: {item.quantity}</span>
+                        <div className="flex-1 flex flex-col justify-center text-center sm:text-left">
+                          <h3 className="font-bold text-sm text-gray-900 pr-0 sm:pr-8 line-clamp-2">{item.name}</h3>
+                          
+                          <div className="text-xs text-gray-500 mt-2 flex flex-wrap items-center justify-center sm:justify-start gap-2">
+                            {colorOptions.length > 0 ? (
+                              <div className="flex items-center gap-1">
+                                <span className="text-[10px] font-bold text-gray-500 uppercase">Color:</span>
+                                <select
+                                  value={item.selectedColor || colorOptions[0]}
+                                  onChange={(e) => handleColorChange(item, e.target.value)}
+                                  className="text-[10px] font-bold text-gray-800 bg-gray-50 border border-gray-200 rounded-md px-2 py-0.5 outline-none focus:border-[#F2A900] cursor-pointer"
+                                >
+                                  {colorOptions.map((c: string, i: number) => (
+                                    <option key={i} value={c}>{c}</option>
+                                  ))}
+                                </select>
+                              </div>
+                            ) : (
+                              item.selectedColor && (
+                                <span className="flex items-center gap-1.5 font-bold uppercase text-[10px] text-gray-600">
+                                  <span className="w-3.5 h-3.5 rounded-full border border-gray-300 shadow-sm" style={{ backgroundColor: getColorCode(item.selectedColor) }}></span> 
+                                  Color: {item.selectedColor}
+                                </span>
+                              )
+                            )}
+                            {item.storage && <span className="font-bold text-[10px] uppercase hidden sm:inline">| {item.storage}</span>}
+                          </div>
+
+                          <div className="flex flex-col sm:flex-row items-center justify-between mt-3 gap-3 sm:gap-0">
+                            <span className="font-black text-gray-900">TZS {(Number(item.price) * qty).toLocaleString()}</span>
+                            
+                            {/* QUANTITY ADJUSTER */}
+                            <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden h-8 bg-gray-50">
+                              <button onClick={() => handleQuantityChange(item, qty - 1)} className="px-3 hover:bg-gray-200 text-gray-600 transition h-full flex items-center">
+                                <FiMinus size={12} />
+                              </button>
+                              <span className="px-3 text-xs font-bold border-x border-gray-200 h-full flex items-center justify-center bg-white text-gray-900 min-w-[35px]">
+                                {qty}
+                              </span>
+                              <button onClick={() => handleQuantityChange(item, qty + 1)} className="px-3 hover:bg-gray-200 text-gray-600 transition h-full flex items-center">
+                                <FiPlus size={12} />
+                              </button>
                             </div>
                           </div>
                         </div>
-                        <button onClick={() => removeFromCart(item.id)} className="absolute top-4 right-4 text-gray-300 hover:text-red-500 transition"><FiTrash2 size={16}/></button>
+                        <button onClick={() => removeFromCart(uniqueId)} className="absolute top-3 right-3 sm:top-4 sm:right-4 text-gray-300 hover:text-red-500 transition bg-white p-1 rounded-full shadow-sm sm:shadow-none sm:bg-transparent"><FiTrash2 size={16}/></button>
                       </div>
                     )
                   }) : (
@@ -342,8 +439,6 @@ export default function CheckoutSystem() {
             {/* STEP 3: PAYMENT UI MPYA */}
             {currentStep === 3 && (
               <div className="space-y-6">
-                
-                {/* 1. Payment Type */}
                 <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100">
                    <h2 className="font-black text-base flex items-center gap-2 mb-4">💳 Payment Type</h2>
                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
@@ -367,19 +462,14 @@ export default function CheckoutSystem() {
                        </div>
                      ))}
                    </div>
-                   
-                   {/* Good Choice Helper Text */}
                    <div className="mt-4 flex items-center gap-2 bg-yellow-50/80 p-3 rounded-lg border border-yellow-100/50">
                       <FiStar className="text-[#F2A900]" size={14}/>
                       <p className="text-xs font-bold text-gray-800">Good choice! <span className="font-medium text-gray-600 ml-1">You will pay {selectedPaymentType.id === 'cod' ? 'the advance amount now and the rest upon delivery' : 'the full amount now and your order will be processed'}.</span></p>
                    </div>
                 </div>
 
-                {/* 2. Payment Method */}
                 <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100">
                    <h2 className="font-black text-base flex items-center gap-2 mb-4"><FiCreditCard className="text-[#F2A900]"/> Payment Method</h2>
-                   
-                   {/* Main Gateway Selection */}
                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
                      {PAYMENT_METHODS.map((method) => (
                        <div 
@@ -410,8 +500,6 @@ export default function CheckoutSystem() {
                      <div className="animate-fade-in border-t border-gray-100 pt-5">
                        <h3 className="text-xs font-bold text-gray-800 mb-3 uppercase tracking-wider flex items-center gap-2"><FiInfo className="text-blue-500"/> Akaunti za Mitandao (Lipa Namba)</h3>
                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
-                         
-                         {/* Vodacom M-Pesa */}
                          <div className="border border-red-200 bg-red-50/30 p-4 rounded-xl flex items-center gap-4 hover:shadow-sm transition">
                            <div className="w-12 h-12 bg-red-600 rounded-full flex items-center justify-center font-black text-white text-lg">M</div>
                            <div>
@@ -420,8 +508,6 @@ export default function CheckoutSystem() {
                              <p className="text-[11px] font-bold text-gray-800 mt-0.5">Name | Jtex</p>
                            </div>
                          </div>
-
-                         {/* Mixx by Yas */}
                          <div className="border border-blue-200 bg-blue-50/30 p-4 rounded-xl flex items-center gap-4 hover:shadow-sm transition">
                            <div className="w-12 h-12 bg-[#0A101D] rounded-full flex items-center justify-center font-black text-yellow-400 text-sm italic">Mixx</div>
                            <div>
@@ -430,9 +516,7 @@ export default function CheckoutSystem() {
                              <p className="text-[11px] font-bold text-gray-800 mt-0.5">Name | Jtex</p>
                            </div>
                          </div>
-
                        </div>
-                       
                        <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 text-xs text-gray-600 font-medium">
                          <p className="font-bold text-gray-900 mb-2">Jinsi ya Kulipia kwa M-Pesa:</p>
                          <ol className="list-decimal ml-4 space-y-1.5 text-[11px]">
@@ -452,8 +536,6 @@ export default function CheckoutSystem() {
                      <div className="animate-fade-in border-t border-gray-100 pt-5">
                        <h3 className="text-xs font-bold text-gray-800 mb-3 uppercase tracking-wider flex items-center gap-2"><FiInfo className="text-green-500"/> Akaunti za Benki</h3>
                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
-                         
-                         {/* NMB Bank */}
                          <div className="border border-blue-200 bg-blue-50/30 p-4 rounded-xl flex items-center gap-4 hover:shadow-sm transition">
                            <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center font-black text-white text-[10px]">NMB</div>
                            <div>
@@ -462,8 +544,6 @@ export default function CheckoutSystem() {
                              <p className="text-[11px] font-bold text-gray-800 mt-0.5">Jtex Company</p>
                            </div>
                          </div>
-
-                         {/* CRDB Bank */}
                          <div className="border border-green-200 bg-green-50/30 p-4 rounded-xl flex items-center gap-4 hover:shadow-sm transition">
                            <div className="w-12 h-12 bg-green-600 rounded-full flex items-center justify-center font-black text-white text-[10px]">CRDB</div>
                            <div>
@@ -472,16 +552,13 @@ export default function CheckoutSystem() {
                              <p className="text-[11px] font-bold text-gray-800 mt-0.5">Jtex Company</p>
                            </div>
                          </div>
-
                        </div>
-
                        <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 text-xs text-gray-600 font-medium">
                          Tafadhali fanya muamala wa <strong>Tsh {selectedPaymentType.id === 'cod' ? advancePayment.toLocaleString() : totalAmount.toLocaleString()}</strong> kwenda kwenye moja ya akaunti za benki hapo juu. Tunashauri uhifadhi ujumbe wako wa muamala.
                        </div>
                      </div>
                    )}
                    
-                   {/* Placeholder For Cards */}
                    {(selectedPaymentMethod.id === 'visa' || selectedPaymentMethod.id === 'mastercard') && (
                      <div className="animate-fade-in border-t border-gray-100 pt-5 text-center py-4">
                        <p className="text-sm font-bold text-gray-500">You will be redirected to the secure {selectedPaymentMethod.name} gateway to complete this payment.</p>
@@ -496,7 +573,6 @@ export default function CheckoutSystem() {
                    </div>
                 </div>
 
-                {/* Pricing Summary (Mobile only visual match) */}
                 <div className="lg:hidden bg-white rounded-2xl p-4 shadow-sm border border-gray-100 mb-6">
                    <h2 className="font-black text-base flex items-center gap-2 mb-4">📝 Pricing Summary</h2>
                    <div className="space-y-2 text-sm">
@@ -507,7 +583,6 @@ export default function CheckoutSystem() {
                       <span className="font-bold text-gray-900">Total Amount</span>
                       <span className="font-black text-xl text-gray-900">TZS {totalAmount.toLocaleString()}</span>
                    </div>
-
                    {selectedPaymentType.id === 'cod' && (
                      <div className="mt-4 bg-yellow-50/80 border border-[#F2A900]/30 rounded-xl flex">
                         <div className="p-3 w-[45%] flex flex-col justify-center border-r border-[#F2A900]/30">
@@ -522,7 +597,6 @@ export default function CheckoutSystem() {
                      </div>
                    )}
                 </div>
-
               </div>
             )}
           </div>
@@ -538,16 +612,26 @@ export default function CheckoutSystem() {
               <div className="space-y-3 mb-6 max-h-[250px] overflow-y-auto custom-scrollbar pr-2">
                  {cart.map((item: any) => {
                    const displayImage = getImagesArray(item.imageUrl)[0];
+                   const qty = getItemQuantity(item);
+
                    return (
-                   <div key={item.id} className="flex gap-3">
+                   <div key={item.cartId || item.id} className="flex gap-3">
                      <div className="w-10 h-10 bg-gray-50 rounded border border-gray-100 flex items-center justify-center flex-shrink-0 p-1">
                        {displayImage ? <img src={getImageUrl(displayImage)} alt={item.name} className="object-contain w-full h-full mix-blend-multiply" /> : <span className="text-lg">{item.imageEmoji || '📦'}</span>}
                      </div>
                      <div className="flex-1">
                        <h4 className="text-xs font-bold text-gray-900 line-clamp-1">{item.name}</h4>
-                       <p className="text-[9px] text-gray-500 mt-0.5">Qty: {item.quantity} {item.storage && `• ${item.storage}`}</p>
+                       <p className="text-[9px] text-gray-500 mt-0.5 flex items-center gap-1.5">
+                          <span className="font-bold">Qty: {qty}</span>
+                          {item.selectedColor && (
+                            <span className="flex items-center gap-1 font-bold uppercase text-gray-600 border-l border-gray-300 pl-1.5">
+                              <span className="w-2.5 h-2.5 rounded-full border border-gray-300" style={{ backgroundColor: getColorCode(item.selectedColor) }}></span>
+                              {item.selectedColor}
+                            </span>
+                          )}
+                       </p>
                      </div>
-                     <div className="text-xs font-black">TZS {(item.price * item.quantity).toLocaleString()}</div>
+                     <div className="text-xs font-black text-right pt-1">TZS {(Number(item.price) * qty).toLocaleString()}</div>
                    </div>
                  )})}
               </div>
@@ -570,9 +654,8 @@ export default function CheckoutSystem() {
               {currentStep < 3 ? (
                 <button 
                   onClick={() => {
-                    if (currentStep === 1) {
-                      handleProceedToShipping();
-                    } else if (currentStep === 2) {
+                    if (currentStep === 1) handleProceedToShipping();
+                    else if (currentStep === 2) {
                       if(!formData.fullName || !formData.phone || !formData.address) {
                          alert("Please fill in all required shipping details.");
                          return;
@@ -604,7 +687,6 @@ export default function CheckoutSystem() {
         </div>
       </main>
 
-      {/* MOBILE FIXED BOTTOM ACTION BAR */}
       <div className="lg:hidden fixed bottom-0 left-0 w-full bg-white border-t border-gray-100 p-4 shadow-[0_-10px_20px_rgba(0,0,0,0.03)] z-50">
         {currentStep < 3 ? (
           <div className="flex items-center justify-between gap-4">

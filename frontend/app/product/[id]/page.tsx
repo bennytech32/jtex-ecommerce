@@ -4,8 +4,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { 
   FiArrowLeft, FiHeart, FiShare, FiShoppingCart, FiStar, 
-  FiChevronRight, FiSearch, FiCheckCircle, FiMapPin, 
-  FiChevronDown, FiPackage, FiTruck, FiMinus, FiPlus, FiCheck, FiHome
+  FiChevronRight, FiChevronLeft, FiSearch, FiCheckCircle, FiMapPin, 
+  FiChevronDown, FiPackage, FiTruck, FiCheck, FiHome
 } from 'react-icons/fi';
 import { useCart } from '../../context/CartContext';
 import Footer from '../../components/common/Footer';
@@ -43,10 +43,9 @@ export default function ProductDetail() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showAllSpecs, setShowAllSpecs] = useState(false);
 
-  // User Selection States
+  // User Selection States (Color Only)
   const [selectedColor, setSelectedColor] = useState<string>('');
   const [colorOptions, setColorOptions] = useState<string[]>([]);
-  const [quantity, setQuantity] = useState(1);
 
   const [userLocation, setUserLocation] = useState('Dar es Salaam, Tanzania'); 
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://jtex-ecommerce-production.up.railway.app';
@@ -63,8 +62,7 @@ export default function ProductDetail() {
     if (!product) return;
     const businessPhone = "255767949581"; 
     const colorText = selectedColor ? `%0A*Color:* ${selectedColor}` : '';
-    const qtyText = quantity > 1 ? `%0A*Quantity:* ${quantity}` : '';
-    const message = `Hello Jtex,%0AI am inquiring about this product:%0A*${product.name}*${colorText}${qtyText}%0A*Price:* TZS ${product.price.toLocaleString()}%0A%0A*Link:* ${window.location.href}`;
+    const message = `Hello Jtex,%0AI am inquiring about this product:%0A*${product.name}*${colorText}%0A*Price:* TZS ${product.price.toLocaleString()}%0A%0A*Link:* ${window.location.href}`;
     window.open(`https://wa.me/${businessPhone}?text=${message}`, '_blank');
   };
 
@@ -85,6 +83,7 @@ export default function ProductDetail() {
     if (searchQuery.trim() !== '') router.push(`/categories?search=${encodeURIComponent(searchQuery)}`);
   };
 
+  // --- SLIDER CONTROLS ---
   const handleScroll = () => {
     if (sliderRef.current) {
       const scrollPosition = sliderRef.current.scrollLeft;
@@ -95,18 +94,28 @@ export default function ProductDetail() {
   };
 
   const scrollToImage = (index: number) => {
+    if (index < 0 || index >= images.length) return;
     setCurrentImageIndex(index);
     if (sliderRef.current) {
       sliderRef.current.scrollTo({ left: sliderRef.current.clientWidth * index, behavior: 'smooth' });
     }
   };
 
+  const slideNext = () => {
+    if (currentImageIndex < images.length - 1) scrollToImage(currentImageIndex + 1);
+  };
+
+  const slidePrev = () => {
+    if (currentImageIndex > 0) scrollToImage(currentImageIndex - 1);
+  };
+
+  // --- CART ADDING ---
   const handleAddToCart = (redirect: boolean = false) => {
     const productToAdd = {
       ...product,
       cartId: `${product.id}-${selectedColor}`,
       selectedColor: selectedColor,
-      quantityToAdd: quantity
+      quantityToAdd: 1 // Default to 1 item when adding
     };
 
     addToCart(productToAdd); 
@@ -114,8 +123,7 @@ export default function ProductDetail() {
     if (redirect) {
       router.push('/checkout');
     } else {
-      alert(`${quantity} item(s) of ${selectedColor || product.name} added to cart!`);
-      setQuantity(1);
+      alert(`1 item of ${selectedColor || product.name} added to cart!`);
     }
   };
 
@@ -194,11 +202,8 @@ export default function ProductDetail() {
     try { preInfo = JSON.parse(product.preOrderInfo); } catch(e) {}
   }
 
-  const relatedProducts = allProducts.filter(p => p.category === product.category && p.id !== product.id).slice(0, 5);
   const otherSpecsKeys = Object.keys(otherSpecs);
   const visibleSpecsKeys = showAllSpecs ? otherSpecsKeys : otherSpecsKeys.slice(0, 5);
-
-  const maxStock = preInfo?.isPreOrder ? 999 : product.stockQuantity;
 
   return (
     <div className="min-h-screen bg-gray-50/30 text-gray-900 font-sans pb-24 lg:pb-0 overflow-x-hidden">
@@ -274,6 +279,24 @@ export default function ProductDetail() {
                   <FiHeart className={`text-lg ${isMainProductWishlisted ? "fill-red-500 text-red-500" : ""}`} />
               </button>
 
+              {/* SLIDER NEXT/PREV CONTROLS (DESKTOP) */}
+              {images.length > 1 && (
+                <>
+                  <button 
+                    onClick={slidePrev} 
+                    className={`absolute left-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 bg-white/90 backdrop-blur rounded-full flex items-center justify-center text-gray-800 shadow-md transition-all opacity-0 group-hover:opacity-100 ${currentImageIndex === 0 ? 'hidden' : 'flex'}`}
+                  >
+                    <FiChevronLeft size={24} />
+                  </button>
+                  <button 
+                    onClick={slideNext} 
+                    className={`absolute right-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 bg-white/90 backdrop-blur rounded-full flex items-center justify-center text-gray-800 shadow-md transition-all opacity-0 group-hover:opacity-100 ${currentImageIndex === images.length - 1 ? 'hidden' : 'flex'}`}
+                  >
+                    <FiChevronRight size={24} />
+                  </button>
+                </>
+              )}
+
               <div ref={sliderRef} onScroll={handleScroll} className="w-full h-full flex overflow-x-auto snap-x snap-mandatory hide-scrollbar smooth-scroll scroll-smooth">
                  {images.length > 0 ? (
                     images.map((imgStr, idx) => (
@@ -308,6 +331,7 @@ export default function ProductDetail() {
                {hasWholesale && <span className="text-[11px] text-gray-500 font-medium mt-1">Discounts available for bulk orders</span>}
             </div>
 
+            {/* COLOR OPTIONS */}
             {colorOptions.length > 0 && (
                <div className="mb-6">
                  <h4 className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-2">Select Color: <span className="text-blue-600 font-medium capitalize">{selectedColor}</span></h4>
@@ -330,21 +354,7 @@ export default function ProductDetail() {
                </div>
             )}
 
-            <div className="mb-6">
-              <h4 className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-3">Quantity</h4>
-              <div className="flex items-center gap-4">
-                <div className="flex items-center bg-gray-50 border border-gray-200 rounded-xl overflow-hidden h-12 w-32">
-                  <button onClick={() => setQuantity(prev => Math.max(1, prev - 1))} className="flex-1 flex items-center justify-center text-gray-600 hover:bg-gray-100 hover:text-black transition h-full"><FiMinus size={18}/></button>
-                  <div className="flex-1 flex items-center justify-center font-bold text-[#0A101D] text-lg bg-white h-full border-x border-gray-100">{quantity}</div>
-                  <button onClick={() => setQuantity(prev => Math.min(maxStock, prev + 1))} className="flex-1 flex items-center justify-center text-gray-600 hover:bg-gray-100 hover:text-black transition h-full"><FiPlus size={18}/></button>
-                </div>
-                <div className="text-[11px] font-medium text-gray-500 leading-tight">
-                  <p>You can mix colors in</p>
-                  <p>your cart.</p>
-                </div>
-              </div>
-            </div>
-
+            {/* WHOLESALE */}
             {hasWholesale && (
               <div className="bg-gradient-to-br from-[#0A101D] to-gray-900 rounded-2xl p-4 border border-gray-800 mb-6 shadow-md text-white">
                 <p className="text-[11px] font-medium text-[#F2A900] uppercase tracking-widest mb-3 flex items-center gap-2"><FiPackage size={14}/> Wholesale Pricing</p>
@@ -365,6 +375,7 @@ export default function ProductDetail() {
               </div>
             )}
 
+            {/* DELIVERY STATUS */}
             {preInfo && preInfo.isPreOrder ? (
               <div className="mb-6 bg-blue-50/50 border border-blue-100 p-4 rounded-2xl flex items-start gap-3">
                  <FiTruck className="text-blue-600 mt-0.5 flex-shrink-0" size={20} />

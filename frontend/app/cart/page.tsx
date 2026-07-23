@@ -35,22 +35,66 @@ export default function CartPage() {
     return Number(item.quantity || item.quantityToAdd || item.qty || 1);
   };
 
-  // Kazi ya kuongeza au kupunguza quantity moja kwa moja kwenye Cart
+  // Kusoma Rangi zinazopatikana kwenye Specs ili kuweka kwenye Dropdown ya Cart
+  const getColorOptions = (item: any) => {
+    let options: string[] = [];
+    if (item.specifications) {
+      try {
+        const parsed = typeof item.specifications === 'string' ? JSON.parse(item.specifications) : item.specifications;
+        const rawColor = parsed.Color || parsed.color || parsed.Colors || parsed.colors;
+        if (rawColor) {
+          options = rawColor.split(/[\/,]/).map((c: string) => c.trim()).filter(Boolean);
+        }
+      } catch(e) {}
+    }
+    return options;
+  };
+
+  // Kazi ya kubadili rangi hapohapo kwenye kikapu
+  const handleColorChange = (item: any, newColor: string) => {
+    if (item.selectedColor === newColor) return;
+    
+    const oldCartId = item.cartId || `${item.id}-${item.selectedColor || 'default'}`;
+    const newCartId = `${item.id}-${newColor}`;
+    const qty = getItemQuantity(item);
+
+    const updatedItem = {
+      ...item,
+      selectedColor: newColor,
+      cartId: newCartId,
+      quantity: qty,
+      quantityToAdd: qty,
+      qty: qty
+    };
+
+    if (removeFromCart) removeFromCart(oldCartId);
+    
+    // Timeout ndogo inahakikisha item ya zamani inatoka kwanza kabla ya mpya kuingia (kuzuia bugs za React state)
+    setTimeout(() => {
+      if (addToCart) addToCart(updatedItem);
+    }, 0);
+  };
+
+  // Kazi ya kuongeza au kupunguza quantity moja kwa moja kwenye Cart imeboreshwa
   const handleQuantityChange = (item: any, newQty: number) => {
     if (newQty < 1) return;
     
-    // Tunatengeneza object sahihi inayoweka quantity kwenye kila property inayoweza kusomwa na CartContext
+    const targetCartId = item.cartId || `${item.id}-${item.selectedColor || 'default'}`;
+    
     const updatedItem = {
       ...item,
       quantity: newQty,
       quantityToAdd: newQty,
       qty: newQty,
-      cartId: item.cartId || `${item.id}-${item.selectedColor || 'default'}`
+      cartId: targetCartId
     };
 
-    if (addToCart) {
-      addToCart(updatedItem);
-    }
+    // Tunatoa ile ya zamani kwanza kuzuia Context yetu isifanye + (addition) badala ya update
+    if (removeFromCart) removeFromCart(targetCartId);
+    
+    setTimeout(() => {
+      if (addToCart) addToCart(updatedItem);
+    }, 0);
   };
 
   const cartSubtotal = cart?.reduce((acc: number, item: any) => {
@@ -98,6 +142,8 @@ export default function CartPage() {
                   const qty = getItemQuantity(item);
                   const itemTotal = Number(item.price) * qty;
                   const uniqueId = item.cartId || `${item.id}-${item.selectedColor || 'default'}` || index; 
+                  
+                  const colorOptions = getColorOptions(item);
 
                   return (
                     <div key={uniqueId} className="grid grid-cols-1 sm:grid-cols-12 gap-4 p-4 md:p-6 items-center hover:bg-gray-50/50 transition">
@@ -114,14 +160,32 @@ export default function CartPage() {
                           <Link href={`/product/${item.id}`} className="font-bold text-sm text-gray-900 hover:text-blue-600 transition line-clamp-2">
                             {item.name}
                           </Link>
-                          {item.selectedColor && (
-                            <p className="text-[11px] font-medium text-gray-500 mt-1 uppercase">Color: <span className="font-bold text-gray-800">{item.selectedColor}</span></p>
+                          
+                          {/* DROPDOWN YA RANGI BADALA YA STATIC TEXT */}
+                          {colorOptions.length > 0 ? (
+                            <div className="mt-1.5 flex items-center gap-2">
+                              <span className="text-[11px] font-bold text-gray-500 uppercase">Color:</span>
+                              <select
+                                value={item.selectedColor || colorOptions[0]}
+                                onChange={(e) => handleColorChange(item, e.target.value)}
+                                className="text-[11px] font-bold text-gray-800 bg-gray-50 border border-gray-200 rounded-md px-2 py-0.5 outline-none focus:border-[#F2A900] cursor-pointer"
+                              >
+                                {colorOptions.map((c: string, i: number) => (
+                                  <option key={i} value={c}>{c}</option>
+                                ))}
+                              </select>
+                            </div>
+                          ) : (
+                            item.selectedColor && (
+                              <p className="text-[11px] font-medium text-gray-500 mt-1 uppercase">Color: <span className="font-bold text-gray-800">{item.selectedColor}</span></p>
+                            )
                           )}
-                          <p className="text-xs font-bold text-[#F2A900] mt-1">TZS {Number(item.price).toLocaleString()}</p>
+
+                          <p className="text-xs font-bold text-[#F2A900] mt-1.5">TZS {Number(item.price).toLocaleString()}</p>
                         </div>
                       </div>
                       
-                      {/* Vitufe vya Kupunguza na Kuongeza Idadi */}
+                      {/* Vitufe vya Kupunguza na Kuongeza Idadi (SASA VINAFANYA KAZI BILA ERROR) */}
                       <div className="col-span-1 sm:col-span-3 flex items-center sm:justify-center mt-2 sm:mt-0">
                         <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden h-9 bg-gray-50">
                           <button 

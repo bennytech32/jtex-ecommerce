@@ -167,18 +167,25 @@ export default function AdminProducts() {
       });
       if(res.ok) {
         const savedCat = await res.json();
-        setDbCategories([...dbCategories, savedCat]);
+        // HYDRATION FIX: Hakikisha inasoma 'id' kwa uhakika (Hata kama API inatumia _id au imei-nest)
+        const catToAdd = savedCat.category || savedCat.data || savedCat;
+        const finalCat = {
+          id: catToAdd.id || catToAdd._id || Date.now().toString(),
+          name: catToAdd.name || newCatName.trim()
+        };
+        
+        setDbCategories(prev => [...prev, finalCat]);
         setNewCatName('');
         setMessage('Kategoria imehifadhiwa kikamilifu!');
       } else {
         const newCat = { id: Date.now().toString(), name: newCatName.trim() };
-        setDbCategories([...dbCategories, newCat]);
+        setDbCategories(prev => [...prev, newCat]);
         setNewCatName('');
         setMessage('Kategoria imehifadhiwa kwa muda (API missing).');
       }
     } catch (err) { 
         const newCat = { id: Date.now().toString(), name: newCatName.trim() };
-        setDbCategories([...dbCategories, newCat]);
+        setDbCategories(prev => [...prev, newCat]);
         setNewCatName('');
         setMessage('Kategoria imehifadhiwa kwa muda (API offline).');
     }
@@ -245,6 +252,13 @@ export default function AdminProducts() {
   const removeImage = (indexToRemove: number) => {
     setImageFiles(prev => prev.filter((_, index) => index !== indexToRemove));
     setImagePreviews(prev => prev.filter((_, index) => index !== indexToRemove));
+  };
+
+  // --- KUFUTA SPEC MOJA MOJA KWENYE AUTO-LOADED ---
+  const handleRemoveAutoSpec = (fieldToRemove: string) => {
+    const updatedSpecs = { ...specData };
+    delete updatedSpecs[fieldToRemove];
+    setSpecData(updatedSpecs);
   };
 
   const handleAddCustomSpec = () => {
@@ -561,8 +575,19 @@ export default function AdminProducts() {
               <div className="bg-gray-50 p-5 rounded-2xl border border-gray-200">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {Object.keys(specData).map(field => (
-                    <div key={field}>
-                      <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">{field}</label>
+                    <div key={field} className="relative group">
+                      <div className="flex justify-between items-center mb-1">
+                        <label className="block text-[10px] font-bold text-gray-500 uppercase">{field}</label>
+                        {/* KITUFE CHA KUFUTA SPEC */}
+                        <button 
+                          type="button" 
+                          onClick={() => handleRemoveAutoSpec(field)} 
+                          className="text-red-400 hover:text-red-600 transition p-1 bg-white rounded-md border border-gray-100 shadow-sm"
+                          title="Futa spec hii"
+                        >
+                          <FiTrash2 size={12} />
+                        </button>
+                      </div>
                       <input 
                         type="text" 
                         value={specData[field] || ''} 
