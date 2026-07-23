@@ -13,13 +13,17 @@ const app = express();
 const prisma = new PrismaClient();
 
 // ==========================================
-// MIDDLEWARES
+// MIDDLEWARES (CORS FIX KAMILI)
 // ==========================================
-// Ruhusu Frontend iwasiliane na Backend (Next.js kwenye port 3000 au Vercel)
+// 1. Ruhusu Frontend (jtex.co.tz au localhost) iwasiliane bila shida
 app.use(cors({
-  origin: '*', // Kwa usalama zaidi baadaye weka URL ya frontend yako
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  origin: '*', // Inaruhusu kila domain. (Kama ikizingua tutaweka ['https://jtex.co.tz', 'http://localhost:3000'])
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
 }));
+
+// 2. Ruhusu "Pre-flight" requests zote (Muhimu sana kuzuia CORS block)
+app.options('*', cors());
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -58,6 +62,7 @@ app.get('/api/categories', async (req, res) => {
     const categories = await prisma.category.findMany({ orderBy: { name: 'asc' } });
     res.json(categories);
   } catch (error) {
+    console.error("Kosa kuvuta kategoria:", error);
     res.status(500).json({ error: 'Imeshindwa kusoma kategoria' });
   }
 });
@@ -83,6 +88,7 @@ app.get('/api/spec-templates', async (req, res) => {
     const templates = await prisma.specTemplate.findMany({ orderBy: { createdAt: 'desc' } });
     res.json(templates);
   } catch (error) {
+    console.error("Kosa kuvuta templates:", error);
     res.status(500).json({ error: 'Imeshindwa kusoma templates' });
   }
 });
@@ -112,7 +118,7 @@ app.get('/api/products', async (req, res) => {
     const products = await prisma.product.findMany({ orderBy: { createdAt: 'desc' } });
     res.json(products);
   } catch (error) {
-    console.error(error);
+    console.error("Kosa kuvuta bidhaa:", error);
     res.status(500).json({ error: 'Kosa la mtandao wakati wa kuvuta bidhaa.' });
   }
 });
@@ -221,6 +227,20 @@ app.delete('/api/products/:id', async (req, res) => {
   } catch (error) {
     res.status(500).json({ error: 'Imeshindwa kufuta bidhaa.' });
   }
+});
+
+// ==========================================
+// 404 & 500 ERROR HANDLERS (KUZUIA FAKE CORS)
+// ==========================================
+// Kama React inaomba endpoint ambayo haipo (404), rudisha JSON yenye headers salama
+app.use((req, res, next) => {
+  res.status(404).json({ error: `Route ya ${req.originalUrl} haipatikani kwenye server (404).` });
+});
+
+// Kama kuna kosa la kiufundi (500), rudisha JSON
+app.use((err, req, res, next) => {
+  console.error('Server Error:', err.stack);
+  res.status(500).json({ error: 'Hitilafu ya ndani ya Server (500).' });
 });
 
 // ==========================================
