@@ -4,13 +4,13 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 
-// NJIA ZIMEREKEBISHWA & ICONS ZOTE ZIMEWEKWA
+// NJIA ZIMEREKEBISHWA & ICONS ZOTE ZIMEWEKWA (Ikiwemo FiShield)
 import { useCart } from '../context/CartContext';
 import { 
   FiArrowLeft, FiHeart, FiShare, FiShare2, FiShoppingCart, FiStar, 
   FiChevronRight, FiChevronLeft, FiSearch, FiCheckCircle, FiMapPin, 
   FiChevronDown, FiPackage, FiTruck, FiCheck, FiHome, FiAward,
-  FiMinus, FiPlus
+  FiMinus, FiPlus, FiShield
 } from 'react-icons/fi';
 
 import TopTicker from '../components/navigation/TopTicker';
@@ -363,12 +363,25 @@ export default function ProductDetailsPage() {
                   <span className="font-bold text-gray-500 uppercase text-[11px] tracking-wider">Model</span>
                   <span className="font-bold text-[#F2A900]">{product.model || 'Standard'}</span>
                 </div>
-                {Object.keys(displaySpecs).length > 0 ? Object.keys(displaySpecs).map((key) => (
-                  <div key={key} className="flex items-center justify-between py-3 border-b border-gray-100">
-                    <span className="font-bold text-gray-500 uppercase text-[11px] tracking-wider">{key}</span>
-                    <span className="font-bold text-gray-900 text-right w-1/2 line-clamp-1">{displaySpecs[key]}</span>
-                  </div>
-                )) : (
+                {otherSpecsKeys.length > 0 ? (
+                  <>
+                    {visibleSpecsKeys.map((key) => (
+                      <div key={key} className="flex items-center justify-between py-3 border-b border-gray-100">
+                        <span className="font-bold text-gray-500 uppercase text-[11px] tracking-wider">{key}</span>
+                        <span className="font-bold text-gray-900 text-right w-1/2 line-clamp-1">{displaySpecs[key]}</span>
+                      </div>
+                    ))}
+                    {otherSpecsKeys.length > 5 && (
+                      <button 
+                        onClick={() => setShowAllSpecs(!showAllSpecs)}
+                        className="col-span-1 md:col-span-2 py-4 text-xs font-bold text-blue-600 bg-blue-50/50 hover:bg-blue-50 transition-colors flex items-center justify-center gap-1 mt-4 rounded-xl border border-blue-100"
+                      >
+                        {showAllSpecs ? 'View Less' : `See All Specifications (${otherSpecsKeys.length - 5} More)`} 
+                        <FiChevronDown className={`transition-transform ${showAllSpecs ? 'rotate-180' : ''}`} />
+                      </button>
+                    )}
+                  </>
+                ) : (
                   <div className="col-span-1 md:col-span-2 py-4 text-gray-400 italic">No additional specifications available for this product.</div>
                 )}
               </div>
