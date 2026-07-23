@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { FiTrash2, FiMinus, FiPlus, FiArrowRight, FiShield, FiShoppingBag } from 'react-icons/fi';
+import { FiTrash2, FiMinus, FiPlus, FiArrowRight, FiShield, FiShoppingBag, FiArrowLeft } from 'react-icons/fi';
 import TopTicker from '../components/navigation/TopTicker';
 import MainHeader from '../components/navigation/MainHeader';
 import NavbarLinks from '../components/navigation/NavbarLinks';
@@ -10,17 +10,15 @@ import Footer from '../components/common/Footer';
 import { useCart } from '../context/CartContext';
 
 export default function CartPage() {
-  const { cart, removeFromCart, updateQuantity } = useCart();
+  const { cart, removeFromCart, addToCart } = useCart();
   const [mounted, setMounted] = useState(false);
   
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://jtex-ecommerce-production.up.railway.app';
 
-  // Component imemount (Kuepuka hydration errors kwa next.js context)
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // Helper ya kupata picha ya kwanza
   const getFirstImage = (imgData: any) => {
     if (!imgData) return null;
     try {
@@ -32,10 +30,32 @@ export default function CartPage() {
     }
   };
 
-  // Mahesabu ya Jumla
+  // Kazi ya kusoma idadi halisi (Quantity) ya bidhaa bila kukosa
+  const getItemQuantity = (item: any) => {
+    return Number(item.quantity || item.quantityToAdd || item.qty || 1);
+  };
+
+  // Kazi ya kuongeza au kupunguza quantity moja kwa moja kwenye Cart
+  const handleQuantityChange = (item: any, newQty: number) => {
+    if (newQty < 1) return;
+    
+    // Tunatengeneza object sahihi inayoweka quantity kwenye kila property inayoweza kusomwa na CartContext
+    const updatedItem = {
+      ...item,
+      quantity: newQty,
+      quantityToAdd: newQty,
+      qty: newQty,
+      cartId: item.cartId || `${item.id}-${item.selectedColor || 'default'}`
+    };
+
+    if (addToCart) {
+      addToCart(updatedItem);
+    }
+  };
+
   const cartSubtotal = cart?.reduce((acc: number, item: any) => {
-    const qty = item.quantity || item.quantityToAdd || 1;
-    return acc + (item.price * qty);
+    const qty = getItemQuantity(item);
+    return acc + (Number(item.price) * qty);
   }, 0) || 0;
 
   if (!mounted) return null;
@@ -66,21 +86,18 @@ export default function CartPage() {
             {/* UPANDE WA KUSHOTO: Orodha ya Bidhaa */}
             <div className="flex-1 w-full bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
               
-              {/* Kichwa cha Jedwali */}
               <div className="grid grid-cols-12 gap-4 p-4 md:p-6 border-b border-gray-100 bg-gray-50 text-[11px] font-bold text-gray-500 uppercase tracking-wider hidden sm:grid">
                 <div className="col-span-6">Product</div>
                 <div className="col-span-3 text-center">Quantity</div>
                 <div className="col-span-3 text-right">Total</div>
               </div>
 
-              {/* Mzunguko wa Bidhaa kutoka kwenye Context */}
               <div className="divide-y divide-gray-100">
                 {cart.map((item: any, index: number) => {
                   const imgUrl = getFirstImage(item.imageUrl);
-                  const qty = item.quantity || item.quantityToAdd || 1;
-                  const itemTotal = item.price * qty;
-                  // Tumia cartId ikiwa ipo (kwa sababu ya rangi tofauti), kama haipo tumia id
-                  const uniqueId = item.cartId || item.id || index; 
+                  const qty = getItemQuantity(item);
+                  const itemTotal = Number(item.price) * qty;
+                  const uniqueId = item.cartId || `${item.id}-${item.selectedColor || 'default'}` || index; 
 
                   return (
                     <div key={uniqueId} className="grid grid-cols-1 sm:grid-cols-12 gap-4 p-4 md:p-6 items-center hover:bg-gray-50/50 transition">
@@ -100,28 +117,25 @@ export default function CartPage() {
                           {item.selectedColor && (
                             <p className="text-[11px] font-medium text-gray-500 mt-1 uppercase">Color: <span className="font-bold text-gray-800">{item.selectedColor}</span></p>
                           )}
-                          <p className="text-xs font-bold text-[#F2A900] mt-1">TZS {item.price.toLocaleString()}</p>
+                          <p className="text-xs font-bold text-[#F2A900] mt-1">TZS {Number(item.price).toLocaleString()}</p>
                         </div>
                       </div>
                       
+                      {/* Vitufe vya Kupunguza na Kuongeza Idadi */}
                       <div className="col-span-1 sm:col-span-3 flex items-center sm:justify-center mt-2 sm:mt-0">
-                        <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden h-9">
+                        <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden h-9 bg-gray-50">
                           <button 
-                            onClick={() => {
-                              if(qty > 1 && updateQuantity) updateQuantity(uniqueId, qty - 1);
-                            }} 
-                            className="px-3 bg-gray-50 hover:bg-gray-100 text-gray-600 transition h-full flex items-center"
+                            onClick={() => handleQuantityChange(item, qty - 1)}
+                            className="px-3 hover:bg-gray-200 text-gray-600 transition h-full flex items-center"
                           >
                             <FiMinus size={14} />
                           </button>
-                          <span className="px-4 text-sm font-bold border-x border-gray-200 h-full flex items-center justify-center min-w-[40px] bg-white">
+                          <span className="px-4 text-sm font-bold border-x border-gray-200 h-full flex items-center justify-center min-w-[45px] bg-white text-gray-900">
                             {qty}
                           </span>
                           <button 
-                            onClick={() => {
-                              if(updateQuantity) updateQuantity(uniqueId, qty + 1);
-                            }} 
-                            className="px-3 bg-gray-50 hover:bg-gray-100 text-gray-600 transition h-full flex items-center"
+                            onClick={() => handleQuantityChange(item, qty + 1)}
+                            className="px-3 hover:bg-gray-200 text-gray-600 transition h-full flex items-center"
                           >
                             <FiPlus size={14} />
                           </button>
@@ -155,13 +169,13 @@ export default function CartPage() {
               </div>
             </div>
 
-            {/* UPANDE WA KULIA: Malipo na Checkout Summary */}
+            {/* UPANDE WA KULIA: Order Summary */}
             <div className="w-full lg:w-[350px] bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sticky top-24">
               <h3 className="text-lg font-black text-[#0A101D] mb-6">Order Summary</h3>
               
               <div className="space-y-4 text-sm text-gray-600 border-b border-gray-100 pb-6 mb-6">
                 <div className="flex justify-between items-center">
-                  <span className="font-medium">Subtotal ({cart.length} items):</span>
+                  <span className="font-medium">Subtotal ({cart.reduce((acc:any, i:any)=> acc + getItemQuantity(i), 0)} items):</span>
                   <span className="font-bold text-gray-900">TZS {cartSubtotal.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between items-center">
@@ -188,9 +202,6 @@ export default function CartPage() {
                   <FiShield size={14} />
                   <span>100% Secure Checkout</span>
                 </div>
-                <p className="text-[10px] text-gray-400 text-center max-w-[250px]">
-                  Taxes and additional shipping rates (if applicable) will be calculated at checkout.
-                </p>
               </div>
             </div>
 
