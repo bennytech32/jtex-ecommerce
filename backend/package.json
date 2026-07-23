@@ -20,5 +20,10 @@
   "devDependencies": {
     "nodemon": "^3.0.0",
     "prisma": "^5.0.0"
+  },
+  "overrides": {
+    "multer-storage-cloudinary": {
+      "cloudinary": "$cloudinary"
+    }
   }
 }
