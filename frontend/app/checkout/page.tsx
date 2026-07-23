@@ -11,6 +11,7 @@ import {
 
 // === HELPER FUNCTION: KUBADILI JINA LA RANGI KUWA RANGI HALISI ===
 const getColorCode = (colorName: string) => {
+  if (!colorName) return '';
   const c = colorName.toLowerCase().trim();
   const colorsMap: any = {
     'black': '#000000', 'white': '#FFFFFF', 'silver': '#C0C0C0', 'gray': '#808080', 'grey': '#808080',
@@ -62,7 +63,6 @@ const ISLAND_REGIONS = [
 export default function CheckoutSystem() {
   const router = useRouter();
   
-  // Tumeondoa updateQuantity ili kuzuia error. Tutatumia addToCart na removeFromCart kufanya modifications zote.
   const { cart, removeFromCart, clearCart, addToCart } = useCart();
   const [mounted, setMounted] = useState(false); 
   
@@ -87,25 +87,54 @@ export default function CheckoutSystem() {
     return Number(item.quantity || item.quantityToAdd || item.qty || 1);
   };
   
+  // === AKILI MPYA: DEEP PARSING KUTAFUTA RANGI ===
   const getColorOptions = (item: any) => {
     let options: string[] = [];
-    if (item.specifications) {
-      try {
-        const parsed = typeof item.specifications === 'string' ? JSON.parse(item.specifications) : item.specifications;
-        const rawColor = parsed.Color || parsed.color || parsed.Colors || parsed.colors;
-        if (rawColor) {
-          options = rawColor.split(/[\/,]/).map((c: string) => c.trim()).filter(Boolean);
+    try {
+      let parsed = item.specifications;
+      
+      // Kulazimisha kusoma kama JSON mara mbili (Kuzuia Double-Stringified Data)
+      if (typeof parsed === 'string') {
+        try { parsed = JSON.parse(parsed); } catch(e) {}
+      }
+      if (typeof parsed === 'string') {
+        try { parsed = JSON.parse(parsed); } catch(e) {}
+      }
+      
+      if (parsed && typeof parsed === 'object') {
+        const colorKey = Object.keys(parsed).find(k => 
+          ['color', 'colors', 'colour', 'colours', 'rangi'].includes(k.toLowerCase().trim())
+        );
+        if (colorKey && parsed[colorKey]) {
+          options = String(parsed[colorKey]).split(/[\/,|]/).map((c: string) => c.trim()).filter(Boolean);
         }
-      } catch(e) {}
+      }
+    } catch(e) {
+       console.error("Color parse error:", e);
     }
+
+    // Fallback: Kama specs imefeli, angalia kwenye item moja kwa moja
+    if (options.length === 0) {
+      const rootColor = item.Color || item.color || item.Colors || item.colors || item.Colour || item.colour || item.Rangi || item.rangi;
+      if (rootColor) {
+        options = String(rootColor).split(/[\/,|]/).map((c: string) => c.trim()).filter(Boolean);
+      }
+    }
+
+    // Fallback ya mwisho kabisa kama User alichagua rangi lakini haipo kwenye Options
+    if (options.length === 0 && item.selectedColor) {
+      options = [item.selectedColor];
+    }
+
     return options;
   };
 
-  // Kubadili Rangi salama (Tunaondoa ya zamani, tunaweka mpya)
+  // === KUBADILI RANGI (Pamoja na kuzuia Race Condition ya CartContext) ===
   const handleColorChange = (item: any, newColor: string) => {
     if (item.selectedColor === newColor) return;
-    const oldCartId = item.cartId || `${item.id}-${item.selectedColor || 'default'}`;
+    const oldCartId = item.cartId || item.id;
     const qty = getItemQuantity(item);
+    
     const updatedItem = {
       ...item,
       selectedColor: newColor,
@@ -114,14 +143,16 @@ export default function CheckoutSystem() {
       quantityToAdd: qty,
       qty: qty
     };
+    
     if (removeFromCart) removeFromCart(oldCartId);
-    setTimeout(() => { if (addToCart) addToCart(updatedItem); }, 0);
+    // Tunatumia 200ms kuzuia mfumo kufuta na kuweka kabla React haijamaliza (Inagoma kuweka colours)
+    setTimeout(() => { if (addToCart) addToCart(updatedItem); }, 200); 
   };
 
-  // Kubadili Idadi salama (+ / -) (Tunaondoa ya zamani, tunaweka mpya yenye idadi sahihi)
+  // === KUBADILI IDADI (Pamoja na kuzuia Race Condition ya CartContext) ===
   const handleQuantityChange = (item: any, newQty: number) => {
     if (newQty < 1) return;
-    const targetCartId = item.cartId || `${item.id}-${item.selectedColor || 'default'}`;
+    const targetCartId = item.cartId || item.id;
     const updatedItem = {
       ...item,
       quantity: newQty,
@@ -130,7 +161,7 @@ export default function CheckoutSystem() {
       cartId: targetCartId
     };
     if (removeFromCart) removeFromCart(targetCartId);
-    setTimeout(() => { if (addToCart) addToCart(updatedItem); }, 0);
+    setTimeout(() => { if (addToCart) addToCart(updatedItem); }, 200);
   };
 
   // States
@@ -213,7 +244,10 @@ export default function CheckoutSystem() {
     const businessPhone = "255767949581"; 
     let itemsText = cart.map((item: any, index: number) => {
       const qty = getItemQuantity(item);
-      const colorText = item.selectedColor ? ` (Color: ${item.selectedColor})` : '';
+      const colorOptions = getColorOptions(item);
+      const activeColor = item.selectedColor || colorOptions[0];
+      const colorText = activeColor ? ` (Color: ${activeColor})` : '';
+      
       return `${index + 1}. ${item.name}${colorText} - Qty: ${qty} (TZS ${(Number(item.price) * qty).toLocaleString()})`;
     }).join('%0A');
 
@@ -298,8 +332,10 @@ export default function CheckoutSystem() {
                   {cart?.length > 0 ? cart.map((item: any) => {
                     const displayImage = getImagesArray(item.imageUrl)[0];
                     const qty = getItemQuantity(item);
-                    const uniqueId = item.cartId || `${item.id}-${item.selectedColor || 'default'}`;
+                    const uniqueId = item.cartId || item.id;
+                    
                     const colorOptions = getColorOptions(item);
+                    const activeColor = item.selectedColor || colorOptions[0];
 
                     return (
                       <div key={uniqueId} className="flex flex-col sm:flex-row gap-4 p-4 border border-gray-100 rounded-xl relative hover:border-[#F2A900] transition group">
@@ -310,11 +346,11 @@ export default function CheckoutSystem() {
                           <h3 className="font-bold text-sm text-gray-900 pr-0 sm:pr-8 line-clamp-2">{item.name}</h3>
                           
                           <div className="text-xs text-gray-500 mt-2 flex flex-wrap items-center justify-center sm:justify-start gap-2">
-                            {colorOptions.length > 0 ? (
+                            {colorOptions.length > 1 ? (
                               <div className="flex items-center gap-1">
                                 <span className="text-[10px] font-bold text-gray-500 uppercase">Color:</span>
                                 <select
-                                  value={item.selectedColor || colorOptions[0]}
+                                  value={activeColor || ''}
                                   onChange={(e) => handleColorChange(item, e.target.value)}
                                   className="text-[10px] font-bold text-gray-800 bg-gray-50 border border-gray-200 rounded-md px-2 py-0.5 outline-none focus:border-[#F2A900] cursor-pointer"
                                 >
@@ -324,10 +360,10 @@ export default function CheckoutSystem() {
                                 </select>
                               </div>
                             ) : (
-                              item.selectedColor && (
+                              activeColor && (
                                 <span className="flex items-center gap-1.5 font-bold uppercase text-[10px] text-gray-600">
-                                  <span className="w-3.5 h-3.5 rounded-full border border-gray-300 shadow-sm" style={{ backgroundColor: getColorCode(item.selectedColor) }}></span> 
-                                  Color: {item.selectedColor}
+                                  <span className="w-3.5 h-3.5 rounded-full border border-gray-300 shadow-sm" style={{ backgroundColor: getColorCode(activeColor) }}></span> 
+                                  Color: {activeColor}
                                 </span>
                               )
                             )}
@@ -335,7 +371,11 @@ export default function CheckoutSystem() {
                           </div>
 
                           <div className="flex flex-col sm:flex-row items-center justify-between mt-3 gap-3 sm:gap-0">
-                            <span className="font-black text-gray-900">TZS {(Number(item.price) * qty).toLocaleString()}</span>
+                            {/* FIX: Kuonesha bei ya kimoja (Unit Price) kuepuka mkanganyiko wa hesabu */}
+                            <div className="flex flex-col">
+                              <span className="font-black text-gray-900 text-sm">TZS {(Number(item.price) * qty).toLocaleString()}</span>
+                              {qty > 1 && <span className="text-[10px] font-bold text-gray-400 mt-0.5">TZS {Number(item.price).toLocaleString()} each</span>}
+                            </div>
                             
                             {/* QUANTITY ADJUSTER */}
                             <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden h-8 bg-gray-50">
@@ -613,6 +653,9 @@ export default function CheckoutSystem() {
                  {cart.map((item: any) => {
                    const displayImage = getImagesArray(item.imageUrl)[0];
                    const qty = getItemQuantity(item);
+                   
+                   const colorOptions = getColorOptions(item);
+                   const activeColor = item.selectedColor || colorOptions[0];
 
                    return (
                    <div key={item.cartId || item.id} className="flex gap-3">
@@ -623,15 +666,19 @@ export default function CheckoutSystem() {
                        <h4 className="text-xs font-bold text-gray-900 line-clamp-1">{item.name}</h4>
                        <p className="text-[9px] text-gray-500 mt-0.5 flex items-center gap-1.5">
                           <span className="font-bold">Qty: {qty}</span>
-                          {item.selectedColor && (
+                          {activeColor && (
                             <span className="flex items-center gap-1 font-bold uppercase text-gray-600 border-l border-gray-300 pl-1.5">
-                              <span className="w-2.5 h-2.5 rounded-full border border-gray-300" style={{ backgroundColor: getColorCode(item.selectedColor) }}></span>
-                              {item.selectedColor}
+                              <span className="w-2.5 h-2.5 rounded-full border border-gray-300" style={{ backgroundColor: getColorCode(activeColor) }}></span>
+                              {activeColor}
                             </span>
                           )}
                        </p>
                      </div>
-                     <div className="text-xs font-black text-right pt-1">TZS {(Number(item.price) * qty).toLocaleString()}</div>
+                     <div className="text-xs font-black text-right flex flex-col justify-start">
+                        <span>TZS {(Number(item.price) * qty).toLocaleString()}</span>
+                        {/* FIX: Kuonesha bei ya kimoja (Unit Price) kuepuka mkanganyiko wa hesabu */}
+                        {qty > 1 && <span className="text-[8px] font-medium text-gray-400 mt-0.5">({Number(item.price).toLocaleString()} x {qty})</span>}
+                     </div>
                    </div>
                  )})}
               </div>

@@ -41,6 +41,10 @@ export default function AdminProducts() {
   const [customSpecs, setCustomSpecs] = useState<{key: string, value: string}[]>([]); 
   const [selectedTemplateId, setSelectedTemplateId] = useState(''); // NEW: Kwa ajili ya Auto-Select Dropdown
   
+  // --- QUICK SAVE TEMPLATE STATES (NEW) ---
+  const [quickTemplateName, setQuickTemplateName] = useState('');
+  const [isSavingTemplate, setIsSavingTemplate] = useState(false);
+  
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
 
@@ -225,6 +229,51 @@ export default function AdminProducts() {
       }
     } catch (err) {}
     setIsLoading(false);
+  };
+
+  // --- SAVE CURRENT CUSTOM FIELDS AS TEMPLATE (NEW LOGIC) ---
+  const handleSaveCurrentAsTemplate = async () => {
+    if(!quickTemplateName.trim()) {
+      setError("Please enter a name for your new template.");
+      window.scrollTo(0,0);
+      return;
+    }
+    
+    setIsSavingTemplate(true);
+    
+    // Kusanya fields zote (Auto + Custom)
+    const autoFields = Object.keys(specData);
+    const extraFields = customSpecs.map(s => s.key.trim()).filter(k => k !== '');
+    const allFields = Array.from(new Set([...autoFields, ...extraFields])); // Toa duplicates
+    
+    if(allFields.length === 0) {
+      setError("There are no fields to save as a template.");
+      setIsSavingTemplate(false);
+      window.scrollTo(0,0);
+      return;
+    }
+
+    try {
+      const res = await fetch(`${API_URL}/api/spec-templates`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ title: quickTemplateName.trim(), fields: allFields })
+      });
+      if(res.ok) {
+        const savedTemplate = await res.json();
+        setDbSpecTemplates([...dbSpecTemplates, savedTemplate]);
+        setQuickTemplateName('');
+        setSelectedTemplateId(savedTemplate.id); // Auto-select the newly created template
+        setMessage('Success! Your custom fields have been saved as a reusable template.');
+      } else {
+        setError("Failed to save template.");
+      }
+    } catch (err) {
+      setError("Network error while saving template.");
+    }
+    
+    setIsSavingTemplate(false);
+    window.scrollTo(0,0);
   };
 
   // --- Image Handling ---
@@ -600,6 +649,30 @@ export default function AdminProducts() {
                 </div>
               ))}
             </div>
+
+            {/* SAVE AS TEMPLATE QUICK ACTION (NEW) */}
+            {(Object.keys(specData).length > 0 || customSpecs.length > 0) && (
+              <div className="mt-6 pt-5 border-t border-gray-200 flex flex-col sm:flex-row items-center gap-3 animate-fade-in">
+                <div className="flex-1 w-full">
+                  <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Save current fields as a Template for next time</label>
+                  <input 
+                    type="text" 
+                    placeholder="Enter template name (e.g. Custom Phones)" 
+                    value={quickTemplateName} 
+                    onChange={e => setQuickTemplateName(e.target.value)} 
+                    className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 outline-none text-sm font-semibold focus:border-purple-400 shadow-sm"
+                  />
+                </div>
+                <button 
+                  type="button" 
+                  onClick={handleSaveCurrentAsTemplate}
+                  disabled={isSavingTemplate || !quickTemplateName.trim()}
+                  className="w-full sm:w-auto mt-4 sm:mt-5 bg-purple-100 hover:bg-purple-200 text-purple-700 font-bold py-2.5 px-6 rounded-xl transition flex items-center justify-center gap-2 disabled:opacity-50"
+                >
+                  {isSavingTemplate ? <><div className="w-4 h-4 border-2 border-purple-700 border-t-transparent rounded-full animate-spin"></div> Saving...</> : <><FiDatabase /> Save Template</>}
+                </button>
+              </div>
+            )}
           </div>
         </div>
 

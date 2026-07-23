@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { 
   FiArrowLeft, FiHeart, FiShare, FiShoppingCart, FiStar, 
   FiChevronRight, FiChevronLeft, FiSearch, FiCheckCircle, FiMapPin, 
-  FiChevronDown, FiPackage, FiTruck, FiCheck, FiHome
+  FiChevronDown, FiPackage, FiTruck, FiCheck, FiHome, FiAward
 } from 'react-icons/fi';
 import { useCart } from '../../context/CartContext';
 import Footer from '../../components/common/Footer';
@@ -115,7 +115,7 @@ export default function ProductDetail() {
       ...product,
       cartId: `${product.id}-${selectedColor}`,
       selectedColor: selectedColor,
-      quantityToAdd: 1 // Default to 1 item when adding
+      quantityToAdd: 1 
     };
 
     addToCart(productToAdd); 
@@ -192,6 +192,7 @@ export default function ProductDetail() {
   } = specs;
   
   const displayModel = Model || product.model || 'N/A';
+  const displayCondition = product.condition || 'Brand New'; // Condition Display
   const hasWholesale = isWholesale === 'Yes';
   
   const tier2Price = wholesaleTier2Price ? Number(wholesaleTier2Price) : basePrice * 0.95; 
@@ -279,7 +280,6 @@ export default function ProductDetail() {
                   <FiHeart className={`text-lg ${isMainProductWishlisted ? "fill-red-500 text-red-500" : ""}`} />
               </button>
 
-              {/* SLIDER NEXT/PREV CONTROLS (DESKTOP) */}
               {images.length > 1 && (
                 <>
                   <button 
@@ -328,16 +328,25 @@ export default function ProductDetail() {
 
             <div className="flex flex-col mb-4 bg-gray-50/50 border border-gray-100 p-4 rounded-2xl">
                <span className="text-3xl lg:text-4xl font-bold text-[#0A101D] leading-none tracking-tight">TSH {basePrice.toLocaleString()}</span>
-               {hasWholesale && <span className="text-[11px] text-gray-500 font-medium mt-1">Discounts available for bulk orders</span>}
+               
+               {/* CONDITION & WHOLESALE BADGES */}
+               <div className="flex items-center gap-2 mt-3">
+                 <span className={`text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-wider flex items-center gap-1 ${
+                    displayCondition.includes('New') ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
+                 }`}>
+                   <FiAward size={12}/> {displayCondition}
+                 </span>
+                 {hasWholesale && <span className="text-[10px] text-blue-700 bg-blue-100 px-2 py-1 rounded-md font-bold uppercase tracking-wider">Discounts available for bulk orders</span>}
+               </div>
             </div>
 
             {/* COLOR OPTIONS */}
             {colorOptions.length > 0 && (
                <div className="mb-6">
-                 <h4 className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-2">Select Color: <span className="text-blue-600 font-medium capitalize">{selectedColor}</span></h4>
+                 <h4 className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-2">Available Colors: <span className="text-blue-600 font-medium capitalize">{selectedColor || colorOptions[0]}</span></h4>
                  <div className="flex flex-wrap gap-3">
                    {colorOptions.map((c, i) => {
-                     const isSelected = selectedColor === c;
+                     const isSelected = selectedColor === c || (!selectedColor && i === 0);
                      const cssColor = getColorCode(c);
                      const isWhite = cssColor === '#FFFFFF' || cssColor.toLowerCase() === 'white';
                      
@@ -374,6 +383,18 @@ export default function ProductDetail() {
                 </div>
               </div>
             )}
+
+            {/* RATINGS (NYOTA) */}
+            <div className="flex items-center gap-1.5 mb-6 bg-gray-50 w-max px-3 py-1.5 rounded-lg border border-gray-100">
+                <div className="flex text-[#F2A900]">
+                  <FiStar className="fill-[#F2A900]" size={14} />
+                  <FiStar className="fill-[#F2A900]" size={14} />
+                  <FiStar className="fill-[#F2A900]" size={14} />
+                  <FiStar className="fill-[#F2A900]" size={14} />
+                  <FiStar className="fill-gray-300 text-gray-300" size={14} />
+                </div>
+                <span className="text-[11px] font-bold text-gray-600 ml-1">4.0 (24 Reviews)</span>
+            </div>
 
             {/* DELIVERY STATUS */}
             {preInfo && preInfo.isPreOrder ? (
