@@ -1,16 +1,16 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 
-// NJIA ZIMEREKEBISHWA & ICONS ZOTE (Pamoja na FiMinus na FiPlus) ZIMEWEKWA
+// NJIA ZIMEREKEBISHWA & ICONS ZOTE ZIMEWEKWA
 import { useCart } from '../context/CartContext';
 import { 
   FiArrowLeft, FiHeart, FiShare, FiShare2, FiShoppingCart, FiStar, 
   FiChevronRight, FiChevronLeft, FiSearch, FiCheckCircle, FiMapPin, 
   FiChevronDown, FiPackage, FiTruck, FiCheck, FiHome, FiAward,
-  FiMinus, FiPlus // ICONS HIZI ZILIKUWA ZIMESAHAULIKA
+  FiMinus, FiPlus
 } from 'react-icons/fi';
 
 import TopTicker from '../components/navigation/TopTicker';
@@ -162,31 +162,6 @@ export default function ProductDetailsPage() {
     setWishlist(prev => prev.includes(productId) ? prev.filter(vid => vid !== productId) : [...prev, productId]);
   };
 
-  const slideNext = () => {
-    if (currentImageIndex < images.length - 1) scrollToImage(currentImageIndex + 1);
-  };
-
-  const slidePrev = () => {
-    if (currentImageIndex > 0) scrollToImage(currentImageIndex - 1);
-  };
-
-  const handleScroll = () => {
-    if (sliderRef.current) {
-      const scrollPosition = sliderRef.current.scrollLeft;
-      const width = sliderRef.current.clientWidth;
-      const newIndex = Math.round(scrollPosition / width);
-      if (newIndex !== currentImageIndex) setCurrentImageIndex(newIndex);
-    }
-  };
-
-  const scrollToImage = (index: number) => {
-    if (index < 0 || index >= images.length) return;
-    setCurrentImageIndex(index);
-    if (sliderRef.current) {
-      sliderRef.current.scrollTo({ left: sliderRef.current.clientWidth * index, behavior: 'smooth' });
-    }
-  };
-
   if (loading) return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-[#F3F4F6] gap-4">
       <div className="w-12 h-12 border-4 border-[#F2A900] border-t-transparent rounded-full animate-spin"></div>
@@ -249,6 +224,9 @@ export default function ProductDetailsPage() {
                   {product.badge}
                 </span>
               )}
+              <button onClick={(e) => toggleWishlist(e, product.id)} className="absolute top-4 right-4 z-20 w-10 h-10 bg-white/90 backdrop-blur rounded-full flex items-center justify-center text-gray-400 hover:text-red-500 shadow-md transition">
+                  <FiHeart className={`text-lg ${isMainProductWishlisted ? "fill-red-500 text-red-500" : ""}`} />
+              </button>
               {mainImage ? (
                  <img src={mainImage} alt={product.name} className="w-full h-full object-contain mix-blend-multiply p-8 transition-transform duration-500 group-hover:scale-105" />
               ) : (
