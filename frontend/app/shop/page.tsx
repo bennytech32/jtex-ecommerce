@@ -10,7 +10,7 @@ import {
   FiArrowRight, FiShield, FiTruck, FiRefreshCw, FiMic, FiCamera, 
   FiHome, FiZap, FiChevronRight, FiMail, FiPhone, FiFacebook, 
   FiTwitter, FiInstagram, FiLinkedin, FiSend, FiMessageCircle, 
-  FiBell, FiSettings, FiArrowLeft, FiGlobe, FiMoreHorizontal, FiTag
+  FiBell, FiSettings, FiArrowLeft, FiGlobe, FiMoreHorizontal, FiTag, FiStar
 } from 'react-icons/fi';
 
 const translations = {
@@ -250,24 +250,33 @@ export default function ShopPage() {
       <nav className="bg-white rounded-2xl border border-gray-100 py-3 shadow-sm mb-6 flex flex-col">
         <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#F2A900] transition font-medium" onClick={() => router.push('/')}><FiHome size={18}/> Home</button>
         <button className="flex items-center gap-3 px-6 py-2.5 bg-gray-50 text-gray-900 font-bold transition" onClick={() => { setActiveCategory('All'); setSearchQuery(''); }}><FiGrid size={18}/> All Products</button>
+        
+        <div className="border-t border-gray-100 my-2"></div>
+        
         <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#F2A900] transition font-medium" onClick={() => router.push('/deals')}>
           <FiZap size={18}/> Flash Sales <span className="ml-auto bg-red-100 text-red-600 text-[10px] font-black px-1.5 py-0.5 rounded">Hot</span>
         </button>
-        {isLoggedIn && (
-           <>
-            <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#F2A900] transition font-medium" onClick={() => router.push('/messages')}>
-              <FiMessageCircle size={18}/> Messages
-            </button>
-            <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#F2A900] transition font-medium" onClick={() => router.push('/notifications')}>
-              <FiBell size={18}/> Notifications
-            </button>
-           </>
-        )}
-        <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#F2A900] transition font-medium" onClick={() => router.push('/checkout')}>
-          <FiShoppingCart size={18}/> Cart <span className="ml-auto bg-[#F2A900] text-white text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full">{cartCount > 0 ? cartCount : 0}</span>
+        <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#F2A900] transition font-medium" onClick={() => router.push('/new-arrivals')}>
+          <FiPackage size={18}/> New Arrivals <span className="ml-auto bg-green-100 text-green-600 text-[10px] font-black px-1.5 py-0.5 rounded">New</span>
         </button>
-        <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#F2A900] transition font-medium" onClick={() => router.push(isLoggedIn ? '/profile' : '/login')}><FiUser size={18}/> Account</button>
-        <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#F2A900] transition font-medium" onClick={() => router.push('/help')}><FiHeadphones size={18}/> Help & Support</button>
+        <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#F2A900] transition font-medium" onClick={() => router.push('/trending')}>
+          <FiStar size={18}/> Trending Now
+        </button>
+
+        <div className="border-t border-gray-100 my-2"></div>
+
+        <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#F2A900] transition font-medium" onClick={() => router.push('/checkout')}>
+          <FiShoppingCart size={18}/> Cart 
+          {cartCount > 0 && <span className="ml-auto bg-[#F2A900] text-black text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full">{cartCount}</span>}
+        </button>
+        
+        <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#F2A900] transition font-medium" onClick={() => router.push('/help')}><FiHeadphones size={18}/> Support</button>
+        
+        <div className="px-6 mt-4 pt-4 border-t border-gray-100">
+           <button onClick={() => router.push(isLoggedIn ? '/profile' : '/login')} className="w-full bg-[#0A101D] text-white font-bold py-3 rounded-xl hover:bg-gray-800 transition shadow-sm text-xs">
+             {isLoggedIn ? 'My Account' : 'Sign In / Register'}
+           </button>
+        </div>
       </nav>
     );
   };

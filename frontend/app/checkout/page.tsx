@@ -6,7 +6,7 @@ import { useCart } from '../context/CartContext';
 import { 
   FiArrowLeft, FiShoppingCart, FiMapPin, FiCreditCard, 
   FiTrash2, FiChevronRight, FiShield, FiCheckCircle, 
-  FiTruck, FiBox, FiPhone, FiUser, FiStar, FiLock, FiInfo, FiMinus, FiPlus
+  FiTruck, FiBox, FiPhone, FiUser, FiStar, FiInfo, FiMinus, FiPlus
 } from 'react-icons/fi';
 
 // === HELPER FUNCTION: KUBADILI JINA LA RANGI KUWA RANGI HALISI ===
@@ -23,16 +23,17 @@ const getColorCode = (colorName: string) => {
   return colorsMap[c] || c; 
 };
 
-// === SHIPPING OPTIONS ===
+// === SHIPPING OPTIONS (Zilizoboreshwa kulingana na maelekezo yako) ===
+// BEI ZOTE SASA NI 0 ILI ZISOME "Negotiable" KILA MAHALI
 const ALL_SHIPPING_METHODS = [
-  { id: 'bodaboda', name: 'Bodaboda', price: 5000, time: '1 - 2 Hours', emoji: '🏍️' },
-  { id: 'bus', name: 'Bus', price: 15000, time: '1 - 2 Days', emoji: '🚌' },
-  { id: 'aeroplane', name: 'Aeroplane', price: 25000, time: '1 Day', emoji: '✈️' },
-  { id: 'boat', name: 'Boat', price: 20000, time: '2 - 3 Days', emoji: '⛴️' }
+  { id: 'bodaboda', name: 'Bodaboda', price: 0, time: '1 - 2 Hours', emoji: '🏍️', isNegotiable: true },
+  { id: 'bus', name: 'Bus', price: 0, time: '1 - 2 Days', emoji: '🚌', isNegotiable: true },
+  { id: 'aeroplane', name: 'Aeroplane', price: 0, time: '1 Day', emoji: '✈️', isNegotiable: true },
+  { id: 'boat', name: 'Boat', price: 0, time: '2 - 3 Days', emoji: '⛴️', isNegotiable: true }
 ];
 
 // === PAYMENT TYPES ===
-const PAYMENT_TYPES = [
+const ALL_PAYMENT_TYPES = [
   { id: 'full', name: 'Full Payment', desc: 'Pay the full amount now' },
   { id: 'cod', name: 'Cash on Delivery', desc: 'Pay advance now, rest on delivery' },
   { id: 'store', name: 'Pay at Store', desc: 'Pay when you pick up' }
@@ -46,7 +47,17 @@ const PAYMENT_METHODS = [
   { id: 'mastercard', name: 'MasterCard', desc: 'Debit/Credit Card', icon: '🔴🟠' }
 ];
 
-// === MIKOA YA TANZANIA ===
+// === NCHI NA MIKOA ===
+const EA_COUNTRIES = [
+  { name: "Tanzania", code: "+255" },
+  { name: "Kenya", code: "+254" },
+  { name: "Uganda", code: "+256" },
+  { name: "Rwanda", code: "+250" },
+  { name: "Burundi", code: "+257" },
+  { name: "South Sudan", code: "+211" },
+  { name: "DR Congo", code: "+243" }
+];
+
 const TANZANIA_REGIONS = [
   "Arusha", "Dar es Salaam", "Dodoma", "Geita", "Iringa", "Kagera", "Katavi", 
   "Kigoma", "Kilimanjaro", "Lindi", "Manyara", "Mara", "Mbeya", "Morogoro", 
@@ -93,7 +104,6 @@ export default function CheckoutSystem() {
     try {
       let parsed = item.specifications;
       
-      // Kulazimisha kusoma kama JSON mara mbili (Kuzuia Double-Stringified Data)
       if (typeof parsed === 'string') {
         try { parsed = JSON.parse(parsed); } catch(e) {}
       }
@@ -113,7 +123,6 @@ export default function CheckoutSystem() {
        console.error("Color parse error:", e);
     }
 
-    // Fallback: Kama specs imefeli, angalia kwenye item moja kwa moja
     if (options.length === 0) {
       const rootColor = item.Color || item.color || item.Colors || item.colors || item.Colour || item.colour || item.Rangi || item.rangi;
       if (rootColor) {
@@ -121,7 +130,6 @@ export default function CheckoutSystem() {
       }
     }
 
-    // Fallback ya mwisho kabisa kama User alichagua rangi lakini haipo kwenye Options
     if (options.length === 0 && item.selectedColor) {
       options = [item.selectedColor];
     }
@@ -129,7 +137,6 @@ export default function CheckoutSystem() {
     return options;
   };
 
-  // === KUBADILI RANGI (Pamoja na kuzuia Race Condition ya CartContext) ===
   const handleColorChange = (item: any, newColor: string) => {
     if (item.selectedColor === newColor) return;
     const oldCartId = item.cartId || item.id;
@@ -145,11 +152,9 @@ export default function CheckoutSystem() {
     };
     
     if (removeFromCart) removeFromCart(oldCartId);
-    // Tunatumia 200ms kuzuia mfumo kufuta na kuweka kabla React haijamaliza (Inagoma kuweka colours)
     setTimeout(() => { if (addToCart) addToCart(updatedItem); }, 200); 
   };
 
-  // === KUBADILI IDADI (Pamoja na kuzuia Race Condition ya CartContext) ===
   const handleQuantityChange = (item: any, newQty: number) => {
     if (newQty < 1) return;
     const targetCartId = item.cartId || item.id;
@@ -166,12 +171,13 @@ export default function CheckoutSystem() {
 
   // States
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1);
-  const [selectedPaymentType, setSelectedPaymentType] = useState(PAYMENT_TYPES[1]); 
+  const [selectedPaymentType, setSelectedPaymentType] = useState(ALL_PAYMENT_TYPES[1]); 
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(PAYMENT_METHODS[0]); 
   
   // Form States
   const [formData, setFormData] = useState({
     fullName: '',
+    phoneCode: '+255',
     phone: '',
     country: 'Tanzania',
     region: 'Dar es Salaam', 
@@ -179,10 +185,30 @@ export default function CheckoutSystem() {
     address: ''
   });
 
-  const isDarEsSalaam = formData.region === 'Dar es Salaam';
-  const isIsland = ISLAND_REGIONS.includes(formData.region);
+  const isTanzania = formData.country === 'Tanzania';
+  const isDarEsSalaam = isTanzania && formData.region === 'Dar es Salaam';
+  const isIsland = isTanzania && ISLAND_REGIONS.includes(formData.region);
+
+  // Kuzuia Cash on Delivery kama sio Tanzania
+  const availablePaymentTypes = isTanzania ? ALL_PAYMENT_TYPES : ALL_PAYMENT_TYPES.filter(type => type.id !== 'cod');
+
+  // Hakikisha state ya payment inajirekebisha ikibadilika
+  useEffect(() => {
+    if (!isTanzania && selectedPaymentType.id === 'cod') {
+      setSelectedPaymentType(availablePaymentTypes[0]); // Default to Full Payment
+    }
+  }, [isTanzania, selectedPaymentType, availablePaymentTypes]);
+
+  // Hakikisha namba inabadilika pale nchi inapobadilika
+  useEffect(() => {
+    const selectedCountryObj = EA_COUNTRIES.find(c => c.name === formData.country);
+    if (selectedCountryObj) {
+      setFormData(prev => ({ ...prev, phoneCode: selectedCountryObj.code }));
+    }
+  }, [formData.country]);
 
   const availableShippingMethods = ALL_SHIPPING_METHODS.filter(method => {
+    if (!isTanzania) return method.id === 'aeroplane' || method.id === 'bus'; 
     if (method.id === 'bodaboda') return isDarEsSalaam;
     if (method.id === 'boat') return isIsland;
     if (method.id === 'bus') return !isIsland; 
@@ -197,24 +223,40 @@ export default function CheckoutSystem() {
     if (!availableShippingMethods.find(m => m.id === selectedShipping?.id)) {
       setSelectedShipping(availableShippingMethods[0]);
     }
-  }, [formData.region, availableShippingMethods, selectedShipping?.id]);
+  }, [formData.region, formData.country, availableShippingMethods, selectedShipping?.id]);
 
   useEffect(() => {
     const savedUser = localStorage.getItem('jtex_user');
     if (savedUser) {
       try {
         const parsedUser = JSON.parse(savedUser);
+        let phoneVal = parsedUser.phone || '';
+        let extractedCode = '+255';
+        
+        // Ukijaribu kutenganisha namba iliyosave ianze na code
+        if (phoneVal.startsWith('+')) {
+           const match = EA_COUNTRIES.find(c => phoneVal.startsWith(c.code));
+           if (match) {
+             extractedCode = match.code;
+             phoneVal = phoneVal.replace(match.code, '').trim();
+           }
+        } else if (phoneVal.startsWith('0')) {
+           phoneVal = phoneVal.substring(1); 
+        }
+
         setFormData(prev => ({
           ...prev,
           fullName: parsedUser.name || '',
-          phone: parsedUser.phone || '',
+          phoneCode: extractedCode,
+          phone: phoneVal,
         }));
       } catch (e) {}
     }
   }, []);
 
   const subtotal = cart?.reduce((acc: number, item: any) => acc + (Number(item.price) * getItemQuantity(item)), 0) || 0; 
-  const deliveryFee = currentStep > 1 && selectedShipping ? selectedShipping.price : 0;
+  // Delivery Fee is Negotiable, so it's 0 for calculation purposes initially. Admin will finalize it.
+  const deliveryFee = 0; 
   const totalAmount = subtotal + deliveryFee;
   
   const advancePayment = selectedPaymentType.id === 'cod' ? Math.min(50000, totalAmount) : totalAmount;
@@ -242,6 +284,8 @@ export default function CheckoutSystem() {
     }
 
     const businessPhone = "255767949581"; 
+    const fullPhoneNumber = `${formData.phoneCode}${formData.phone.startsWith('0') ? formData.phone.substring(1) : formData.phone}`;
+    
     let itemsText = cart.map((item: any, index: number) => {
       const qty = getItemQuantity(item);
       const colorOptions = getColorOptions(item);
@@ -255,7 +299,10 @@ export default function CheckoutSystem() {
       ? `Nimelipia Kianzio (Advance): TZS ${advancePayment.toLocaleString()}%0ASalia langu ni: TZS ${remainingBalance.toLocaleString()} (Nitalipa nikipokea mzigo)` 
       : `Nimelipia Full Amount: TZS ${totalAmount.toLocaleString()}`;
 
-    const message = `Habari Jtex, nimefanya manunuzi mtandaoni.%0A%0A*BIDHAA ZANGU:*%0A${itemsText}%0A%0A*TAARIFA ZANGU:*%0AJina: ${formData.fullName}%0ASimu: ${formData.phone}%0AMkoa: ${formData.region}%0AAnwani: ${formData.address}%0A%0A*NJIA YA KUSAFIRISHA:*%0A${selectedShipping.name} (TZS ${deliveryFee.toLocaleString()})%0A%0A*JUMLA KUU:* TZS ${totalAmount.toLocaleString()}%0A%0A*MALIPO YALIYOTEULIWA:*%0ANjia: ${selectedPaymentMethod.name}%0A${paymentInfo}%0A%0ATafadhali thibitisha order yangu.`;
+    // Shipping inasoma (Negotiable) kama ulivyoagiza
+    const shippingPriceInfo = "Negotiable";
+
+    const message = `Habari Jtex, nimefanya manunuzi mtandaoni.%0A%0A*BIDHAA ZANGU:*%0A${itemsText}%0A%0A*TAARIFA ZANGU:*%0AJina: ${formData.fullName}%0ASimu: ${fullPhoneNumber}%0ANchi: ${formData.country}%0AMkoa/Mji: ${formData.region}%0AAnwani: ${formData.address}%0A%0A*NJIA YA KUSAFIRISHA:*%0A${selectedShipping.name} (${shippingPriceInfo})%0A%0A*JUMLA KUU BIDHAA:* TZS ${subtotal.toLocaleString()}%0A%0A*MALIPO YALIYOTEULIWA:*%0ANjia: ${selectedPaymentMethod.name}%0A${paymentInfo}%0A%0ATafadhali thibitisha order yangu.`;
 
     const whatsappUrl = `https://wa.me/${businessPhone}?text=${message}`;
     clearCart();
@@ -371,13 +418,11 @@ export default function CheckoutSystem() {
                           </div>
 
                           <div className="flex flex-col sm:flex-row items-center justify-between mt-3 gap-3 sm:gap-0">
-                            {/* FIX: Kuonesha bei ya kimoja (Unit Price) kuepuka mkanganyiko wa hesabu */}
                             <div className="flex flex-col">
                               <span className="font-black text-gray-900 text-sm">TZS {(Number(item.price) * qty).toLocaleString()}</span>
                               {qty > 1 && <span className="text-[10px] font-bold text-gray-400 mt-0.5">TZS {Number(item.price).toLocaleString()} each</span>}
                             </div>
                             
-                            {/* QUANTITY ADJUSTER */}
                             <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden h-8 bg-gray-50">
                               <button onClick={() => handleQuantityChange(item, qty - 1)} className="px-3 hover:bg-gray-200 text-gray-600 transition h-full flex items-center">
                                 <FiMinus size={12} />
@@ -411,34 +456,51 @@ export default function CheckoutSystem() {
                 <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100">
                   <h2 className="font-black text-base flex items-center gap-2 mb-4"><FiUser className="text-[#F2A900]"/> Shipping Details</h2>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
+                    <div className="sm:col-span-2">
                       <label className="block text-xs font-bold text-gray-600 mb-1.5">Full Name <span className="text-red-500">*</span></label>
                       <div className="relative">
                         <FiUser className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                         <input type="text" required value={formData.fullName} onChange={(e)=>setFormData({...formData, fullName: e.target.value})} className="w-full pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-[#F2A900]" />
                       </div>
                     </div>
-                    <div>
-                      <label className="block text-xs font-bold text-gray-600 mb-1.5">Phone Number <span className="text-red-500">*</span></label>
-                      <div className="relative">
-                        <FiPhone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                        <input type="text" required value={formData.phone} onChange={(e)=>setFormData({...formData, phone: e.target.value})} className="w-full pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-[#F2A900]" />
-                      </div>
-                    </div>
+                    
                     <div>
                       <label className="block text-xs font-bold text-gray-600 mb-1.5">Country <span className="text-red-500">*</span></label>
                       <select value={formData.country} onChange={(e)=>setFormData({...formData, country: e.target.value})} className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-[#F2A900]">
-                        <option value="Tanzania">Tanzania</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-gray-600 mb-1.5">Region <span className="text-red-500">*</span></label>
-                      <select value={formData.region} onChange={(e)=>setFormData({...formData, region: e.target.value})} className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-[#F2A900]">
-                        {TANZANIA_REGIONS.map(region => (
-                          <option key={region} value={region}>{region}</option>
+                        {EA_COUNTRIES.map(c => (
+                           <option key={c.name} value={c.name}>{c.name}</option>
                         ))}
                       </select>
                     </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-gray-600 mb-1.5">Phone Number <span className="text-red-500">*</span></label>
+                      <div className="flex gap-2">
+                         <div className="w-[80px] bg-gray-50 border border-gray-200 rounded-xl flex items-center justify-center text-sm font-bold text-gray-700">
+                            {formData.phoneCode}
+                         </div>
+                         <div className="relative flex-1">
+                           <input type="tel" required value={formData.phone} onChange={(e)=>setFormData({...formData, phone: e.target.value})} placeholder="767 123 456" className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-[#F2A900]" />
+                         </div>
+                      </div>
+                    </div>
+
+                    {isTanzania ? (
+                      <div>
+                        <label className="block text-xs font-bold text-gray-600 mb-1.5">Region <span className="text-red-500">*</span></label>
+                        <select value={formData.region} onChange={(e)=>setFormData({...formData, region: e.target.value})} className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-[#F2A900]">
+                          {TANZANIA_REGIONS.map(region => (
+                            <option key={region} value={region}>{region}</option>
+                          ))}
+                        </select>
+                      </div>
+                    ) : (
+                      <div>
+                         <label className="block text-xs font-bold text-gray-600 mb-1.5">City/State <span className="text-red-500">*</span></label>
+                         <input type="text" required value={formData.region} onChange={(e)=>setFormData({...formData, region: e.target.value})} placeholder="City or State" className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-[#F2A900]" />
+                      </div>
+                    )}
+
                     <div className="sm:col-span-2">
                       <label className="block text-xs font-bold text-gray-600 mb-1.5">Full Address / Landmark <span className="text-red-500">*</span></label>
                       <div className="relative">
@@ -466,7 +528,10 @@ export default function CheckoutSystem() {
                         <span className="text-2xl">{method.emoji}</span>
                         <div>
                           <h4 className="font-bold text-sm text-gray-900">{method.name}</h4>
-                          <p className="text-xs font-black text-gray-900 mt-1">TZS {method.price.toLocaleString()}</p>
+                          <p className="text-xs font-black text-gray-900 mt-1">
+                             {/* HAPA TUNAFANYA ZOTE ZISOME NEGOTIABLE ISIPOKUWA BODABODA */}
+                             {method.id === 'bodaboda' ? `TZS ${method.price.toLocaleString()} / Negotiable` : "Negotiable"}
+                          </p>
                           <p className="text-[10px] font-medium text-gray-500 flex items-center gap-1 mt-0.5">⏱ {method.time}</p>
                         </div>
                       </div>
@@ -482,7 +547,7 @@ export default function CheckoutSystem() {
                 <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100">
                    <h2 className="font-black text-base flex items-center gap-2 mb-4">💳 Payment Type</h2>
                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-                     {PAYMENT_TYPES.map((type) => (
+                     {availablePaymentTypes.map((type) => (
                        <div 
                          key={type.id} 
                          onClick={() => setSelectedPaymentType(type)}
@@ -605,10 +670,11 @@ export default function CheckoutSystem() {
                      </div>
                    )}
 
-                   <div className="flex gap-3 mt-8 border-t border-gray-100 pt-6">
+                   {/* FIX: Button Moja tu ya Confirm ipo Hapa Chini! */}
+                   <div className="hidden lg:flex gap-3 mt-8 border-t border-gray-100 pt-6">
                       <button type="button" onClick={() => setCurrentStep(2)} className="px-6 py-4 bg-gray-100 text-gray-600 font-bold rounded-xl text-sm hover:bg-gray-200 transition">Back</button>
-                      <button type="button" onClick={handleWhatsAppOrder} className="flex-1 bg-green-600 hover:bg-green-700 text-white font-black py-4 rounded-xl transition shadow-lg flex items-center justify-center gap-2">
-                        <FiLock /> {selectedPaymentType.id === 'cod' ? `Confirm Order TZS ${advancePayment.toLocaleString()}` : `Confirm Order TZS ${totalAmount.toLocaleString()}`}
+                      <button type="button" onClick={handleWhatsAppOrder} className="flex-1 bg-[#25D366] hover:bg-[#1EBE5D] text-white font-black py-4 rounded-xl transition shadow-lg flex items-center justify-center gap-2">
+                        <FiPhone className="text-xl"/> Confirm via WhatsApp
                       </button>
                    </div>
                 </div>
@@ -617,11 +683,14 @@ export default function CheckoutSystem() {
                    <h2 className="font-black text-base flex items-center gap-2 mb-4">📝 Pricing Summary</h2>
                    <div className="space-y-2 text-sm">
                       <div className="flex justify-between text-gray-600 font-medium"><span>Subtotal</span><span>TZS {subtotal.toLocaleString()}</span></div>
-                      <div className="flex justify-between text-gray-600 font-medium"><span>Delivery ({selectedShipping?.name})</span><span>TZS {deliveryFee.toLocaleString()}</span></div>
+                      <div className="flex justify-between text-gray-600 font-medium">
+                        <span>Delivery ({selectedShipping?.name})</span>
+                        <span>Negotiable</span>
+                      </div>
                    </div>
                    <div className="border-t border-gray-100 mt-3 pt-3 flex justify-between items-center">
-                      <span className="font-bold text-gray-900">Total Amount</span>
-                      <span className="font-black text-xl text-gray-900">TZS {totalAmount.toLocaleString()}</span>
+                      <span className="font-bold text-gray-900">Total Products</span>
+                      <span className="font-black text-xl text-gray-900">TZS {subtotal.toLocaleString()}</span>
                    </div>
                    {selectedPaymentType.id === 'cod' && (
                      <div className="mt-4 bg-yellow-50/80 border border-[#F2A900]/30 rounded-xl flex">
@@ -649,7 +718,7 @@ export default function CheckoutSystem() {
                  {currentStep < 3 && <button onClick={() => setCurrentStep(1)} className="text-xs font-bold text-gray-500 hover:text-black">Edit Cart ✏️</button>}
               </div>
               
-              <div className="space-y-3 mb-6 max-h-[250px] overflow-y-auto custom-scrollbar pr-2">
+              <div className="space-y-5 mb-6 max-h-[400px] overflow-y-auto custom-scrollbar pr-2">
                  {cart.map((item: any) => {
                    const displayImage = getImagesArray(item.imageUrl)[0];
                    const qty = getItemQuantity(item);
@@ -659,25 +728,48 @@ export default function CheckoutSystem() {
 
                    return (
                    <div key={item.cartId || item.id} className="flex gap-3">
-                     <div className="w-10 h-10 bg-gray-50 rounded border border-gray-100 flex items-center justify-center flex-shrink-0 p-1">
-                       {displayImage ? <img src={getImageUrl(displayImage)} alt={item.name} className="object-contain w-full h-full mix-blend-multiply" /> : <span className="text-lg">{item.imageEmoji || '📦'}</span>}
+                     <div className="w-14 h-14 bg-gray-50 rounded border border-gray-100 flex items-center justify-center flex-shrink-0 p-1">
+                       {displayImage ? <img src={getImageUrl(displayImage)} alt={item.name} className="object-contain w-full h-full mix-blend-multiply" /> : <span className="text-xl">{item.imageEmoji || '📦'}</span>}
                      </div>
                      <div className="flex-1">
-                       <h4 className="text-xs font-bold text-gray-900 line-clamp-1">{item.name}</h4>
-                       <p className="text-[9px] text-gray-500 mt-0.5 flex items-center gap-1.5">
-                          <span className="font-bold">Qty: {qty}</span>
-                          {activeColor && (
-                            <span className="flex items-center gap-1 font-bold uppercase text-gray-600 border-l border-gray-300 pl-1.5">
-                              <span className="w-2.5 h-2.5 rounded-full border border-gray-300" style={{ backgroundColor: getColorCode(activeColor) }}></span>
-                              {activeColor}
-                            </span>
+                       <h4 className="text-xs font-bold text-gray-900 line-clamp-1 mb-1">{item.name}</h4>
+                       
+                       {/* FIX YA ORDER SUMMARY: RANGI NA QUANTITY ZINABADILISHWA HAPA */}
+                       <div className="flex items-center gap-2 mb-2">
+                          {colorOptions.length > 1 ? (
+                            <select
+                              value={activeColor || ''}
+                              onChange={(e) => handleColorChange(item, e.target.value)}
+                              className="text-[10px] font-bold text-gray-800 bg-gray-50 border border-gray-200 rounded px-1 py-0.5 outline-none focus:border-[#F2A900] cursor-pointer"
+                            >
+                              {colorOptions.map((c: string, i: number) => (
+                                <option key={i} value={c}>{c}</option>
+                              ))}
+                            </select>
+                          ) : (
+                            activeColor && (
+                              <span className="flex items-center gap-1 font-bold uppercase text-[9px] text-gray-600 bg-gray-50 border border-gray-100 px-1 py-0.5 rounded">
+                                <span className="w-2 h-2 rounded-full border border-gray-300" style={{ backgroundColor: getColorCode(activeColor) }}></span>
+                                {activeColor}
+                              </span>
+                            )
                           )}
-                       </p>
+                          
+                          <div className="flex items-center border border-gray-200 rounded overflow-hidden bg-gray-50 h-5">
+                            <button onClick={() => handleQuantityChange(item, qty - 1)} className="px-1.5 hover:bg-gray-200 text-gray-600 transition h-full flex items-center">
+                              <FiMinus size={8} />
+                            </button>
+                            <span className="px-1.5 text-[10px] font-bold border-x border-gray-200 h-full flex items-center justify-center bg-white text-gray-900 min-w-[20px]">
+                              {qty}
+                            </span>
+                            <button onClick={() => handleQuantityChange(item, qty + 1)} className="px-1.5 hover:bg-gray-200 text-gray-600 transition h-full flex items-center">
+                              <FiPlus size={8} />
+                            </button>
+                          </div>
+                       </div>
                      </div>
                      <div className="text-xs font-black text-right flex flex-col justify-start">
                         <span>TZS {(Number(item.price) * qty).toLocaleString()}</span>
-                        {/* FIX: Kuonesha bei ya kimoja (Unit Price) kuepuka mkanganyiko wa hesabu */}
-                        {qty > 1 && <span className="text-[8px] font-medium text-gray-400 mt-0.5">({Number(item.price).toLocaleString()} x {qty})</span>}
                      </div>
                    </div>
                  )})}
@@ -687,18 +779,19 @@ export default function CheckoutSystem() {
                 <div className="flex justify-between text-gray-600 font-medium"><span>Sub Total</span><span>TZS {subtotal.toLocaleString()}</span></div>
                 <div className="flex justify-between text-gray-600 font-medium">
                    <span>Delivery {currentStep > 1 && selectedShipping ? `(${selectedShipping.name})` : ''}</span>
-                   <span>TZS {deliveryFee.toLocaleString()}</span>
+                   <span>Negotiable</span>
                 </div>
               </div>
 
               <div className="border-t border-gray-200 pt-4 mb-6">
                 <div className="flex justify-between items-end">
-                   <span className="font-bold text-gray-900">Total Amount</span>
-                   <span className="font-black text-xl text-gray-900">TZS {totalAmount.toLocaleString()}</span>
+                   <span className="font-bold text-gray-900">Total Products</span>
+                   <span className="font-black text-xl text-gray-900">TZS {subtotal.toLocaleString()}</span>
                 </div>
               </div>
 
-              {currentStep < 3 ? (
+              {/* Kitufe kipo hatua mbili za mwanzo tu, Hatua ya mwisho(Payment) kimewekwa kule ndani */}
+              {currentStep < 3 && (
                 <button 
                   onClick={() => {
                     if (currentStep === 1) handleProceedToShipping();
@@ -714,10 +807,6 @@ export default function CheckoutSystem() {
                   className="w-full bg-[#F2A900] disabled:bg-gray-300 disabled:text-gray-500 hover:bg-yellow-500 text-black font-black py-4 rounded-xl flex items-center justify-center gap-2 transition shadow-md"
                 >
                   {currentStep === 1 ? 'Proceed to Checkout' : 'Continue to Payment'}
-                </button>
-              ) : (
-                <button onClick={handleWhatsAppOrder} className="w-full bg-[#25D366] hover:bg-[#1EBE5D] text-white font-black py-4 rounded-xl flex items-center justify-center gap-2 transition shadow-md">
-                   <FiLock /> {selectedPaymentType.id === 'cod' ? `Confirm Order TZS ${advancePayment.toLocaleString()}` : `Confirm Order TZS ${totalAmount.toLocaleString()}`}
                 </button>
               )}
               
@@ -738,8 +827,8 @@ export default function CheckoutSystem() {
         {currentStep < 3 ? (
           <div className="flex items-center justify-between gap-4">
             <div className="flex flex-col">
-              <span className="text-[10px] font-bold text-gray-500">Total</span>
-              <span className="text-sm font-black text-gray-900">TZS {totalAmount.toLocaleString()}</span>
+              <span className="text-[10px] font-bold text-gray-500">Products Total</span>
+              <span className="text-sm font-black text-gray-900">TZS {subtotal.toLocaleString()}</span>
             </div>
             <button 
               onClick={() => {
@@ -767,7 +856,7 @@ export default function CheckoutSystem() {
               onClick={handleWhatsAppOrder}
               className="w-full bg-[#25D366] text-white font-black py-4 rounded-xl flex items-center justify-center gap-2 shadow-sm"
             >
-              <FiPhone /> Order via WhatsApp <FiChevronRight />
+              <FiPhone className="text-xl"/> Confirm via WhatsApp <FiChevronRight />
             </button>
           </div>
         )}

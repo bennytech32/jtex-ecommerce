@@ -236,14 +236,16 @@ export default function HomePage() {
           
           <div className="border-t border-gray-100 my-2"></div>
 
+          {/* FIX: Nimeondoa ile namba "3" na "12" ya uongo hapa kwenye Messages na Notifications */}
           <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#F2A900] transition font-medium" onClick={() => router.push('/messages')}>
-            <FiMessageCircle size={18}/> Messages <span className="ml-auto bg-[#F2A900] text-white text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full">3</span>
+            <FiMessageCircle size={18}/> Messages
           </button>
           <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#F2A900] transition font-medium" onClick={() => router.push('/notifications')}>
-            <FiBell size={18}/> Notifications <span className="ml-auto bg-red-500 text-white text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full">12</span>
+            <FiBell size={18}/> Notifications
           </button>
+          {/* FIX: Nimeondoa ile "3" ya uongo kwenye Cart, sasa inaonesha cartCount pekee ikiwa kubwa kuliko 0 */}
           <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#F2A900] transition font-medium" onClick={() => router.push('/checkout')}>
-            <FiShoppingCart size={18}/> Cart <span className="ml-auto bg-[#F2A900] text-white text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full">{cartCount > 0 ? cartCount : 3}</span>
+            <FiShoppingCart size={18}/> Cart {cartCount > 0 && <span className="ml-auto bg-[#F2A900] text-white text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full">{cartCount}</span>}
           </button>
           <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#F2A900] transition font-medium" onClick={() => router.push('/profile')}><FiUser size={18}/> Account</button>
           <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#F2A900] transition font-medium" onClick={() => router.push('/settings')}><FiSettings size={18}/> Settings</button>
@@ -483,7 +485,9 @@ export default function HomePage() {
         
         {/* DESKTOP SIDEBAR */}
         <aside className="hidden lg:flex flex-col w-[260px] flex-shrink-0">
+          
           {renderSidebarMenu()}
+
           <div className="bg-[#0A101D] text-white rounded-2xl p-6 relative overflow-hidden shadow-lg border border-gray-800">
             <div className="absolute top-0 right-0 w-32 h-32 bg-[#F2A900]/20 rounded-full blur-3xl"></div>
             <p className="text-xs text-gray-400 font-bold mb-1">Special Offers</p>
