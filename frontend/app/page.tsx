@@ -10,7 +10,7 @@ import {
   FiArrowRight, FiShield, FiTruck, FiRefreshCw, FiMic, FiCamera, 
   FiHome, FiZap, FiChevronRight, FiMail, FiPhone, FiFacebook, 
   FiTwitter, FiInstagram, FiLinkedin, FiSend, FiMessageCircle, 
-  FiBell, FiSettings, FiArrowLeft, FiGlobe, FiStar
+  FiBell, FiSettings, FiArrowLeft, FiGlobe, FiStar, FiAward, FiCheckCircle
 } from 'react-icons/fi';
 
 export default function HomePage() {
@@ -26,8 +26,23 @@ export default function HomePage() {
   const [userCountry, setUserCountry] = useState('...');
   const [countryCode, setCountryCode] = useState('tz'); 
 
+  // === WISHLIST STATE (ILI KUZUIA ERROR ILIYOTOKEA) ===
+  const [wishlist, setWishlist] = useState<string[]>([]);
+
+  const toggleWishlist = (e: React.MouseEvent, productId: string) => {
+    e.stopPropagation();
+    setWishlist(prev => prev.includes(productId) ? prev.filter(id => id !== productId) : [...prev, productId]);
+  };
+
   // === SEARCH STATE PAMOJA NA FUNCTION YAKE ===
   const [searchQuery, setSearchQuery] = useState('');
+  const [showDesktopSuggestions, setShowDesktopSuggestions] = useState(false);
+  const [showMobileSuggestions, setShowMobileSuggestions] = useState(false);
+
+  // Filter bidhaa kwa ajili ya Live Search
+  const filteredSuggestions = searchQuery.trim() === '' 
+    ? [] 
+    : products.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase())).slice(0, 6); // Zinaonekana top 6
 
   const handleSearch = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -36,6 +51,8 @@ export default function HomePage() {
     } else {
       router.push('/categories');
     }
+    setShowDesktopSuggestions(false);
+    setShowMobileSuggestions(false);
   };
 
   // Timer State for Flash Sales
@@ -284,7 +301,7 @@ export default function HomePage() {
       </div>
 
       {/* ========================================================= */}
-      {/* 1. DESKTOP HEADER - Logo inabaki hapa */}
+      {/* 1. DESKTOP HEADER */}
       {/* ========================================================= */}
       <header className="hidden lg:block bg-[#0A101D] text-white border-b border-gray-800 sticky top-0 z-40">
         <div className="max-w-[1600px] mx-auto px-6 h-24 flex items-center justify-between gap-6">
@@ -305,25 +322,60 @@ export default function HomePage() {
           </div>
 
           {/* ACTIVE SEARCH DESKTOP */}
-          <form onSubmit={handleSearch} className="flex-1 max-w-2xl flex items-center h-12 bg-white rounded-lg overflow-hidden shadow-sm">
-            <button type="button" className="h-full px-4 text-gray-600 text-sm font-bold bg-gray-100 border-r border-gray-200 flex items-center gap-1 hover:bg-gray-200 transition">
-              All <FiChevronDown/>
-            </button>
-            <input 
-              type="text" 
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search products, brands..." 
-              className="flex-1 h-full px-4 text-sm text-gray-900 outline-none" 
-            />
-            <div className="flex items-center gap-3 px-3 text-gray-400">
-              <FiCamera className="cursor-pointer hover:text-gray-600"/>
-              <FiMic className="cursor-pointer hover:text-gray-600"/>
-            </div>
-            <button type="submit" className="h-full px-8 bg-[#F2A900] text-black hover:bg-yellow-500 transition">
-              <FiSearch size={20} />
-            </button>
-          </form>
+          <div className="flex-1 max-w-2xl relative">
+            <form onSubmit={handleSearch} className="flex items-center h-12 bg-white rounded-lg overflow-hidden shadow-sm w-full">
+              <button type="button" className="h-full px-4 text-gray-600 text-sm font-bold bg-gray-100 border-r border-gray-200 flex items-center gap-1 hover:bg-gray-200 transition">
+                All <FiChevronDown/>
+              </button>
+              <input 
+                type="text" 
+                value={searchQuery}
+                onChange={(e) => { setSearchQuery(e.target.value); setShowDesktopSuggestions(true); }}
+                onFocus={() => setShowDesktopSuggestions(true)}
+                onBlur={() => setTimeout(() => setShowDesktopSuggestions(false), 200)}
+                placeholder="Search products, brands..." 
+                className="flex-1 h-full px-4 text-base text-gray-900 outline-none" 
+              />
+              <div className="flex items-center gap-3 px-3 text-gray-400">
+                <FiCamera className="cursor-pointer hover:text-gray-600"/>
+                <FiMic className="cursor-pointer hover:text-gray-600"/>
+              </div>
+              <button type="submit" className="h-full px-8 bg-[#F2A900] text-black hover:bg-yellow-500 transition">
+                <FiSearch size={20} />
+              </button>
+            </form>
+
+            {/* LIVE SEARCH SUGGESTIONS DROPDOWN (DESKTOP) */}
+            {showDesktopSuggestions && searchQuery.trim() !== '' && (
+              <div className="absolute top-full mt-2 left-0 w-full bg-white rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.1)] border border-gray-100 overflow-hidden z-50">
+                {filteredSuggestions.length > 0 ? (
+                  <ul className="max-h-[60vh] overflow-y-auto hide-scrollbar">
+                    {filteredSuggestions.map((prod) => (
+                      <li 
+                        key={prod.id} 
+                        onClick={() => router.push(`/product/${prod.id}`)}
+                        className="px-4 py-3 hover:bg-gray-50 cursor-pointer flex items-center gap-4 border-b border-gray-50 last:border-0 transition"
+                      >
+                        <div className="w-12 h-12 bg-gray-50 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0 border border-gray-100 p-1">
+                          {getDisplayImage(prod.imageUrl) ? (
+                            <img src={getImageUrl(getDisplayImage(prod.imageUrl))} className="w-full h-full object-contain mix-blend-multiply" alt=""/>
+                          ) : <FiPackage className="text-gray-400"/>}
+                        </div>
+                        <div className="flex flex-col flex-1 min-w-0">
+                          <span className="text-sm font-bold text-gray-800 truncate">{prod.name}</span>
+                          <span className="text-xs font-black text-[#F2A900]">TZS {prod.price.toLocaleString()}</span>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <div className="px-4 py-6 text-center text-sm font-medium text-gray-500">
+                    No products found for "{searchQuery}"
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
 
           <div className="flex items-center gap-4 flex-shrink-0">
             <button className="flex items-center gap-2 hover:bg-gray-800/50 p-2 rounded-lg transition">
@@ -348,11 +400,10 @@ export default function HomePage() {
       </header>
 
       {/* ========================================================= */}
-      {/* 2. MOBILE HEADER - Logo Imeondolewa hapa kama ulivyotaka */}
+      {/* 2. MOBILE HEADER */}
       {/* ========================================================= */}
       <header className="lg:hidden bg-[#0A101D] text-white pt-4 pb-3 sticky top-0 z-50">
         <div className="px-4 flex items-center justify-between mb-3">
-          
           <div className="flex items-center gap-1.5 cursor-pointer">
              <div className="w-6 h-6 rounded-full border border-gray-700 flex items-center justify-center bg-gray-800/50">
                 <FiMapPin className="text-[#F2A900]" size={12}/>
@@ -369,8 +420,7 @@ export default function HomePage() {
           </button>
         </div>
         
-        {/* MOBILE SEARCH BAR */}
-        <div className="px-4">
+        <div className="px-4 relative">
           <form onSubmit={handleSearch} className="flex items-center h-12 bg-white rounded-xl overflow-hidden shadow-sm border border-gray-200">
             <div className="pl-4 pr-3 flex items-center border-r border-gray-200 h-full bg-gray-50">
                <span className="text-xs text-gray-600 font-bold">Search Jtex</span>
@@ -378,9 +428,11 @@ export default function HomePage() {
             <input 
               type="text" 
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => { setSearchQuery(e.target.value); setShowMobileSuggestions(true); }}
+              onFocus={() => setShowMobileSuggestions(true)}
+              onBlur={() => setTimeout(() => setShowMobileSuggestions(false), 200)}
               placeholder="What are you looking for?"
-              className="flex-1 h-full px-3 text-sm text-gray-900 outline-none bg-transparent placeholder-gray-400" 
+              className="flex-1 h-full px-3 text-base text-gray-900 outline-none bg-transparent placeholder-gray-400" 
             />
             <div className="flex items-center gap-2 px-2 text-gray-400 bg-white">
               <FiMic size={18} className="cursor-pointer hover:text-gray-600"/>
@@ -390,6 +442,37 @@ export default function HomePage() {
               <FiSearch size={20} />
             </button>
           </form>
+
+          {/* LIVE SEARCH SUGGESTIONS DROPDOWN (MOBILE) */}
+          {showMobileSuggestions && searchQuery.trim() !== '' && (
+            <div className="absolute top-full mt-2 left-4 right-4 bg-white rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.15)] border border-gray-100 overflow-hidden z-50">
+              {filteredSuggestions.length > 0 ? (
+                <ul className="max-h-[50vh] overflow-y-auto hide-scrollbar">
+                  {filteredSuggestions.map((prod) => (
+                    <li 
+                      key={prod.id} 
+                      onClick={() => router.push(`/product/${prod.id}`)}
+                      className="px-4 py-3 hover:bg-gray-50 cursor-pointer flex items-center gap-3 border-b border-gray-50 last:border-0 transition"
+                    >
+                      <div className="w-10 h-10 bg-gray-50 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0 border border-gray-100 p-1">
+                        {getDisplayImage(prod.imageUrl) ? (
+                          <img src={getImageUrl(getDisplayImage(prod.imageUrl))} className="w-full h-full object-contain mix-blend-multiply" alt=""/>
+                        ) : <FiPackage className="text-gray-400"/>}
+                      </div>
+                      <div className="flex flex-col flex-1 min-w-0">
+                        <span className="text-xs font-bold text-gray-800 truncate">{prod.name}</span>
+                        <span className="text-[10px] font-black text-[#F2A900]">TZS {prod.price.toLocaleString()}</span>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <div className="px-4 py-6 text-center text-xs font-medium text-gray-500">
+                  No products found for "{searchQuery}"
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </header>
 
@@ -400,9 +483,7 @@ export default function HomePage() {
         
         {/* DESKTOP SIDEBAR */}
         <aside className="hidden lg:flex flex-col w-[260px] flex-shrink-0">
-          
           {renderSidebarMenu()}
-
           <div className="bg-[#0A101D] text-white rounded-2xl p-6 relative overflow-hidden shadow-lg border border-gray-800">
             <div className="absolute top-0 right-0 w-32 h-32 bg-[#F2A900]/20 rounded-full blur-3xl"></div>
             <p className="text-xs text-gray-400 font-bold mb-1">Special Offers</p>
@@ -415,7 +496,6 @@ export default function HomePage() {
         {/* MAIN CONTENT AREA */}
         <main className="flex-1 min-w-0 pb-6 relative">
           
-          {/* DESKTOP CATEGORIES HEADER ZIKAE ICONS */}
           <div className="hidden lg:flex items-center bg-white rounded-2xl border border-gray-100 px-4 py-4 shadow-sm mb-6 overflow-hidden">
             <div className="flex items-center gap-3 w-full overflow-x-auto hide-scrollbar">
               {dbCategories.map((cat, idx) => (
@@ -511,8 +591,8 @@ export default function HomePage() {
           </div>
 
           {/* Flash Sales Section */}
-          <div className="px-4 lg:px-0 mb-6">
-             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+          <div className="px-4 lg:px-0 mb-12">
+             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
                 <div className="flex items-center gap-2">
                    <FiZap size={24} className="text-[#F2A900] fill-[#F2A900]"/>
                    <h2 className="text-xl lg:text-2xl font-black text-gray-900">Flash Sales</h2>
@@ -533,9 +613,7 @@ export default function HomePage() {
                    <button onClick={() => router.push('/deals')} className="text-xs font-bold text-blue-600 flex items-center gap-1 hover:underline">View All <FiChevronRight/></button>
                 </div>
              </div>
-          </div>
 
-          <div className="px-4 lg:px-0 mb-12">
              {isLoading ? (
                <div className="flex justify-center py-10"><div className="w-8 h-8 border-4 border-[#F2A900] border-t-transparent rounded-full animate-spin"></div></div>
              ) : (
@@ -552,9 +630,8 @@ export default function HomePage() {
                      >
                         <div className="relative w-full pt-[100%] bg-gray-50/50 rounded-xl mb-4 overflow-hidden border border-gray-50 flex-shrink-0">
                            <span className="absolute top-2 left-2 bg-[#FF7A00] text-white text-[10px] font-black px-1.5 py-0.5 rounded z-20">-{visualDiscount}%</span>
-                           <button className="absolute top-2 right-2 text-gray-400 hover:text-red-500 lg:hidden z-20" onClick={(e) => { e.stopPropagation(); }}><FiHeart/></button>
+                           <button className="absolute top-2 right-2 text-gray-400 hover:text-red-500 lg:hidden z-20" onClick={(e) => { e.stopPropagation(); toggleWishlist(e, product.id); }}><FiHeart className={wishlist.includes(product.id) ? "fill-red-500 text-red-500" : ""}/></button>
                            
-                           {/* FIX YA PICHA: TUMIA GET_DISPLAY_IMAGE MPYA */}
                            {getDisplayImage(product.imageUrl) ? (
                               <img src={getImageUrl(getDisplayImage(product.imageUrl))} alt={product.name} className="absolute inset-0 w-full h-full object-contain mix-blend-multiply p-4 group-hover:scale-105 transition-transform duration-300" />
                            ) : (
@@ -585,7 +662,7 @@ export default function HomePage() {
           </div>
 
           {/* ========================================================= */}
-          {/* SECTION MPYA 1: NEW ARRIVALS */}
+          {/* NEW ARRIVALS SECTION */}
           {/* ========================================================= */}
           <div className="px-4 lg:px-0 mb-12">
              <div className="flex items-center justify-between mb-6">
@@ -612,7 +689,6 @@ export default function HomePage() {
                         </div>
 
                         <div className="relative w-full pt-[100%] bg-gray-50/50 rounded-xl mb-4 overflow-hidden border border-gray-50 flex-shrink-0">
-                           {/* FIX YA PICHA KWENYE NEW ARRIVALS */}
                            {getDisplayImage(product.imageUrl) ? (
                               <img src={getImageUrl(getDisplayImage(product.imageUrl))} alt={product.name} className="absolute inset-0 w-full h-full object-contain mix-blend-multiply p-4 group-hover:scale-105 transition-transform duration-300" />
                            ) : (
@@ -637,7 +713,7 @@ export default function HomePage() {
           </div>
 
           {/* ========================================================= */}
-          {/* SECTION MPYA 2: TRENDING NOW (TOP SELLING) */}
+          {/* TRENDING NOW SECTION */}
           {/* ========================================================= */}
           <div className="px-4 lg:px-0 mb-10">
              <div className="flex items-center justify-between mb-6 bg-gradient-to-r from-gray-900 to-gray-800 p-4 lg:p-6 rounded-2xl shadow-md">
@@ -667,7 +743,6 @@ export default function HomePage() {
                              <span className="text-[#F2A900] text-lg">🔥</span>
                            </div>
 
-                           {/* FIX YA PICHA KWENYE TRENDING NOW */}
                            {getDisplayImage(product.imageUrl) ? (
                               <img src={getImageUrl(getDisplayImage(product.imageUrl))} alt={product.name} className="absolute inset-0 w-full h-full object-contain mix-blend-multiply p-4 group-hover:scale-105 transition-transform duration-300" />
                            ) : (
@@ -690,6 +765,91 @@ export default function HomePage() {
              )}
           </div>
 
+          {/* ========================================================= */}
+          {/* TOP BRANDS SECTION */}
+          {/* ========================================================= */}
+          <div className="px-4 lg:px-0 mb-12">
+             <div className="flex items-center justify-between mb-4 bg-gradient-to-r from-[#0A101D] to-gray-800 p-4 lg:p-6 rounded-2xl shadow-md">
+                <div>
+                   <div className="flex items-center gap-2 mb-1">
+                      <FiAward size={24} className="text-[#F2A900]"/>
+                      <h2 className="text-xl lg:text-2xl font-black text-white">Top Brands</h2>
+                   </div>
+                   <p className="text-xs text-gray-400">Premium Partners & Certified Products</p>
+                </div>
+                <button onClick={() => router.push('/categories')} className="text-xs font-bold text-[#F2A900] flex items-center gap-1 hover:text-white transition">Shop All <FiChevronRight/></button>
+             </div>
+
+             <div className="bg-white rounded-2xl border border-gray-100 py-4 mb-6 shadow-sm overflow-hidden relative flex items-center">
+                <div className="marquee-container items-center gap-10 lg:gap-20 px-4">
+                   {[...brandLogos, ...brandLogos].map((num, idx) => (
+                      <div key={`brand-${idx}`} className="flex-shrink-0 flex items-center justify-center">
+                        <img 
+                          src={`/${num}.png`} 
+                          alt={`Brand ${num}`} 
+                          className="h-8 lg:h-10 object-contain grayscale hover:grayscale-0 transition-all duration-300 cursor-pointer"
+                          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} 
+                        />
+                      </div>
+                   ))}
+                </div>
+             </div>
+
+             {isLoading ? (
+               <div className="flex justify-center py-10"><div className="w-8 h-8 border-4 border-[#F2A900] border-t-transparent rounded-full animate-spin"></div></div>
+             ) : (
+               <>
+                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 lg:gap-4 mb-8">
+                   {products.slice(5, 15).map((product: any) => {
+                     const visualDiscount = getDeterministicDiscount(product.id); 
+                     const oldPrice = Math.round(product.price / (1 - (visualDiscount/100)));
+
+                     return (
+                       <div 
+                         key={`brand-prod-${product.id}`} 
+                         onClick={() => router.push(`/product/${product.id}`)} 
+                         className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm flex flex-col h-full group hover:border-[#F2A900] transition cursor-pointer"
+                       >
+                          <div className="relative w-full pt-[100%] bg-gray-50/50 rounded-xl mb-4 overflow-hidden border border-gray-50 flex-shrink-0">
+                             <span className="absolute top-2 left-2 bg-blue-600 text-white text-[10px] font-black px-1.5 py-0.5 rounded z-20 flex items-center gap-1"><FiCheckCircle size={10}/> Verified</span>
+                             <button className="absolute top-2 right-2 text-gray-400 hover:text-red-500 lg:hidden z-20" onClick={(e) => { e.stopPropagation(); toggleWishlist(e, product.id); }}><FiHeart className={wishlist.includes(product.id) ? "fill-red-500 text-red-500" : ""}/></button>
+                             
+                             {getDisplayImage(product.imageUrl) ? (
+                                <img src={getImageUrl(getDisplayImage(product.imageUrl))} alt={product.name} className="absolute inset-0 w-full h-full object-contain mix-blend-multiply p-4 group-hover:scale-105 transition-transform duration-300" />
+                             ) : (
+                                <div className="absolute inset-0 flex items-center justify-center text-5xl">📦</div>
+                             )}
+                          </div>
+
+                          <div className="flex flex-col flex-grow">
+                             <h4 className="font-bold text-xs lg:text-sm text-gray-800 mb-2 line-clamp-2 leading-snug group-hover:text-[#F2A900] transition">{product.name}</h4>
+                             <div className="flex flex-col xl:flex-row xl:items-center gap-1 xl:gap-2 mb-2 mt-auto">
+                                <span className="font-black text-sm lg:text-base text-gray-900">TZS {product.price.toLocaleString()}</span>
+                                <span className="text-[10px] text-gray-400 line-through">TZS {oldPrice.toLocaleString()}</span>
+                             </div>
+                             <div className="flex items-center justify-between mt-1 border-t border-gray-100 pt-3">
+                                <div className="flex items-center text-[#F2A900] text-[10px] font-bold">
+                                   <span className="flex items-center tracking-tighter">★★★★★</span> <span className="text-gray-400 ml-1 font-medium hidden sm:inline-block">({Math.floor(Math.random() * 100) + 10})</span>
+                                </div>
+                                <button onClick={(e) => { e.stopPropagation(); addToCart(product); }} className="w-8 h-8 bg-gray-50 border border-gray-200 rounded-lg flex items-center justify-center text-gray-600 hover:bg-[#F2A900] hover:text-black hover:border-[#F2A900] transition">
+                                   <FiShoppingCart size={14}/>
+                                </button>
+                             </div>
+                          </div>
+                       </div>
+                     )
+                   })}
+                 </div>
+
+                 <div className="flex justify-center">
+                   <button onClick={() => router.push('/categories')} className="bg-white border-2 border-gray-200 text-gray-800 font-black px-12 py-3.5 rounded-xl flex items-center gap-2 hover:border-[#F2A900] hover:bg-yellow-50 hover:text-[#0A101D] transition shadow-sm">
+                      View More Products <FiChevronDown className="animate-bounce mt-1"/>
+                   </button>
+                 </div>
+               </>
+             )}
+          </div>
+
         </main>
       </div>
 
@@ -708,37 +868,6 @@ export default function HomePage() {
         }
       `}</style>
 
-      <div className="w-full bg-[#0A101D] border-t border-b border-gray-800 py-5 lg:py-6 overflow-hidden relative flex flex-col md:flex-row items-center gap-4 mb-20 lg:mb-28">
-         <div className="md:absolute md:left-0 md:top-0 md:bottom-0 md:z-20 md:bg-gradient-to-r md:from-[#0A101D] md:via-[#0A101D] md:to-transparent w-full md:w-80 flex items-center px-6 md:px-10 justify-between md:justify-start">
-            <div className="flex flex-col">
-               <h3 className="text-xl lg:text-2xl font-black text-white leading-tight flex items-center gap-2">Top <span className="text-[#F2A900]">Brands</span></h3>
-               <p className="hidden md:block text-[10px] text-gray-400 mt-1 font-medium tracking-wide uppercase">Premium Partners</p>
-            </div>
-            <button onClick={() => router.push('/categories')} className="md:hidden bg-[#F2A900] text-black text-[10px] font-black px-4 py-1.5 rounded-lg flex items-center gap-1 shadow-sm">
-                Shop All <FiArrowRight/>
-            </button>
-         </div>
-
-         <div className="w-full relative mt-2 md:mt-0">
-            <div className="marquee-container items-center gap-10 lg:gap-20 md:pl-[350px]">
-               {[...brandLogos, ...brandLogos].map((num, idx) => (
-                  <div key={idx} className="flex-shrink-0 flex items-center justify-center">
-                    <img 
-                      src={`/${num}.png`} 
-                      alt={`Brand ${num}`} 
-                      className="h-8 lg:h-12 object-contain grayscale hover:grayscale-0 brightness-200 hover:brightness-100 transition-all duration-300 cursor-pointer"
-                      onError={(e) => {
-                         (e.target as HTMLImageElement).style.display = 'none';
-                      }}
-                    />
-                  </div>
-               ))}
-            </div>
-         </div>
-
-         <div className="hidden md:block absolute right-0 top-0 bottom-0 z-20 bg-gradient-to-l from-[#0A101D] to-transparent w-32 pointer-events-none"></div>
-      </div>
-
       <footer className="bg-[#0A101D] text-gray-300 py-12 lg:py-16 pb-28 lg:pb-16">
         <div className="max-w-[1500px] mx-auto px-6 lg:px-8">
           <div className="flex flex-col lg:flex-row items-center justify-between border-b border-gray-800 pb-10 mb-10 gap-6">
@@ -747,7 +876,7 @@ export default function HomePage() {
               <p className="text-sm text-gray-400">Get the latest updates on new products and upcoming sales.</p>
             </div>
             <div className="flex w-full lg:w-auto">
-              <input type="email" placeholder="Enter your email address" className="px-4 py-3 rounded-l-xl w-full lg:w-80 text-gray-900 outline-none text-sm" />
+              <input type="email" placeholder="Enter your email address" className="px-4 py-3 rounded-l-xl w-full lg:w-80 text-gray-900 outline-none text-base" />
               <button className="bg-[#F2A900] text-black px-6 py-3 rounded-r-xl font-bold flex items-center gap-2 hover:bg-yellow-500 transition text-sm">Subscribe <FiSend /></button>
             </div>
           </div>
