@@ -30,6 +30,7 @@ export default function CategoryPage({ params }: { params?: { slug?: string } })
     : 'All Categories';
 
   const [products, setProducts] = useState<any[]>([]);
+  const [allProductsData, setAllProductsData] = useState<any[]>([]); // Data halisi ya search bar
   const [filteredProducts, setFilteredProducts] = useState<any[]>([]);
   const [allCategories, setAllCategories] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -39,7 +40,11 @@ export default function CategoryPage({ params }: { params?: { slug?: string } })
   const [userCountry, setUserCountry] = useState('...');
   const [countryCode, setCountryCode] = useState('tz');
   
+  // === SEARCH STATE PAMOJA NA FUNCTION YAKE ===
   const [searchQuery, setSearchQuery] = useState('');
+  const [showDesktopSuggestions, setShowDesktopSuggestions] = useState(false);
+  const [showMobileSuggestions, setShowMobileSuggestions] = useState(false);
+
   const [sortOrder, setSortOrder] = useState('popular');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [wishlist, setWishlist] = useState<string[]>([]);
@@ -53,6 +58,11 @@ export default function CategoryPage({ params }: { params?: { slug?: string } })
     if (!url) return '';
     return url.startsWith('http') ? url : `${getApiUrl()}${url}`;
   };
+
+  // Filter bidhaa kwa ajili ya Live Search suggestions
+  const filteredSuggestions = searchQuery.trim() === '' 
+    ? [] 
+    : allProductsData.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase())).slice(0, 6);
 
   // ==========================================
   // HELPER MPYA: Inasaidia kutoa picha kwenye kifurushi (Array)
@@ -106,6 +116,7 @@ export default function CategoryPage({ params }: { params?: { slug?: string } })
         const prodRes = await fetch(`${getApiUrl()}/api/products`);
         if (prodRes.ok) {
           const data = await prodRes.json();
+          setAllProductsData(data); // Hifadhi zote kwa ajili ya search bar
           let filtered = data;
           
           if (resolvedSlug && resolvedSlug !== 'all') {
@@ -152,6 +163,13 @@ export default function CategoryPage({ params }: { params?: { slug?: string } })
     setSelectedBrand('All');
     setSortOrder('popular');
     setSearchQuery('');
+  };
+
+  const handleSearch = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    setShowDesktopSuggestions(false);
+    setShowMobileSuggestions(false);
+    // Hii itafanya filter local tu kwenye list iliyopo, kwa kuwa tuko tayari kwenye categories.
   };
 
   const toggleWishlist = (e: React.MouseEvent, productId: string) => {
@@ -226,23 +244,64 @@ export default function CategoryPage({ params }: { params?: { slug?: string } })
               <FiMapPin className="text-gray-400" size={20}/>
               <div className="flex flex-col leading-tight">
                 <span className="text-[10px] text-gray-400">Deliver to</span>
-                <span className="text-xs font-bold flex items-center gap-1">{userLocation} <FiChevronDown/></span>
+                <span className="text-xs font-bold flex items-center gap-1">{userLocation.split(',')[0]} <FiChevronDown/></span>
               </div>
             </div>
           </div>
 
-          <div className="flex-1 max-w-2xl flex items-center h-12 bg-white rounded-lg overflow-hidden shadow-sm">
-            <button className="h-full px-4 text-gray-600 text-sm font-bold bg-gray-100 border-r border-gray-200 flex items-center gap-1 hover:bg-gray-200 transition">
-              All <FiChevronDown/>
-            </button>
-            <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search products, brands..." className="flex-1 h-full px-4 text-sm text-gray-900 outline-none" />
-            <div className="flex items-center gap-3 px-3 text-gray-400">
-              <FiCamera className="cursor-pointer hover:text-gray-600"/>
-              <FiMic className="cursor-pointer hover:text-gray-600"/>
-            </div>
-            <button className="h-full px-8 bg-[#F2A900] text-black hover:bg-yellow-500 transition">
-              <FiSearch size={20} />
-            </button>
+          <div className="flex-1 max-w-2xl relative">
+            <form onSubmit={handleSearch} className="flex items-center h-12 bg-white rounded-lg overflow-hidden shadow-sm w-full">
+              <button type="button" className="h-full px-4 text-gray-600 text-sm font-bold bg-gray-100 border-r border-gray-200 flex items-center gap-1 hover:bg-gray-200 transition">
+                All <FiChevronDown/>
+              </button>
+              <input 
+                type="text" 
+                value={searchQuery}
+                onChange={(e) => { setSearchQuery(e.target.value); setShowDesktopSuggestions(true); }}
+                onFocus={() => setShowDesktopSuggestions(true)}
+                onBlur={() => setTimeout(() => setShowDesktopSuggestions(false), 200)}
+                placeholder="Search products, brands..." 
+                className="flex-1 h-full px-4 text-base text-gray-900 outline-none" // IOS Zoom Fix: text-base
+              />
+              <div className="flex items-center gap-3 px-3 text-gray-400">
+                <FiCamera className="cursor-pointer hover:text-gray-600"/>
+                <FiMic className="cursor-pointer hover:text-gray-600"/>
+              </div>
+              <button type="submit" className="h-full px-8 bg-[#F2A900] text-black hover:bg-yellow-500 transition">
+                <FiSearch size={20} />
+              </button>
+            </form>
+
+            {/* LIVE SEARCH SUGGESTIONS DROPDOWN (DESKTOP) */}
+            {showDesktopSuggestions && searchQuery.trim() !== '' && (
+              <div className="absolute top-full mt-2 left-0 w-full bg-white rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.1)] border border-gray-100 overflow-hidden z-50">
+                {filteredSuggestions.length > 0 ? (
+                  <ul className="max-h-[60vh] overflow-y-auto hide-scrollbar">
+                    {filteredSuggestions.map((prod) => (
+                      <li 
+                        key={prod.id} 
+                        onClick={() => router.push(`/product/${prod.id}`)}
+                        className="px-4 py-3 hover:bg-gray-50 cursor-pointer flex items-center gap-4 border-b border-gray-50 last:border-0 transition"
+                      >
+                        <div className="w-12 h-12 bg-gray-50 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0 border border-gray-100 p-1">
+                          {getImagesArray(prod.imageUrl)[0] ? (
+                            <img src={getImageUrl(getImagesArray(prod.imageUrl)[0])} className="w-full h-full object-contain mix-blend-multiply" alt=""/>
+                          ) : <FiPackage className="text-gray-400"/>}
+                        </div>
+                        <div className="flex flex-col flex-1 min-w-0">
+                          <span className="text-sm font-bold text-gray-800 truncate">{prod.name}</span>
+                          <span className="text-xs font-black text-[#F2A900]">TZS {prod.price.toLocaleString()}</span>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <div className="px-4 py-6 text-center text-sm font-medium text-gray-500">
+                    No products found for "{searchQuery}"
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           <div className="flex items-center gap-4 flex-shrink-0">
@@ -287,13 +346,56 @@ export default function CategoryPage({ params }: { params?: { slug?: string } })
              )}
           </div>
         </div>
-        <div className="flex items-center h-11 bg-white rounded-xl overflow-hidden shadow-sm">
-          <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search products..." className="flex-1 h-full px-4 text-sm text-gray-900 outline-none" />
-          <div className="flex items-center gap-3 px-3 text-gray-400">
-            <FiMic size={18} className="cursor-pointer"/>
-            <FiCamera size={18} className="cursor-pointer"/>
-          </div>
-          <button className="h-full px-5 bg-[#F2A900] text-black"><FiSearch size={18} /></button>
+        
+        {/* MOBILE SEARCH W/ SUGGESTIONS */}
+        <div className="relative">
+          <form onSubmit={handleSearch} className="flex items-center h-11 bg-white rounded-xl overflow-hidden shadow-sm">
+            <input 
+              type="text" 
+              value={searchQuery} 
+              onChange={(e) => { setSearchQuery(e.target.value); setShowMobileSuggestions(true); }}
+              onFocus={() => setShowMobileSuggestions(true)}
+              onBlur={() => setTimeout(() => setShowMobileSuggestions(false), 200)}
+              placeholder="Search products..." 
+              className="flex-1 h-full px-4 text-base text-gray-900 outline-none" // IOS Zoom Fix: text-base
+            />
+            <div className="flex items-center gap-3 px-3 text-gray-400">
+              <FiMic size={18} className="cursor-pointer"/>
+              <FiCamera size={18} className="cursor-pointer"/>
+            </div>
+            <button type="submit" className="h-full px-5 bg-[#F2A900] text-black"><FiSearch size={18} /></button>
+          </form>
+
+          {/* LIVE SEARCH SUGGESTIONS DROPDOWN (MOBILE) */}
+          {showMobileSuggestions && searchQuery.trim() !== '' && (
+            <div className="absolute top-full mt-2 left-0 right-0 bg-white rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.15)] border border-gray-100 overflow-hidden z-50">
+              {filteredSuggestions.length > 0 ? (
+                <ul className="max-h-[50vh] overflow-y-auto hide-scrollbar">
+                  {filteredSuggestions.map((prod) => (
+                    <li 
+                      key={prod.id} 
+                      onClick={() => router.push(`/product/${prod.id}`)}
+                      className="px-4 py-3 hover:bg-gray-50 cursor-pointer flex items-center gap-3 border-b border-gray-50 last:border-0 transition"
+                    >
+                      <div className="w-10 h-10 bg-gray-50 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0 border border-gray-100 p-1">
+                        {getImagesArray(prod.imageUrl)[0] ? (
+                          <img src={getImageUrl(getImagesArray(prod.imageUrl)[0])} className="w-full h-full object-contain mix-blend-multiply" alt=""/>
+                        ) : <FiPackage className="text-gray-400"/>}
+                      </div>
+                      <div className="flex flex-col flex-1 min-w-0">
+                        <span className="text-xs font-bold text-gray-800 truncate">{prod.name}</span>
+                        <span className="text-[10px] font-black text-[#F2A900]">TZS {prod.price.toLocaleString()}</span>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <div className="px-4 py-6 text-center text-xs font-medium text-gray-500">
+                  No products found for "{searchQuery}"
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </header>
 

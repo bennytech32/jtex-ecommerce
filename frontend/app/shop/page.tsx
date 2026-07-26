@@ -58,9 +58,19 @@ export default function ShopPage() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   
   const [searchQuery, setSearchQuery] = useState('');
+  const [showDesktopSuggestions, setShowDesktopSuggestions] = useState(false);
+  const [showMobileSuggestions, setShowMobileSuggestions] = useState(false);
+  
   const [activeCategory, setActiveCategory] = useState('All');
   const [sortOrder, setSortOrder] = useState('popular');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [wishlist, setWishlist] = useState<string[]>([]);
+
+  // States mpya kwa ajili ya Real Filters
+  const [maxPrice, setMaxPrice] = useState<number>(10000000);
+  const [selectedBrand, setSelectedBrand] = useState<string>('All');
+  const [selectedCondition, setSelectedCondition] = useState<string>('All');
+  const [availableBrands, setAvailableBrands] = useState<string[]>([]);
 
   const [user, setUser] = useState<any>(null);
   const [lang, setLang] = useState<'en' | 'sw'>('en'); 
@@ -70,6 +80,11 @@ export default function ShopPage() {
   const [countryCode, setCountryCode] = useState('tz'); 
 
   const t = translations[lang];
+
+  // Filter bidhaa kwa ajili ya Live Search Dropdown
+  const filteredSuggestions = searchQuery.trim() === '' 
+    ? [] 
+    : products.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase())).slice(0, 6);
 
   const getApiUrl = () => process.env.NEXT_PUBLIC_API_URL || 'https://jtex-ecommerce-production.up.railway.app';
   
@@ -136,6 +151,10 @@ export default function ShopPage() {
         setProducts(data);
         setFilteredProducts(data);
         
+        // Extract real Brands
+        const uniqueBrands = Array.from(new Set(data.map((p: any) => p.brand))).filter(Boolean);
+        setAvailableBrands(['All', ...uniqueBrands] as string[]);
+        
         const uniqueCats = Array.from(new Set(data.map((p: any) => p.category))).filter(Boolean);
         const formattedCats = uniqueCats.map((c: any) => ({
             name: c, 
@@ -161,6 +180,7 @@ export default function ShopPage() {
     return () => window.removeEventListener('selectCategory', handleCategorySelect);
   }, []);
 
+  // REAL FILTERS EFFECT
   useEffect(() => {
     let result = products;
     if (activeCategory !== 'All') {
@@ -170,13 +190,40 @@ export default function ShopPage() {
         return pCat.includes(tCat) || tCat.includes(pCat);
       });
     }
+    
     if (searchQuery) result = result.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()));
+    result = result.filter(p => p.price <= maxPrice);
+    if (selectedBrand !== 'All') result = result.filter(p => p.brand === selectedBrand);
+    
+    // Condition Filter Logic
+    if (selectedCondition !== 'All') {
+      result = result.filter(p => {
+          const cond = p.condition || 'Brand New';
+          return cond.toLowerCase().includes(selectedCondition.toLowerCase());
+      });
+    }
     
     if (sortOrder === 'low') result = [...result].sort((a, b) => a.price - b.price);
     else if (sortOrder === 'high') result = [...result].sort((a, b) => b.price - a.price);
+    else if (sortOrder === 'newest') result = [...result].reverse(); // Simple newest logic
     
     setFilteredProducts(result);
-  }, [searchQuery, activeCategory, sortOrder, products]);
+  }, [searchQuery, activeCategory, maxPrice, selectedBrand, selectedCondition, sortOrder, products]);
+
+  const resetFilters = () => {
+    setMaxPrice(10000000);
+    setSelectedBrand('All');
+    setSelectedCondition('All');
+    setSortOrder('popular');
+    setSearchQuery('');
+  };
+
+  const handleSearch = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    setShowDesktopSuggestions(false);
+    setShowMobileSuggestions(false);
+    // Hii hapa inaruhusu kufilter bidhaa hapo hapo kwenye Shop ukibonyeza enter.
+  };
 
   const toggleWishlist = (e: React.MouseEvent, productId: string) => {
     e.stopPropagation();
@@ -225,6 +272,57 @@ export default function ShopPage() {
     );
   };
 
+  const ProductCard = ({ product }: { product: any }) => {
+    const isWishlisted = wishlist.includes(product.id);
+    const visualDiscount = getDeterministicDiscount(product.id); 
+    const oldPrice = Math.round(product.price / (1 - (visualDiscount/100)));
+    const displayImage = getDisplayImage(product.imageUrl);
+
+    if (viewMode === 'list') {
+      return (
+        <div onClick={() => router.push(`/product/${product.id}`)} className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm flex gap-4 group hover:border-[#F2A900] transition cursor-pointer">
+          <div className="relative w-32 h-32 bg-gray-50/50 rounded-xl flex items-center justify-center flex-shrink-0 p-2 overflow-hidden border border-gray-50">
+            <span className="absolute top-2 left-2 bg-[#FF7A00] text-white text-[10px] font-black px-1.5 py-0.5 rounded z-20">-{visualDiscount}%</span>
+            {displayImage ? <img src={getImageUrl(displayImage)} alt={product.name} className="absolute inset-0 w-full h-full object-contain mix-blend-multiply p-2 group-hover:scale-105 transition-transform" /> : <span className="text-4xl">📦</span>}
+          </div>
+          <div className="flex-1 flex flex-col justify-center">
+            <h4 className="font-bold text-sm text-gray-800 mb-1 leading-snug line-clamp-2">{product.name}</h4>
+            <div className="flex items-center gap-2 mb-2">
+              <span className="font-black text-base text-gray-900">TZS {product.price.toLocaleString()}</span>
+              <span className="text-[10px] text-gray-400 line-through">TZS {oldPrice.toLocaleString()}</span>
+            </div>
+            <div className="flex items-center justify-between mt-auto">
+              <div className="flex items-center text-[#F2A900] text-[10px] font-bold"><span className="tracking-tighter">★★★★★</span></div>
+              <button onClick={(e) => { e.stopPropagation(); addToCart(product); }} className="px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-700 hover:bg-[#F2A900] hover:text-black font-bold text-xs flex items-center gap-2 transition"><FiShoppingCart/> Add</button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+    return (
+      <div onClick={() => router.push(`/product/${product.id}`)} className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm flex flex-col h-full group hover:border-[#F2A900] transition cursor-pointer">
+        <div className="relative w-full pt-[100%] bg-gray-50/50 rounded-xl mb-4 overflow-hidden border border-gray-50 flex-shrink-0">
+            <span className="absolute top-2 left-2 bg-[#FF7A00] text-white text-[10px] font-black px-1.5 py-0.5 rounded z-20">-{visualDiscount}%</span>
+            <button onClick={(e) => toggleWishlist(e, product.id)} className="absolute top-2 right-2 text-gray-400 hover:text-red-500 lg:hidden z-20"><FiHeart className={isWishlisted ? "fill-red-500 text-red-500" : ""}/></button>
+            {displayImage ? <img src={getImageUrl(displayImage)} alt={product.name} className="absolute inset-0 w-full h-full object-contain mix-blend-multiply p-4 group-hover:scale-105 transition-transform duration-300" /> : <div className="absolute inset-0 flex items-center justify-center text-5xl">📦</div>}
+        </div>
+        <div className="flex flex-col flex-grow">
+            <h4 className="font-bold text-xs lg:text-sm text-gray-800 mb-2 line-clamp-2 leading-snug">{product.name}</h4>
+            <div className="flex flex-col xl:flex-row xl:items-center gap-1 xl:gap-2 mb-2 mt-auto">
+                <span className="font-black text-sm lg:text-base text-gray-900">TZS {product.price.toLocaleString()}</span>
+                <span className="text-[10px] text-gray-400 line-through">TZS {oldPrice.toLocaleString()}</span>
+            </div>
+            <div className="flex items-center justify-between mt-1 border-t border-gray-100 pt-3">
+                <div className="flex items-center text-[#F2A900] text-[10px] font-bold"><span className="flex items-center tracking-tighter">★★★★★</span> <span className="text-gray-400 ml-1 font-medium hidden sm:inline-block">({Math.floor(Math.random() * 100) + 10})</span></div>
+                <button onClick={(e) => { e.stopPropagation(); addToCart(product); }} className="w-8 h-8 bg-gray-50 border border-gray-200 rounded-lg flex items-center justify-center text-gray-600 hover:bg-[#F2A900] hover:text-black transition">
+                  <FiShoppingCart size={14}/>
+                </button>
+            </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-[#F8FAFC] font-sans text-gray-900">
       
@@ -249,18 +347,59 @@ export default function ShopPage() {
             </div>
           </div>
 
-          <div className="flex-1 max-w-2xl flex items-center h-12 bg-white rounded-lg overflow-hidden shadow-sm">
-            <button className="h-full px-4 text-gray-600 text-sm font-bold bg-gray-100 border-r border-gray-200 flex items-center gap-1 hover:bg-gray-200 transition">
-              All <FiChevronDown/>
-            </button>
-            <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder={t.search} className="flex-1 h-full px-4 text-sm text-gray-900 outline-none" />
-            <div className="flex items-center gap-3 px-3 text-gray-400">
-              <FiCamera className="cursor-pointer hover:text-gray-600"/>
-              <FiMic className="cursor-pointer hover:text-gray-600"/>
-            </div>
-            <button className="h-full px-8 bg-[#F2A900] text-black hover:bg-yellow-500 transition">
-              <FiSearch size={20} />
-            </button>
+          <div className="flex-1 max-w-2xl relative">
+            <form onSubmit={handleSearch} className="flex items-center h-12 bg-white rounded-lg overflow-hidden shadow-sm">
+              <button type="button" className="h-full px-4 text-gray-600 text-sm font-bold bg-gray-100 border-r border-gray-200 flex items-center gap-1 hover:bg-gray-200 transition">
+                All <FiChevronDown/>
+              </button>
+              <input 
+                type="text" 
+                value={searchQuery} 
+                onChange={(e) => { setSearchQuery(e.target.value); setShowDesktopSuggestions(true); }}
+                onFocus={() => setShowDesktopSuggestions(true)}
+                onBlur={() => setTimeout(() => setShowDesktopSuggestions(false), 200)}
+                placeholder={t.search} 
+                className="flex-1 h-full px-4 text-base text-gray-900 outline-none" // IOS Zoom Fix: text-base
+              />
+              <div className="flex items-center gap-3 px-3 text-gray-400">
+                <FiCamera className="cursor-pointer hover:text-gray-600"/>
+                <FiMic className="cursor-pointer hover:text-gray-600"/>
+              </div>
+              <button type="submit" className="h-full px-8 bg-[#F2A900] text-black hover:bg-yellow-500 transition">
+                <FiSearch size={20} />
+              </button>
+            </form>
+
+            {/* LIVE SEARCH SUGGESTIONS DROPDOWN (DESKTOP) */}
+            {showDesktopSuggestions && searchQuery.trim() !== '' && (
+              <div className="absolute top-full mt-2 left-0 w-full bg-white rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.1)] border border-gray-100 overflow-hidden z-50">
+                {filteredSuggestions.length > 0 ? (
+                  <ul className="max-h-[60vh] overflow-y-auto hide-scrollbar">
+                    {filteredSuggestions.map((prod) => (
+                      <li 
+                        key={prod.id} 
+                        onClick={() => router.push(`/product/${prod.id}`)}
+                        className="px-4 py-3 hover:bg-gray-50 cursor-pointer flex items-center gap-4 border-b border-gray-50 last:border-0 transition"
+                      >
+                        <div className="w-12 h-12 bg-gray-50 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0 border border-gray-100 p-1">
+                          {getDisplayImage(prod.imageUrl) ? (
+                            <img src={getImageUrl(getDisplayImage(prod.imageUrl))} className="w-full h-full object-contain mix-blend-multiply" alt=""/>
+                          ) : <FiPackage className="text-gray-400"/>}
+                        </div>
+                        <div className="flex flex-col flex-1 min-w-0">
+                          <span className="text-sm font-bold text-gray-800 truncate">{prod.name}</span>
+                          <span className="text-xs font-black text-[#F2A900]">TZS {prod.price.toLocaleString()}</span>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <div className="px-4 py-6 text-center text-sm font-medium text-gray-500">
+                    {t.noProducts}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           <div className="flex items-center gap-4 flex-shrink-0">
@@ -282,7 +421,7 @@ export default function ShopPage() {
       </header>
 
       {/* ========================================================= */}
-      {/* 2. MOBILE HEADER PROFESSIONAL (Icon za Cart na Lugha tu + Search Bar chini yake) */}
+      {/* 2. MOBILE HEADER W/ SUGGESTIONS */}
       {/* ========================================================= */}
       <header className="lg:hidden bg-[#0A101D] text-white pt-4 pb-3 sticky top-0 z-50 shadow-md">
         <div className="px-4 flex items-center justify-between mb-4">
@@ -304,23 +443,56 @@ export default function ShopPage() {
         </div>
         
         {/* MOBILE SEARCH BAR */}
-        <div className="px-4">
-          <div className="flex items-center h-12 bg-white rounded-xl overflow-hidden shadow-sm border border-gray-200">
+        <div className="px-4 relative">
+          <form onSubmit={handleSearch} className="flex items-center h-12 bg-white rounded-xl overflow-hidden shadow-sm border border-gray-200">
             <input 
                type="text" 
                value={searchQuery} 
-               onChange={(e) => setSearchQuery(e.target.value)} 
+               onChange={(e) => { setSearchQuery(e.target.value); setShowMobileSuggestions(true); }}
+               onFocus={() => setShowMobileSuggestions(true)}
+               onBlur={() => setTimeout(() => setShowMobileSuggestions(false), 200)}
                placeholder="Search products..." 
-               className="flex-1 h-full px-4 text-sm text-gray-900 outline-none bg-transparent placeholder-gray-400" 
+               className="flex-1 h-full px-4 text-base text-gray-900 outline-none bg-transparent placeholder-gray-400" // IOS Zoom Fix: text-base
             />
             <div className="flex items-center gap-3 px-2 text-gray-400 bg-white">
               <FiMic size={18} className="cursor-pointer hover:text-[#F2A900] transition"/>
               <FiCamera size={18} className="cursor-pointer hover:text-[#F2A900] transition"/>
             </div>
-            <button className="h-full px-5 bg-[#F2A900] text-black hover:bg-yellow-500 transition border-l border-[#F2A900]/20">
+            <button type="submit" className="h-full px-5 bg-[#F2A900] text-black hover:bg-yellow-500 transition border-l border-[#F2A900]/20">
               <FiSearch size={20} />
             </button>
-          </div>
+          </form>
+
+          {/* LIVE SEARCH SUGGESTIONS DROPDOWN (MOBILE) */}
+          {showMobileSuggestions && searchQuery.trim() !== '' && (
+            <div className="absolute top-full mt-2 left-4 right-4 bg-white rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.15)] border border-gray-100 overflow-hidden z-50">
+              {filteredSuggestions.length > 0 ? (
+                <ul className="max-h-[50vh] overflow-y-auto hide-scrollbar">
+                  {filteredSuggestions.map((prod) => (
+                    <li 
+                      key={prod.id} 
+                      onClick={() => router.push(`/product/${prod.id}`)}
+                      className="px-4 py-3 hover:bg-gray-50 cursor-pointer flex items-center gap-3 border-b border-gray-50 last:border-0 transition"
+                    >
+                      <div className="w-10 h-10 bg-gray-50 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0 border border-gray-100 p-1">
+                        {getDisplayImage(prod.imageUrl) ? (
+                          <img src={getImageUrl(getDisplayImage(prod.imageUrl))} className="w-full h-full object-contain mix-blend-multiply" alt=""/>
+                        ) : <FiPackage className="text-gray-400"/>}
+                      </div>
+                      <div className="flex flex-col flex-1 min-w-0">
+                        <span className="text-xs font-bold text-gray-800 truncate">{prod.name}</span>
+                        <span className="text-[10px] font-black text-[#F2A900]">TZS {prod.price.toLocaleString()}</span>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <div className="px-4 py-6 text-center text-xs font-medium text-gray-500">
+                  {t.noProducts}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </header>
 
@@ -334,35 +506,44 @@ export default function ShopPage() {
           
           {renderSidebarMenu()}
 
-          {/* Filters Box */}
+          {/* REAL FILTERS BOX */}
           <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm mb-6 sticky top-28">
              <div className="flex justify-between items-center mb-6">
                 <h3 className="font-black text-gray-900">{t.filter}</h3>
-                <button onClick={() => {setSearchQuery(''); setActiveCategory('All'); setSortOrder('popular');}} className="text-xs text-blue-600 hover:underline">{t.clearAll}</button>
+                <button onClick={resetFilters} className="text-xs text-blue-600 hover:underline">{t.clearAll}</button>
              </div>
              
              <div className="space-y-6">
+                {/* PRICE FILTER */}
                 <div>
-                   <div className="flex justify-between items-center mb-3 cursor-pointer text-sm font-bold text-gray-800">
-                      {t.priceRange} <FiChevronDown/>
-                   </div>
-                   <div className="px-2">
-                     <div className="w-full h-1 bg-gray-200 rounded-full relative mb-4 mt-2">
-                        <div className="absolute left-[20%] right-[30%] h-full bg-[#F2A900] rounded-full"></div>
-                        <div className="absolute left-[20%] top-1/2 -translate-y-1/2 w-3 h-3 bg-white border-2 border-[#F2A900] rounded-full shadow"></div>
-                        <div className="absolute right-[30%] top-1/2 -translate-y-1/2 w-3 h-3 bg-white border-2 border-[#F2A900] rounded-full shadow"></div>
-                     </div>
-                     <div className="flex justify-between text-[10px] font-medium text-gray-500">
-                        <span>TZS 10,000</span>
-                        <span>TZS 5,000,000+</span>
-                     </div>
-                   </div>
+                   <h4 className="text-sm font-bold text-gray-800 mb-2">Max Price</h4>
+                   <p className="text-xs text-[#F2A900] font-black mb-2">TZS {maxPrice.toLocaleString()}</p>
+                   <input 
+                     type="range" min="10000" max="10000000" step="50000"
+                     value={maxPrice} onChange={(e) => setMaxPrice(Number(e.target.value))}
+                     className="w-full accent-[#F2A900] cursor-pointer"
+                   />
                 </div>
-                {['Brand', 'Condition', 'Ratings'].map(filter => (
-                   <div key={filter} className="flex justify-between items-center pb-3 border-b border-gray-100 cursor-pointer text-sm font-bold text-gray-800 hover:text-[#F2A900] transition">
-                      {filter} <FiChevronDown/>
-                   </div>
-                ))}
+
+                {/* BRAND FILTER */}
+                {availableBrands.length > 1 && (
+                  <div>
+                     <h4 className="text-sm font-bold text-gray-800 mb-2">Brand</h4>
+                     <select value={selectedBrand} onChange={e => setSelectedBrand(e.target.value)} className="w-full bg-gray-50 border border-gray-200 rounded-lg p-2.5 text-sm outline-none focus:border-[#F2A900] cursor-pointer">
+                        {availableBrands.map(b => <option key={b} value={b}>{b}</option>)}
+                     </select>
+                  </div>
+                )}
+
+                {/* CONDITION FILTER (REAL KABISA) */}
+                <div>
+                   <h4 className="text-sm font-bold text-gray-800 mb-2">Condition</h4>
+                   <select value={selectedCondition} onChange={e => setSelectedCondition(e.target.value)} className="w-full bg-gray-50 border border-gray-200 rounded-lg p-2.5 text-sm outline-none focus:border-[#F2A900] cursor-pointer">
+                      <option value="All">All Conditions</option>
+                      <option value="New">Brand New</option>
+                      <option value="Used">Used</option>
+                   </select>
+                </div>
              </div>
           </div>
         </aside>
@@ -398,13 +579,14 @@ export default function ShopPage() {
                    <span className="text-xs text-gray-500 font-bold">{t.sort}</span>
                    <select value={sortOrder} onChange={(e) => setSortOrder(e.target.value)} className="text-xs font-bold text-gray-900 outline-none bg-transparent cursor-pointer">
                       <option value="popular">{t.popular}</option>
+                      <option value="newest">Newest</option>
                       <option value="low">{t.lowToHigh}</option>
                       <option value="high">{t.highToLow}</option>
                    </select>
                 </div>
                 <div className="hidden lg:flex bg-white border border-gray-200 rounded-lg p-1 shadow-sm">
-                   <button className="p-1.5 bg-orange-50 text-[#F2A900] rounded"><FiGrid size={16}/></button>
-                   <button className="p-1.5 text-gray-400 hover:text-gray-700"><FiList size={16}/></button>
+                   <button onClick={() => setViewMode('grid')} className={`p-1.5 rounded ${viewMode === 'grid' ? 'bg-orange-50 text-[#F2A900]' : 'text-gray-400 hover:text-gray-700'}`}><FiGrid size={16}/></button>
+                   <button onClick={() => setViewMode('list')} className={`p-1.5 rounded ${viewMode === 'list' ? 'bg-orange-50 text-[#F2A900]' : 'text-gray-400 hover:text-gray-700'}`}><FiList size={16}/></button>
                 </div>
              </div>
           </div>
@@ -417,54 +599,11 @@ export default function ShopPage() {
                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-16 flex flex-col items-center justify-center text-center">
                   <FiSearch className="text-5xl text-gray-300 mb-4" />
                   <h3 className="text-lg font-bold text-gray-900 mb-2">{t.noProducts}</h3>
-                  <button onClick={() => {setSearchQuery(''); setActiveCategory('All');}} className="mt-4 bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold py-2 px-6 rounded-lg transition text-sm">Clear Search</button>
+                  <button onClick={resetFilters} className="mt-4 bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold py-2 px-6 rounded-lg transition text-sm">Clear Search & Filters</button>
                </div>
              ) : (
-               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 lg:gap-4">
-                 {filteredProducts.map((product: any) => {
-                   const visualDiscount = getDeterministicDiscount(product.id); 
-                   const oldPrice = Math.round(product.price / (1 - (visualDiscount/100)));
-                   const isWishlisted = wishlist.includes(product.id);
-
-                   return (
-                     <div 
-                       key={product.id} 
-                       onClick={() => router.push(`/product/${product.id}`)} 
-                       className="bg-white border border-gray-100 rounded-2xl p-3 sm:p-4 shadow-sm flex flex-col h-full group hover:border-[#F2A900] transition cursor-pointer"
-                     >
-                        <div className="relative w-full pt-[100%] bg-gray-50/50 rounded-xl mb-3 sm:mb-4 overflow-hidden border border-gray-50 flex-shrink-0">
-                           <span className="absolute top-2 left-2 bg-[#FF7A00] text-white text-[10px] font-black px-1.5 py-0.5 rounded z-20">-{visualDiscount}%</span>
-                           <button className="absolute top-2 right-2 text-gray-400 hover:text-red-500 lg:hidden z-20" onClick={(e) => toggleWishlist(e, product.id)}>
-                              <FiHeart className={isWishlisted ? "fill-red-500 text-red-500" : ""} />
-                           </button>
-                           
-                           {/* FIX YA PICHA KWENYE DUKA */}
-                           {getDisplayImage(product.imageUrl) ? (
-                              <img src={getImageUrl(getDisplayImage(product.imageUrl))} alt={product.name} className="absolute inset-0 w-full h-full object-contain mix-blend-multiply p-4 group-hover:scale-105 transition-transform duration-300" />
-                           ) : (
-                              <div className="absolute inset-0 flex items-center justify-center text-5xl">📦</div>
-                           )}
-                        </div>
-
-                        <div className="flex flex-col flex-grow">
-                           <h4 className="font-bold text-xs lg:text-sm text-gray-800 mb-2 line-clamp-2 leading-snug">{product.name}</h4>
-                           
-                           <div className="flex flex-col xl:flex-row xl:items-center gap-1 xl:gap-2 mb-2 mt-auto">
-                              <span className="font-black text-sm lg:text-base text-gray-900">TZS {product.price.toLocaleString()}</span>
-                              <span className="text-[10px] text-gray-400 line-through">TZS {oldPrice.toLocaleString()}</span>
-                           </div>
-                           <div className="flex items-center justify-between mt-1 border-t border-gray-50 pt-2 sm:pt-3">
-                              <div className="flex items-center text-[#F2A900] text-[10px] font-bold">
-                                 <span className="flex items-center tracking-tighter">★★★★★</span> <span className="text-gray-400 ml-1 font-medium hidden sm:inline-block">({Math.floor(Math.random() * 100) + 10})</span>
-                              </div>
-                              <button onClick={(e) => { e.stopPropagation(); addToCart(product); }} className="w-7 h-7 sm:w-8 sm:h-8 bg-gray-50 border border-gray-200 rounded-lg flex items-center justify-center text-gray-600 hover:bg-[#F2A900] hover:text-black hover:border-[#F2A900] transition">
-                                 <FiShoppingCart size={14}/>
-                              </button>
-                           </div>
-                        </div>
-                     </div>
-                   )
-                 })}
+               <div className={`grid gap-3 sm:gap-4 ${viewMode === 'grid' ? 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5' : 'grid-cols-1'}`}>
+                 {filteredProducts.map((product: any) => <ProductCard key={product.id} product={product} />)}
                </div>
              )}
           </div>
@@ -482,7 +621,8 @@ export default function ShopPage() {
               <p className="text-sm text-gray-400">Get the latest updates on new products and upcoming sales.</p>
             </div>
             <div className="flex w-full lg:w-auto">
-              <input type="email" placeholder="Enter your email address" className="px-4 py-3 rounded-l-xl w-full lg:w-80 text-gray-900 outline-none text-sm" />
+              {/* IOS Zoom Fix: text-base kwenye email input */}
+              <input type="email" placeholder="Enter your email address" className="px-4 py-3 rounded-l-xl w-full lg:w-80 text-gray-900 outline-none text-base" />
               <button className="bg-[#F2A900] text-black px-6 py-3 rounded-r-xl font-bold flex items-center gap-2 hover:bg-yellow-500 transition text-sm">Subscribe <FiSend /></button>
             </div>
           </div>

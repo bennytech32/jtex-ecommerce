@@ -5,7 +5,12 @@ import { useParams, useRouter } from 'next/navigation';
 import { 
   FiArrowLeft, FiHeart, FiShare, FiShoppingCart, FiStar, 
   FiChevronRight, FiChevronLeft, FiSearch, FiCheckCircle, FiMapPin, 
-  FiChevronDown, FiPackage, FiTruck, FiCheck, FiHome, FiAward
+  FiChevronDown, FiPackage, FiTruck, FiCheck, FiHome, FiAward,
+  FiGlobe, FiMic, FiCamera, FiZap, FiGrid, FiShield, FiRefreshCw,
+  FiHeadphones, FiArrowRight, FiMinus, FiPlus, FiShare2, FiFacebook,
+  FiTwitter, FiInstagram, FiLinkedin, FiSend, FiMail, FiPhone,
+  FiMessageCircle, FiBell, FiSettings, FiUser, FiMonitor, FiSmartphone,
+  FiShoppingBag, FiCoffee, FiSmile, FiList
 } from 'react-icons/fi';
 import { useCart } from '../../context/CartContext';
 import Footer from '../../components/common/Footer';
@@ -43,6 +48,10 @@ export default function ProductDetail() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showAllSpecs, setShowAllSpecs] = useState(false);
 
+  // Search Suggestions States
+  const [showDesktopSuggestions, setShowDesktopSuggestions] = useState(false);
+  const [showMobileSuggestions, setShowMobileSuggestions] = useState(false);
+
   // User Selection States (Color Only)
   const [selectedColor, setSelectedColor] = useState<string>('');
   const [colorOptions, setColorOptions] = useState<string[]>([]);
@@ -51,6 +60,27 @@ export default function ProductDetail() {
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://jtex-ecommerce-production.up.railway.app';
 
   const cartCount = cart?.length || 0;
+
+  // Filter bidhaa kwa ajili ya Live Search
+  const filteredSuggestions = searchQuery.trim() === '' 
+    ? [] 
+    : allProducts.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase())).slice(0, 6); // Zinaonekana top 6
+
+  // Function ya ku-extract picha mbele ya list search dropdown
+  const getDisplayImage = (imgData: string) => {
+    if (!imgData) return '';
+    try {
+      const parsed = JSON.parse(imgData);
+      return Array.isArray(parsed) && parsed.length > 0 ? parsed[0] : imgData;
+    } catch(e) {
+      return imgData; 
+    }
+  };
+
+  const getImageUrl = (url: string) => {
+    if (!url) return '';
+    return url.startsWith('http') ? url : `${API_URL}${url}`;
+  };
 
   // --- ACTIONS ---
   const toggleWishlist = (e: React.MouseEvent, productId: string) => {
@@ -81,6 +111,8 @@ export default function ProductDetail() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim() !== '') router.push(`/categories?search=${encodeURIComponent(searchQuery)}`);
+    setShowDesktopSuggestions(false);
+    setShowMobileSuggestions(false);
   };
 
   // --- SLIDER CONTROLS ---
@@ -224,10 +256,56 @@ export default function ProductDetail() {
               </div>
             </div>
           </div>
-          <form onSubmit={handleSearch} className="flex-1 max-w-2xl flex items-center h-12 bg-white rounded-lg overflow-hidden shadow-sm">
-            <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search products..." className="flex-1 h-full px-4 text-sm text-gray-900 outline-none" />
-            <button type="submit" className="h-full px-8 bg-[#F2A900] text-black hover:bg-yellow-500 transition"><FiSearch size={20} /></button>
-          </form>
+
+          {/* ACTIVE SEARCH DESKTOP */}
+          <div className="flex-1 max-w-2xl relative">
+            <form onSubmit={handleSearch} className="flex items-center h-12 bg-white rounded-lg overflow-hidden shadow-sm w-full">
+              <input 
+                type="text" 
+                value={searchQuery}
+                onChange={(e) => { setSearchQuery(e.target.value); setShowDesktopSuggestions(true); }}
+                onFocus={() => setShowDesktopSuggestions(true)}
+                onBlur={() => setTimeout(() => setShowDesktopSuggestions(false), 200)}
+                placeholder="Search products..." 
+                className="flex-1 h-full px-4 text-base text-gray-900 outline-none" // IOS Zoom Fix: text-base
+              />
+              <button type="submit" className="h-full px-8 bg-[#F2A900] text-black hover:bg-yellow-500 transition">
+                <FiSearch size={20} />
+              </button>
+            </form>
+
+            {/* LIVE SEARCH SUGGESTIONS DROPDOWN (DESKTOP) */}
+            {showDesktopSuggestions && searchQuery.trim() !== '' && (
+              <div className="absolute top-full mt-2 left-0 w-full bg-white rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.1)] border border-gray-100 overflow-hidden z-50">
+                {filteredSuggestions.length > 0 ? (
+                  <ul className="max-h-[60vh] overflow-y-auto hide-scrollbar">
+                    {filteredSuggestions.map((prod) => (
+                      <li 
+                        key={prod.id} 
+                        onClick={() => router.push(`/product/${prod.id}`)}
+                        className="px-4 py-3 hover:bg-gray-50 cursor-pointer flex items-center gap-4 border-b border-gray-50 last:border-0 transition"
+                      >
+                        <div className="w-12 h-12 bg-gray-50 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0 border border-gray-100 p-1">
+                          {getDisplayImage(prod.imageUrl) ? (
+                            <img src={getImageUrl(getDisplayImage(prod.imageUrl))} className="w-full h-full object-contain mix-blend-multiply" alt=""/>
+                          ) : <FiPackage className="text-gray-400"/>}
+                        </div>
+                        <div className="flex flex-col flex-1 min-w-0">
+                          <span className="text-sm font-bold text-gray-800 truncate">{prod.name}</span>
+                          <span className="text-xs font-black text-[#F2A900]">TZS {prod.price.toLocaleString()}</span>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <div className="px-4 py-6 text-center text-sm font-medium text-gray-500">
+                    No products found for "{searchQuery}"
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
           <div className="flex items-center gap-4 flex-shrink-0">
             <button onClick={() => router.push('/checkout')} className="relative flex flex-col items-center hover:bg-gray-800/50 p-2 rounded-lg transition">
               <FiShoppingCart size={24} className="text-gray-300"/>
@@ -252,11 +330,52 @@ export default function ProductDetail() {
              </div>
           </div>
         </div>
-        <div className="px-4">
-          <form onSubmit={handleSearch} className="flex items-center h-11 bg-white rounded-xl overflow-hidden shadow-sm">
-            <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search products..." className="flex-1 h-full px-4 text-sm text-gray-900 outline-none" />
+        
+        {/* MOBILE SEARCH BAR W/ SUGGESTIONS */}
+        <div className="px-4 relative">
+          <form onSubmit={handleSearch} className="flex items-center h-11 bg-white rounded-xl overflow-hidden shadow-sm w-full">
+            <input 
+              type="text" 
+              value={searchQuery} 
+              onChange={(e) => { setSearchQuery(e.target.value); setShowMobileSuggestions(true); }}
+              onFocus={() => setShowMobileSuggestions(true)}
+              onBlur={() => setTimeout(() => setShowMobileSuggestions(false), 200)}
+              placeholder="Search products..." 
+              className="flex-1 h-full px-4 text-base text-gray-900 outline-none" // IOS Zoom Fix: text-base
+            />
             <button type="submit" className="h-full px-5 bg-[#F2A900] text-black"><FiSearch size={18} /></button>
           </form>
+
+          {/* LIVE SEARCH SUGGESTIONS DROPDOWN (MOBILE) */}
+          {showMobileSuggestions && searchQuery.trim() !== '' && (
+            <div className="absolute top-full mt-2 left-4 right-4 bg-white rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.15)] border border-gray-100 overflow-hidden z-50">
+              {filteredSuggestions.length > 0 ? (
+                <ul className="max-h-[50vh] overflow-y-auto hide-scrollbar">
+                  {filteredSuggestions.map((prod) => (
+                    <li 
+                      key={prod.id} 
+                      onClick={() => router.push(`/product/${prod.id}`)}
+                      className="px-4 py-3 hover:bg-gray-50 cursor-pointer flex items-center gap-3 border-b border-gray-50 last:border-0 transition"
+                    >
+                      <div className="w-10 h-10 bg-gray-50 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0 border border-gray-100 p-1">
+                        {getDisplayImage(prod.imageUrl) ? (
+                          <img src={getImageUrl(getDisplayImage(prod.imageUrl))} className="w-full h-full object-contain mix-blend-multiply" alt=""/>
+                        ) : <FiPackage className="text-gray-400"/>}
+                      </div>
+                      <div className="flex flex-col flex-1 min-w-0">
+                        <span className="text-xs font-bold text-gray-800 truncate">{prod.name}</span>
+                        <span className="text-[10px] font-black text-[#F2A900]">TZS {prod.price.toLocaleString()}</span>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <div className="px-4 py-6 text-center text-xs font-medium text-gray-500">
+                  No products found for "{searchQuery}"
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </header>
 
@@ -324,18 +443,17 @@ export default function ProductDetail() {
           {/* ========================================================= */}
           <div className="w-full lg:w-[45%] flex flex-col px-4 lg:px-0 py-6 lg:py-0">
             
+            <div className="flex flex-wrap items-center gap-2 mb-3">
+              <span className="bg-gray-100 text-gray-600 text-[10px] font-bold px-2.5 py-1 rounded-md uppercase tracking-wider">{product.brand || 'Generic'}</span>
+            </div>
+
             <h1 className="text-xl sm:text-2xl lg:text-3xl font-semibold text-[#0A101D] leading-tight mb-4">{product.name}</h1>
 
             <div className="flex flex-col mb-4 bg-gray-50/50 border border-gray-100 p-4 rounded-2xl">
                <span className="text-3xl lg:text-4xl font-bold text-[#0A101D] leading-none tracking-tight">TSH {basePrice.toLocaleString()}</span>
                
-               {/* CONDITION & WHOLESALE BADGES */}
+               {/* WHOLESALE BADGES */}
                <div className="flex items-center gap-2 mt-3">
-                 <span className={`text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-wider flex items-center gap-1 ${
-                    displayCondition.includes('New') ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
-                 }`}>
-                   <FiAward size={12}/> {displayCondition}
-                 </span>
                  {hasWholesale && <span className="text-[10px] text-blue-700 bg-blue-100 px-2 py-1 rounded-md font-bold uppercase tracking-wider">Discounts available for bulk orders</span>}
                </div>
             </div>
@@ -352,10 +470,10 @@ export default function ProductDetail() {
                      
                      return (
                        <div key={i} className="flex flex-col items-center gap-1.5 cursor-pointer group" onClick={() => setSelectedColor(c)}>
-                         <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 ${isSelected ? 'ring-2 ring-offset-2 ring-[#F2A900] scale-110' : 'ring-1 ring-gray-200 hover:ring-gray-300'}`} style={{ backgroundColor: cssColor }}>
-                           {isSelected && <FiCheck className={isWhite ? 'text-black' : 'text-white'} size={18} />}
+                         {/* FIX YA COLOUR: ICONS NDOGO (w-6 h-6 badala ya w-10 h-10) */}
+                         <div className={`w-6 h-6 rounded-full flex items-center justify-center transition-all duration-300 ${isSelected ? 'ring-2 ring-offset-2 ring-[#F2A900] scale-110' : 'ring-1 ring-gray-200 hover:ring-gray-300'}`} style={{ backgroundColor: cssColor }}>
+                           {isSelected && <FiCheck className={isWhite ? 'text-black' : 'text-white'} size={12} />}
                          </div>
-                         <span className={`text-[10px] font-medium ${isSelected ? 'text-[#0A101D]' : 'text-gray-500 group-hover:text-gray-700'}`}>{c}</span>
                        </div>
                      );
                    })}
@@ -384,16 +502,24 @@ export default function ProductDetail() {
               </div>
             )}
 
-            {/* RATINGS (NYOTA) */}
-            <div className="flex items-center gap-1.5 mb-6 bg-gray-50 w-max px-3 py-1.5 rounded-lg border border-gray-100">
-                <div className="flex text-[#F2A900]">
-                  <FiStar className="fill-[#F2A900]" size={14} />
-                  <FiStar className="fill-[#F2A900]" size={14} />
-                  <FiStar className="fill-[#F2A900]" size={14} />
-                  <FiStar className="fill-[#F2A900]" size={14} />
-                  <FiStar className="fill-gray-300 text-gray-300" size={14} />
-                </div>
-                <span className="text-[11px] font-bold text-gray-600 ml-1">4.0 (24 Reviews)</span>
+            {/* RATINGS (NYOTA) NA BRAND NEW/USED VIMEKAWA PAMOJA */}
+            <div className="flex items-center flex-wrap gap-3 mb-6">
+              <div className="flex items-center gap-1.5 bg-gray-50 w-max px-3 py-1.5 rounded-lg border border-gray-100">
+                  <div className="flex text-[#F2A900]">
+                    <FiStar className="fill-[#F2A900]" size={14} />
+                    <FiStar className="fill-[#F2A900]" size={14} />
+                    <FiStar className="fill-[#F2A900]" size={14} />
+                    <FiStar className="fill-[#F2A900]" size={14} />
+                    <FiStar className="fill-gray-300 text-gray-300" size={14} />
+                  </div>
+                  <span className="text-[11px] font-bold text-gray-600 ml-1">4.0 (24 Reviews)</span>
+              </div>
+              
+              <span className="text-gray-300">|</span>
+              
+              <span className={`text-[10px] font-bold px-2.5 py-1.5 rounded-md uppercase tracking-wider flex items-center gap-1.5 ${displayCondition.includes('New') ? 'bg-green-50 text-green-700 border border-green-100' : 'bg-amber-50 text-amber-700 border border-amber-100'}`}>
+                <FiAward size={14}/> {displayCondition}
+              </span>
             </div>
 
             {/* DELIVERY STATUS */}
