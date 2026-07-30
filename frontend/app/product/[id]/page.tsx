@@ -28,6 +28,12 @@ const getColorCode = (colorName: string) => {
   return colorsMap[c] || c;
 };
 
+// HELPER MPYA: Inabadilisha jina la bidhaa kuwa URL safi (Mfn: "Dell Laptop 4GB" -> "dell-laptop-4gb")
+const generateSlug = (name: string) => {
+  if (!name) return '';
+  return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+};
+
 export default function ProductDetail() {
   const { id } = useParams();
   const router = useRouter();
@@ -64,7 +70,7 @@ export default function ProductDetail() {
   // Filter bidhaa kwa ajili ya Live Search
   const filteredSuggestions = searchQuery.trim() === ''
     ? []
-    : allProducts.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase())).slice(0, 6); // Zinaonekana top 6
+    : allProducts.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase())).slice(0, 6);
 
   // Function ya ku-extract picha mbele ya list search dropdown
   const getDisplayImage = (imgData: string) => {
@@ -181,7 +187,12 @@ export default function ProductDetail() {
         const data = await res.json();
         setAllProducts(data);
 
-        const foundProduct = data.find((p: any) => p.id === id);
+        // FIX: Hapa inatafuta bidhaa kwa kutumia 'ID' au 'Slug (Jina lililonyooshwa)'
+        const decodedId = decodeURIComponent(id as string);
+        const foundProduct = data.find((p: any) =>
+          p.id === decodedId || generateSlug(p.name) === decodedId
+        );
+
         if (foundProduct) {
           setProduct(foundProduct);
 
@@ -228,7 +239,7 @@ export default function ProductDetail() {
 
   const {
     Model, Color, color, Colors, colors,
-    isWholesale, wholesaleTier2Price, wholesaleTier3Price,
+    isWholesale, wholesaleTier2Price, wholesaleTier3Price, wholesaleMinOrder,
     ...otherSpecs
   } = specs;
 
@@ -295,7 +306,8 @@ export default function ProductDetail() {
                     {filteredSuggestions.map((prod) => (
                       <li
                         key={prod.id}
-                        onClick={() => router.push(`/product/${prod.id}`)}
+                        // HAPA PANAITUMIA URL SAFI
+                        onClick={() => router.push(`/product/${generateSlug(prod.name)}`)}
                         className="px-4 py-3 hover:bg-gray-50 cursor-pointer flex items-center gap-4 border-b border-gray-50 last:border-0 transition"
                       >
                         <div className="w-12 h-12 bg-gray-50 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0 border border-gray-100 p-1">
@@ -354,7 +366,7 @@ export default function ProductDetail() {
               onFocus={() => setShowMobileSuggestions(true)}
               onBlur={() => setTimeout(() => setShowMobileSuggestions(false), 200)}
               placeholder="Search products..."
-              className="flex-1 h-full px-4 text-base text-gray-900 outline-none bg-transparent placeholder-gray-400" // IOS Zoom Fix: text-base
+              className="flex-1 h-full px-4 text-base text-gray-900 outline-none" // IOS Zoom Fix: text-base
             />
             <button type="submit" className="h-full px-5 bg-[#F2A900] text-black"><FiSearch size={18} /></button>
           </form>
@@ -367,7 +379,8 @@ export default function ProductDetail() {
                   {filteredSuggestions.map((prod) => (
                     <li
                       key={prod.id}
-                      onClick={() => router.push(`/product/${prod.id}`)}
+                      // HAPA PIA PANAITUMIA URL SAFI
+                      onClick={() => router.push(`/product/${generateSlug(prod.name)}`)}
                       className="px-4 py-3 hover:bg-gray-50 cursor-pointer flex items-center gap-3 border-b border-gray-50 last:border-0 transition"
                     >
                       <div className="w-10 h-10 bg-gray-50 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0 border border-gray-100 p-1">
@@ -494,10 +507,14 @@ export default function ProductDetail() {
               </div>
             )}
 
-            {/* WHOLESALE */}
+            {/* WHOLESALE - MIN ORDER ILIYOREKEBISHWA */}
             {hasWholesale && (
               <div className="bg-gradient-to-br from-[#0A101D] to-gray-900 rounded-2xl p-4 border border-gray-800 mb-6 shadow-md text-white">
-                <p className="text-[11px] font-medium text-[#F2A900] uppercase tracking-widest mb-3 flex items-center gap-2"><FiPackage size={14} /> Wholesale Pricing</p>
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-[11px] font-medium text-[#F2A900] uppercase tracking-widest flex items-center gap-2">
+                    <FiPackage size={14} /> Minimum Order: {wholesaleMinOrder || 2}
+                  </p>
+                </div>
                 <div className="grid grid-cols-3 divide-x divide-gray-700">
                   <div className="text-center px-2">
                     <p className="text-[10px] font-medium text-gray-400 mb-0.5">1 Piece</p>
@@ -535,26 +552,53 @@ export default function ProductDetail() {
               </span>
             </div>
 
-            {/* DELIVERY STATUS */}
-            {preInfo && preInfo.isPreOrder ? (
-              <div className="mb-6 bg-blue-50/50 border border-blue-100 p-4 rounded-2xl flex items-start gap-3">
-                <FiTruck className="text-blue-600 mt-0.5 flex-shrink-0" size={20} />
+            {/* STATUS YA INSTOCK NA DELIVERY ZILIZOTENGANISHWA KWA UBORA */}
+            <div className="mb-6 bg-gray-50 border border-gray-100 p-4 rounded-2xl flex flex-col gap-4">
+              {/* In Stock / Pre-order Block */}
+              <div className="flex items-start gap-3">
+                {preInfo && preInfo.isPreOrder ? (
+                  <>
+                    <FiPackage className="text-blue-600 mt-0.5 flex-shrink-0" size={20} />
+                    <div>
+                      <p className="font-semibold text-sm text-blue-800 mb-1">Available for Pre-Order</p>
+                      <p className="text-xs text-gray-500 font-medium leading-relaxed">
+                        This item is available for pre-order and will be shipped once it arrives in stock.
+                      </p>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <FiCheckCircle className="text-green-600 mt-0.5 flex-shrink-0" size={20} />
+                    <div>
+                      <p className="font-semibold text-sm text-green-700 mb-1">In Stock</p>
+                      <p className="text-xs text-gray-500 font-medium leading-relaxed">
+                        Item is available in our warehouse and is ready to be shipped immediately.
+                      </p>
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {/* Separator */}
+              <div className="border-t border-gray-200"></div>
+
+              {/* Delivery Information Block */}
+              <div className="flex items-start gap-3">
+                <FiTruck className="text-gray-700 mt-0.5 flex-shrink-0" size={20} />
                 <div>
-                  <p className="font-semibold text-sm text-blue-800 mb-1">Available for Pre-Order</p>
-                  <p className="text-xs text-blue-900 leading-relaxed font-medium">Shipping from <span className="font-semibold">{preInfo.origin}</span>. Est Delivery: <span className="font-semibold">{preInfo.estDays}</span>.</p>
+                  <p className="font-semibold text-sm text-gray-800 mb-1">Delivery Information</p>
+                  {preInfo && preInfo.isPreOrder ? (
+                    <p className="text-[11px] font-medium text-gray-500 leading-relaxed">
+                      Shipping from <span className="font-semibold text-gray-800">{preInfo.origin}</span>. Est Delivery: <span className="font-semibold text-gray-800">{preInfo.estDays}</span>.
+                    </p>
+                  ) : (
+                    <p className="text-[11px] font-medium text-gray-500 leading-relaxed">
+                      Delivery within 24 hours in Dar es Salaam. For other regions, shipping takes 2-3 business days. Free pickup available at our store.
+                    </p>
+                  )}
                 </div>
               </div>
-            ) : (
-              <div className="mb-6 bg-green-50/50 border border-green-100 p-4 rounded-2xl flex items-start gap-3">
-                <FiTruck className="text-green-600 mt-0.5 flex-shrink-0" size={20} />
-                <div>
-                  <p className="font-semibold text-sm text-green-700 mb-1">In Stock</p>
-                  <p className="text-[11px] font-medium text-green-800 leading-relaxed">
-                    Delivery within 24 hours in Dar es Salaam. For other regions, shipping takes 2-3 business days. Free pickup available at our store.
-                  </p>
-                </div>
-              </div>
-            )}
+            </div>
 
             <div className="hidden lg:flex gap-3 mt-auto pt-4 border-t border-gray-100">
               <button onClick={() => handleAddToCart(false)} className="flex-1 bg-[#F2A900] hover:bg-yellow-500 text-black font-semibold py-4 rounded-xl text-sm transition flex justify-center items-center gap-2 shadow-[0_4px_14px_rgba(242,169,0,0.3)] hover:scale-[1.02]">
@@ -632,7 +676,8 @@ export default function ProductDetail() {
               return (
                 <div
                   key={`sim-${item.id}`}
-                  onClick={() => router.push(`/product/${item.id}`)}
+                  // HAPA PIA TUNAITUMIA URL SAFI
+                  onClick={() => router.push(`/product/${generateSlug(item.name)}`)}
                   className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm flex flex-col h-full group hover:border-[#F2A900] transition cursor-pointer"
                 >
                   <div className="relative w-full pt-[100%] bg-gray-50/50 rounded-xl mb-4 overflow-hidden border border-gray-50 flex-shrink-0">
