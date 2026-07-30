@@ -13,6 +13,12 @@ import {
   FiBell, FiSettings, FiArrowLeft, FiGlobe, FiStar, FiAward, FiCheckCircle
 } from 'react-icons/fi';
 
+// HELPER MPYA: Kutengeneza URL safi kwa kutumia jina la bidhaa
+const generateSlug = (name: string) => {
+  if (!name) return '';
+  return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+};
+
 export default function HomePage() {
   const router = useRouter();
   const { cart, addToCart } = useCart();
@@ -26,7 +32,7 @@ export default function HomePage() {
   const [userCountry, setUserCountry] = useState('...');
   const [countryCode, setCountryCode] = useState('tz');
 
-  // === WISHLIST STATE (ILI KUZUIA ERROR ILIYOTOKEA) ===
+  // === WISHLIST STATE ===
   const [wishlist, setWishlist] = useState<string[]>([]);
 
   const toggleWishlist = (e: React.MouseEvent, productId: string) => {
@@ -34,7 +40,7 @@ export default function HomePage() {
     setWishlist(prev => prev.includes(productId) ? prev.filter(id => id !== productId) : [...prev, productId]);
   };
 
-  // === SEARCH STATE PAMOJA NA FUNCTION YAKE ===
+  // === SEARCH STATE ===
   const [searchQuery, setSearchQuery] = useState('');
   const [showDesktopSuggestions, setShowDesktopSuggestions] = useState(false);
   const [showMobileSuggestions, setShowMobileSuggestions] = useState(false);
@@ -42,7 +48,7 @@ export default function HomePage() {
   // Filter bidhaa kwa ajili ya Live Search
   const filteredSuggestions = searchQuery.trim() === ''
     ? []
-    : products.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase())).slice(0, 6); // Zinaonekana top 6
+    : products.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase())).slice(0, 6);
 
   const handleSearch = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -55,10 +61,7 @@ export default function HomePage() {
     setShowMobileSuggestions(false);
   };
 
-  // Timer State for Flash Sales
   const [timeLeft, setTimeLeft] = useState({ hrs: 12, mins: 56, secs: 32 });
-
-  // Slider State for Hero Banner
   const [currentSlide, setCurrentSlide] = useState(0);
 
   const getApiUrl = () => {
@@ -71,16 +74,13 @@ export default function HomePage() {
     return url.startsWith('http') ? url : `${getApiUrl()}${url}`;
   };
 
-  // ==========================================
-  // FIX: HELPER YA KUSOMA ARRAY YA PICHA SALAMA
-  // ==========================================
   const getDisplayImage = (imgData: string) => {
     if (!imgData) return '';
     try {
       const parsed = JSON.parse(imgData);
       return Array.isArray(parsed) && parsed.length > 0 ? parsed[0] : imgData;
     } catch (e) {
-      return imgData; // Ikiwa sio JSON array, itarudisha string ilivyo (kama picha moja)
+      return imgData;
     }
   };
 
@@ -353,12 +353,13 @@ export default function HomePage() {
                     {filteredSuggestions.map((prod) => (
                       <li
                         key={prod.id}
-                        onClick={() => router.push(`/product/${prod.id}`)}
+                        // HAPA INATUMIA URL SAFI KWA SLUG
+                        onClick={() => router.push(`/product/${generateSlug(prod.name)}`)}
                         className="px-4 py-3 hover:bg-gray-50 cursor-pointer flex items-center gap-4 border-b border-gray-50 last:border-0 transition"
                       >
                         <div className="w-12 h-12 bg-gray-50 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0 border border-gray-100 p-1">
                           {getDisplayImage(prod.imageUrl) ? (
-                            <img src={getImageUrl(getDisplayImage(prod.imageUrl))} className="w-full h-full object-contain mix-blend-multiply" alt="" />
+                            <img src={getImageUrl(getDisplayImage(prod.imageUrl))} className="w-full h-full object-cover" alt="" />
                           ) : <FiPackage className="text-gray-400" />}
                         </div>
                         <div className="flex flex-col flex-1 min-w-0">
@@ -451,12 +452,13 @@ export default function HomePage() {
                   {filteredSuggestions.map((prod) => (
                     <li
                       key={prod.id}
-                      onClick={() => router.push(`/product/${prod.id}`)}
+                      // HAPA PIA INATUMIA URL SAFI KWA SLUG
+                      onClick={() => router.push(`/product/${generateSlug(prod.name)}`)}
                       className="px-4 py-3 hover:bg-gray-50 cursor-pointer flex items-center gap-3 border-b border-gray-50 last:border-0 transition"
                     >
                       <div className="w-10 h-10 bg-gray-50 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0 border border-gray-100 p-1">
                         {getDisplayImage(prod.imageUrl) ? (
-                          <img src={getImageUrl(getDisplayImage(prod.imageUrl))} className="w-full h-full object-contain mix-blend-multiply" alt="" />
+                          <img src={getImageUrl(getDisplayImage(prod.imageUrl))} className="w-full h-full object-cover" alt="" />
                         ) : <FiPackage className="text-gray-400" />}
                       </div>
                       <div className="flex flex-col flex-1 min-w-0">
@@ -483,9 +485,7 @@ export default function HomePage() {
 
         {/* DESKTOP SIDEBAR */}
         <aside className="hidden lg:flex flex-col w-[260px] flex-shrink-0">
-
           {renderSidebarMenu()}
-
           <div className="bg-[#0A101D] text-white rounded-2xl p-6 relative overflow-hidden shadow-lg border border-gray-800">
             <div className="absolute top-0 right-0 w-32 h-32 bg-[#F2A900]/20 rounded-full blur-3xl"></div>
             <p className="text-xs text-gray-400 font-bold mb-1">Special Offers</p>
@@ -627,14 +627,13 @@ export default function HomePage() {
                   return (
                     <div
                       key={product.id}
-                      onClick={() => router.push(`/product/${product.id}`)}
+                      onClick={() => router.push(`/product/${generateSlug(product.name)}`)}
                       className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm flex flex-col h-full group hover:border-[#F2A900] transition cursor-pointer"
                     >
                       <div className="relative w-full pt-[100%] bg-gray-50/50 rounded-xl mb-4 overflow-hidden border border-gray-50 flex-shrink-0">
                         <span className="absolute top-2 left-2 bg-[#FF7A00] text-white text-[10px] font-black px-1.5 py-0.5 rounded z-20">-{visualDiscount}%</span>
                         <button className="absolute top-2 right-2 text-gray-400 hover:text-red-500 lg:hidden z-20" onClick={(e) => { e.stopPropagation(); toggleWishlist(e, product.id); }}><FiHeart className={wishlist.includes(product.id) ? "fill-red-500 text-red-500" : ""} /></button>
 
-                        {/* FIX YA PICHA IJAE FRAME NZIMA BILA PADDING */}
                         {getDisplayImage(product.imageUrl) ? (
                           <img src={getImageUrl(getDisplayImage(product.imageUrl))} alt={product.name} className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                         ) : (
@@ -684,7 +683,7 @@ export default function HomePage() {
                   return (
                     <div
                       key={product.id}
-                      onClick={() => router.push(`/product/${product.id}`)}
+                      onClick={() => router.push(`/product/${generateSlug(product.name)}`)}
                       className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm flex flex-col h-full group hover:border-[#F2A900] transition cursor-pointer relative"
                     >
                       <div className="absolute top-0 right-0 bg-green-500 text-white text-[9px] font-black px-3 py-1 rounded-bl-xl z-20 shadow-sm uppercase tracking-wider">
@@ -692,7 +691,6 @@ export default function HomePage() {
                       </div>
 
                       <div className="relative w-full pt-[100%] bg-gray-50/50 rounded-xl mb-4 overflow-hidden border border-gray-50 flex-shrink-0">
-                        {/* FIX YA PICHA IJAE FRAME NZIMA BILA PADDING */}
                         {getDisplayImage(product.imageUrl) ? (
                           <img src={getImageUrl(getDisplayImage(product.imageUrl))} alt={product.name} className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                         ) : (
@@ -739,7 +737,7 @@ export default function HomePage() {
                   return (
                     <div
                       key={product.id}
-                      onClick={() => router.push(`/product/${product.id}`)}
+                      onClick={() => router.push(`/product/${generateSlug(product.name)}`)}
                       className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm flex flex-col h-full group hover:border-[#F2A900] transition cursor-pointer"
                     >
                       <div className="relative w-full pt-[100%] bg-gray-50/50 rounded-xl mb-4 overflow-hidden border border-gray-50 flex-shrink-0">
@@ -747,7 +745,6 @@ export default function HomePage() {
                           <span className="text-[#F2A900] text-lg">🔥</span>
                         </div>
 
-                        {/* FIX YA PICHA IJAE FRAME NZIMA BILA PADDING */}
                         {getDisplayImage(product.imageUrl) ? (
                           <img src={getImageUrl(getDisplayImage(product.imageUrl))} alt={product.name} className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                         ) : (
@@ -812,14 +809,13 @@ export default function HomePage() {
                     return (
                       <div
                         key={`brand-prod-${product.id}`}
-                        onClick={() => router.push(`/product/${product.id}`)}
+                        onClick={() => router.push(`/product/${generateSlug(product.name)}`)}
                         className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm flex flex-col h-full group hover:border-[#F2A900] transition cursor-pointer"
                       >
                         <div className="relative w-full pt-[100%] bg-gray-50/50 rounded-xl mb-4 overflow-hidden border border-gray-50 flex-shrink-0">
                           <span className="absolute top-2 left-2 bg-blue-600 text-white text-[10px] font-black px-1.5 py-0.5 rounded z-20 flex items-center gap-1"><FiCheckCircle size={10} /> Verified</span>
                           <button className="absolute top-2 right-2 text-gray-400 hover:text-red-500 lg:hidden z-20" onClick={(e) => { e.stopPropagation(); toggleWishlist(e, product.id); }}><FiHeart className={wishlist.includes(product.id) ? "fill-red-500 text-red-500" : ""} /></button>
 
-                          {/* FIX YA PICHA IJAE FRAME NZIMA BILA PADDING */}
                           {getDisplayImage(product.imageUrl) ? (
                             <img src={getImageUrl(getDisplayImage(product.imageUrl))} alt={product.name} className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                           ) : (
