@@ -7,7 +7,7 @@ import {
     FiCreditCard, FiPrinter, FiBox, FiDollarSign,
     FiClock, FiUser, FiSmartphone, FiArrowLeft, FiCheckCircle,
     FiShoppingCart, FiFileText, FiShield, FiUserPlus, FiPercent,
-    FiPieChart, FiUsers, FiSettings, FiMenu, FiX, FiTag, FiMonitor, FiSave
+    FiPieChart, FiUsers, FiSettings, FiMenu, FiX, FiTag, FiMonitor, FiSave, FiLogOut
 } from 'react-icons/fi';
 
 export default function StoreManagementSystem() {
@@ -16,8 +16,9 @@ export default function StoreManagementSystem() {
 
     // === SYSTEM NAVIGATION STATE ===
     const [activeModule, setActiveModule] = useState<'dashboard' | 'pos' | 'customers' | 'invoices' | 'warranties' | 'settings'>('dashboard');
-    const [sidebarOpen, setSidebarOpen] = useState(true);
+    const [sidebarOpen, setSidebarOpen] = useState(false); // Default false for mobile
     const [isLoading, setIsLoading] = useState(true);
+    const [showMobileCart, setShowMobileCart] = useState(false);
 
     // === DATABASES STATES (Populated from API) ===
     const [products, setProducts] = useState<any[]>([]);
@@ -48,7 +49,7 @@ export default function StoreManagementSystem() {
 
     // Universal Printing State
     const [printType, setPrintType] = useState<'receipt' | 'invoice' | 'warranty' | null>(null);
-    const [printData, setPrintData] = useState<any>(null); // Holds data for manual prints
+    const [printData, setPrintData] = useState<any>(null);
 
     const warrantyOptions = ['None', '3 Months', '6 Months', '1 Year', '2 Years'];
 
@@ -59,18 +60,11 @@ export default function StoreManagementSystem() {
     });
 
     // === MANUAL GENERATION STATES ===
-    // State for manual invoice creation
     const [manualInvoice, setManualInvoice] = useState({
-        customerName: '',
-        customerPhone: '',
-        items: [{ desc: '', qty: 1, price: 0 }]
+        customerName: '', customerPhone: '', items: [{ desc: '', qty: 1, price: 0 }]
     });
-
-    // State for manual warranty creation
     const [manualWarranty, setManualWarranty] = useState({
-        customerName: '',
-        customerPhone: '',
-        items: [{ desc: '', period: '1 Year' }]
+        customerName: '', customerPhone: '', items: [{ desc: '', period: '1 Year' }]
     });
 
     // === API HELPERS ===
@@ -79,23 +73,29 @@ export default function StoreManagementSystem() {
         return url.replace(/\/$/, '');
     };
 
-    const getImageUrl = (url: string) => {
-        if (!url) return '';
-        return url.startsWith('http') ? url : `${getApiUrl()}${url}`;
-    };
-
     const getDisplayImage = (imgData: string) => {
         if (!imgData) return '';
         try {
             const parsed = JSON.parse(imgData);
             return Array.isArray(parsed) && parsed.length > 0 ? parsed[0] : imgData;
-        } catch (e) {
-            return imgData;
-        }
+        } catch (e) { return imgData; }
     };
 
-    // === DATA FETCHING (LIVE) ===
+    const getImageUrl = (url: string) => {
+        if (!url) return '';
+        return url.startsWith('http') ? url : `${getApiUrl()}${url}`;
+    };
+
+    // === AUTHENTICATION & DATA FETCHING ===
     useEffect(() => {
+        // 1. SECURITY CHECK: Ensure user is logged in as Admin
+        const adminToken = localStorage.getItem('jtex_admin_token');
+        if (!adminToken) {
+            alert("Access Denied. You must log in as an administrator.");
+            router.push('/admin/login');
+            return;
+        }
+
         const timer = setInterval(() => setCurrentTime(new Date()), 1000);
 
         const fetchAllData = async () => {
@@ -112,14 +112,18 @@ export default function StoreManagementSystem() {
                 }
 
                 // Fetch Orders / Invoices
-                const ordRes = await fetch(`${getApiUrl()}/api/orders`);
+                const ordRes = await fetch(`${getApiUrl()}/api/orders`, {
+                    headers: { 'Authorization': `Bearer ${adminToken}` }
+                });
                 if (ordRes.ok) {
                     const ordData = await ordRes.json();
                     setInvoices(ordData);
                 }
 
                 // Fetch Customers
-                const custRes = await fetch(`${getApiUrl()}/api/customers`);
+                const custRes = await fetch(`${getApiUrl()}/api/customers`, {
+                    headers: { 'Authorization': `Bearer ${adminToken}` }
+                });
                 if (custRes.ok) {
                     const custData = await custRes.json();
                     setCustomers(custData);
@@ -131,8 +135,19 @@ export default function StoreManagementSystem() {
         };
 
         fetchAllData();
+
+        // Auto-open sidebar on larger screens
+        if (window.innerWidth >= 1024) setSidebarOpen(true);
+
         return () => clearInterval(timer);
     }, []);
+
+    // Logout Function
+    const handleLogout = () => {
+        localStorage.removeItem('jtex_admin_token');
+        localStorage.removeItem('jtex_admin_user');
+        router.push('/admin/login');
+    }
 
     // Filter Products for POS
     const filteredProducts = products.filter(p => {
@@ -228,9 +243,13 @@ export default function StoreManagementSystem() {
                 date: new Date().toISOString()
             };
 
+            const adminToken = localStorage.getItem('jtex_admin_token');
             const res = await fetch(`${getApiUrl()}/api/orders`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${adminToken}`
+                },
                 body: JSON.stringify(orderPayload)
             });
 
@@ -246,7 +265,6 @@ export default function StoreManagementSystem() {
             console.error("Error saving POS Order:", error);
         }
 
-        // Prepare print data based on current cart
         setPrintData({
             customerName: selectedCustomer.name,
             customerPhone: selectedCustomer.phone,
@@ -273,9 +291,13 @@ export default function StoreManagementSystem() {
         }
 
         try {
+            const adminToken = localStorage.getItem('jtex_admin_token');
             const res = await fetch(`${getApiUrl()}/api/customers`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${adminToken}`
+                },
                 body: JSON.stringify(newCustomerData)
             });
 
@@ -318,7 +340,7 @@ export default function StoreManagementSystem() {
     // ============================================================================
     if (printType && printData) {
         return (
-            <div className="bg-white text-black p-8 min-h-screen">
+            <div className="bg-white text-black p-4 sm:p-8 min-h-screen">
                 {/* 1. RECEIPT TEMPLATE */}
                 {printType === 'receipt' && (
                     <div className="max-w-[300px] mx-auto font-mono text-sm">
@@ -358,7 +380,7 @@ export default function StoreManagementSystem() {
                         </div>
                         {printData.paymentMethod === 'cash' && (
                             <div className="border-t border-dashed border-gray-400 pt-2 mb-6 text-xs">
-                                <div className="flex justify-between"><span>Cash Tendered:</span><span>{printData.amountTendered.toLocaleString()}</span></div>
+                                <div className="flex justify-between"><span>Cash Tendered:</span><span>{(printData.amountTendered || printData.total).toLocaleString()}</span></div>
                                 <div className="flex justify-between font-bold"><span>Change:</span><span>{printData.change.toLocaleString()}</span></div>
                             </div>
                         )}
@@ -372,62 +394,64 @@ export default function StoreManagementSystem() {
                 {/* 2. INVOICE TEMPLATE */}
                 {printType === 'invoice' && (
                     <div className="max-w-4xl mx-auto font-sans">
-                        <div className="flex justify-between items-start mb-10 border-b-4 border-[#0A101D] pb-6">
+                        <div className="flex flex-col sm:flex-row justify-between items-start mb-10 border-b-4 border-[#0A101D] pb-6 gap-4">
                             <div>
-                                <img src="/logo.png" alt="Jtex Logo" className="h-16 mb-2 grayscale" />
-                                <h1 className="text-4xl font-black text-gray-900 tracking-tight">TAX INVOICE</h1>
+                                <img src="/logo.png" alt="Jtex Logo" className="h-12 sm:h-16 mb-2 grayscale" />
+                                <h1 className="text-3xl sm:text-4xl font-black text-gray-900 tracking-tight">TAX INVOICE</h1>
                                 <p className="text-gray-500 font-bold mt-1">Invoice #: INV-{Math.floor(Math.random() * 100000)}</p>
                             </div>
-                            <div className="text-right text-sm">
+                            <div className="sm:text-right text-sm">
                                 <h3 className="font-black text-lg text-gray-900">Jtex Technologies</h3>
                                 <p>TanHouse, Dar es Salaam</p>
                                 <p>TIN: 123-456-789 | VRN: 987654321</p>
                                 <p>Email: info@jtex.co.tz | Tel: +255 767 949 581</p>
                             </div>
                         </div>
-                        <div className="flex justify-between mb-10">
-                            <div className="w-1/2">
+                        <div className="flex flex-col sm:flex-row justify-between mb-10 gap-6">
+                            <div className="sm:w-1/2">
                                 <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Billed To:</h4>
                                 <h2 className="text-xl font-black text-gray-900">{printData.customerName || 'Walk-in Customer'}</h2>
                                 {printData.customerPhone && <p className="text-gray-600 mt-1">Phone: {printData.customerPhone}</p>}
                             </div>
-                            <div className="w-1/2 text-right">
+                            <div className="sm:w-1/2 sm:text-right">
                                 <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Invoice Details:</h4>
                                 <p><span className="font-bold">Date:</span> {new Date(printData.date || new Date()).toLocaleDateString()}</p>
                                 <p><span className="font-bold">Payment Method:</span> <span className="uppercase">{printData.paymentMethod || 'N/A'}</span></p>
                                 <p><span className="font-bold">Status:</span> <span className="text-green-600 font-black">PAID</span></p>
                             </div>
                         </div>
-                        <table className="w-full mb-10 border-collapse">
-                            <thead>
-                                <tr className="bg-[#0A101D] text-white text-sm">
-                                    <th className="p-3 text-left w-12">#</th>
-                                    <th className="p-3 text-left">Description</th>
-                                    <th className="p-3 text-center">Warranty</th>
-                                    <th className="p-3 text-center">Qty</th>
-                                    <th className="p-3 text-right">Unit Price</th>
-                                    <th className="p-3 text-right">Total</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {printData.items.map((item: any, idx: number) => (
-                                    <tr key={idx} className="border-b border-gray-200 text-sm">
-                                        <td className="p-3 font-bold">{idx + 1}</td>
-                                        <td className="p-3 font-bold text-gray-800">{item.name || item.desc} {item.isOnline === false && <span className="text-[10px] text-gray-400">(Offline)</span>}</td>
-                                        <td className="p-3 text-center text-gray-500">{item.warranty && item.warranty !== 'None' ? item.warranty : '-'}</td>
-                                        <td className="p-3 text-center">{item.qty}</td>
-                                        <td className="p-3 text-right">{(item.price).toLocaleString()}</td>
-                                        <td className="p-3 text-right font-bold">{(item.price * item.qty).toLocaleString()}</td>
+                        <div className="overflow-x-auto mb-10">
+                            <table className="w-full border-collapse min-w-[600px]">
+                                <thead>
+                                    <tr className="bg-[#0A101D] text-white text-sm">
+                                        <th className="p-3 text-left w-12">#</th>
+                                        <th className="p-3 text-left">Description</th>
+                                        <th className="p-3 text-center">Warranty</th>
+                                        <th className="p-3 text-center">Qty</th>
+                                        <th className="p-3 text-right">Unit Price</th>
+                                        <th className="p-3 text-right">Total</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                        <div className="flex justify-between items-start mb-12">
-                            <div className="w-1/2 pr-10">
+                                </thead>
+                                <tbody>
+                                    {printData.items.map((item: any, idx: number) => (
+                                        <tr key={idx} className="border-b border-gray-200 text-sm">
+                                            <td className="p-3 font-bold">{idx + 1}</td>
+                                            <td className="p-3 font-bold text-gray-800">{item.name || item.desc} {item.isOnline === false && <span className="text-[10px] text-gray-400">(Offline)</span>}</td>
+                                            <td className="p-3 text-center text-gray-500">{item.warranty && item.warranty !== 'None' ? item.warranty : '-'}</td>
+                                            <td className="p-3 text-center">{item.qty}</td>
+                                            <td className="p-3 text-right">{(item.price).toLocaleString()}</td>
+                                            <td className="p-3 text-right font-bold">{(item.price * item.qty).toLocaleString()}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div className="flex flex-col sm:flex-row justify-between items-start mb-12 gap-8">
+                            <div className="w-full sm:w-1/2 sm:pr-10 order-2 sm:order-1">
                                 <h4 className="font-bold text-gray-800 text-sm mb-2">Terms & Conditions</h4>
                                 <p className="text-xs text-gray-500 whitespace-pre-wrap">{docSettings.invoiceTerms}</p>
                             </div>
-                            <div className="w-72 space-y-3 text-sm">
+                            <div className="w-full sm:w-72 space-y-3 text-sm order-1 sm:order-2">
                                 <div className="flex justify-between border-b border-gray-100 pb-2"><span>Subtotal:</span><span className="font-bold">TZS {(printData.subtotal || 0).toLocaleString()}</span></div>
                                 {printData.discount > 0 && <div className="flex justify-between border-b border-gray-100 pb-2 text-green-600"><span>Discount:</span><span className="font-bold">- TZS {printData.discount.toLocaleString()}</span></div>}
                                 <div className="flex justify-between text-xl font-black text-[#0A101D] pt-2"><span>Total:</span><span>TZS {(printData.total || 0).toLocaleString()}</span></div>
@@ -435,7 +459,7 @@ export default function StoreManagementSystem() {
                         </div>
 
                         <div className="flex justify-between items-end mt-20 pt-6 border-t border-gray-200">
-                            <div className="text-center w-64">
+                            <div className="text-center w-48 sm:w-64">
                                 <div className="border-b border-gray-800 mb-2"></div>
                                 <p className="text-xs font-bold text-gray-500">Authorized Signature & Stamp</p>
                             </div>
@@ -445,13 +469,13 @@ export default function StoreManagementSystem() {
 
                 {/* 3. WARRANTY CERTIFICATE TEMPLATE */}
                 {printType === 'warranty' && (
-                    <div className="max-w-4xl mx-auto font-sans border-[8px] border-[#0A101D] p-10 relative min-h-[800px]">
-                        <div className="absolute top-10 right-10 text-[#F2A900] opacity-20"><FiShield size={150} /></div>
-                        <div className="text-center mb-10 relative z-10">
-                            <img src="/logo.png" alt="Jtex Logo" className="h-16 mx-auto mb-4 grayscale" />
-                            <h1 className="text-3xl font-black text-gray-900 uppercase tracking-widest border-b-2 border-[#F2A900] inline-block pb-2">Warranty Certificate</h1>
+                    <div className="max-w-4xl mx-auto font-sans border-[4px] sm:border-[8px] border-[#0A101D] p-6 sm:p-10 relative min-h-[600px] sm:min-h-[800px]">
+                        <div className="absolute top-10 right-10 text-[#F2A900] opacity-10 sm:opacity-20"><FiShield size={100} className="sm:w-[150px] sm:h-[150px]" /></div>
+                        <div className="text-center mb-8 sm:mb-10 relative z-10">
+                            <img src="/logo.png" alt="Jtex Logo" className="h-12 sm:h-16 mx-auto mb-4 grayscale" />
+                            <h1 className="text-2xl sm:text-3xl font-black text-gray-900 uppercase tracking-widest border-b-2 border-[#F2A900] inline-block pb-2">Warranty Certificate</h1>
                         </div>
-                        <div className="grid grid-cols-2 gap-8 mb-10 relative z-10 text-sm">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8 mb-8 sm:mb-10 relative z-10 text-xs sm:text-sm">
                             <div>
                                 <h3 className="font-black text-gray-900 border-b border-gray-200 pb-2 mb-3">Customer Information</h3>
                                 <p><span className="font-bold text-gray-500">Name:</span> {printData.customerName}</p>
@@ -465,36 +489,39 @@ export default function StoreManagementSystem() {
                                 <p><span className="font-bold text-gray-500">Contact:</span> +255 767 949 581</p>
                             </div>
                         </div>
-                        <table className="w-full mb-10 border border-gray-200 text-sm relative z-10">
-                            <thead className="bg-gray-100">
-                                <tr>
-                                    <th className="p-3 text-left border-b border-gray-200">Covered Product Description</th>
-                                    <th className="p-3 text-left border-b border-gray-200">Warranty Period</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {printData.items.filter((i: any) => i.warranty && i.warranty !== 'None' || i.period).map((item: any, idx: number) => (
-                                    <tr key={idx} className="border-b border-gray-200">
-                                        <td className="p-3 font-bold">{item.name || item.desc}</td>
-                                        <td className="p-3 font-black text-[#F2A900]">{item.warranty || item.period}</td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
 
-                        <div className="mb-10 text-xs text-gray-600 space-y-2 leading-relaxed bg-gray-50 p-4 rounded-lg">
+                        <div className="overflow-x-auto mb-8 sm:mb-10 relative z-10">
+                            <table className="w-full border border-gray-200 text-xs sm:text-sm min-w-[500px]">
+                                <thead className="bg-gray-100">
+                                    <tr>
+                                        <th className="p-3 text-left border-b border-gray-200">Covered Product Description</th>
+                                        <th className="p-3 text-left border-b border-gray-200">Warranty Period</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {printData.items.filter((i: any) => i.warranty && i.warranty !== 'None' || i.period).map((item: any, idx: number) => (
+                                        <tr key={idx} className="border-b border-gray-200">
+                                            <td className="p-3 font-bold">{item.name || item.desc}</td>
+                                            <td className="p-3 font-black text-[#F2A900]">{item.warranty || item.period}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div className="mb-10 text-xs text-gray-600 space-y-2 leading-relaxed bg-gray-50 p-4 rounded-lg relative z-10">
                             <h4 className="font-black text-gray-900 text-sm mb-2">Terms and Conditions</h4>
                             <p className="whitespace-pre-wrap">{docSettings.warrantyTerms}</p>
                         </div>
 
-                        <div className="flex justify-between items-end pt-10 px-10 absolute bottom-10 left-0 right-0">
+                        <div className="flex justify-between items-end pt-10 sm:px-10 mt-auto">
                             <div className="text-center">
-                                <div className="border-b border-gray-800 w-48 mb-2 h-10"></div>
-                                <p className="text-xs font-bold text-gray-500">Customer Signature</p>
+                                <div className="border-b border-gray-800 w-32 sm:w-48 mb-2 h-10"></div>
+                                <p className="text-[10px] sm:text-xs font-bold text-gray-500">Customer Signature</p>
                             </div>
                             <div className="text-center">
-                                <div className="border-b border-gray-800 w-48 mb-2 h-10 flex items-end justify-center"><span className="font-serif italic text-xl text-blue-800">Jtex Auth</span></div>
-                                <p className="text-xs font-bold text-gray-500">Authorized Signature & Stamp</p>
+                                <div className="border-b border-gray-800 w-32 sm:w-48 mb-2 h-10 flex items-end justify-center"><span className="font-serif italic text-lg sm:text-xl text-blue-800">Jtex Auth</span></div>
+                                <p className="text-[10px] sm:text-xs font-bold text-gray-500">Authorized Signature & Stamp</p>
                             </div>
                         </div>
                     </div>
@@ -511,59 +538,80 @@ export default function StoreManagementSystem() {
     return (
         <div className="flex h-screen bg-gray-50 font-sans overflow-hidden">
 
+            {/* === MOBILE OVERLAY FOR SIDEBAR === */}
+            {!sidebarOpen && (
+                <div className="lg:hidden fixed inset-0 bg-black/50 z-30" onClick={() => setSidebarOpen(true)}></div>
+            )}
+
             {/* === SIDEBAR === */}
-            <aside className={`${sidebarOpen ? 'w-64' : 'w-20'} bg-[#0A101D] text-white flex flex-col transition-all duration-300 shadow-2xl relative z-40`}>
+            <aside className={`fixed lg:static inset-y-0 left-0 z-40 transform ${sidebarOpen ? '-translate-x-full lg:translate-x-0' : 'translate-x-0 lg:translate-x-0'} w-64 bg-[#0A101D] text-white flex flex-col transition-transform duration-300 shadow-2xl`}>
                 <div className="h-16 flex items-center justify-between px-4 border-b border-gray-800">
-                    {sidebarOpen ? <img src="/logo.png" alt="Jtex" className="h-8 object-contain" /> : <div className="w-8 h-8 bg-[#F2A900] text-black font-black flex items-center justify-center rounded">JT</div>}
-                    <button onClick={() => setSidebarOpen(!sidebarOpen)} className="text-gray-400 hover:text-white"><FiMenu size={20} /></button>
+                    <img src="/logo.png" alt="Jtex" className="h-8 object-contain" />
+                    <button onClick={() => setSidebarOpen(true)} className="lg:hidden text-gray-400 hover:text-white"><FiX size={24} /></button>
                 </div>
 
                 <div className="flex-1 py-6 space-y-2 px-3 overflow-y-auto hide-scrollbar">
-                    <button onClick={() => setActiveModule('dashboard')} className={`w-full flex items-center gap-4 px-3 py-3 rounded-xl transition ${activeModule === 'dashboard' ? 'bg-[#F2A900] text-black font-bold shadow-lg' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}>
-                        <FiPieChart size={20} /> {sidebarOpen && <span>Dashboard</span>}
+                    <button onClick={() => { setActiveModule('dashboard'); if (window.innerWidth < 1024) setSidebarOpen(true); }} className={`w-full flex items-center gap-4 px-3 py-3 rounded-xl transition ${activeModule === 'dashboard' ? 'bg-[#F2A900] text-black font-bold shadow-lg' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}>
+                        <FiPieChart size={20} /> <span>Dashboard</span>
                     </button>
-                    <button onClick={() => setActiveModule('pos')} className={`w-full flex items-center gap-4 px-3 py-3 rounded-xl transition ${activeModule === 'pos' ? 'bg-[#F2A900] text-black font-bold shadow-lg' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}>
-                        <FiMonitor size={20} /> {sidebarOpen && <span>POS Terminal</span>}
+                    <button onClick={() => { setActiveModule('pos'); if (window.innerWidth < 1024) setSidebarOpen(true); }} className={`w-full flex items-center gap-4 px-3 py-3 rounded-xl transition ${activeModule === 'pos' ? 'bg-[#F2A900] text-black font-bold shadow-lg' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}>
+                        <FiMonitor size={20} /> <span>POS Terminal</span>
                     </button>
-                    <button onClick={() => setActiveModule('customers')} className={`w-full flex items-center gap-4 px-3 py-3 rounded-xl transition ${activeModule === 'customers' ? 'bg-[#F2A900] text-black font-bold shadow-lg' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}>
-                        <FiUsers size={20} /> {sidebarOpen && <span>Customers</span>}
+                    <button onClick={() => { setActiveModule('customers'); if (window.innerWidth < 1024) setSidebarOpen(true); }} className={`w-full flex items-center gap-4 px-3 py-3 rounded-xl transition ${activeModule === 'customers' ? 'bg-[#F2A900] text-black font-bold shadow-lg' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}>
+                        <FiUsers size={20} /> <span>Customers</span>
                     </button>
-                    <button onClick={() => setActiveModule('invoices')} className={`w-full flex items-center gap-4 px-3 py-3 rounded-xl transition ${activeModule === 'invoices' ? 'bg-[#F2A900] text-black font-bold shadow-lg' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}>
-                        <FiFileText size={20} /> {sidebarOpen && <span>Generate Invoices</span>}
+                    <button onClick={() => { setActiveModule('invoices'); if (window.innerWidth < 1024) setSidebarOpen(true); }} className={`w-full flex items-center gap-4 px-3 py-3 rounded-xl transition ${activeModule === 'invoices' ? 'bg-[#F2A900] text-black font-bold shadow-lg' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}>
+                        <FiFileText size={20} /> <span>Generate Invoices</span>
                     </button>
-                    <button onClick={() => setActiveModule('warranties')} className={`w-full flex items-center gap-4 px-3 py-3 rounded-xl transition ${activeModule === 'warranties' ? 'bg-[#F2A900] text-black font-bold shadow-lg' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}>
-                        <FiShield size={20} /> {sidebarOpen && <span>Generate Warranties</span>}
+                    <button onClick={() => { setActiveModule('warranties'); if (window.innerWidth < 1024) setSidebarOpen(true); }} className={`w-full flex items-center gap-4 px-3 py-3 rounded-xl transition ${activeModule === 'warranties' ? 'bg-[#F2A900] text-black font-bold shadow-lg' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}>
+                        <FiShield size={20} /> <span>Generate Warranties</span>
                     </button>
-                    <button onClick={() => setActiveModule('settings')} className={`w-full flex items-center gap-4 px-3 py-3 rounded-xl transition ${activeModule === 'settings' ? 'bg-[#F2A900] text-black font-bold shadow-lg' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}>
-                        <FiSettings size={20} /> {sidebarOpen && <span>Doc Settings</span>}
+                    <button onClick={() => { setActiveModule('settings'); if (window.innerWidth < 1024) setSidebarOpen(true); }} className={`w-full flex items-center gap-4 px-3 py-3 rounded-xl transition ${activeModule === 'settings' ? 'bg-[#F2A900] text-black font-bold shadow-lg' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}>
+                        <FiSettings size={20} /> <span>Doc Settings</span>
                     </button>
                 </div>
 
-                <div className="p-4 border-t border-gray-800">
-                    <button onClick={() => router.push('/admin/dashboard')} className="w-full flex items-center gap-4 px-3 py-3 text-red-400 hover:bg-gray-800 rounded-xl transition">
-                        <FiArrowLeft size={20} /> {sidebarOpen && <span>Exit to Admin</span>}
+                <div className="p-4 border-t border-gray-800 space-y-2">
+                    <button onClick={() => router.push('/admin/dashboard')} className="w-full flex items-center gap-4 px-3 py-3 text-blue-400 hover:bg-gray-800 rounded-xl transition">
+                        <FiArrowLeft size={20} /> <span>Back to Main Panel</span>
+                    </button>
+                    <button onClick={handleLogout} className="w-full flex items-center gap-4 px-3 py-3 text-red-400 hover:bg-gray-800 rounded-xl transition font-bold">
+                        <FiLogOut size={20} /> <span>Secure Logout</span>
                     </button>
                 </div>
             </aside>
 
             {/* === MAIN CONTENT AREA === */}
-            <div className="flex-1 flex flex-col min-w-0">
+            <div className="flex-1 flex flex-col min-w-0 w-full">
 
                 {/* HEADER */}
-                <header className="bg-white h-16 flex items-center justify-between px-6 shadow-sm z-10 border-b border-gray-200">
-                    <h2 className="text-xl font-black text-gray-800 uppercase tracking-wide">
-                        {activeModule === 'dashboard' && 'Store Overview'}
-                        {activeModule === 'pos' && 'Point of Sale Terminal'}
-                        {activeModule === 'customers' && 'Customer Management'}
-                        {activeModule === 'invoices' && 'Manual Invoice Generator'}
-                        {activeModule === 'warranties' && 'Manual Warranty Generator'}
-                        {activeModule === 'settings' && 'Document Settings'}
-                    </h2>
-                    <div className="flex items-center gap-4 text-sm font-bold">
-                        <div className="flex items-center gap-2 text-gray-500 bg-gray-100 px-3 py-1.5 rounded-lg"><FiClock className="text-[#F2A900]" /> {currentTime.toLocaleTimeString()}</div>
-                        <div className="flex items-center gap-2 bg-[#0A101D] text-white px-4 py-1.5 rounded-lg shadow-sm">
-                            <FiUser /> Benjamin (Manager)
+                <header className="bg-white h-16 flex items-center justify-between px-4 sm:px-6 shadow-sm z-10 border-b border-gray-200">
+                    <div className="flex items-center gap-3">
+                        <button onClick={() => setSidebarOpen(false)} className="lg:hidden text-gray-700 hover:text-[#F2A900]"><FiMenu size={24} /></button>
+                        <h2 className="text-lg sm:text-xl font-black text-gray-800 uppercase tracking-wide truncate">
+                            {activeModule === 'dashboard' && 'Store Overview'}
+                            {activeModule === 'pos' && 'Point of Sale'}
+                            {activeModule === 'customers' && 'Customers'}
+                            {activeModule === 'invoices' && 'Invoice Gen'}
+                            {activeModule === 'warranties' && 'Warranty Gen'}
+                            {activeModule === 'settings' && 'Doc Settings'}
+                        </h2>
+                    </div>
+                    <div className="flex items-center gap-2 sm:gap-4 text-xs sm:text-sm font-bold">
+                        <div className="hidden sm:flex items-center gap-2 text-gray-500 bg-gray-100 px-3 py-1.5 rounded-lg"><FiClock className="text-[#F2A900]" /> {currentTime.toLocaleTimeString()}</div>
+                        <div className="flex items-center gap-2 bg-[#0A101D] text-white px-3 sm:px-4 py-1.5 rounded-lg shadow-sm">
+                            <FiUser /> <span className="hidden sm:inline">Admin</span>
                         </div>
+                        {/* Mobile Cart Toggle */}
+                        {activeModule === 'pos' && (
+                            <button
+                                onClick={() => setShowMobileCart(!showMobileCart)}
+                                className="lg:hidden flex items-center gap-2 bg-[#F2A900] text-black px-3 py-1.5 rounded-lg shadow-sm relative"
+                            >
+                                <FiShoppingCart size={18} />
+                                {cart.length > 0 && <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center">{cart.length}</span>}
+                            </button>
+                        )}
                     </div>
                 </header>
 
@@ -578,8 +626,8 @@ export default function StoreManagementSystem() {
 
                     {/* 1. DASHBOARD MODULE */}
                     {activeModule === 'dashboard' && (
-                        <div className="p-8 w-full overflow-y-auto">
-                            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                        <div className="p-4 sm:p-8 w-full overflow-y-auto">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
                                 <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 border-l-4 border-l-[#F2A900]">
                                     <p className="text-gray-500 text-sm font-bold mb-1">Total Products</p>
                                     <h3 className="text-3xl font-black text-gray-900">{products.length}</h3>
@@ -602,18 +650,18 @@ export default function StoreManagementSystem() {
 
                     {/* 2. CUSTOMERS MODULE */}
                     {activeModule === 'customers' && (
-                        <div className="p-8 w-full overflow-y-auto">
-                            <div className="flex justify-between items-center mb-6">
-                                <div className="relative w-96">
+                        <div className="p-4 sm:p-8 w-full overflow-y-auto">
+                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                                <div className="relative w-full sm:w-96">
                                     <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                                     <input type="text" placeholder="Search customers..." className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-xl focus:border-[#F2A900] outline-none" />
                                 </div>
-                                <button onClick={() => setNewCustomerModal(true)} className="bg-[#0A101D] text-white px-4 py-2 rounded-xl font-bold text-sm flex items-center gap-2 hover:bg-[#F2A900] hover:text-black transition">
+                                <button onClick={() => setNewCustomerModal(true)} className="w-full sm:w-auto bg-[#0A101D] text-white px-4 py-2 rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-[#F2A900] hover:text-black transition">
                                     <FiUserPlus /> Add New Customer
                                 </button>
                             </div>
-                            <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
-                                <table className="w-full text-left text-sm">
+                            <div className="bg-white rounded-2xl border border-gray-200 overflow-x-auto shadow-sm">
+                                <table className="w-full text-left text-sm min-w-[600px]">
                                     <thead className="bg-gray-50 border-b border-gray-200">
                                         <tr>
                                             <th className="p-4 font-bold text-gray-600">Customer Name</th>
@@ -640,10 +688,10 @@ export default function StoreManagementSystem() {
 
                     {/* 3. MANUAL INVOICES MODULE */}
                     {activeModule === 'invoices' && (
-                        <div className="p-8 w-full overflow-y-auto flex gap-6">
+                        <div className="p-4 sm:p-8 w-full overflow-y-auto flex flex-col lg:flex-row gap-6">
 
                             {/* Invoice Form */}
-                            <div className="w-1/2 bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
+                            <div className="w-full lg:w-1/2 bg-white rounded-2xl border border-gray-200 p-4 sm:p-6 shadow-sm">
                                 <h3 className="font-black text-lg text-gray-800 mb-4 border-b pb-2">Generate Custom Invoice</h3>
 
                                 <div className="space-y-4">
@@ -659,14 +707,16 @@ export default function StoreManagementSystem() {
                                     <div className="border-t border-gray-200 pt-4 mt-4">
                                         <label className="block text-xs font-bold text-gray-600 uppercase mb-2">Invoice Items</label>
                                         {manualInvoice.items.map((item, idx) => (
-                                            <div key={idx} className="flex gap-2 mb-2 items-start">
-                                                <input type="text" placeholder="Description" value={item.desc} onChange={e => { const newItems = [...manualInvoice.items]; newItems[idx].desc = e.target.value; setManualInvoice({ ...manualInvoice, items: newItems }); }} className="flex-1 p-2 border rounded text-sm outline-none" />
-                                                <input type="number" placeholder="Qty" value={item.qty} onChange={e => { const newItems = [...manualInvoice.items]; newItems[idx].qty = Number(e.target.value); setManualInvoice({ ...manualInvoice, items: newItems }); }} className="w-16 p-2 border rounded text-sm outline-none" />
-                                                <input type="number" placeholder="Price" value={item.price} onChange={e => { const newItems = [...manualInvoice.items]; newItems[idx].price = Number(e.target.value); setManualInvoice({ ...manualInvoice, items: newItems }); }} className="w-24 p-2 border rounded text-sm outline-none" />
-                                                <button onClick={() => { const newItems = manualInvoice.items.filter((_, i) => i !== idx); setManualInvoice({ ...manualInvoice, items: newItems }); }} className="p-2 text-red-500 hover:bg-red-50 rounded"><FiTrash2 /></button>
+                                            <div key={idx} className="flex flex-col sm:flex-row gap-2 mb-4 sm:mb-2 items-start sm:items-center bg-gray-50 sm:bg-transparent p-2 sm:p-0 rounded">
+                                                <input type="text" placeholder="Description" value={item.desc} onChange={e => { const newItems = [...manualInvoice.items]; newItems[idx].desc = e.target.value; setManualInvoice({ ...manualInvoice, items: newItems }); }} className="w-full sm:flex-1 p-2 border rounded text-sm outline-none" />
+                                                <div className="flex gap-2 w-full sm:w-auto">
+                                                    <input type="number" placeholder="Qty" value={item.qty} onChange={e => { const newItems = [...manualInvoice.items]; newItems[idx].qty = Number(e.target.value); setManualInvoice({ ...manualInvoice, items: newItems }); }} className="w-20 p-2 border rounded text-sm outline-none" />
+                                                    <input type="number" placeholder="Price" value={item.price} onChange={e => { const newItems = [...manualInvoice.items]; newItems[idx].price = Number(e.target.value); setManualInvoice({ ...manualInvoice, items: newItems }); }} className="flex-1 sm:w-28 p-2 border rounded text-sm outline-none" />
+                                                    <button onClick={() => { const newItems = manualInvoice.items.filter((_, i) => i !== idx); setManualInvoice({ ...manualInvoice, items: newItems }); }} className="p-2 text-red-500 hover:bg-red-50 rounded bg-white sm:bg-transparent"><FiTrash2 /></button>
+                                                </div>
                                             </div>
                                         ))}
-                                        <button onClick={() => setManualInvoice({ ...manualInvoice, items: [...manualInvoice.items, { desc: '', qty: 1, price: 0 }] })} className="text-xs font-bold text-blue-600 mt-2 flex items-center gap-1"><FiPlus /> Add Row</button>
+                                        <button onClick={() => setManualInvoice({ ...manualInvoice, items: [...manualInvoice.items, { desc: '', qty: 1, price: 0 }] })} className="text-xs font-bold text-blue-600 mt-2 flex items-center gap-1 bg-blue-50 px-3 py-1.5 rounded"><FiPlus /> Add Row</button>
                                     </div>
                                 </div>
 
@@ -690,10 +740,10 @@ export default function StoreManagementSystem() {
                             </div>
 
                             {/* Invoice History List */}
-                            <div className="w-1/2 bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm flex flex-col">
+                            <div className="w-full lg:w-1/2 bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm flex flex-col min-h-[300px]">
                                 <div className="p-4 border-b border-gray-200 bg-gray-50"><h3 className="font-black text-gray-800">System Invoice History</h3></div>
-                                <div className="flex-1 overflow-y-auto">
-                                    <table className="w-full text-left text-sm">
+                                <div className="flex-1 overflow-x-auto">
+                                    <table className="w-full text-left text-sm min-w-[400px]">
                                         <thead className="bg-gray-50 border-b border-gray-200">
                                             <tr>
                                                 <th className="p-3 font-bold">ID</th>
@@ -706,7 +756,7 @@ export default function StoreManagementSystem() {
                                                 <tr key={i} className="border-b border-gray-100 hover:bg-gray-50">
                                                     <td className="p-3 font-bold text-xs">{inv.id || `INV-${i + 1000}`}</td>
                                                     <td className="p-3 text-gray-600 truncate max-w-[100px]">{inv.customerName || inv.shippingInfo?.fullName || 'Walk-in'}</td>
-                                                    <td className="p-3 text-right font-black text-green-600">{(inv.total || 0).toLocaleString()}</td>
+                                                    <td className="p-3 text-right font-black text-green-600">{(inv.total || inv.totalAmount || 0).toLocaleString()}</td>
                                                 </tr>
                                             ))}
                                         </tbody>
@@ -718,12 +768,12 @@ export default function StoreManagementSystem() {
 
                     {/* 4. MANUAL WARRANTIES MODULE */}
                     {activeModule === 'warranties' && (
-                        <div className="p-8 w-full overflow-y-auto flex gap-6">
-                            <div className="w-full max-w-2xl bg-white rounded-2xl border border-gray-200 p-6 shadow-sm mx-auto">
+                        <div className="p-4 sm:p-8 w-full overflow-y-auto flex gap-6">
+                            <div className="w-full max-w-2xl bg-white rounded-2xl border border-gray-200 p-4 sm:p-6 shadow-sm mx-auto">
                                 <h3 className="font-black text-lg text-gray-800 mb-4 border-b pb-2 flex items-center gap-2"><FiShield className="text-[#F2A900]" /> Generate Custom Warranty Certificate</h3>
 
                                 <div className="space-y-4">
-                                    <div className="grid grid-cols-2 gap-4">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                         <div>
                                             <label className="block text-xs font-bold text-gray-600 uppercase mb-1">Customer Name</label>
                                             <input type="text" value={manualWarranty.customerName} onChange={e => setManualWarranty({ ...manualWarranty, customerName: e.target.value })} className="w-full p-2 border rounded outline-none focus:border-[#F2A900] text-sm" />
@@ -737,18 +787,20 @@ export default function StoreManagementSystem() {
                                     <div className="border-t border-gray-200 pt-4 mt-4">
                                         <label className="block text-xs font-bold text-gray-600 uppercase mb-2">Warrantied Items</label>
                                         {manualWarranty.items.map((item, idx) => (
-                                            <div key={idx} className="flex gap-2 mb-2 items-start">
-                                                <input type="text" placeholder="Product Description/Serial Number" value={item.desc} onChange={e => { const newItems = [...manualWarranty.items]; newItems[idx].desc = e.target.value; setManualWarranty({ ...manualWarranty, items: newItems }); }} className="flex-1 p-2 border rounded text-sm outline-none" />
-                                                <select value={item.period} onChange={e => { const newItems = [...manualWarranty.items]; newItems[idx].period = e.target.value; setManualWarranty({ ...manualWarranty, items: newItems }); }} className="w-32 p-2 border rounded text-sm outline-none bg-white">
-                                                    <option value="3 Months">3 Months</option>
-                                                    <option value="6 Months">6 Months</option>
-                                                    <option value="1 Year">1 Year</option>
-                                                    <option value="2 Years">2 Years</option>
-                                                </select>
-                                                <button onClick={() => { const newItems = manualWarranty.items.filter((_, i) => i !== idx); setManualWarranty({ ...manualWarranty, items: newItems }); }} className="p-2 text-red-500 hover:bg-red-50 rounded"><FiTrash2 /></button>
+                                            <div key={idx} className="flex flex-col sm:flex-row gap-2 mb-4 sm:mb-2 items-start sm:items-center bg-gray-50 sm:bg-transparent p-2 sm:p-0 rounded">
+                                                <input type="text" placeholder="Product Description/Serial Number" value={item.desc} onChange={e => { const newItems = [...manualWarranty.items]; newItems[idx].desc = e.target.value; setManualWarranty({ ...manualWarranty, items: newItems }); }} className="w-full sm:flex-1 p-2 border rounded text-sm outline-none" />
+                                                <div className="flex gap-2 w-full sm:w-auto">
+                                                    <select value={item.period} onChange={e => { const newItems = [...manualWarranty.items]; newItems[idx].period = e.target.value; setManualWarranty({ ...manualWarranty, items: newItems }); }} className="flex-1 sm:w-32 p-2 border rounded text-sm outline-none bg-white">
+                                                        <option value="3 Months">3 Months</option>
+                                                        <option value="6 Months">6 Months</option>
+                                                        <option value="1 Year">1 Year</option>
+                                                        <option value="2 Years">2 Years</option>
+                                                    </select>
+                                                    <button onClick={() => { const newItems = manualWarranty.items.filter((_, i) => i !== idx); setManualWarranty({ ...manualWarranty, items: newItems }); }} className="p-2 text-red-500 hover:bg-red-50 rounded bg-white sm:bg-transparent"><FiTrash2 /></button>
+                                                </div>
                                             </div>
                                         ))}
-                                        <button onClick={() => setManualWarranty({ ...manualWarranty, items: [...manualWarranty.items, { desc: '', period: '1 Year' }] })} className="text-xs font-bold text-blue-600 mt-2 flex items-center gap-1"><FiPlus /> Add Product</button>
+                                        <button onClick={() => setManualWarranty({ ...manualWarranty, items: [...manualWarranty.items, { desc: '', period: '1 Year' }] })} className="text-xs font-bold text-blue-600 mt-2 flex items-center gap-1 bg-blue-50 px-3 py-1.5 rounded"><FiPlus /> Add Product</button>
                                     </div>
                                 </div>
 
@@ -770,8 +822,8 @@ export default function StoreManagementSystem() {
 
                     {/* 5. DOCUMENT SETTINGS MODULE */}
                     {activeModule === 'settings' && (
-                        <div className="p-8 w-full overflow-y-auto">
-                            <div className="max-w-3xl bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
+                        <div className="p-4 sm:p-8 w-full overflow-y-auto">
+                            <div className="max-w-3xl bg-white rounded-2xl border border-gray-200 p-4 sm:p-6 shadow-sm">
                                 <h3 className="font-black text-lg text-gray-800 mb-6 border-b pb-2 flex items-center gap-2"><FiSettings /> Print Document Settings</h3>
 
                                 <div className="space-y-6">
@@ -797,7 +849,7 @@ export default function StoreManagementSystem() {
                                         />
                                     </div>
 
-                                    <button onClick={() => alert("Document settings saved successfully!")} className="bg-[#0A101D] text-white px-6 py-3 rounded-xl font-bold hover:bg-[#F2A900] hover:text-black transition flex items-center gap-2">
+                                    <button onClick={() => alert("Document settings saved successfully!")} className="w-full sm:w-auto bg-[#0A101D] text-white px-6 py-3 rounded-xl font-bold hover:bg-[#F2A900] hover:text-black transition flex items-center justify-center gap-2">
                                         <FiSave /> Save Configurations
                                     </button>
                                 </div>
@@ -807,25 +859,24 @@ export default function StoreManagementSystem() {
 
                     {/* 6. POS TERMINAL MODULE (Duka na Custom Items) */}
                     {activeModule === 'pos' && (
-                        <div className="flex-1 flex overflow-hidden">
-                            {/* L: Products */}
-                            <div className="flex-1 flex flex-col bg-gray-100">
-                                <div className="p-4 bg-white border-b border-gray-200 flex items-center justify-between shadow-sm">
-                                    <div className="relative w-96">
+                        <div className="flex-1 flex flex-col lg:flex-row overflow-hidden relative">
+                            {/* L: Products (Takes full width on mobile, flexible on desktop) */}
+                            <div className={`flex-1 flex flex-col bg-gray-100 transition-all ${showMobileCart ? 'hidden lg:flex' : 'flex'}`}>
+                                <div className="p-4 bg-white border-b border-gray-200 flex flex-col sm:flex-row items-stretch sm:items-center justify-between shadow-sm gap-3">
+                                    <div className="relative w-full sm:w-96">
                                         <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                                         <input
                                             type="text"
                                             value={searchQuery}
                                             onChange={(e) => setSearchQuery(e.target.value)}
                                             placeholder="Scan barcode or search products..."
-                                            className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-xl focus:border-[#F2A900] outline-none text-sm font-medium"
+                                            className="w-full pl-10 pr-4 py-2.5 sm:py-2 border border-gray-200 rounded-xl focus:border-[#F2A900] outline-none text-sm font-medium"
                                         />
                                     </div>
 
-                                    {/* ADD CUSTOM/OFFLINE ITEM BUTTON */}
                                     <button
                                         onClick={() => setCustomItemModal(true)}
-                                        className="bg-[#0A101D] text-white px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-[#F2A900] hover:text-black transition shadow-md"
+                                        className="bg-[#0A101D] text-white px-4 py-2.5 sm:py-2 rounded-xl text-sm font-bold flex items-center justify-center gap-2 hover:bg-[#F2A900] hover:text-black transition shadow-md"
                                     >
                                         <FiPlus /> Custom Item
                                     </button>
@@ -836,25 +887,25 @@ export default function StoreManagementSystem() {
                                         <button
                                             key={cat}
                                             onClick={() => setActiveCategory(cat)}
-                                            className={`px-4 py-1.5 rounded-lg font-bold text-xs transition-all border ${activeCategory === cat ? 'bg-[#0A101D] text-white border-[#0A101D]' : 'bg-gray-50 text-gray-600 border-gray-200 hover:border-[#F2A900]'}`}
+                                            className={`px-4 py-2 sm:py-1.5 rounded-lg font-bold text-xs transition-all border whitespace-nowrap ${activeCategory === cat ? 'bg-[#0A101D] text-white border-[#0A101D]' : 'bg-gray-50 text-gray-600 border-gray-200 hover:border-[#F2A900]'}`}
                                         >
                                             {cat}
                                         </button>
                                     ))}
                                 </div>
 
-                                <div className="flex-1 overflow-y-auto p-4">
-                                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+                                <div className="flex-1 overflow-y-auto p-4 pb-24 lg:pb-4">
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3 sm:gap-4">
                                         {filteredProducts.map(product => (
                                             <div
                                                 key={product.id}
                                                 onClick={() => addToCart(product)}
-                                                className={`bg-white border ${product.stock <= 0 && product.isOnline ? 'border-red-200 opacity-60' : 'border-gray-200 hover:border-[#F2A900] hover:shadow-lg'} rounded-2xl p-3 cursor-pointer transition-all flex flex-col h-full active:scale-95 group relative overflow-hidden`}
+                                                className={`bg-white border ${product.stock <= 0 && product.isOnline ? 'border-red-200 opacity-60' : 'border-gray-200 hover:border-[#F2A900] hover:shadow-lg'} rounded-2xl p-3 sm:p-4 cursor-pointer transition-all flex flex-col h-full active:scale-95 group relative overflow-hidden`}
                                             >
                                                 {!product.isOnline && <span className="absolute top-2 left-2 bg-gray-800 text-white text-[8px] px-1.5 py-0.5 rounded font-black z-10 shadow">STORE ONLY</span>}
 
                                                 {/* PRODUCT IMAGE FIX */}
-                                                <div className="w-full h-24 bg-gray-50 rounded-xl mb-3 flex items-center justify-center border border-gray-100 group-hover:bg-yellow-50/50 relative overflow-hidden">
+                                                <div className="w-full h-24 sm:h-28 bg-gray-50 rounded-xl mb-3 flex items-center justify-center border border-gray-100 group-hover:bg-yellow-50/50 relative overflow-hidden">
                                                     {getDisplayImage(product.imageUrl) ? (
                                                         <img src={getImageUrl(getDisplayImage(product.imageUrl))} alt={product.name} className="absolute inset-0 w-full h-full object-contain mix-blend-multiply p-2" />
                                                     ) : (
@@ -862,11 +913,11 @@ export default function StoreManagementSystem() {
                                                     )}
                                                 </div>
 
-                                                <h3 className="font-bold text-gray-800 text-xs leading-tight line-clamp-2 mb-2">{product.name}</h3>
+                                                <h3 className="font-bold text-gray-800 text-xs sm:text-sm leading-tight line-clamp-2 mb-2">{product.name}</h3>
                                                 <div className="mt-auto flex items-center justify-between">
                                                     <span className="font-black text-[#0A101D] text-sm">{(product.price).toLocaleString()}</span>
                                                     <span className={`text-[9px] font-bold px-2 py-1 rounded ${product.stock > 0 || !product.isOnline ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>
-                                                        {product.stock > 0 || !product.isOnline ? `Qty: ${product.stock || '∞'}` : 'Out of Stock'}
+                                                        {product.stock > 0 || !product.isOnline ? `Qty: ${product.stock || '∞'}` : 'Out'}
                                                     </span>
                                                 </div>
                                             </div>
@@ -875,8 +926,14 @@ export default function StoreManagementSystem() {
                                 </div>
                             </div>
 
-                            {/* R: Cart */}
-                            <div className="w-[350px] xl:w-[420px] bg-white border-l border-gray-200 flex flex-col shadow-2xl z-20 flex-shrink-0">
+                            {/* R: Cart (Sidebar on Desktop, Full screen overlay on Mobile if active) */}
+                            <div className={`lg:w-[350px] xl:w-[420px] bg-white border-l border-gray-200 flex flex-col shadow-2xl z-30 flex-shrink-0 absolute lg:relative inset-0 lg:inset-auto ${showMobileCart ? 'flex' : 'hidden lg:flex'}`}>
+
+                                {/* Mobile Cart Header with Close Button */}
+                                <div className="lg:hidden p-4 bg-[#0A101D] text-white flex justify-between items-center">
+                                    <h2 className="font-black text-lg flex items-center gap-2"><FiShoppingCart className="text-[#F2A900]" /> Current Order</h2>
+                                    <button onClick={() => setShowMobileCart(false)} className="bg-gray-800 p-2 rounded text-gray-300 hover:text-white"><FiX size={20} /></button>
+                                </div>
 
                                 {/* Customer Selection */}
                                 <div className="p-4 border-b border-gray-200 bg-gray-50/50">
@@ -891,7 +948,7 @@ export default function StoreManagementSystem() {
                                                 if (cust) setSelectedCustomer({ name: cust.name, phone: cust.phone || '' });
                                                 else setSelectedCustomer({ name: 'Walk-in Customer', phone: '' });
                                             }}
-                                            className="text-[10px] font-bold bg-white border border-gray-300 rounded px-2 py-1 outline-none"
+                                            className="text-[10px] font-bold bg-white border border-gray-300 rounded px-2 py-1 outline-none max-w-[120px] truncate"
                                         >
                                             <option value="Walk-in Customer">Walk-in Customer</option>
                                             {customers.map((c, i) => <option key={i} value={c.name}>{c.name}</option>)}
@@ -903,19 +960,19 @@ export default function StoreManagementSystem() {
                                             placeholder="Customer Name"
                                             value={selectedCustomer.name === 'Walk-in Customer' ? '' : selectedCustomer.name}
                                             onChange={(e) => setSelectedCustomer({ ...selectedCustomer, name: e.target.value || 'Walk-in Customer' })}
-                                            className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-xs font-bold focus:border-[#F2A900] outline-none"
+                                            className="w-full px-3 py-2.5 sm:py-2 bg-white border border-gray-300 rounded-lg text-xs font-bold focus:border-[#F2A900] outline-none"
                                         />
                                         <input
                                             type="text"
                                             placeholder="Phone Number (Optional)"
                                             value={selectedCustomer.phone}
                                             onChange={(e) => setSelectedCustomer({ ...selectedCustomer, phone: e.target.value })}
-                                            className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-xs font-bold focus:border-[#F2A900] outline-none"
+                                            className="w-full px-3 py-2.5 sm:py-2 bg-white border border-gray-300 rounded-lg text-xs font-bold focus:border-[#F2A900] outline-none"
                                         />
                                     </div>
                                 </div>
 
-                                <div className="px-4 py-3 border-b border-gray-200 bg-white flex justify-between items-center">
+                                <div className="hidden lg:flex px-4 py-3 border-b border-gray-200 bg-white justify-between items-center">
                                     <h2 className="font-black text-base text-gray-900 flex items-center gap-2">
                                         <FiShoppingCart className="text-[#F2A900]" /> Current Order
                                     </h2>
@@ -923,7 +980,7 @@ export default function StoreManagementSystem() {
                                 </div>
 
                                 {/* Cart Items List */}
-                                <div className="flex-1 overflow-y-auto p-2 bg-gray-50/30 hide-scrollbar">
+                                <div className="flex-1 overflow-y-auto p-3 bg-gray-50/30 hide-scrollbar">
                                     {cart.length === 0 ? (
                                         <div className="h-full flex flex-col items-center justify-center text-gray-400">
                                             <FiShoppingCart size={48} className="mb-4 opacity-30" />
@@ -931,10 +988,10 @@ export default function StoreManagementSystem() {
                                             <p className="text-xs mt-1">Select products to begin</p>
                                         </div>
                                     ) : (
-                                        <div className="space-y-2">
+                                        <div className="space-y-3">
                                             {cart.map((item, index) => (
                                                 <div key={index} className="bg-white border border-gray-200 p-3 rounded-xl shadow-sm flex flex-col gap-2 relative group hover:border-[#F2A900] transition">
-                                                    <div className="flex justify-between items-start pr-6">
+                                                    <div className="flex justify-between items-start pr-8">
                                                         <h4 className="font-bold text-xs text-gray-800 line-clamp-2 leading-snug">{item.name}</h4>
                                                     </div>
 
@@ -944,7 +1001,7 @@ export default function StoreManagementSystem() {
                                                         <select
                                                             value={item.warranty}
                                                             onChange={(e) => updateWarranty(item.id, e.target.value)}
-                                                            className="text-[10px] font-bold bg-green-50 text-green-700 border border-green-200 rounded px-1.5 py-0.5 outline-none cursor-pointer"
+                                                            className="text-[10px] font-bold bg-green-50 text-green-700 border border-green-200 rounded px-1.5 py-1 sm:py-0.5 outline-none cursor-pointer"
                                                         >
                                                             {warrantyOptions.map(w => <option key={w} value={w}>{w === 'None' ? 'No Warranty' : w}</option>)}
                                                         </select>
@@ -954,13 +1011,13 @@ export default function StoreManagementSystem() {
                                                         <span className="font-black text-gray-900 text-sm">TZS {(item.price * item.qty).toLocaleString()}</span>
 
                                                         <div className="flex items-center bg-gray-100 rounded-lg overflow-hidden border border-gray-200">
-                                                            <button onClick={() => updateQty(item.id, -1)} className="px-2.5 py-1 hover:bg-gray-200 transition text-gray-600"><FiMinus size={12} /></button>
-                                                            <span className="px-3 font-bold text-xs bg-white border-x border-gray-200 py-1">{item.qty}</span>
-                                                            <button onClick={() => updateQty(item.id, 1)} className="px-2.5 py-1 hover:bg-gray-200 transition text-gray-600"><FiPlus size={12} /></button>
+                                                            <button onClick={() => updateQty(item.id, -1)} className="px-3 sm:px-2.5 py-1.5 sm:py-1 hover:bg-gray-200 transition text-gray-600"><FiMinus size={12} /></button>
+                                                            <span className="px-3 font-bold text-xs bg-white border-x border-gray-200 py-1.5 sm:py-1">{item.qty}</span>
+                                                            <button onClick={() => updateQty(item.id, 1)} className="px-3 sm:px-2.5 py-1.5 sm:py-1 hover:bg-gray-200 transition text-gray-600"><FiPlus size={12} /></button>
                                                         </div>
                                                     </div>
 
-                                                    <button onClick={() => removeFromCart(item.id)} className="absolute top-3 right-3 text-gray-300 hover:text-red-500 transition opacity-0 group-hover:opacity-100 bg-white rounded-full p-1"><FiTrash2 size={14} /></button>
+                                                    <button onClick={() => removeFromCart(item.id)} className="absolute top-2 right-2 bg-red-50 text-red-500 hover:bg-red-100 transition sm:opacity-0 group-hover:opacity-100 rounded-full p-2"><FiTrash2 size={14} /></button>
                                                 </div>
                                             ))}
                                         </div>
@@ -968,7 +1025,7 @@ export default function StoreManagementSystem() {
                                 </div>
 
                                 {/* Discount & Calculations */}
-                                <div className="bg-white border-t border-gray-200 p-4 shadow-[0_-10px_20px_rgba(0,0,0,0.03)] z-10">
+                                <div className="bg-white border-t border-gray-200 p-4 shadow-[0_-10px_20px_rgba(0,0,0,0.03)] z-10 pb-6 lg:pb-4">
 
                                     <div className="flex items-center justify-between mb-3 bg-gray-50 border border-gray-200 rounded-lg p-2">
                                         <span className="text-xs font-bold text-gray-600 flex items-center gap-1"><FiPercent /> Discount (TZS)</span>
@@ -992,7 +1049,7 @@ export default function StoreManagementSystem() {
                                         )}
                                         <div className="flex justify-between items-center border-t border-gray-200 pt-3 mt-1">
                                             <span className="text-sm font-black text-gray-900 uppercase">Total Payable</span>
-                                            <span className="text-2xl font-black text-[#F2A900]">TZS {total.toLocaleString()}</span>
+                                            <span className="text-xl sm:text-2xl font-black text-[#F2A900]">TZS {total.toLocaleString()}</span>
                                         </div>
                                     </div>
 
@@ -1000,14 +1057,14 @@ export default function StoreManagementSystem() {
                                         <button
                                             onClick={() => setCart([])}
                                             disabled={cart.length === 0}
-                                            className="px-4 py-3 bg-red-50 text-red-600 font-bold rounded-xl hover:bg-red-100 transition disabled:opacity-50 flex items-center justify-center border border-red-200"
+                                            className="px-4 py-3 sm:py-3 bg-red-50 text-red-600 font-bold rounded-xl hover:bg-red-100 transition disabled:opacity-50 flex items-center justify-center border border-red-200"
                                         >
                                             <FiTrash2 size={18} />
                                         </button>
                                         <button
                                             onClick={() => setPaymentModal(true)}
                                             disabled={cart.length === 0}
-                                            className="flex-1 bg-[#0A101D] disabled:bg-gray-300 disabled:text-gray-500 text-white font-black py-3 rounded-xl text-base hover:bg-gray-800 transition flex items-center justify-center gap-2 shadow-lg"
+                                            className="flex-1 bg-[#0A101D] disabled:bg-gray-300 disabled:text-gray-500 text-white font-black py-4 sm:py-3 rounded-xl text-base hover:bg-gray-800 transition flex items-center justify-center gap-2 shadow-lg"
                                         >
                                             <FiCreditCard /> Checkout
                                         </button>
@@ -1107,41 +1164,41 @@ export default function StoreManagementSystem() {
             {/* ============================================== */}
             {paymentModal && (
                 <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[80] flex items-center justify-center p-4 animate-fade-in">
-                    <div className="bg-white rounded-3xl w-full max-w-3xl overflow-hidden shadow-2xl flex flex-col md:flex-row">
+                    <div className="bg-white rounded-3xl w-full max-w-3xl overflow-hidden shadow-2xl flex flex-col md:flex-row max-h-[90vh]">
 
                         {/* Left side: Payment Methods */}
-                        <div className="w-full md:w-5/12 bg-gray-50 p-8 border-r border-gray-200">
+                        <div className="w-full md:w-5/12 bg-gray-50 p-6 sm:p-8 border-b md:border-b-0 md:border-r border-gray-200 overflow-y-auto">
                             <h2 className="text-lg font-black text-gray-900 mb-6 uppercase tracking-wider">Payment Method</h2>
-                            <div className="space-y-4">
+                            <div className="space-y-3 sm:space-y-4">
                                 <button
                                     onClick={() => setPaymentMethod('cash')}
-                                    className={`w-full flex items-center gap-4 p-4 rounded-2xl border-2 transition font-bold ${paymentMethod === 'cash' ? 'border-[#F2A900] bg-yellow-50 text-gray-900 shadow-sm' : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'}`}
+                                    className={`w-full flex items-center gap-4 p-3 sm:p-4 rounded-2xl border-2 transition font-bold ${paymentMethod === 'cash' ? 'border-[#F2A900] bg-yellow-50 text-gray-900 shadow-sm' : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'}`}
                                 >
-                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${paymentMethod === 'cash' ? 'bg-[#F2A900] text-black' : 'bg-gray-100 text-gray-500'}`}><FiDollarSign className="text-xl" /></div>
+                                    <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center ${paymentMethod === 'cash' ? 'bg-[#F2A900] text-black' : 'bg-gray-100 text-gray-500'}`}><FiDollarSign className="text-lg sm:text-xl" /></div>
                                     Cash / TZS
                                 </button>
                                 <button
                                     onClick={() => setPaymentMethod('mobile')}
-                                    className={`w-full flex items-center gap-4 p-4 rounded-2xl border-2 transition font-bold ${paymentMethod === 'mobile' ? 'border-blue-500 bg-blue-50 text-blue-900 shadow-sm' : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'}`}
+                                    className={`w-full flex items-center gap-4 p-3 sm:p-4 rounded-2xl border-2 transition font-bold ${paymentMethod === 'mobile' ? 'border-blue-500 bg-blue-50 text-blue-900 shadow-sm' : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'}`}
                                 >
-                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${paymentMethod === 'mobile' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-500'}`}><FiSmartphone className="text-xl" /></div>
+                                    <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center ${paymentMethod === 'mobile' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-500'}`}><FiSmartphone className="text-lg sm:text-xl" /></div>
                                     Mobile Money
                                 </button>
                                 <button
                                     onClick={() => setPaymentMethod('bank')}
-                                    className={`w-full flex items-center gap-4 p-4 rounded-2xl border-2 transition font-bold ${paymentMethod === 'bank' ? 'border-purple-500 bg-purple-50 text-purple-900 shadow-sm' : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'}`}
+                                    className={`w-full flex items-center gap-4 p-3 sm:p-4 rounded-2xl border-2 transition font-bold ${paymentMethod === 'bank' ? 'border-purple-500 bg-purple-50 text-purple-900 shadow-sm' : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'}`}
                                 >
-                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${paymentMethod === 'bank' ? 'bg-purple-500 text-white' : 'bg-gray-100 text-gray-500'}`}><FiCreditCard className="text-xl" /></div>
+                                    <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center ${paymentMethod === 'bank' ? 'bg-purple-500 text-white' : 'bg-gray-100 text-gray-500'}`}><FiCreditCard className="text-lg sm:text-xl" /></div>
                                     Bank Card / PDQ
                                 </button>
                             </div>
                         </div>
 
                         {/* Right side: Amount Processing */}
-                        <div className="w-full md:w-7/12 p-8 bg-white flex flex-col">
-                            <div className="mb-8 border-b border-gray-100 pb-6">
+                        <div className="w-full md:w-7/12 p-6 sm:p-8 bg-white flex flex-col overflow-y-auto">
+                            <div className="mb-6 sm:mb-8 border-b border-gray-100 pb-4 sm:pb-6">
                                 <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Total Amount Due</p>
-                                <h3 className="text-4xl font-black text-[#0A101D]">TZS {total.toLocaleString()}</h3>
+                                <h3 className="text-3xl sm:text-4xl font-black text-[#0A101D]">TZS {total.toLocaleString()}</h3>
                             </div>
 
                             {paymentMethod === 'cash' && (
@@ -1152,48 +1209,48 @@ export default function StoreManagementSystem() {
                                         autoFocus
                                         value={amountTendered}
                                         onChange={(e) => setAmountTendered(e.target.value)}
-                                        className="w-full bg-gray-50 border-2 border-gray-200 focus:border-[#F2A900] rounded-2xl px-5 py-4 outline-none text-2xl font-black text-gray-900 transition mb-6"
+                                        className="w-full bg-gray-50 border-2 border-gray-200 focus:border-[#F2A900] rounded-2xl px-4 sm:px-5 py-3 sm:py-4 outline-none text-xl sm:text-2xl font-black text-gray-900 transition mb-4 sm:mb-6"
                                         placeholder="Enter amount..."
                                     />
 
-                                    <div className="grid grid-cols-3 gap-3 mb-6">
+                                    <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-6">
                                         {[10000, 20000, 50000, 100000].map(amt => (
-                                            <button key={amt} onClick={() => setAmountTendered(String(amt))} className="bg-gray-50 hover:bg-gray-200 text-gray-800 font-black py-3 rounded-xl border border-gray-200 transition text-sm">
+                                            <button key={amt} onClick={() => setAmountTendered(String(amt))} className="bg-gray-50 hover:bg-gray-200 text-gray-800 font-black py-2.5 sm:py-3 rounded-xl border border-gray-200 transition text-[10px] sm:text-sm">
                                                 {amt.toLocaleString()}
                                             </button>
                                         ))}
-                                        <button onClick={() => setAmountTendered(String(total))} className="bg-yellow-50 hover:bg-yellow-100 text-yellow-800 font-black py-3 rounded-xl border border-yellow-200 transition text-sm col-span-2">
+                                        <button onClick={() => setAmountTendered(String(total))} className="bg-yellow-50 hover:bg-yellow-100 text-yellow-800 font-black py-2.5 sm:py-3 rounded-xl border border-yellow-200 transition text-[10px] sm:text-sm col-span-2">
                                             Exact Amount
                                         </button>
                                     </div>
 
                                     {amountTendered && Number(amountTendered) >= total ? (
-                                        <div className="bg-green-50 border-2 border-green-200 rounded-2xl p-5 mb-4 animate-fade-in">
+                                        <div className="bg-green-50 border-2 border-green-200 rounded-2xl p-4 sm:p-5 mb-4 animate-fade-in">
                                             <p className="text-xs font-bold text-green-600 uppercase tracking-wider mb-1">Change to Return</p>
-                                            <p className="text-3xl font-black text-green-700">TZS {change.toLocaleString()}</p>
+                                            <p className="text-2xl sm:text-3xl font-black text-green-700">TZS {change.toLocaleString()}</p>
                                         </div>
                                     ) : (
-                                        <div className="h-[92px]"></div>
+                                        <div className="h-0 sm:h-[92px]"></div>
                                     )}
                                 </div>
                             )}
 
                             {paymentMethod !== 'cash' && (
-                                <div className="flex-1 flex flex-col items-center justify-center text-center px-8 animate-fade-in">
-                                    <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-6 border-2 border-gray-100">
-                                        <FiCheckCircle size={40} className={paymentMethod === 'mobile' ? 'text-blue-500' : 'text-purple-500'} />
+                                <div className="flex-1 flex flex-col items-center justify-center text-center px-4 sm:px-8 animate-fade-in py-8">
+                                    <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gray-50 rounded-full flex items-center justify-center mb-6 border-2 border-gray-100">
+                                        <FiCheckCircle className={`w-8 h-8 sm:w-10 sm:h-10 ${paymentMethod === 'mobile' ? 'text-blue-500' : 'text-purple-500'}`} />
                                     </div>
-                                    <h3 className="font-black text-lg text-gray-900 mb-2">Process Via Terminal</h3>
-                                    <p className="text-sm text-gray-500 font-medium">Please ask the customer to complete the transaction on their device or PDQ machine. Click confirm once payment is verified.</p>
+                                    <h3 className="font-black text-base sm:text-lg text-gray-900 mb-2">Process Via Terminal</h3>
+                                    <p className="text-xs sm:text-sm text-gray-500 font-medium">Please ask the customer to complete the transaction on their device or PDQ machine. Click confirm once payment is verified.</p>
                                 </div>
                             )}
 
-                            <div className="flex gap-4 mt-auto pt-6 border-t border-gray-100">
-                                <button onClick={() => setPaymentModal(false)} className="px-8 py-4 bg-gray-100 text-gray-700 font-black rounded-2xl hover:bg-gray-200 transition">Cancel</button>
+                            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-auto pt-6 border-t border-gray-100">
+                                <button onClick={() => setPaymentModal(false)} className="w-full sm:w-auto px-8 py-4 bg-gray-100 text-gray-700 font-black rounded-2xl hover:bg-gray-200 transition order-2 sm:order-1">Cancel</button>
                                 <button
                                     onClick={handleProcessPayment}
                                     disabled={paymentMethod === 'cash' && Number(amountTendered) < total}
-                                    className="flex-1 bg-[#F2A900] disabled:bg-gray-300 disabled:text-gray-500 text-[#0A101D] font-black py-4 rounded-2xl hover:bg-yellow-500 transition shadow-lg flex items-center justify-center gap-2"
+                                    className="w-full sm:flex-1 bg-[#F2A900] disabled:bg-gray-300 disabled:text-gray-500 text-[#0A101D] font-black py-4 rounded-2xl hover:bg-yellow-500 transition shadow-lg flex items-center justify-center gap-2 order-1 sm:order-2"
                                 >
                                     Confirm Payment <FiCheckCircle />
                                 </button>
@@ -1208,31 +1265,37 @@ export default function StoreManagementSystem() {
             {/* ============================================== */}
             {successModal && !printType && (
                 <div className="fixed inset-0 bg-gray-900/90 z-[90] flex items-center justify-center p-4 animate-fade-in backdrop-blur-sm">
-                    <div className="bg-white rounded-3xl w-full max-w-xl p-10 text-center shadow-2xl relative overflow-hidden">
+                    <div className="bg-white rounded-3xl w-full max-w-xl p-6 sm:p-10 text-center shadow-2xl relative overflow-hidden">
                         <div className="absolute top-0 left-0 w-full h-2 bg-green-500"></div>
 
-                        <div className="w-24 h-24 bg-green-50 text-green-500 rounded-full flex items-center justify-center mx-auto mb-6">
-                            <FiCheckCircle size={48} />
+                        <div className="w-16 h-16 sm:w-24 sm:h-24 bg-green-50 text-green-500 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6">
+                            <FiCheckCircle size={40} className="sm:w-12 sm:h-12" />
                         </div>
 
-                        <h2 className="text-3xl font-black text-gray-900 mb-2">Payment Successful!</h2>
-                        <p className="text-gray-500 font-medium mb-10">Transaction completed for <span className="font-bold text-gray-800">TZS {total.toLocaleString()}</span>. Please select the document to print for the customer.</p>
+                        <h2 className="text-2xl sm:text-3xl font-black text-gray-900 mb-2">Payment Successful!</h2>
+                        <p className="text-xs sm:text-sm text-gray-500 font-medium mb-8 sm:mb-10">Transaction completed for <span className="font-bold text-gray-800">TZS {total.toLocaleString()}</span>. Please select the document to print for the customer.</p>
 
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10">
-                            <button onClick={() => executePrint('receipt')} className="flex flex-col items-center gap-3 p-6 border-2 border-gray-100 rounded-2xl hover:border-[#F2A900] hover:bg-yellow-50 transition group">
-                                <FiFileText size={32} className="text-gray-400 group-hover:text-[#F2A900]" />
-                                <span className="font-black text-sm text-gray-800">Print Receipt</span>
-                                <span className="text-[10px] text-gray-500 font-bold uppercase">(Thermal / Small)</span>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-8 sm:mb-10">
+                            <button onClick={() => executePrint('receipt')} className="flex sm:flex-col items-center justify-center gap-3 p-4 sm:p-6 border-2 border-gray-100 rounded-2xl hover:border-[#F2A900] hover:bg-yellow-50 transition group">
+                                <FiFileText size={24} className="sm:w-8 sm:h-8 text-gray-400 group-hover:text-[#F2A900]" />
+                                <div className="flex flex-col items-start sm:items-center">
+                                    <span className="font-black text-sm text-gray-800">Print Receipt</span>
+                                    <span className="text-[10px] text-gray-500 font-bold uppercase">(Thermal)</span>
+                                </div>
                             </button>
-                            <button onClick={() => executePrint('invoice')} className="flex flex-col items-center gap-3 p-6 border-2 border-gray-100 rounded-2xl hover:border-blue-500 hover:bg-blue-50 transition group">
-                                <FiFileText size={32} className="text-gray-400 group-hover:text-blue-500" />
-                                <span className="font-black text-sm text-gray-800">Print Invoice</span>
-                                <span className="text-[10px] text-gray-500 font-bold uppercase">(A4 Document)</span>
+                            <button onClick={() => executePrint('invoice')} className="flex sm:flex-col items-center justify-center gap-3 p-4 sm:p-6 border-2 border-gray-100 rounded-2xl hover:border-blue-500 hover:bg-blue-50 transition group">
+                                <FiFileText size={24} className="sm:w-8 sm:h-8 text-gray-400 group-hover:text-blue-500" />
+                                <div className="flex flex-col items-start sm:items-center">
+                                    <span className="font-black text-sm text-gray-800">Print Invoice</span>
+                                    <span className="text-[10px] text-gray-500 font-bold uppercase">(A4 Doc)</span>
+                                </div>
                             </button>
-                            <button onClick={() => executePrint('warranty')} className="flex flex-col items-center gap-3 p-6 border-2 border-gray-100 rounded-2xl hover:border-green-500 hover:bg-green-50 transition group">
-                                <FiShield size={32} className="text-gray-400 group-hover:text-green-500" />
-                                <span className="font-black text-sm text-gray-800">Warranty Card</span>
-                                <span className="text-[10px] text-gray-500 font-bold uppercase">(Certificate)</span>
+                            <button onClick={() => executePrint('warranty')} className="flex sm:flex-col items-center justify-center gap-3 p-4 sm:p-6 border-2 border-gray-100 rounded-2xl hover:border-green-500 hover:bg-green-50 transition group">
+                                <FiShield size={24} className="sm:w-8 sm:h-8 text-gray-400 group-hover:text-green-500" />
+                                <div className="flex flex-col items-start sm:items-center">
+                                    <span className="font-black text-sm text-gray-800">Warranty</span>
+                                    <span className="text-[10px] text-gray-500 font-bold uppercase">(Certificate)</span>
+                                </div>
                             </button>
                         </div>
 
