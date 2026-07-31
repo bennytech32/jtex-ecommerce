@@ -1,15 +1,15 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation'; 
-import { 
-  FiBox, FiUsers, FiDollarSign, FiAlertCircle, FiGlobe, 
+import { useRouter } from 'next/navigation';
+import {
+  FiBox, FiUsers, FiDollarSign, FiAlertCircle, FiGlobe,
   FiPlusCircle, FiMonitor, FiTruck, FiTrendingUp, FiCreditCard,
   FiCheckCircle, FiPhone, FiTag
 } from 'react-icons/fi';
-import { 
-  LineChart, Line, BarChart, Bar, XAxis, YAxis, 
-  CartesianGrid, Tooltip, ResponsiveContainer 
+import {
+  LineChart, Line, BarChart, Bar, XAxis, YAxis,
+  CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
 
 const translations = {
@@ -143,7 +143,7 @@ export default function AdminDashboard() {
   const router = useRouter();
   const [lang, setLang] = useState<'en' | 'sw'>('en');
   const [activeTab, setActiveTab] = useState<'overview' | 'orders' | 'crm' | 'products'>('overview');
-  
+
   const [stats, setStats] = useState({
     totalProducts: 0, lowStock: 0, outOfStock: 0, inventoryValue: 0, totalUsers: 0
   });
@@ -166,8 +166,6 @@ export default function AdminDashboard() {
 
   const getApiUrl = () => process.env.NEXT_PUBLIC_API_URL || 'https://jtex-ecommerce-production.up.railway.app';
 
-  // FIX: Imeondolewa Guard ya "Token" hapa kwasababu layout ishaifanya.
-  // Tunaita data zetu moja kwa moja.
   useEffect(() => {
     fetchData();
   }, []);
@@ -187,7 +185,7 @@ export default function AdminDashboard() {
   const fetchData = async () => {
     try {
       const apiUrl = getApiUrl();
-      
+
       const statsRes = await fetch(`${apiUrl}/api/dashboard`, { cache: 'no-store' });
       if (statsRes.ok) setStats(await statsRes.json());
 
@@ -197,8 +195,8 @@ export default function AdminDashboard() {
         setAllOrders(ordersData);
         let rev = 0, pend = 0;
         ordersData.forEach((o: any) => {
-          if(o.status !== 'CANCELLED') rev += o.totalAmount;
-          if(o.status === 'PENDING') pend += 1;
+          if (o.status !== 'CANCELLED') rev += o.totalAmount;
+          if (o.status === 'PENDING') pend += 1;
         });
         setCalculatedStats({ revenue: rev, pending: pend });
       }
@@ -223,7 +221,7 @@ export default function AdminDashboard() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus })
       });
-      if(res.ok) {
+      if (res.ok) {
         alert(t.alertStatusSuccess);
         fetchData();
       }
@@ -231,7 +229,6 @@ export default function AdminDashboard() {
       alert("Error updating order status.");
     }
   };
-
 
   if (isLoading) {
     return (
@@ -244,7 +241,7 @@ export default function AdminDashboard() {
 
   return (
     <div className="w-full h-full font-sans">
-      
+
       {/* HEADER */}
       <header className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
         <div>
@@ -252,7 +249,7 @@ export default function AdminDashboard() {
           <p className="text-sm text-gray-500 font-medium">{t.overviewDesc}</p>
         </div>
         <div className="flex items-center gap-3">
-          <button 
+          <button
             onClick={() => setLang(lang === 'en' ? 'sw' : 'en')}
             className="flex items-center gap-2 bg-white border border-gray-200 px-4 py-2 rounded-xl text-xs font-bold text-[#0F172A] shadow-sm hover:bg-gray-50 transition"
           >
@@ -263,26 +260,26 @@ export default function AdminDashboard() {
 
       {/* ADMIN TABS NAVIGATION */}
       <div className="flex overflow-x-auto gap-2 mb-8 bg-white p-2 rounded-2xl shadow-sm border border-gray-100 hide-scrollbar">
-        <button 
+        <button
           onClick={() => setActiveTab('overview')}
           className={`flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm transition-all whitespace-nowrap ${activeTab === 'overview' ? 'bg-[#0F172A] text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
         >
           <FiTrendingUp /> {t.tabOverview}
         </button>
-        <button 
+        <button
           onClick={() => setActiveTab('products')}
           className={`flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm transition-all whitespace-nowrap ${activeTab === 'products' ? 'bg-amber-500 text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
         >
           <FiBox /> {t.tabProducts}
         </button>
-        <button 
+        <button
           onClick={() => setActiveTab('orders')}
           className={`flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm transition-all whitespace-nowrap ${activeTab === 'orders' ? 'bg-blue-600 text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
         >
-          <FiTruck /> {t.tabOrders} 
+          <FiTruck /> {t.tabOrders}
           {calculatedStats.pending > 0 && <span className="bg-red-500 text-white text-[10px] px-2 py-0.5 rounded-full">{calculatedStats.pending}</span>}
         </button>
-        <button 
+        <button
           onClick={() => setActiveTab('crm')}
           className={`flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm transition-all whitespace-nowrap ${activeTab === 'crm' ? 'bg-purple-600 text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
         >
@@ -297,7 +294,7 @@ export default function AdminDashboard() {
           <div className="mb-8">
             <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">{t.quickActions}</h3>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <button onClick={() => alert(t.alertPosFeature)} className="flex items-center gap-4 bg-gradient-to-r from-[#0F172A] to-gray-800 p-4 rounded-2xl text-white hover:shadow-lg transition transform hover:-translate-y-1">
+              <button onClick={() => router.push('/admin/pos')} className="flex items-center gap-4 bg-gradient-to-r from-[#0F172A] to-gray-800 p-4 rounded-2xl text-white hover:shadow-lg transition transform hover:-translate-y-1">
                 <div className="w-12 h-12 bg-white/10 rounded-full flex items-center justify-center text-2xl"><FiMonitor /></div>
                 <div className="text-left"><p className="font-black text-lg">{t.openPos}</p><p className="text-[10px] text-gray-300">Point of Sale System</p></div>
               </button>
@@ -353,27 +350,27 @@ export default function AdminDashboard() {
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={salesData}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
-                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#6B7280', fontSize: 12}} dy={10} />
-                    <YAxis axisLine={false} tickLine={false} tick={{fill: '#6B7280', fontSize: 12}} dx={-10} tickFormatter={(value) => `${value / 1000000}M`} />
-                    <Tooltip cursor={{stroke: '#F3F4F6', strokeWidth: 2}} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} formatter={(value: any) => [`TZS ${value.toLocaleString()}`, t.sales]} />
-                    <Line type="monotone" dataKey="mauzo" stroke="#F2A900" strokeWidth={4} dot={{r: 4, fill: '#0F172A', strokeWidth: 2}} activeDot={{r: 6, fill: '#F2A900'}} />
+                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#6B7280', fontSize: 12 }} dy={10} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fill: '#6B7280', fontSize: 12 }} dx={-10} tickFormatter={(value) => `${value / 1000000}M`} />
+                    <Tooltip cursor={{ stroke: '#F3F4F6', strokeWidth: 2 }} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} formatter={(value: any) => [`TZS ${value.toLocaleString()}`, t.sales]} />
+                    <Line type="monotone" dataKey="mauzo" stroke="#F2A900" strokeWidth={4} dot={{ r: 4, fill: '#0F172A', strokeWidth: 2 }} activeDot={{ r: 6, fill: '#F2A900' }} />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
             </div>
             <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-               <h3 className="text-sm font-black text-gray-900 mb-6 uppercase tracking-wider">{t.revenueCompare}</h3>
-               <div className="h-72">
-                 <ResponsiveContainer width="100%" height="100%">
-                   <BarChart data={salesData}>
-                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
-                     <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#6B7280', fontSize: 12}} dy={10} />
-                     <YAxis axisLine={false} tickLine={false} tick={{fill: '#6B7280', fontSize: 12}} dx={-10} tickFormatter={(value) => `${value / 1000000}M`} />
-                     <Tooltip cursor={{fill: '#F9FAFB'}} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} formatter={(value: any) => [`TZS ${value.toLocaleString()}`, t.revenue]} />
-                     <Bar dataKey="mauzo" fill="#0F172A" radius={[6, 6, 0, 0]} />
-                   </BarChart>
-                 </ResponsiveContainer>
-               </div>
+              <h3 className="text-sm font-black text-gray-900 mb-6 uppercase tracking-wider">{t.revenueCompare}</h3>
+              <div className="h-72">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={salesData}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
+                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#6B7280', fontSize: 12 }} dy={10} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fill: '#6B7280', fontSize: 12 }} dx={-10} tickFormatter={(value) => `${value / 1000000}M`} />
+                    <Tooltip cursor={{ fill: '#F9FAFB' }} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} formatter={(value: any) => [`TZS ${value.toLocaleString()}`, t.revenue]} />
+                    <Bar dataKey="mauzo" fill="#0F172A" radius={[6, 6, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
             </div>
           </div>
         </div>
@@ -384,14 +381,14 @@ export default function AdminDashboard() {
         <div className="bg-white rounded-2xl shadow-sm overflow-hidden animate-fade-in border border-gray-100 min-h-[500px]">
           <div className="p-6 border-b border-gray-100 bg-amber-50/10 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
-              <h3 className="text-xl font-black text-gray-900 flex items-center gap-2"><FiBox className="text-amber-500"/> {t.tabProducts}</h3>
+              <h3 className="text-xl font-black text-gray-900 flex items-center gap-2"><FiBox className="text-amber-500" /> {t.tabProducts}</h3>
               <p className="text-sm text-gray-500 mt-1">{t.productsDesc}</p>
             </div>
             <button onClick={() => router.push('/admin/products')} className="bg-[#0F172A] text-white font-bold px-4 py-2.5 rounded-xl flex items-center gap-2 text-sm hover:bg-gray-800 transition shadow-sm">
               <FiPlusCircle /> {t.addProduct}
             </button>
           </div>
-          
+
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
               <thead className="bg-gray-50 text-gray-500 font-bold uppercase text-[10px] tracking-wider border-b border-gray-100">
@@ -428,9 +425,8 @@ export default function AdminDashboard() {
                         TZS {product.price.toLocaleString()}
                       </td>
                       <td className="px-6 py-4 text-center">
-                        <span className={`px-2.5 py-1 rounded font-black text-xs ${
-                          (product.stock || 0) <= 5 ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'
-                        }`}>
+                        <span className={`px-2.5 py-1 rounded font-black text-xs ${(product.stock || 0) <= 5 ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'
+                          }`}>
                           {product.stock || 0}
                         </span>
                       </td>
@@ -447,10 +443,10 @@ export default function AdminDashboard() {
       {activeTab === 'orders' && (
         <div className="bg-white rounded-2xl shadow-sm overflow-hidden animate-fade-in border border-gray-100 min-h-[500px]">
           <div className="p-6 border-b border-gray-100 bg-blue-50/10">
-            <h3 className="text-xl font-black text-gray-900 flex items-center gap-2"><FiTruck className="text-blue-600"/> {t.tabOrders}</h3>
+            <h3 className="text-xl font-black text-gray-900 flex items-center gap-2"><FiTruck className="text-blue-600" /> {t.tabOrders}</h3>
             <p className="text-sm text-gray-500 mt-1">{t.subOverviewDesc}</p>
           </div>
-          
+
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
               <thead className="bg-gray-50 text-gray-500 font-bold uppercase text-[10px] tracking-wider border-b border-gray-100">
@@ -468,41 +464,41 @@ export default function AdminDashboard() {
                   allOrders.map((order) => {
                     const debtAmount = order.totalAmount - (order.upfrontPayment || 0);
                     return (
-                    <tr key={order.id} className="hover:bg-gray-50/50 transition">
-                      <td className="px-6 py-5">
-                        <p className="font-mono font-black text-gray-900 text-base">#{order.id.slice(-6).toUpperCase()}</p>
-                        <p className="text-gray-500 text-xs mt-1">{new Date(order.createdAt).toLocaleString()}</p>
-                      </td>
-                      <td className="px-6 py-5">
-                        <p className="font-bold text-gray-900">{order.user?.name || t.unknownCustomer}</p>
-                        <p className="text-gray-500 text-xs mt-1 leading-relaxed max-w-xs">{order.address}</p>
-                      </td>
-                      <td className="px-6 py-5">
-                        <div className="space-y-1">
-                          <p className="text-sm font-black text-gray-900">Total: TZS {order.totalAmount.toLocaleString()}</p>
-                          {order.upfrontPayment > 0 && <p className="text-xs font-bold text-green-600">{t.upfront}: TZS {order.upfrontPayment.toLocaleString()}</p>}
-                          {debtAmount > 0 && <p className="text-xs font-bold text-red-500">{t.debt}: TZS {debtAmount.toLocaleString()}</p>}
-                        </div>
-                      </td>
-                      <td className="px-6 py-5 text-center">
-                        <select 
-                          value={order.status}
-                          onChange={(e) => handleUpdateStatus(order.id, e.target.value)}
-                          className={`px-3 py-2 rounded-lg text-xs font-black uppercase tracking-wider outline-none cursor-pointer border-2 transition ${
-                            order.status === 'DELIVERED' ? 'bg-green-50 text-green-700 border-green-200 focus:border-green-500' :
-                            order.status === 'SHIPPED' ? 'bg-blue-50 text-blue-700 border-blue-200 focus:border-blue-500' :
-                            order.status === 'CANCELLED' ? 'bg-red-50 text-red-700 border-red-200 focus:border-red-500' :
-                            'bg-yellow-50 text-yellow-700 border-yellow-200 focus:border-yellow-500'
-                          }`}
-                        >
-                          <option value="PENDING">{t.optPending}</option>
-                          <option value="SHIPPED">{t.optShipped}</option>
-                          <option value="DELIVERED">{t.optDelivered}</option>
-                          <option value="CANCELLED">{t.optCancelled}</option>
-                        </select>
-                      </td>
-                    </tr>
-                  )})
+                      <tr key={order.id} className="hover:bg-gray-50/50 transition">
+                        <td className="px-6 py-5">
+                          <p className="font-mono font-black text-gray-900 text-base">#{order.id.slice(-6).toUpperCase()}</p>
+                          <p className="text-gray-500 text-xs mt-1">{new Date(order.createdAt).toLocaleString()}</p>
+                        </td>
+                        <td className="px-6 py-5">
+                          <p className="font-bold text-gray-900">{order.user?.name || t.unknownCustomer}</p>
+                          <p className="text-gray-500 text-xs mt-1 leading-relaxed max-w-xs">{order.address}</p>
+                        </td>
+                        <td className="px-6 py-5">
+                          <div className="space-y-1">
+                            <p className="text-sm font-black text-gray-900">Total: TZS {order.totalAmount.toLocaleString()}</p>
+                            {order.upfrontPayment > 0 && <p className="text-xs font-bold text-green-600">{t.upfront}: TZS {order.upfrontPayment.toLocaleString()}</p>}
+                            {debtAmount > 0 && <p className="text-xs font-bold text-red-500">{t.debt}: TZS {debtAmount.toLocaleString()}</p>}
+                          </div>
+                        </td>
+                        <td className="px-6 py-5 text-center">
+                          <select
+                            value={order.status}
+                            onChange={(e) => handleUpdateStatus(order.id, e.target.value)}
+                            className={`px-3 py-2 rounded-lg text-xs font-black uppercase tracking-wider outline-none cursor-pointer border-2 transition ${order.status === 'DELIVERED' ? 'bg-green-50 text-green-700 border-green-200 focus:border-green-500' :
+                                order.status === 'SHIPPED' ? 'bg-blue-50 text-blue-700 border-blue-200 focus:border-blue-500' :
+                                  order.status === 'CANCELLED' ? 'bg-red-50 text-red-700 border-red-200 focus:border-red-500' :
+                                    'bg-yellow-50 text-yellow-700 border-yellow-200 focus:border-yellow-500'
+                              }`}
+                          >
+                            <option value="PENDING">{t.optPending}</option>
+                            <option value="SHIPPED">{t.optShipped}</option>
+                            <option value="DELIVERED">{t.optDelivered}</option>
+                            <option value="CANCELLED">{t.optCancelled}</option>
+                          </select>
+                        </td>
+                      </tr>
+                    )
+                  })
                 )}
               </tbody>
             </table>
@@ -514,10 +510,10 @@ export default function AdminDashboard() {
       {activeTab === 'crm' && (
         <div className="bg-white rounded-2xl shadow-sm overflow-hidden animate-fade-in border border-gray-100 min-h-[500px]">
           <div className="p-6 border-b border-gray-100 bg-purple-50/10">
-            <h3 className="text-xl font-black text-gray-900 flex items-center gap-2"><FiUsers className="text-purple-600"/> {t.tabCrm}</h3>
+            <h3 className="text-xl font-black text-gray-900 flex items-center gap-2"><FiUsers className="text-purple-600" /> {t.tabCrm}</h3>
             <p className="text-sm text-gray-500 mt-1">{t.subCrmDesc}</p>
           </div>
-          
+
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
               <thead className="bg-gray-50 text-gray-500 font-bold uppercase text-[10px] tracking-wider border-b border-gray-100">
@@ -543,7 +539,7 @@ export default function AdminDashboard() {
                         </div>
                       </td>
                       <td className="px-6 py-5">
-                        <p className="font-bold text-gray-700 flex items-center gap-2"><FiPhone className="text-gray-400"/> {u.phone || 'N/A'}</p>
+                        <p className="font-bold text-gray-700 flex items-center gap-2"><FiPhone className="text-gray-400" /> {u.phone || 'N/A'}</p>
                         <p className="text-gray-500 text-xs mt-1">{u.email}</p>
                       </td>
                       <td className="px-6 py-5 text-center">
