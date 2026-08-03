@@ -28,7 +28,7 @@ export default function AdminProducts() {
   const [name, setName] = useState('');
   const [selectedCategoryId, setSelectedCategoryId] = useState('');
   const [brand, setBrand] = useState('');
-  const [modelName, setModelName] = useState(''); // OPTIONAL
+  const [modelName, setModelName] = useState('');
   const [badge, setBadge] = useState('');
   const [condition, setCondition] = useState('Brand New');
   const [colors, setColors] = useState('');
@@ -40,7 +40,10 @@ export default function AdminProducts() {
   const [specData, setSpecData] = useState<any>({});
   const [customSpecs, setCustomSpecs] = useState<{ key: string, value: string }[]>([]);
   const [selectedTemplateId, setSelectedTemplateId] = useState('');
-  const [templateSearchQuery, setTemplateSearchQuery] = useState(''); // Search bar for templates
+
+  // Smart Search Combo Box States
+  const [templateSearchQuery, setTemplateSearchQuery] = useState('');
+  const [showTemplateDropdown, setShowTemplateDropdown] = useState(false);
 
   // --- QUICK SAVE TEMPLATE STATES ---
   const [quickTemplateName, setQuickTemplateName] = useState('');
@@ -54,11 +57,14 @@ export default function AdminProducts() {
   const [shippingOrigin, setShippingOrigin] = useState<'Dubai' | 'China'>('Dubai');
   const [freightType, setFreightType] = useState<'Air' | 'Sea'>('Air');
 
-  // Wholesale States
+  // Wholesale States (Fully Manual 3 Tiers)
   const [isWholesale, setIsWholesale] = useState(false);
-  const [wholesaleMinOrder, setWholesaleMinOrder] = useState('2');
-  const [wholesaleTier2Price, setWholesaleTier2Price] = useState('');
-  const [wholesaleTier3Price, setWholesaleTier3Price] = useState('');
+  const [wsTier1Qty, setWsTier1Qty] = useState('');
+  const [wsTier1Price, setWsTier1Price] = useState('');
+  const [wsTier2Qty, setWsTier2Qty] = useState('');
+  const [wsTier2Price, setWsTier2Price] = useState('');
+  const [wsTier3Qty, setWsTier3Qty] = useState('');
+  const [wsTier3Price, setWsTier3Price] = useState('');
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://jtex-ecommerce-production.up.railway.app';
 
@@ -113,13 +119,12 @@ export default function AdminProducts() {
     let autoFields: string[] = [];
     let matchedTemplateId = '';
 
-    // 1. CHECK DB TEMPLATES FIRST (Auto-Select Custom Templates)
     const dbTemplate = dbSpecTemplates.find(t => t.title.toLowerCase() === cat);
     if (dbTemplate) {
       autoFields = dbTemplate.fields;
       matchedTemplateId = dbTemplate.id;
+      setTemplateSearchQuery(dbTemplate.title);
     }
-    // 2. IF NO DB TEMPLATE, USE AI FALLBACK LOGIC
     else {
       if (cat.includes('laptop') || cat.includes('computer')) {
         autoFields = ['Processor', 'RAM', 'Storage', 'Graphics', 'Display Size', 'Operating System'];
@@ -142,9 +147,9 @@ export default function AdminProducts() {
       else if (cat.includes('printer')) {
         autoFields = ['Print Technology', 'Print Speed', 'Resolution', 'Connectivity'];
       }
+      setTemplateSearchQuery('AI Auto-Generated / Custom');
     }
 
-    // Set fields
     if (autoFields.length > 0) {
       const newSpecObj: any = {};
       autoFields.forEach(field => { newSpecObj[field] = ''; });
@@ -165,14 +170,16 @@ export default function AdminProducts() {
     } else {
       setSpecData({});
       setSelectedTemplateId('');
+      setTemplateSearchQuery('');
     }
   }, [selectedCategoryId, dbCategories, dbSpecTemplates]);
 
   // Handle Manual Template Override
-  const applySpecTemplate = (templateId: string) => {
+  const applySpecTemplate = (templateId: string, templateTitle: string) => {
     setSelectedTemplateId(templateId);
+    setTemplateSearchQuery(templateTitle);
+
     if (!templateId) {
-      // Re-trigger smart specs if manual is cleared
       const catObj = dbCategories.find(c => c.id === selectedCategoryId);
       if (catObj) generateSmartSpecs(catObj.name);
       return;
@@ -194,7 +201,6 @@ export default function AdminProducts() {
     setError('');
     setMessage('');
 
-    // Duplicate Prevention Check
     const exists = dbCategories.find(c => c.name.toLowerCase() === newCatName.trim().toLowerCase());
     if (exists) {
       setError(`Category '${newCatName}' already exists!`);
@@ -226,7 +232,6 @@ export default function AdminProducts() {
     setError('');
     setMessage('');
 
-    // Duplicate Prevention Check
     const exists = dbSpecTemplates.find(t => t.title.toLowerCase() === newSpecTitle.trim().toLowerCase());
     if (exists) {
       setError(`Template '${newSpecTitle}' already exists!`);
@@ -262,7 +267,6 @@ export default function AdminProducts() {
     setError('');
     setMessage('');
 
-    // Duplicate Prevention Check
     const exists = dbSpecTemplates.find(t => t.title.toLowerCase() === quickTemplateName.trim().toLowerCase());
     if (exists) {
       setError(`Template '${quickTemplateName}' already exists!`);
@@ -272,10 +276,9 @@ export default function AdminProducts() {
 
     setIsSavingTemplate(true);
 
-    // Combine fields (Auto + Custom)
     const autoFields = Object.keys(specData);
     const extraFields = customSpecs.map(s => s.key.trim()).filter(k => k !== '');
-    const allFields = Array.from(new Set([...autoFields, ...extraFields])); // Remove duplicates
+    const allFields = Array.from(new Set([...autoFields, ...extraFields]));
 
     if (allFields.length === 0) {
       setError("There are no fields to save as a template.");
@@ -294,7 +297,8 @@ export default function AdminProducts() {
         const savedTemplate = await res.json();
         setDbSpecTemplates([...dbSpecTemplates, savedTemplate]);
         setQuickTemplateName('');
-        setSelectedTemplateId(savedTemplate.id); // Auto-select the newly created template
+        setSelectedTemplateId(savedTemplate.id);
+        setTemplateSearchQuery(savedTemplate.title);
         setMessage('Success! Your custom fields have been saved as a reusable template.');
       } else {
         setError("Failed to save template.");
@@ -356,9 +360,19 @@ export default function AdminProducts() {
     if (colors.trim() !== '') finalSpecs['Color'] = colors.trim();
     if (isWholesale) {
       finalSpecs['isWholesale'] = 'Yes';
-      if (wholesaleMinOrder) finalSpecs['wholesaleMinOrder'] = wholesaleMinOrder;
-      if (wholesaleTier2Price) finalSpecs['wholesaleTier2Price'] = wholesaleTier2Price;
-      if (wholesaleTier3Price) finalSpecs['wholesaleTier3Price'] = wholesaleTier3Price;
+      if (wsTier1Qty && wsTier1Price) {
+        finalSpecs['wholesaleTier1Qty'] = wsTier1Qty;
+        finalSpecs['wholesaleTier1Price'] = wsTier1Price;
+        finalSpecs['wholesaleMinOrder'] = wsTier1Qty; // Fallback backward compatibility
+      }
+      if (wsTier2Qty && wsTier2Price) {
+        finalSpecs['wholesaleTier2Qty'] = wsTier2Qty;
+        finalSpecs['wholesaleTier2Price'] = wsTier2Price;
+      }
+      if (wsTier3Qty && wsTier3Price) {
+        finalSpecs['wholesaleTier3Qty'] = wsTier3Qty;
+        finalSpecs['wholesaleTier3Price'] = wsTier3Price;
+      }
     }
 
     customSpecs.forEach(spec => {
@@ -374,7 +388,7 @@ export default function AdminProducts() {
     formData.append('name', name);
     formData.append('category', finalCategory);
     formData.append('brand', brand);
-    formData.append('model', modelName); // Now Optional, safe if empty
+    formData.append('model', modelName);
     formData.append('badge', badge);
     formData.append('condition', condition);
     formData.append('buyingPrice', buyingPrice);
@@ -394,9 +408,10 @@ export default function AdminProducts() {
       if (res.ok) {
         setMessage('Product added successfully to live store!');
         setSku(''); setName(''); setBrand(''); setModelName(''); setBadge(''); setCondition('Brand New'); setColors(''); setBuyingPrice(''); setPrice(''); setStockQuantity('');
-        setSelectedCategoryId(''); setSpecData({}); setCustomSpecs([]); setSelectedTemplateId('');
+        setSelectedCategoryId(''); setSpecData({}); setCustomSpecs([]); setSelectedTemplateId(''); setTemplateSearchQuery('');
         setImageFiles([]); setImagePreviews([]);
-        setIsPreOrder(false); setIsWholesale(false); setWholesaleMinOrder('2'); setWholesaleTier2Price(''); setWholesaleTier3Price('');
+        setIsPreOrder(false); setIsWholesale(false);
+        setWsTier1Qty(''); setWsTier1Price(''); setWsTier2Qty(''); setWsTier2Price(''); setWsTier3Qty(''); setWsTier3Price('');
         if (fileInputRef.current) fileInputRef.current.value = '';
         window.scrollTo(0, 0);
       } else {
@@ -551,33 +566,61 @@ export default function AdminProducts() {
             </div>
           </div>
 
-          {/* Wholesale Section */}
+          {/* Wholesale Section (Fully Manual 3 Tiers) */}
           <div className="mt-6 border border-gray-200 rounded-2xl overflow-hidden">
             <div className="bg-gray-50 px-5 py-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className={`p-2 rounded-xl ${isWholesale ? 'bg-emerald-100 text-emerald-600' : 'bg-gray-200 text-gray-500'}`}><FiPackage size={18} /></div>
                 <div>
                   <label className="block text-sm font-black text-gray-800">Enable Wholesale Pricing</label>
-                  <p className="text-[10px] text-gray-500 font-medium">Offer discounts for bulk purchases</p>
+                  <p className="text-[10px] text-gray-500 font-medium">Offer manual discounts for bulk purchases (3 Tiers)</p>
                 </div>
               </div>
               <input type="checkbox" checked={isWholesale} onChange={e => setIsWholesale(e.target.checked)} className="w-5 h-5 accent-emerald-600 cursor-pointer" />
             </div>
 
             {isWholesale && (
-              <div className="bg-white p-5 grid grid-cols-1 sm:grid-cols-3 gap-5 border-t border-gray-200 animate-fade-in">
-                <div>
-                  <label className="block text-[10px] font-black text-emerald-700 uppercase tracking-wider mb-1.5">Min Order Qty</label>
-                  <input type="number" value={wholesaleMinOrder} onChange={e => setWholesaleMinOrder(e.target.value)} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 outline-none text-sm font-bold text-gray-800 focus:border-emerald-400" placeholder="e.g. 2" />
+              <div className="bg-white p-5 grid grid-cols-1 md:grid-cols-3 gap-5 border-t border-gray-200 animate-fade-in">
+
+                {/* Tier 1 */}
+                <div className="space-y-3 bg-gray-50 p-4 rounded-xl border border-gray-100">
+                  <h4 className="text-[10px] font-black text-emerald-700 uppercase tracking-wider border-b border-emerald-100 pb-2">Tier 1 (Min Order)</h4>
+                  <div>
+                    <label className="block text-[10px] font-bold text-gray-600 mb-1">Quantity</label>
+                    <input type="number" value={wsTier1Qty} onChange={e => setWsTier1Qty(e.target.value)} className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 outline-none text-sm font-bold text-gray-800 focus:border-emerald-400" placeholder="e.g. 2" />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-bold text-gray-600 mb-1">Price (TZS)</label>
+                    <input type="number" value={wsTier1Price} onChange={e => setWsTier1Price(e.target.value)} className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 outline-none text-sm font-bold text-gray-800 focus:border-emerald-400" placeholder="e.g. 250000" />
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-[10px] font-black text-emerald-700 uppercase tracking-wider mb-1.5">Price for {wholesaleMinOrder || '2'}-5 Pcs</label>
-                  <input type="number" value={wholesaleTier2Price} onChange={e => setWholesaleTier2Price(e.target.value)} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 outline-none text-sm font-bold text-gray-800 focus:border-emerald-400" placeholder="e.g. 240000" />
+
+                {/* Tier 2 */}
+                <div className="space-y-3 bg-gray-50 p-4 rounded-xl border border-gray-100">
+                  <h4 className="text-[10px] font-black text-emerald-700 uppercase tracking-wider border-b border-emerald-100 pb-2">Tier 2</h4>
+                  <div>
+                    <label className="block text-[10px] font-bold text-gray-600 mb-1">Quantity (From)</label>
+                    <input type="number" value={wsTier2Qty} onChange={e => setWsTier2Qty(e.target.value)} className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 outline-none text-sm font-bold text-gray-800 focus:border-emerald-400" placeholder="e.g. 5" />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-bold text-gray-600 mb-1">Price (TZS)</label>
+                    <input type="number" value={wsTier2Price} onChange={e => setWsTier2Price(e.target.value)} className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 outline-none text-sm font-bold text-gray-800 focus:border-emerald-400" placeholder="e.g. 240000" />
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-[10px] font-black text-emerald-700 uppercase tracking-wider mb-1.5">Price for &gt;5 Pcs</label>
-                  <input type="number" value={wholesaleTier3Price} onChange={e => setWholesaleTier3Price(e.target.value)} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 outline-none text-sm font-bold text-gray-800 focus:border-emerald-400" placeholder="e.g. 230000" />
+
+                {/* Tier 3 */}
+                <div className="space-y-3 bg-gray-50 p-4 rounded-xl border border-gray-100">
+                  <h4 className="text-[10px] font-black text-emerald-700 uppercase tracking-wider border-b border-emerald-100 pb-2">Tier 3</h4>
+                  <div>
+                    <label className="block text-[10px] font-bold text-gray-600 mb-1">Quantity (From)</label>
+                    <input type="number" value={wsTier3Qty} onChange={e => setWsTier3Qty(e.target.value)} className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 outline-none text-sm font-bold text-gray-800 focus:border-emerald-400" placeholder="e.g. 10" />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-bold text-gray-600 mb-1">Price (TZS)</label>
+                    <input type="number" value={wsTier3Price} onChange={e => setWsTier3Price(e.target.value)} className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 outline-none text-sm font-bold text-gray-800 focus:border-emerald-400" placeholder="e.g. 230000" />
+                  </div>
                 </div>
+
               </div>
             )}
           </div>
@@ -624,30 +667,43 @@ export default function AdminProducts() {
               <p className="text-[11px] font-medium text-gray-500 mt-1">Fields are automatically generated based on the chosen category.</p>
             </div>
 
-            {/* Dropdown inayo-sync na AI / Template Selection na Search Bar */}
-            <div className="min-w-[250px] bg-gray-50 p-3 rounded-xl border border-gray-200">
-              <div className="relative mb-2">
+            {/* Smart Combo Box for Template Selection */}
+            <div className="relative min-w-[250px] bg-gray-50 p-2.5 rounded-xl border border-gray-200">
+              <div className="relative">
                 <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
                 <input
                   type="text"
-                  placeholder="Search templates..."
+                  placeholder="Search & select template..."
                   value={templateSearchQuery}
-                  onChange={(e) => setTemplateSearchQuery(e.target.value)}
-                  className="w-full pl-8 pr-3 py-2 bg-white border border-gray-200 rounded-lg outline-none text-xs font-medium focus:border-purple-400 shadow-sm"
+                  onChange={(e) => {
+                    setTemplateSearchQuery(e.target.value);
+                    setShowTemplateDropdown(true);
+                  }}
+                  onFocus={() => setShowTemplateDropdown(true)}
+                  onBlur={() => setTimeout(() => setShowTemplateDropdown(false), 200)}
+                  className="w-full pl-8 pr-3 py-2 bg-white border border-gray-200 rounded-lg outline-none text-xs font-bold focus:border-purple-400 shadow-sm"
                 />
+
+                {showTemplateDropdown && (
+                  <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto animate-fade-in">
+                    <div
+                      onClick={() => { applySpecTemplate('', 'AI Auto-Generated / Custom'); setShowTemplateDropdown(false); }}
+                      className="px-3 py-2 text-xs font-bold text-gray-700 hover:bg-purple-50 cursor-pointer border-b border-gray-100"
+                    >
+                      AI Auto-Generated / Custom
+                    </div>
+                    {dbSpecTemplates.filter(t => t.title.toLowerCase().includes(templateSearchQuery.toLowerCase())).map(temp => (
+                      <div
+                        key={temp.id}
+                        onClick={() => { applySpecTemplate(temp.id, temp.title); setShowTemplateDropdown(false); }}
+                        className="px-3 py-2 text-xs font-bold text-gray-700 hover:bg-purple-50 cursor-pointer"
+                      >
+                        {temp.title}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
-              <select
-                value={selectedTemplateId}
-                onChange={(e) => applySpecTemplate(e.target.value)}
-                className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 outline-none text-[11px] font-bold text-gray-700 cursor-pointer focus:border-purple-400"
-              >
-                <option value="">AI Auto-Generated / Custom</option>
-                {dbSpecTemplates
-                  .filter(t => t.title.toLowerCase().includes(templateSearchQuery.toLowerCase()))
-                  .map(temp => (
-                    <option key={temp.id} value={temp.id}>Template: {temp.title}</option>
-                  ))}
-              </select>
             </div>
           </div>
 

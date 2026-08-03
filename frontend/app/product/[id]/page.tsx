@@ -237,18 +237,20 @@ export default function ProductDetail() {
   const basePrice = product.price;
   const isMainProductWishlisted = wishlist.includes(product.id);
 
+  // EXTRACTION YA DATA KUTOKA KWA ADMIN (Tiers 3 kamili na IDADI ZAKE)
   const {
     Model, Color, color, Colors, colors,
-    isWholesale, wholesaleTier2Price, wholesaleTier3Price, wholesaleMinOrder,
+    isWholesale,
+    wholesaleMinOrder,
+    wholesaleTier1Qty, wholesaleTier1Price,
+    wholesaleTier2Qty, wholesaleTier2Price,
+    wholesaleTier3Qty, wholesaleTier3Price,
     ...otherSpecs
   } = specs;
 
   const displayModel = Model || product.model || 'N/A';
   const displayCondition = product.condition || 'Brand New'; // Condition Display
   const hasWholesale = isWholesale === 'Yes';
-
-  const tier2Price = wholesaleTier2Price ? Number(wholesaleTier2Price) : basePrice * 0.95;
-  const tier3Price = wholesaleTier3Price ? Number(wholesaleTier3Price) : basePrice * 0.90;
 
   let preInfo: any = null;
   if (product.preOrderInfo) {
@@ -507,32 +509,43 @@ export default function ProductDetail() {
               </div>
             )}
 
-            {/* WHOLESALE - MIN ORDER ILIYOREKEBISHWA */}
+            {/* WHOLESALE - DYNAMIC 3 TIERS FROM ADMIN */}
             {hasWholesale && (
               <div className="bg-gradient-to-br from-[#0A101D] to-gray-900 rounded-2xl p-4 border border-gray-800 mb-6 shadow-md text-white">
                 <div className="flex items-center justify-between mb-3">
                   <p className="text-[11px] font-medium text-[#F2A900] uppercase tracking-widest flex items-center gap-2">
-                    <FiPackage size={14} /> Minimum Order: {wholesaleMinOrder || 2}
+                    <FiPackage size={14} /> Minimum Bulk Order: {wholesaleTier1Qty || wholesaleMinOrder || 2}
                   </p>
                 </div>
                 <div className="grid grid-cols-3 divide-x divide-gray-700">
+
+                  {/* TIER 1 */}
                   <div className="text-center px-2">
-                    <p className="text-[10px] font-medium text-gray-400 mb-0.5">1 Piece</p>
-                    <p className="font-semibold text-xs text-white">TZS {basePrice.toLocaleString()}</p>
+                    <p className="text-[10px] font-medium text-gray-400 mb-0.5">{wholesaleTier1Qty || wholesaleMinOrder || '2'} Pcs</p>
+                    <p className="font-semibold text-xs text-white">TZS {(wholesaleTier1Price ? Number(wholesaleTier1Price) : basePrice).toLocaleString()}</p>
                   </div>
+
+                  {/* TIER 2 */}
                   <div className="text-center px-2">
-                    <p className="text-[10px] font-medium text-gray-400 mb-0.5">2-5 Pcs</p>
-                    <p className="font-semibold text-xs text-green-400">TZS {tier2Price.toLocaleString()}</p>
+                    <p className="text-[10px] font-medium text-gray-400 mb-0.5">{wholesaleTier2Qty ? `${wholesaleTier2Qty} Pcs` : 'Tier 2'}</p>
+                    <p className="font-semibold text-xs text-green-400">
+                      {wholesaleTier2Price ? `TZS ${Number(wholesaleTier2Price).toLocaleString()}` : '-'}
+                    </p>
                   </div>
+
+                  {/* TIER 3 */}
                   <div className="text-center px-2">
-                    <p className="text-[10px] font-medium text-gray-400 mb-0.5">5+ Pcs</p>
-                    <p className="font-semibold text-xs text-[#F2A900]">TZS {tier3Price.toLocaleString()}</p>
+                    <p className="text-[10px] font-medium text-gray-400 mb-0.5">{wholesaleTier3Qty ? `${wholesaleTier3Qty} Pcs` : 'Tier 3'}</p>
+                    <p className="font-semibold text-xs text-[#F2A900]">
+                      {wholesaleTier3Price ? `TZS ${Number(wholesaleTier3Price).toLocaleString()}` : '-'}
+                    </p>
                   </div>
+
                 </div>
               </div>
             )}
 
-            {/* RATINGS (NYOTA) NA BRAND NEW/USED VIMEKAWA PAMOJA */}
+            {/* RATINGS NA BRAND NEW/USED */}
             <div className="flex items-center flex-wrap gap-3 mb-6">
               <div className="flex items-center gap-1.5 bg-gray-50 w-max px-3 py-1.5 rounded-lg border border-gray-100">
                 <div className="flex text-[#F2A900]">
@@ -552,7 +565,7 @@ export default function ProductDetail() {
               </span>
             </div>
 
-            {/* STATUS YA INSTOCK NA DELIVERY ZILIZOTENGANISHWA KWA UBORA */}
+            {/* STATUS YA INSTOCK NA DELIVERY */}
             <div className="mb-6 bg-gray-50 border border-gray-100 p-4 rounded-2xl flex flex-col gap-4">
               {/* In Stock / Pre-order Block */}
               <div className="flex items-start gap-3">
@@ -660,7 +673,7 @@ export default function ProductDetail() {
         </div>
 
         {/* ========================================================= */}
-        {/* SIMILAR PRODUCTS SECTION (MPYA) */}
+        {/* SIMILAR PRODUCTS SECTION */}
         {/* ========================================================= */}
         <div className="mb-12 px-4 lg:px-0">
           <div className="flex items-center justify-between mb-6">
@@ -676,7 +689,6 @@ export default function ProductDetail() {
               return (
                 <div
                   key={`sim-${item.id}`}
-                  // HAPA PIA TUNAITUMIA URL SAFI
                   onClick={() => router.push(`/product/${generateSlug(item.name)}`)}
                   className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm flex flex-col h-full group hover:border-[#F2A900] transition cursor-pointer"
                 >
