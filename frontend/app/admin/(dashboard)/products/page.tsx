@@ -1,10 +1,10 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { 
-  FiPlus, FiBox, FiDatabase, FiAlertTriangle, FiCheckCircle, FiX, 
-  FiSettings, FiTag, FiCpu, FiTruck, FiAnchor, FiLayers, FiTrash2, 
-  FiPackage, FiImage, FiDollarSign, FiList 
+import {
+  FiPlus, FiBox, FiDatabase, FiAlertTriangle, FiCheckCircle, FiX,
+  FiSettings, FiTag, FiCpu, FiTruck, FiAnchor, FiLayers, FiTrash2,
+  FiPackage, FiImage, FiDollarSign, FiList, FiSearch
 } from 'react-icons/fi';
 
 export default function AdminProducts() {
@@ -13,7 +13,7 @@ export default function AdminProducts() {
   const [error, setError] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // States za Kategoria na Specs kutoka DB
+  // DB States
   const [dbCategories, setDbCategories] = useState<any[]>([]);
   const [dbSpecTemplates, setDbSpecTemplates] = useState<any[]>([]);
 
@@ -21,7 +21,7 @@ export default function AdminProducts() {
   const [showManager, setShowManager] = useState(false);
   const [newCatName, setNewCatName] = useState('');
   const [newSpecTitle, setNewSpecTitle] = useState('');
-  const [newSpecFields, setNewSpecFields] = useState<string>(''); 
+  const [newSpecFields, setNewSpecFields] = useState<string>('');
 
   // --- Form States (Add Product) ---
   const [sku, setSku] = useState('');
@@ -29,22 +29,23 @@ export default function AdminProducts() {
   const [selectedCategoryId, setSelectedCategoryId] = useState('');
   const [brand, setBrand] = useState('');
   const [modelName, setModelName] = useState(''); // OPTIONAL
-  const [badge, setBadge] = useState(''); 
+  const [badge, setBadge] = useState('');
   const [condition, setCondition] = useState('Brand New');
-  const [colors, setColors] = useState(''); 
+  const [colors, setColors] = useState('');
   const [buyingPrice, setBuyingPrice] = useState('');
   const [price, setPrice] = useState('');
   const [stockQuantity, setStockQuantity] = useState('');
-  
+
   // Spec States
-  const [specData, setSpecData] = useState<any>({}); 
-  const [customSpecs, setCustomSpecs] = useState<{key: string, value: string}[]>([]); 
-  const [selectedTemplateId, setSelectedTemplateId] = useState(''); // NEW: Kwa ajili ya Auto-Select Dropdown
-  
-  // --- QUICK SAVE TEMPLATE STATES (NEW) ---
+  const [specData, setSpecData] = useState<any>({});
+  const [customSpecs, setCustomSpecs] = useState<{ key: string, value: string }[]>([]);
+  const [selectedTemplateId, setSelectedTemplateId] = useState('');
+  const [templateSearchQuery, setTemplateSearchQuery] = useState(''); // Search bar for templates
+
+  // --- QUICK SAVE TEMPLATE STATES ---
   const [quickTemplateName, setQuickTemplateName] = useState('');
   const [isSavingTemplate, setIsSavingTemplate] = useState(false);
-  
+
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
 
@@ -55,6 +56,7 @@ export default function AdminProducts() {
 
   // Wholesale States
   const [isWholesale, setIsWholesale] = useState(false);
+  const [wholesaleMinOrder, setWholesaleMinOrder] = useState('2');
   const [wholesaleTier2Price, setWholesaleTier2Price] = useState('');
   const [wholesaleTier3Price, setWholesaleTier3Price] = useState('');
 
@@ -64,8 +66,8 @@ export default function AdminProducts() {
   const shippingConfig = {
     Dubai: { days: "5–10 business days", icon: "🇦🇪" },
     China: { days: "10–30 business days", icon: "🇨🇳" },
-    Air: { desc: "Fastest shipping option.", icon: <FiTruck className="text-sky-600"/> },
-    Sea: { desc: "Longer transit time.", icon: <FiAnchor className="text-blue-800"/> }
+    Air: { desc: "Fastest shipping option.", icon: <FiTruck className="text-sky-600" /> },
+    Sea: { desc: "Longer transit time.", icon: <FiAnchor className="text-blue-800" /> }
   };
 
   // Auto-generate SKU
@@ -84,8 +86,8 @@ export default function AdminProducts() {
   const fetchInitialData = async () => {
     try {
       const [catRes, specRes] = await Promise.all([
-        fetch(`${API_URL}/api/categories`).catch(() => ({ ok: false, json: () => [] })), 
-        fetch(`${API_URL}/api/spec-templates`).catch(() => ({ ok: false, json: () => [] })) 
+        fetch(`${API_URL}/api/categories`).catch(() => ({ ok: false, json: () => [] })),
+        fetch(`${API_URL}/api/spec-templates`).catch(() => ({ ok: false, json: () => [] }))
       ]);
 
       let fetchedCats = [];
@@ -93,7 +95,7 @@ export default function AdminProducts() {
       setDbCategories(fetchedCats);
 
       if (specRes.ok) setDbSpecTemplates(await specRes.json());
-      
+
     } catch (err) {
       console.error('Fetch Error:', err);
     }
@@ -111,25 +113,23 @@ export default function AdminProducts() {
     let autoFields: string[] = [];
     let matchedTemplateId = '';
 
-    // 1. ANGALIA DATABASE TEMPLATES KWANZA (Auto-Select Custom Templates)
+    // 1. CHECK DB TEMPLATES FIRST (Auto-Select Custom Templates)
     const dbTemplate = dbSpecTemplates.find(t => t.title.toLowerCase() === cat);
     if (dbTemplate) {
       autoFields = dbTemplate.fields;
       matchedTemplateId = dbTemplate.id;
-    } 
-    // 2. KAMA HAKUNA DB TEMPLATE, TUMIA AI FALLBACK LOGIC
+    }
+    // 2. IF NO DB TEMPLATE, USE AI FALLBACK LOGIC
     else {
       if (cat.includes('laptop') || cat.includes('computer')) {
         autoFields = ['Processor', 'RAM', 'Storage', 'Graphics', 'Display Size', 'Operating System'];
-      } 
+      }
       else if (cat.includes('phone') || cat.includes('tablet')) {
         autoFields = ['Display', 'Processor', 'RAM', 'Storage', 'Main Camera', 'Battery Capacity'];
       }
-      // Akili ya Nguo/Viatu (Fashion)
       else if (cat.includes('cloth') || cat.includes('wear') || cat.includes('shoe') || cat.includes('fashion') || cat.includes('apparel')) {
         autoFields = ['Size', 'Material / Fabric', 'Gender', 'Care Instructions', 'Fit Type'];
       }
-      // Akili ya Samani / Furniture
       else if (cat.includes('furniture') || cat.includes('chair') || cat.includes('table') || cat.includes('sofa')) {
         autoFields = ['Dimensions (L x W x H)', 'Material', 'Weight Capacity', 'Color/Finish'];
       }
@@ -153,7 +153,6 @@ export default function AdminProducts() {
       setSpecData({});
     }
 
-    // Set ID for dropdown to show correctly
     setSelectedTemplateId(matchedTemplateId);
   };
 
@@ -181,7 +180,7 @@ export default function AdminProducts() {
 
     const template = dbSpecTemplates.find(t => t.id === templateId);
     if (!template) return;
-    
+
     const initialData: any = {};
     template.fields.forEach((field: string) => {
       initialData[field] = '';
@@ -191,15 +190,26 @@ export default function AdminProducts() {
 
   // --- Management Logic ---
   const handleSaveCategory = async () => {
-    if(!newCatName.trim()) return;
+    if (!newCatName.trim()) return;
+    setError('');
+    setMessage('');
+
+    // Duplicate Prevention Check
+    const exists = dbCategories.find(c => c.name.toLowerCase() === newCatName.trim().toLowerCase());
+    if (exists) {
+      setError(`Category '${newCatName}' already exists!`);
+      window.scrollTo(0, 0);
+      return;
+    }
+
     setIsLoading(true);
     try {
       const res = await fetch(`${API_URL}/api/categories`, {
         method: 'POST',
-        headers: {'Content-Type': 'application/json'},
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: newCatName.trim() })
       });
-      if(res.ok) {
+      if (res.ok) {
         const savedCat = await res.json();
         const catToAdd = savedCat.category || savedCat.data || savedCat;
         const finalCat = { id: catToAdd.id || catToAdd._id || Date.now().toString(), name: catToAdd.name || newCatName.trim() };
@@ -207,59 +217,80 @@ export default function AdminProducts() {
         setNewCatName('');
         setMessage('Category saved perfectly!');
       }
-    } catch (err) {}
+    } catch (err) { }
     setIsLoading(false);
   };
 
   const handleSaveSpecTemplate = async () => {
-    if(!newSpecTitle.trim() || !newSpecFields.trim()) return;
+    if (!newSpecTitle.trim() || !newSpecFields.trim()) return;
+    setError('');
+    setMessage('');
+
+    // Duplicate Prevention Check
+    const exists = dbSpecTemplates.find(t => t.title.toLowerCase() === newSpecTitle.trim().toLowerCase());
+    if (exists) {
+      setError(`Template '${newSpecTitle}' already exists!`);
+      window.scrollTo(0, 0);
+      return;
+    }
+
     setIsLoading(true);
     const fieldsArray = newSpecFields.split(',').map(f => f.trim()).filter(f => f !== '');
     try {
       const res = await fetch(`${API_URL}/api/spec-templates`, {
         method: 'POST',
-        headers: {'Content-Type': 'application/json'},
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title: newSpecTitle.trim(), fields: fieldsArray })
       });
-      if(res.ok) {
+      if (res.ok) {
         const savedTemplate = await res.json();
         setDbSpecTemplates([...dbSpecTemplates, savedTemplate]);
         setNewSpecTitle(''); setNewSpecFields('');
         setMessage('Template saved perfectly!');
       }
-    } catch (err) {}
+    } catch (err) { }
     setIsLoading(false);
   };
 
-  // --- SAVE CURRENT CUSTOM FIELDS AS TEMPLATE (NEW LOGIC) ---
+  // --- SAVE CURRENT CUSTOM FIELDS AS TEMPLATE ---
   const handleSaveCurrentAsTemplate = async () => {
-    if(!quickTemplateName.trim()) {
+    if (!quickTemplateName.trim()) {
       setError("Please enter a name for your new template.");
-      window.scrollTo(0,0);
+      window.scrollTo(0, 0);
       return;
     }
-    
+    setError('');
+    setMessage('');
+
+    // Duplicate Prevention Check
+    const exists = dbSpecTemplates.find(t => t.title.toLowerCase() === quickTemplateName.trim().toLowerCase());
+    if (exists) {
+      setError(`Template '${quickTemplateName}' already exists!`);
+      window.scrollTo(0, 0);
+      return;
+    }
+
     setIsSavingTemplate(true);
-    
-    // Kusanya fields zote (Auto + Custom)
+
+    // Combine fields (Auto + Custom)
     const autoFields = Object.keys(specData);
     const extraFields = customSpecs.map(s => s.key.trim()).filter(k => k !== '');
-    const allFields = Array.from(new Set([...autoFields, ...extraFields])); // Toa duplicates
-    
-    if(allFields.length === 0) {
+    const allFields = Array.from(new Set([...autoFields, ...extraFields])); // Remove duplicates
+
+    if (allFields.length === 0) {
       setError("There are no fields to save as a template.");
       setIsSavingTemplate(false);
-      window.scrollTo(0,0);
+      window.scrollTo(0, 0);
       return;
     }
 
     try {
       const res = await fetch(`${API_URL}/api/spec-templates`, {
         method: 'POST',
-        headers: {'Content-Type': 'application/json'},
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title: quickTemplateName.trim(), fields: allFields })
       });
-      if(res.ok) {
+      if (res.ok) {
         const savedTemplate = await res.json();
         setDbSpecTemplates([...dbSpecTemplates, savedTemplate]);
         setQuickTemplateName('');
@@ -271,9 +302,9 @@ export default function AdminProducts() {
     } catch (err) {
       setError("Network error while saving template.");
     }
-    
+
     setIsSavingTemplate(false);
-    window.scrollTo(0,0);
+    window.scrollTo(0, 0);
   };
 
   // --- Image Handling ---
@@ -297,7 +328,7 @@ export default function AdminProducts() {
     setImagePreviews(prev => prev.filter((_, index) => index !== indexToRemove));
   };
 
-  // --- KUFUTA SPEC MOJA MOJA KWENYE AUTO-LOADED ---
+  // --- REMOVE SPECIFIC AUTO LOADED FIELDS ---
   const handleRemoveAutoSpec = (fieldToRemove: string) => {
     const updatedSpecs = { ...specData };
     delete updatedSpecs[fieldToRemove];
@@ -317,16 +348,17 @@ export default function AdminProducts() {
 
     let finalCategory = selectedCategoryId;
     const catObj = dbCategories.find(c => c.id === selectedCategoryId || c.name === selectedCategoryId);
-    if(catObj) finalCategory = catObj.name;
-    
-    if(!finalCategory) { setError('Please select a category.'); setIsLoading(false); return;}
+    if (catObj) finalCategory = catObj.name;
+
+    if (!finalCategory) { setError('Please select a category.'); setIsLoading(false); window.scrollTo(0, 0); return; }
 
     const finalSpecs = { ...specData };
     if (colors.trim() !== '') finalSpecs['Color'] = colors.trim();
     if (isWholesale) {
       finalSpecs['isWholesale'] = 'Yes';
-      if(wholesaleTier2Price) finalSpecs['wholesaleTier2Price'] = wholesaleTier2Price;
-      if(wholesaleTier3Price) finalSpecs['wholesaleTier3Price'] = wholesaleTier3Price;
+      if (wholesaleMinOrder) finalSpecs['wholesaleMinOrder'] = wholesaleMinOrder;
+      if (wholesaleTier2Price) finalSpecs['wholesaleTier2Price'] = wholesaleTier2Price;
+      if (wholesaleTier3Price) finalSpecs['wholesaleTier3Price'] = wholesaleTier3Price;
     }
 
     customSpecs.forEach(spec => {
@@ -338,39 +370,42 @@ export default function AdminProducts() {
     } : { isPreOrder: false };
 
     const formData = new FormData();
-    formData.append('sku', sku); 
+    formData.append('sku', sku);
     formData.append('name', name);
-    formData.append('category', finalCategory); 
+    formData.append('category', finalCategory);
     formData.append('brand', brand);
     formData.append('model', modelName); // Now Optional, safe if empty
-    formData.append('badge', badge); 
+    formData.append('badge', badge);
     formData.append('condition', condition);
-    formData.append('buyingPrice', buyingPrice); 
+    formData.append('buyingPrice', buyingPrice);
     formData.append('price', price);
-    formData.append('stockQuantity', isPreOrder ? '999' : stockQuantity); 
+    formData.append('stockQuantity', isPreOrder ? '999' : stockQuantity);
     formData.append('specifications', JSON.stringify(finalSpecs));
-    formData.append('preOrderInfo', JSON.stringify(preOrderInfo)); 
-    
+    formData.append('preOrderInfo', JSON.stringify(preOrderInfo));
+
     imageFiles.forEach((file) => formData.append('images', file));
 
     try {
       const res = await fetch(`${API_URL}/api/products`, { method: 'POST', body: formData });
       const rawText = await res.text();
       let data: any = {};
-      try { data = JSON.parse(rawText); } catch(e) { data = { error: rawText }; }
+      try { data = JSON.parse(rawText); } catch (e) { data = { error: rawText }; }
 
       if (res.ok) {
         setMessage('Product added successfully to live store!');
-        setSku(''); setName(''); setBrand(''); setModelName(''); setBadge(''); setCondition('Brand New'); setColors(''); setBuyingPrice(''); setPrice(''); setStockQuantity(''); 
+        setSku(''); setName(''); setBrand(''); setModelName(''); setBadge(''); setCondition('Brand New'); setColors(''); setBuyingPrice(''); setPrice(''); setStockQuantity('');
         setSelectedCategoryId(''); setSpecData({}); setCustomSpecs([]); setSelectedTemplateId('');
         setImageFiles([]); setImagePreviews([]);
-        setIsPreOrder(false); setIsWholesale(false); setWholesaleTier2Price(''); setWholesaleTier3Price('');
+        setIsPreOrder(false); setIsWholesale(false); setWholesaleMinOrder('2'); setWholesaleTier2Price(''); setWholesaleTier3Price('');
         if (fileInputRef.current) fileInputRef.current.value = '';
-        window.scrollTo(0,0); 
+        window.scrollTo(0, 0);
       } else {
         setError(`Failed: ${data.error || "Server rejected the data."}`);
+        window.scrollTo(0, 0);
       }
-    } catch (err: any) { setError(`Network error: ${err.message}`);
+    } catch (err: any) {
+      setError(`Network error: ${err.message}`);
+      window.scrollTo(0, 0);
     } finally { setIsLoading(false); }
   };
 
@@ -382,24 +417,24 @@ export default function AdminProducts() {
           <p className="text-xs text-gray-500 mt-1">Smart form with AI-powered categories and specs.</p>
         </div>
         <button onClick={() => setShowManager(!showManager)} className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold transition shadow-sm border ${showManager ? 'bg-white border-gray-200 text-gray-800' : 'bg-[#0A101D] text-white border-transparent'}`}>
-          <FiLayers/> {showManager ? 'Close Manager' : 'Manage Categories & Specs'}
+          <FiLayers /> {showManager ? 'Close Manager' : 'Manage Categories & Specs'}
         </button>
       </div>
 
-      {message && <div className="mb-6 p-4 bg-emerald-50 text-emerald-700 text-sm rounded-2xl flex items-center gap-2 font-bold shadow-sm border border-emerald-100"><FiCheckCircle size={18} /> {message}</div>}
-      {error && <div className="mb-6 p-4 bg-red-50 text-red-600 text-sm rounded-2xl flex items-center gap-2 font-bold shadow-sm border border-red-100"><FiAlertTriangle size={18} /> {error}</div>}
+      {message && <div className="mb-6 p-4 bg-emerald-50 text-emerald-700 text-sm rounded-2xl flex items-center gap-2 font-bold shadow-sm border border-emerald-100 animate-fade-in"><FiCheckCircle size={18} /> {message}</div>}
+      {error && <div className="mb-6 p-4 bg-red-50 text-red-600 text-sm rounded-2xl flex items-center gap-2 font-bold shadow-sm border border-red-100 animate-fade-in"><FiAlertTriangle size={18} /> {error}</div>}
 
       {/* MANAGER COMPONENT */}
       {showManager && (
         <div className="mb-8 grid grid-cols-1 md:grid-cols-2 gap-6 bg-gray-50 p-6 rounded-3xl border border-gray-200 shadow-inner animate-fade-in">
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 space-y-4">
-            <h3 className="font-black text-sm flex items-center gap-2 text-gray-800"><FiPlus className="text-emerald-500"/> Add Category</h3>
-            <input type="text" value={newCatName} onChange={e => setNewCatName(e.target.value)} placeholder="e.g. Solar Panels" className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#F2A900]"/>
+            <h3 className="font-black text-sm flex items-center gap-2 text-gray-800"><FiPlus className="text-emerald-500" /> Add Category</h3>
+            <input type="text" value={newCatName} onChange={e => setNewCatName(e.target.value)} placeholder="e.g. Solar Panels" className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#F2A900]" />
             <button onClick={handleSaveCategory} disabled={isLoading || !newCatName} className="bg-emerald-600 hover:bg-emerald-700 text-white w-full py-2.5 rounded-xl text-xs font-bold disabled:bg-gray-300 transition">Save Category</button>
           </div>
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 space-y-4">
-            <h3 className="font-black text-sm flex items-center gap-2 text-gray-800"><FiSettings className="text-blue-500"/> Create Spec Template</h3>
-            <input type="text" value={newSpecTitle} onChange={e => setNewSpecTitle(e.target.value)} placeholder="Title (e.g. Shirts)" className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#F2A900]"/>
+            <h3 className="font-black text-sm flex items-center gap-2 text-gray-800"><FiSettings className="text-blue-500" /> Create Spec Template</h3>
+            <input type="text" value={newSpecTitle} onChange={e => setNewSpecTitle(e.target.value)} placeholder="Title (e.g. Shirts)" className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#F2A900]" />
             <textarea value={newSpecFields} onChange={e => setNewSpecFields(e.target.value)} placeholder="Fields: Size, Material, Fit" className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#F2A900] h-16"></textarea>
             <button onClick={handleSaveSpecTemplate} disabled={isLoading || !newSpecTitle || !newSpecFields} className="bg-blue-600 hover:bg-blue-700 text-white w-full py-2.5 rounded-xl text-xs font-bold disabled:bg-gray-300 transition">Save Template</button>
           </div>
@@ -408,11 +443,11 @@ export default function AdminProducts() {
 
       {/* MAIN FORM WITH PROFESSIONAL SECTIONS */}
       <form onSubmit={handleAddProduct} className="space-y-6">
-        
+
         {/* SECTION 1: MEDIA & BASIC INFO */}
         <div className="bg-white p-6 sm:p-8 rounded-3xl shadow-sm border border-gray-100">
-          <h2 className="text-base font-black text-gray-900 mb-6 flex items-center gap-2"><FiBox className="text-[#F2A900]"/> Basic Information</h2>
-          
+          <h2 className="text-base font-black text-gray-900 mb-6 flex items-center gap-2"><FiBox className="text-[#F2A900]" /> Basic Information</h2>
+
           <div className="flex flex-col lg:flex-row gap-8">
             <div className="w-full lg:w-1/3">
               <label className="block text-[11px] font-black text-gray-400 uppercase tracking-wider mb-2">Product Media (Max 5)</label>
@@ -424,7 +459,7 @@ export default function AdminProducts() {
                   <span className="text-[10px] font-medium text-gray-400 mt-1">JPEG, PNG, WEBP allowed</span>
                 </label>
               </div>
-              
+
               {imagePreviews.length > 0 && (
                 <div className="flex flex-wrap gap-3 mt-4">
                   {imagePreviews.map((preview, index) => (
@@ -445,13 +480,13 @@ export default function AdminProducts() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div>
-                    <label className="block text-[11px] font-black text-gray-400 uppercase tracking-wider mb-1.5 flex items-center gap-2">Category <span className="text-[9px] text-[#F2A900] bg-yellow-50 px-2 py-0.5 rounded-full capitalize">AI Powered</span></label>
-                    <select required value={selectedCategoryId} onChange={(e) => setSelectedCategoryId(e.target.value)} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none text-sm font-bold text-gray-800 focus:border-[#F2A900] transition cursor-pointer">
-                      <option value="">-- Select Category --</option>
-                      {dbCategories.map(cat => (
-                        <option key={cat.id} value={cat.id}>{cat.name}</option>
-                      ))}
-                    </select>
+                  <label className="block text-[11px] font-black text-gray-400 uppercase tracking-wider mb-1.5 flex items-center gap-2">Category <span className="text-[9px] text-[#F2A900] bg-yellow-50 px-2 py-0.5 rounded-full capitalize">AI Powered</span></label>
+                  <select required value={selectedCategoryId} onChange={(e) => setSelectedCategoryId(e.target.value)} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none text-sm font-bold text-gray-800 focus:border-[#F2A900] transition cursor-pointer">
+                    <option value="">-- Select Category --</option>
+                    {dbCategories.map(cat => (
+                      <option key={cat.id} value={cat.id}>{cat.name}</option>
+                    ))}
+                  </select>
                 </div>
                 <div>
                   <label className="block text-[11px] font-black text-gray-400 uppercase tracking-wider mb-1.5">Brand <span className="text-gray-300 font-normal">(Optional)</span></label>
@@ -495,8 +530,8 @@ export default function AdminProducts() {
 
         {/* SECTION 2: PRICING & INVENTORY */}
         <div className="bg-white p-6 sm:p-8 rounded-3xl shadow-sm border border-gray-100">
-          <h2 className="text-base font-black text-gray-900 mb-6 flex items-center gap-2"><FiDollarSign className="text-emerald-500"/> Pricing & Inventory</h2>
-          
+          <h2 className="text-base font-black text-gray-900 mb-6 flex items-center gap-2"><FiDollarSign className="text-emerald-500" /> Pricing & Inventory</h2>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
             <div>
               <label className="block text-[11px] font-black text-gray-400 uppercase tracking-wider mb-1.5">SKU (Auto)</label>
@@ -519,20 +554,24 @@ export default function AdminProducts() {
           {/* Wholesale Section */}
           <div className="mt-6 border border-gray-200 rounded-2xl overflow-hidden">
             <div className="bg-gray-50 px-5 py-4 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-xl ${isWholesale ? 'bg-emerald-100 text-emerald-600' : 'bg-gray-200 text-gray-500'}`}><FiPackage size={18}/></div>
-                    <div>
-                        <label className="block text-sm font-black text-gray-800">Enable Wholesale Pricing</label>
-                        <p className="text-[10px] text-gray-500 font-medium">Offer discounts for bulk purchases</p>
-                    </div>
+              <div className="flex items-center gap-3">
+                <div className={`p-2 rounded-xl ${isWholesale ? 'bg-emerald-100 text-emerald-600' : 'bg-gray-200 text-gray-500'}`}><FiPackage size={18} /></div>
+                <div>
+                  <label className="block text-sm font-black text-gray-800">Enable Wholesale Pricing</label>
+                  <p className="text-[10px] text-gray-500 font-medium">Offer discounts for bulk purchases</p>
                 </div>
-                <input type="checkbox" checked={isWholesale} onChange={e => setIsWholesale(e.target.checked)} className="w-5 h-5 accent-emerald-600 cursor-pointer"/>
+              </div>
+              <input type="checkbox" checked={isWholesale} onChange={e => setIsWholesale(e.target.checked)} className="w-5 h-5 accent-emerald-600 cursor-pointer" />
             </div>
 
             {isWholesale && (
-              <div className="bg-white p-5 grid grid-cols-1 sm:grid-cols-2 gap-5 border-t border-gray-200 animate-fade-in">
+              <div className="bg-white p-5 grid grid-cols-1 sm:grid-cols-3 gap-5 border-t border-gray-200 animate-fade-in">
                 <div>
-                  <label className="block text-[10px] font-black text-emerald-700 uppercase tracking-wider mb-1.5">Price for 2-5 Pcs</label>
+                  <label className="block text-[10px] font-black text-emerald-700 uppercase tracking-wider mb-1.5">Min Order Qty</label>
+                  <input type="number" value={wholesaleMinOrder} onChange={e => setWholesaleMinOrder(e.target.value)} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 outline-none text-sm font-bold text-gray-800 focus:border-emerald-400" placeholder="e.g. 2" />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black text-emerald-700 uppercase tracking-wider mb-1.5">Price for {wholesaleMinOrder || '2'}-5 Pcs</label>
                   <input type="number" value={wholesaleTier2Price} onChange={e => setWholesaleTier2Price(e.target.value)} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 outline-none text-sm font-bold text-gray-800 focus:border-emerald-400" placeholder="e.g. 240000" />
                 </div>
                 <div>
@@ -547,14 +586,14 @@ export default function AdminProducts() {
         {/* SECTION 3: SHIPPING & PRE-ORDER */}
         <div className="bg-white p-6 sm:p-8 rounded-3xl shadow-sm border border-gray-100">
           <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                  <div className={`p-2.5 rounded-xl ${isPreOrder ? 'bg-blue-100 text-blue-600 shadow-sm' : 'bg-gray-100 text-gray-400'}`}><FiTruck size={20}/></div>
-                  <div>
-                      <h2 className="text-base font-black text-gray-900">Pre-Order Logistics</h2>
-                      <p className="text-[11px] font-medium text-gray-500">Enable if product ships directly from abroad</p>
-                  </div>
+            <div className="flex items-center gap-3">
+              <div className={`p-2.5 rounded-xl ${isPreOrder ? 'bg-blue-100 text-blue-600 shadow-sm' : 'bg-gray-100 text-gray-400'}`}><FiTruck size={20} /></div>
+              <div>
+                <h2 className="text-base font-black text-gray-900">Pre-Order Logistics</h2>
+                <p className="text-[11px] font-medium text-gray-500">Enable if product ships directly from abroad</p>
               </div>
-              <input type="checkbox" checked={isPreOrder} onChange={e => setIsPreOrder(e.target.checked)} className="w-6 h-6 accent-blue-600 cursor-pointer"/>
+            </div>
+            <input type="checkbox" checked={isPreOrder} onChange={e => setIsPreOrder(e.target.checked)} className="w-6 h-6 accent-blue-600 cursor-pointer" />
           </div>
 
           {isPreOrder && (
@@ -579,47 +618,59 @@ export default function AdminProducts() {
 
         {/* SECTION 4: SMART SPECIFICATIONS (AI) */}
         <div className="bg-white p-6 sm:p-8 rounded-3xl shadow-sm border border-gray-100">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 border-b border-gray-100 pb-4">
-             <div>
-               <h2 className="text-base font-black text-gray-900 flex items-center gap-2"><FiList className="text-purple-500"/> Smart Specifications</h2>
-               <p className="text-[11px] font-medium text-gray-500 mt-1">Fields are automatically generated based on the chosen category.</p>
-             </div>
-             
-             {/* Dropdown inayo-sync na AI / Template Selection */}
-             <div className="min-w-[200px]">
-               <select 
-                 value={selectedTemplateId}
-                 onChange={(e) => applySpecTemplate(e.target.value)} 
-                 className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 outline-none text-[11px] font-bold text-gray-700 cursor-pointer focus:border-purple-400"
-               >
-                 <option value="">AI Auto-Generated / Custom</option>
-                 {dbSpecTemplates.map(temp => (
-                     <option key={temp.id} value={temp.id}>Template: {temp.title}</option>
-                 ))}
-               </select>
-             </div>
+          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-6 border-b border-gray-100 pb-4">
+            <div>
+              <h2 className="text-base font-black text-gray-900 flex items-center gap-2"><FiList className="text-purple-500" /> Smart Specifications</h2>
+              <p className="text-[11px] font-medium text-gray-500 mt-1">Fields are automatically generated based on the chosen category.</p>
+            </div>
+
+            {/* Dropdown inayo-sync na AI / Template Selection na Search Bar */}
+            <div className="min-w-[250px] bg-gray-50 p-3 rounded-xl border border-gray-200">
+              <div className="relative mb-2">
+                <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
+                <input
+                  type="text"
+                  placeholder="Search templates..."
+                  value={templateSearchQuery}
+                  onChange={(e) => setTemplateSearchQuery(e.target.value)}
+                  className="w-full pl-8 pr-3 py-2 bg-white border border-gray-200 rounded-lg outline-none text-xs font-medium focus:border-purple-400 shadow-sm"
+                />
+              </div>
+              <select
+                value={selectedTemplateId}
+                onChange={(e) => applySpecTemplate(e.target.value)}
+                className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 outline-none text-[11px] font-bold text-gray-700 cursor-pointer focus:border-purple-400"
+              >
+                <option value="">AI Auto-Generated / Custom</option>
+                {dbSpecTemplates
+                  .filter(t => t.title.toLowerCase().includes(templateSearchQuery.toLowerCase()))
+                  .map(temp => (
+                    <option key={temp.id} value={temp.id}>Template: {temp.title}</option>
+                  ))}
+              </select>
+            </div>
           </div>
-          
+
           {Object.keys(specData).length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 mb-8">
               {Object.keys(specData).map(field => (
                 <div key={field} className="relative group bg-gray-50/50 p-3 rounded-xl border border-gray-100">
                   <div className="flex justify-between items-center mb-1.5">
                     <label className="block text-[10px] font-black text-gray-500 uppercase tracking-wider">{field}</label>
-                    <button 
-                      type="button" 
-                      onClick={() => handleRemoveAutoSpec(field)} 
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveAutoSpec(field)}
                       className="text-red-400 hover:text-red-600 transition p-1 bg-white rounded-md border border-gray-200 shadow-sm"
                       title="Remove field"
                     >
                       <FiTrash2 size={12} />
                     </button>
                   </div>
-                  <input 
-                    type="text" 
-                    value={specData[field] || ''} 
-                    onChange={e => setSpecData({...specData, [field]: e.target.value})} 
-                    className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2.5 outline-none text-sm font-semibold focus:border-purple-400 shadow-sm" 
+                  <input
+                    type="text"
+                    value={specData[field] || ''}
+                    onChange={e => setSpecData({ ...specData, [field]: e.target.value })}
+                    className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2.5 outline-none text-sm font-semibold focus:border-purple-400 shadow-sm"
                     placeholder={`Enter ${field.toLowerCase()}`}
                   />
                 </div>
@@ -636,7 +687,7 @@ export default function AdminProducts() {
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-sm font-black text-gray-700">Add Extra Custom Fields</h3>
               <button type="button" onClick={handleAddCustomSpec} className="text-[11px] font-bold text-[#0A101D] bg-white border border-gray-200 px-4 py-2 rounded-xl hover:border-[#F2A900] transition flex items-center gap-1.5 shadow-sm">
-                <FiPlus/> Add Field
+                <FiPlus /> Add Field
               </button>
             </div>
 
@@ -645,26 +696,26 @@ export default function AdminProducts() {
                 <div key={index} className="flex flex-col sm:flex-row items-center gap-3">
                   <input type="text" placeholder="Title (e.g. Warranty)" value={spec.key} onChange={e => handleCustomSpecChange(index, 'key', e.target.value)} className="w-full sm:w-1/3 bg-white border border-gray-200 rounded-xl px-4 py-2.5 outline-none text-sm font-bold focus:border-[#F2A900] shadow-sm" />
                   <input type="text" placeholder="Value (e.g. 1 Year Local)" value={spec.value} onChange={e => handleCustomSpecChange(index, 'value', e.target.value)} className="w-full sm:flex-1 bg-white border border-gray-200 rounded-xl px-4 py-2.5 outline-none text-sm font-medium focus:border-[#F2A900] shadow-sm" />
-                  <button type="button" onClick={() => removeCustomSpec(index)} className="w-full sm:w-auto text-red-500 bg-red-50 border border-red-100 hover:bg-red-100 p-2.5 rounded-xl transition flex justify-center items-center"><FiTrash2 size={18}/></button>
+                  <button type="button" onClick={() => removeCustomSpec(index)} className="w-full sm:w-auto text-red-500 bg-red-50 border border-red-100 hover:bg-red-100 p-2.5 rounded-xl transition flex justify-center items-center"><FiTrash2 size={18} /></button>
                 </div>
               ))}
             </div>
 
-            {/* SAVE AS TEMPLATE QUICK ACTION (NEW) */}
+            {/* SAVE AS TEMPLATE QUICK ACTION */}
             {(Object.keys(specData).length > 0 || customSpecs.length > 0) && (
               <div className="mt-6 pt-5 border-t border-gray-200 flex flex-col sm:flex-row items-center gap-3 animate-fade-in">
                 <div className="flex-1 w-full">
                   <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Save current fields as a Template for next time</label>
-                  <input 
-                    type="text" 
-                    placeholder="Enter template name (e.g. Custom Phones)" 
-                    value={quickTemplateName} 
-                    onChange={e => setQuickTemplateName(e.target.value)} 
+                  <input
+                    type="text"
+                    placeholder="Enter template name (e.g. Custom Phones)"
+                    value={quickTemplateName}
+                    onChange={e => setQuickTemplateName(e.target.value)}
                     className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 outline-none text-sm font-semibold focus:border-purple-400 shadow-sm"
                   />
                 </div>
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   onClick={handleSaveCurrentAsTemplate}
                   disabled={isSavingTemplate || !quickTemplateName.trim()}
                   className="w-full sm:w-auto mt-4 sm:mt-5 bg-purple-100 hover:bg-purple-200 text-purple-700 font-bold py-2.5 px-6 rounded-xl transition flex items-center justify-center gap-2 disabled:opacity-50"
