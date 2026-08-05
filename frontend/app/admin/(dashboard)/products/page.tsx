@@ -57,7 +57,7 @@ export default function AdminProducts() {
   const [shippingOrigin, setShippingOrigin] = useState<'Dubai' | 'China'>('Dubai');
   const [freightType, setFreightType] = useState<'Air' | 'Sea'>('Air');
 
-  // Wholesale States (Fully Manual 3 Tiers)
+  // Wholesale States (Fully Manual 3 Tiers - Support Ranges)
   const [isWholesale, setIsWholesale] = useState(false);
   const [wsTier1Qty, setWsTier1Qty] = useState('');
   const [wsTier1Price, setWsTier1Price] = useState('');
@@ -566,7 +566,7 @@ export default function AdminProducts() {
             </div>
           </div>
 
-          {/* Wholesale Section (Fully Manual 3 Tiers) */}
+          {/* Wholesale Section (Fully Manual 3 Tiers - Support Ranges) */}
           <div className="mt-6 border border-gray-200 rounded-2xl overflow-hidden">
             <div className="bg-gray-50 px-5 py-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -586,8 +586,8 @@ export default function AdminProducts() {
                 <div className="space-y-3 bg-gray-50 p-4 rounded-xl border border-gray-100">
                   <h4 className="text-[10px] font-black text-emerald-700 uppercase tracking-wider border-b border-emerald-100 pb-2">Tier 1 (Min Order)</h4>
                   <div>
-                    <label className="block text-[10px] font-bold text-gray-600 mb-1">Quantity</label>
-                    <input type="number" value={wsTier1Qty} onChange={e => setWsTier1Qty(e.target.value)} className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 outline-none text-sm font-bold text-gray-800 focus:border-emerald-400" placeholder="e.g. 2" />
+                    <label className="block text-[10px] font-bold text-gray-600 mb-1">Quantity Range</label>
+                    <input type="text" value={wsTier1Qty} onChange={e => setWsTier1Qty(e.target.value)} className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 outline-none text-sm font-bold text-gray-800 focus:border-emerald-400" placeholder="e.g. 1" />
                   </div>
                   <div>
                     <label className="block text-[10px] font-bold text-gray-600 mb-1">Price (TZS)</label>
@@ -599,8 +599,8 @@ export default function AdminProducts() {
                 <div className="space-y-3 bg-gray-50 p-4 rounded-xl border border-gray-100">
                   <h4 className="text-[10px] font-black text-emerald-700 uppercase tracking-wider border-b border-emerald-100 pb-2">Tier 2</h4>
                   <div>
-                    <label className="block text-[10px] font-bold text-gray-600 mb-1">Quantity (From)</label>
-                    <input type="number" value={wsTier2Qty} onChange={e => setWsTier2Qty(e.target.value)} className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 outline-none text-sm font-bold text-gray-800 focus:border-emerald-400" placeholder="e.g. 5" />
+                    <label className="block text-[10px] font-bold text-gray-600 mb-1">Quantity Range</label>
+                    <input type="text" value={wsTier2Qty} onChange={e => setWsTier2Qty(e.target.value)} className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 outline-none text-sm font-bold text-gray-800 focus:border-emerald-400" placeholder="e.g. 2-5" />
                   </div>
                   <div>
                     <label className="block text-[10px] font-bold text-gray-600 mb-1">Price (TZS)</label>
@@ -612,8 +612,8 @@ export default function AdminProducts() {
                 <div className="space-y-3 bg-gray-50 p-4 rounded-xl border border-gray-100">
                   <h4 className="text-[10px] font-black text-emerald-700 uppercase tracking-wider border-b border-emerald-100 pb-2">Tier 3</h4>
                   <div>
-                    <label className="block text-[10px] font-bold text-gray-600 mb-1">Quantity (From)</label>
-                    <input type="number" value={wsTier3Qty} onChange={e => setWsTier3Qty(e.target.value)} className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 outline-none text-sm font-bold text-gray-800 focus:border-emerald-400" placeholder="e.g. 10" />
+                    <label className="block text-[10px] font-bold text-gray-600 mb-1">Quantity Range</label>
+                    <input type="text" value={wsTier3Qty} onChange={e => setWsTier3Qty(e.target.value)} className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 outline-none text-sm font-bold text-gray-800 focus:border-emerald-400" placeholder="e.g. 6+" />
                   </div>
                   <div>
                     <label className="block text-[10px] font-bold text-gray-600 mb-1">Price (TZS)</label>

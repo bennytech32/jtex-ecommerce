@@ -28,7 +28,7 @@ const getColorCode = (colorName: string) => {
   return colorsMap[c] || c;
 };
 
-// HELPER MPYA: Inabadilisha jina la bidhaa kuwa URL safi (Mfn: "Dell Laptop 4GB" -> "dell-laptop-4gb")
+// HELPER MPYA: Inabadilisha jina la bidhaa kuwa URL safi
 const generateSlug = (name: string) => {
   if (!name) return '';
   return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
@@ -187,7 +187,6 @@ export default function ProductDetail() {
         const data = await res.json();
         setAllProducts(data);
 
-        // FIX: Hapa inatafuta bidhaa kwa kutumia 'ID' au 'Slug (Jina lililonyooshwa)'
         const decodedId = decodeURIComponent(id as string);
         const foundProduct = data.find((p: any) =>
           p.id === decodedId || generateSlug(p.name) === decodedId
@@ -227,7 +226,7 @@ export default function ProductDetail() {
 
   if (loading) return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-white gap-4">
-      <div className="w-12 h-12 border-4 border-[#F2A900] border-t-transparent rounded-full animate-spin"></div>
+      <div className="w-12 h-12 border-4 border-[#E8A922] border-t-transparent rounded-full animate-spin"></div>
       <p className="text-sm font-medium text-gray-500 animate-pulse">Loading product details...</p>
     </div>
   );
@@ -237,7 +236,7 @@ export default function ProductDetail() {
   const basePrice = product.price;
   const isMainProductWishlisted = wishlist.includes(product.id);
 
-  // EXTRACTION YA DATA KUTOKA KWA ADMIN (Tiers 3 kamili na IDADI ZAKE)
+  // EXTRACTION YA DATA KUTOKA KWA ADMIN
   const {
     Model, Color, color, Colors, colors,
     isWholesale,
@@ -249,7 +248,7 @@ export default function ProductDetail() {
   } = specs;
 
   const displayModel = Model || product.model || 'N/A';
-  const displayCondition = product.condition || 'Brand New'; // Condition Display
+  const displayCondition = product.condition || 'Brand New';
   const hasWholesale = isWholesale === 'Yes';
 
   let preInfo: any = null;
@@ -268,24 +267,24 @@ export default function ProductDetail() {
     <div className="min-h-screen bg-gray-50/30 text-gray-900 font-sans pb-24 lg:pb-0 overflow-x-hidden">
 
       {/* ========================================================= */}
-      {/* HEADERS (DESKTOP & MOBILE) */}
+      {/* HEADERS (DESKTOP) - NO LOGO */}
       {/* ========================================================= */}
-      <header className="hidden lg:block bg-[#0A101D] text-white border-b border-gray-800 sticky top-0 z-40">
-        <div className="max-w-[1600px] mx-auto px-6 h-24 flex items-center justify-between gap-6">
-          <div className="flex items-center gap-8 flex-shrink-0">
-            <img src="/logo.png" alt="Jtex Logo" className="h-20 cursor-pointer object-contain" onClick={() => router.push('/')} />
-            <div className="flex items-center gap-2 cursor-pointer hover:bg-gray-800/50 p-2 rounded-lg transition">
-              <FiMapPin className="text-gray-400" size={20} />
-              <div className="flex flex-col leading-tight">
-                <span className="text-[10px] text-gray-400">Deliver to</span>
-                <span className="text-xs font-semibold flex items-center gap-1">{userLocation.split(',')[0]} <FiChevronDown /></span>
-              </div>
+      <header className="hidden lg:block bg-[#1B6B80] text-white border-b border-[#145363] sticky top-0 z-40">
+        <div className="max-w-[1440px] xl:max-w-[1536px] mx-auto px-6 h-20 flex items-center justify-between gap-6">
+          <div className="flex items-center gap-4 flex-shrink-0">
+            <button onClick={() => router.back()} className="p-2 bg-white/10 hover:bg-white/20 rounded-full transition text-white">
+              <FiArrowLeft size={20} />
+            </button>
+            <div className="flex items-center gap-2 text-white/80 text-sm font-medium">
+              <span className="cursor-pointer hover:text-white transition" onClick={() => router.push('/')}>Home</span>
+              <FiChevronRight size={14} />
+              <span className="cursor-pointer hover:text-white transition" onClick={() => router.push('/categories')}>Products</span>
             </div>
           </div>
 
           {/* ACTIVE SEARCH DESKTOP */}
-          <div className="flex-1 max-w-2xl relative">
-            <form onSubmit={handleSearch} className="flex items-center h-12 bg-white rounded-lg overflow-hidden shadow-sm w-full">
+          <div className="flex-1 max-w-2xl relative mx-auto">
+            <form onSubmit={handleSearch} className="flex items-center h-11 bg-white rounded-lg overflow-hidden shadow-sm w-full">
               <input
                 type="text"
                 value={searchQuery}
@@ -293,10 +292,10 @@ export default function ProductDetail() {
                 onFocus={() => setShowDesktopSuggestions(true)}
                 onBlur={() => setTimeout(() => setShowDesktopSuggestions(false), 200)}
                 placeholder="Search products..."
-                className="flex-1 h-full px-4 text-base text-gray-900 outline-none" // IOS Zoom Fix: text-base
+                className="flex-1 h-full px-4 text-sm text-gray-900 outline-none w-full"
               />
-              <button type="submit" className="h-full px-8 bg-[#F2A900] text-black hover:bg-yellow-500 transition">
-                <FiSearch size={20} />
+              <button type="submit" className="h-full px-6 bg-[#E8A922] text-white hover:bg-[#D4981C] transition">
+                <FiSearch size={18} />
               </button>
             </form>
 
@@ -308,9 +307,8 @@ export default function ProductDetail() {
                     {filteredSuggestions.map((prod) => (
                       <li
                         key={prod.id}
-                        // HAPA PANAITUMIA URL SAFI
                         onClick={() => router.push(`/product/${generateSlug(prod.name)}`)}
-                        className="px-4 py-3 hover:bg-gray-50 cursor-pointer flex items-center gap-4 border-b border-gray-50 last:border-0 transition"
+                        className="px-4 py-3 hover:bg-[#E8A922]/10 cursor-pointer flex items-center gap-4 border-b border-gray-50 last:border-0 transition"
                       >
                         <div className="w-12 h-12 bg-gray-50 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0 border border-gray-100 p-1">
                           {getDisplayImage(prod.imageUrl) ? (
@@ -319,7 +317,7 @@ export default function ProductDetail() {
                         </div>
                         <div className="flex flex-col flex-1 min-w-0">
                           <span className="text-sm font-bold text-gray-800 truncate">{prod.name}</span>
-                          <span className="text-xs font-black text-[#F2A900]">TZS {prod.price.toLocaleString()}</span>
+                          <span className="text-xs font-black text-[#E8A922]">TZS {prod.price.toLocaleString()}</span>
                         </div>
                       </li>
                     ))}
@@ -334,33 +332,40 @@ export default function ProductDetail() {
           </div>
 
           <div className="flex items-center gap-4 flex-shrink-0">
-            <button onClick={() => router.push('/checkout')} className="relative flex flex-col items-center hover:bg-gray-800/50 p-2 rounded-lg transition">
-              <FiShoppingCart size={24} className="text-gray-300" />
-              <span className="text-[10px] font-medium mt-1">Cart</span>
-              {cartCount > 0 && <span className="absolute top-0 right-1 bg-[#F2A900] text-black text-[10px] font-bold w-4 h-4 flex items-center justify-center rounded-full">{cartCount}</span>}
+            <button onClick={handleShare} className="p-2 hover:bg-white/10 rounded-full transition text-white">
+              <FiShare2 size={20} />
+            </button>
+            <button onClick={() => router.push('/checkout')} className="relative p-2 hover:bg-white/10 rounded-full transition text-white">
+              <FiShoppingCart size={22} />
+              {cartCount > 0 && <span className="absolute top-0 right-0 bg-[#E8A922] text-white text-[10px] font-bold w-4 h-4 flex items-center justify-center rounded-full border border-[#1B6B80]">{cartCount}</span>}
             </button>
           </div>
         </div>
       </header>
 
-      <header className="lg:hidden bg-[#0A101D] text-white pt-4 pb-3 sticky top-0 z-50">
+      {/* ========================================================= */}
+      {/* HEADERS (MOBILE) - NO LOGO */}
+      {/* ========================================================= */}
+      <header className="lg:hidden bg-[#1B6B80] text-white pt-4 pb-3 sticky top-0 z-50 border-b border-[#145363]">
         <div className="px-4 flex items-center justify-between mb-3">
-          <div className="flex items-center gap-1.5 cursor-pointer" onClick={() => router.back()}>
-            <FiArrowLeft size={20} className="text-gray-300" />
-            <span className="text-sm font-medium text-gray-300">Back</span>
+          <div className="flex items-center gap-2 cursor-pointer" onClick={() => router.back()}>
+            <div className="p-1.5 bg-white/10 rounded-full">
+              <FiArrowLeft size={18} className="text-white" />
+            </div>
+            <span className="text-sm font-medium text-white/90">Back</span>
           </div>
           <div className="flex items-center gap-4">
-            <FiShare onClick={handleShare} size={20} className="text-gray-300 cursor-pointer" />
+            <FiShare onClick={handleShare} size={20} className="text-white/90 cursor-pointer" />
             <div className="relative" onClick={() => router.push('/checkout')}>
-              <FiShoppingCart size={20} className="text-gray-300" />
-              {cartCount > 0 && <span className="absolute -top-1.5 -right-1.5 bg-[#F2A900] text-black text-[9px] font-bold w-3.5 h-3.5 flex items-center justify-center rounded-full">{cartCount}</span>}
+              <FiShoppingCart size={20} className="text-white/90" />
+              {cartCount > 0 && <span className="absolute -top-1.5 -right-1.5 bg-[#E8A922] text-white text-[9px] font-bold w-3.5 h-3.5 flex items-center justify-center rounded-full">{cartCount}</span>}
             </div>
           </div>
         </div>
 
         {/* MOBILE SEARCH BAR W/ SUGGESTIONS */}
-        <div className="px-4 relative">
-          <form onSubmit={handleSearch} className="flex items-center h-11 bg-white rounded-xl overflow-hidden shadow-sm w-full">
+        <div className="px-4 relative w-full">
+          <form onSubmit={handleSearch} className="flex items-center h-10 bg-white rounded-xl overflow-hidden shadow-sm w-full">
             <input
               type="text"
               value={searchQuery}
@@ -368,9 +373,9 @@ export default function ProductDetail() {
               onFocus={() => setShowMobileSuggestions(true)}
               onBlur={() => setTimeout(() => setShowMobileSuggestions(false), 200)}
               placeholder="Search products..."
-              className="flex-1 h-full px-4 text-base text-gray-900 outline-none" // IOS Zoom Fix: text-base
+              className="flex-1 h-full px-3 text-sm text-gray-900 outline-none w-full min-w-0"
             />
-            <button type="submit" className="h-full px-5 bg-[#F2A900] text-black"><FiSearch size={18} /></button>
+            <button type="submit" className="h-full px-4 bg-[#E8A922] text-white flex-shrink-0"><FiSearch size={16} /></button>
           </form>
 
           {/* LIVE SEARCH SUGGESTIONS DROPDOWN (MOBILE) */}
@@ -381,9 +386,8 @@ export default function ProductDetail() {
                   {filteredSuggestions.map((prod) => (
                     <li
                       key={prod.id}
-                      // HAPA PIA PANAITUMIA URL SAFI
                       onClick={() => router.push(`/product/${generateSlug(prod.name)}`)}
-                      className="px-4 py-3 hover:bg-gray-50 cursor-pointer flex items-center gap-3 border-b border-gray-50 last:border-0 transition"
+                      className="px-4 py-3 hover:bg-[#E8A922]/10 cursor-pointer flex items-center gap-3 border-b border-gray-50 last:border-0 transition"
                     >
                       <div className="w-10 h-10 bg-gray-50 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0 border border-gray-100 p-1">
                         {getDisplayImage(prod.imageUrl) ? (
@@ -392,7 +396,7 @@ export default function ProductDetail() {
                       </div>
                       <div className="flex flex-col flex-1 min-w-0">
                         <span className="text-xs font-bold text-gray-800 truncate">{prod.name}</span>
-                        <span className="text-[10px] font-black text-[#F2A900]">TZS {prod.price.toLocaleString()}</span>
+                        <span className="text-[10px] font-black text-[#E8A922]">TZS {prod.price.toLocaleString()}</span>
                       </div>
                     </li>
                   ))}
@@ -407,7 +411,7 @@ export default function ProductDetail() {
         </div>
       </header>
 
-      <main className="max-w-[1400px] mx-auto lg:px-6 lg:py-8 mt-2 lg:mt-0">
+      <main className="max-w-[1440px] xl:max-w-[1536px] mx-auto lg:px-6 lg:py-8 mt-2 lg:mt-0">
         <div className="flex flex-col lg:flex-row gap-0 lg:gap-8 mb-8 lg:mb-12 bg-white lg:rounded-3xl lg:border border-gray-100 lg:p-6 lg:shadow-sm">
 
           {/* ========================================================= */}
@@ -416,14 +420,15 @@ export default function ProductDetail() {
           <div className="w-full lg:w-[55%] flex flex-col-reverse lg:flex-row gap-4 relative px-4 lg:px-0">
             <div className="hidden lg:flex flex-col gap-3 w-20 flex-shrink-0 max-h-[500px] overflow-y-auto hide-scrollbar">
               {images.map((imgStr, idx) => (
-                <div key={idx} onClick={() => scrollToImage(idx)} className={`w-20 h-20 bg-white rounded-xl border-2 p-2 cursor-pointer transition-all flex items-center justify-center ${currentImageIndex === idx ? 'border-[#F2A900]' : 'border-gray-100 hover:border-gray-300'}`}>
+                <div key={idx} onClick={() => scrollToImage(idx)} className={`w-20 h-20 bg-white rounded-xl border-2 p-1 overflow-hidden cursor-pointer transition-all flex items-center justify-center ${currentImageIndex === idx ? 'border-[#E8A922]' : 'border-gray-100 hover:border-gray-300'}`}>
                   <img src={imgStr} className="w-full h-full object-contain mix-blend-multiply" />
                 </div>
               ))}
             </div>
 
-            <div className="flex-1 w-full bg-gray-50/50 rounded-2xl border border-gray-100 relative h-[350px] lg:h-[500px] overflow-hidden group">
-              <button onClick={(e) => toggleWishlist(e, product.id)} className="absolute top-4 right-4 z-20 w-10 h-10 bg-white/90 backdrop-blur rounded-full flex items-center justify-center text-gray-400 hover:text-red-500 shadow-md transition">
+            {/* Picha Kubwa: bg-white badala ya bg-gray-50, border imeondolewa ili isiache frame */}
+            <div className="flex-1 w-full bg-white rounded-2xl relative h-[350px] lg:h-[500px] overflow-hidden group">
+              <button onClick={(e) => toggleWishlist(e, product.id)} className="absolute top-4 right-4 z-20 w-10 h-10 bg-white/90 backdrop-blur rounded-full flex items-center justify-center text-gray-400 hover:text-red-500 shadow-md transition border border-gray-100">
                 <FiHeart className={`text-lg ${isMainProductWishlisted ? "fill-red-500 text-red-500" : ""}`} />
               </button>
 
@@ -431,35 +436,36 @@ export default function ProductDetail() {
                 <>
                   <button
                     onClick={slidePrev}
-                    className={`absolute left-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 bg-white/90 backdrop-blur rounded-full flex items-center justify-center text-gray-800 shadow-md transition-all opacity-0 group-hover:opacity-100 ${currentImageIndex === 0 ? 'hidden' : 'flex'}`}
+                    className={`absolute left-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 bg-white/90 backdrop-blur rounded-full flex items-center justify-center text-[#1B6B80] shadow-md transition-all opacity-0 group-hover:opacity-100 ${currentImageIndex === 0 ? 'hidden' : 'flex'}`}
                   >
                     <FiChevronLeft size={24} />
                   </button>
                   <button
                     onClick={slideNext}
-                    className={`absolute right-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 bg-white/90 backdrop-blur rounded-full flex items-center justify-center text-gray-800 shadow-md transition-all opacity-0 group-hover:opacity-100 ${currentImageIndex === images.length - 1 ? 'hidden' : 'flex'}`}
+                    className={`absolute right-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 bg-white/90 backdrop-blur rounded-full flex items-center justify-center text-[#1B6B80] shadow-md transition-all opacity-0 group-hover:opacity-100 ${currentImageIndex === images.length - 1 ? 'hidden' : 'flex'}`}
                   >
                     <FiChevronRight size={24} />
                   </button>
                 </>
               )}
 
-              <div ref={sliderRef} onScroll={handleScroll} className="w-full h-full flex overflow-x-auto snap-x snap-mandatory hide-scrollbar smooth-scroll scroll-smooth">
+              <div ref={sliderRef} onScroll={handleScroll} className="w-full h-full flex overflow-x-auto snap-x snap-mandatory hide-scrollbar smooth-scroll scroll-smooth bg-white">
                 {images.length > 0 ? (
                   images.map((imgStr, idx) => (
-                    <div key={idx} className="w-full h-full flex-shrink-0 snap-center flex items-center justify-center p-6 lg:p-12 relative">
+                    // Padding imeondolewa (p-0) ili ifit vizuri mpaka kwenye pembe na object-contain inazuia isikatwe
+                    <div key={idx} className="w-full h-full flex-shrink-0 snap-center flex items-center justify-center relative">
                       <img src={imgStr} className="w-full h-full object-contain mix-blend-multiply" />
                     </div>
                   ))
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-gray-50"><span className="text-9xl">📦</span></div>
+                  <div className="w-full h-full flex items-center justify-center bg-white"><span className="text-9xl">📦</span></div>
                 )}
               </div>
 
               {images.length > 1 && (
                 <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 z-10 bg-white/50 backdrop-blur px-3 py-1.5 rounded-full border border-gray-200/50 shadow-sm">
                   {images.map((_, idx) => (
-                    <div key={idx} onClick={() => scrollToImage(idx)} className={`h-1.5 rounded-full cursor-pointer transition-all ${currentImageIndex === idx ? 'w-4 bg-[#F2A900]' : 'w-1.5 bg-gray-400'}`}></div>
+                    <div key={idx} onClick={() => scrollToImage(idx)} className={`h-1.5 rounded-full cursor-pointer transition-all ${currentImageIndex === idx ? 'w-4 bg-[#E8A922]' : 'w-1.5 bg-gray-400'}`}></div>
                   ))}
                 </div>
               )}
@@ -472,24 +478,26 @@ export default function ProductDetail() {
           <div className="w-full lg:w-[45%] flex flex-col px-4 lg:px-0 py-6 lg:py-0">
 
             <div className="flex flex-wrap items-center gap-2 mb-3">
-              <span className="bg-gray-100 text-gray-600 text-[10px] font-bold px-2.5 py-1 rounded-md uppercase tracking-wider">{product.brand || 'Generic'}</span>
+              <span className="bg-[#1B6B80]/10 text-[#1B6B80] text-[10px] font-bold px-2.5 py-1 rounded-md uppercase tracking-wider border border-[#1B6B80]/20">{product.brand || 'Generic'}</span>
             </div>
 
-            <h1 className="text-xl sm:text-2xl lg:text-3xl font-semibold text-[#0A101D] leading-tight mb-4">{product.name}</h1>
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-black text-[#1B6B80] leading-tight mb-4">{product.name}</h1>
 
             <div className="flex flex-col mb-4 bg-gray-50/50 border border-gray-100 p-4 rounded-2xl">
-              <span className="text-3xl lg:text-4xl font-bold text-[#0A101D] leading-none tracking-tight">TSH {basePrice.toLocaleString()}</span>
+              <span className="text-3xl lg:text-4xl font-black text-[#E8A922] leading-none tracking-tight">TSH {basePrice.toLocaleString()}</span>
 
               {/* WHOLESALE BADGES */}
-              <div className="flex items-center gap-2 mt-3">
-                {hasWholesale && <span className="text-[10px] text-blue-700 bg-blue-100 px-2 py-1 rounded-md font-bold uppercase tracking-wider">Discounts available for bulk orders</span>}
-              </div>
+              {hasWholesale && (
+                <div className="flex items-center gap-2 mt-3">
+                  <span className="text-[10px] text-[#1B6B80] bg-[#1B6B80]/10 border border-[#1B6B80]/20 px-2 py-1 rounded-md font-bold uppercase tracking-wider">Discounts available for bulk orders</span>
+                </div>
+              )}
             </div>
 
             {/* COLOR OPTIONS */}
             {colorOptions.length > 0 && (
               <div className="mb-6">
-                <h4 className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-2">Available Colors: <span className="text-blue-600 font-medium capitalize">{selectedColor || colorOptions[0]}</span></h4>
+                <h4 className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-2">Available Colors: <span className="text-[#1B6B80] font-black capitalize">{selectedColor || colorOptions[0]}</span></h4>
                 <div className="flex flex-wrap gap-3">
                   {colorOptions.map((c, i) => {
                     const isSelected = selectedColor === c || (!selectedColor && i === 0);
@@ -498,8 +506,7 @@ export default function ProductDetail() {
 
                     return (
                       <div key={i} className="flex flex-col items-center gap-1.5 cursor-pointer group" onClick={() => setSelectedColor(c)}>
-                        {/* FIX YA COLOUR: ICONS NDOGO (w-6 h-6 badala ya w-10 h-10) */}
-                        <div className={`w-6 h-6 rounded-full flex items-center justify-center transition-all duration-300 ${isSelected ? 'ring-2 ring-offset-2 ring-[#F2A900] scale-110' : 'ring-1 ring-gray-200 hover:ring-gray-300'}`} style={{ backgroundColor: cssColor }}>
+                        <div className={`w-6 h-6 rounded-full flex items-center justify-center transition-all duration-300 ${isSelected ? 'ring-2 ring-offset-2 ring-[#E8A922] scale-110' : 'ring-1 ring-gray-200 hover:ring-gray-300'}`} style={{ backgroundColor: cssColor }}>
                           {isSelected && <FiCheck className={isWhite ? 'text-black' : 'text-white'} size={12} />}
                         </div>
                       </div>
@@ -511,32 +518,32 @@ export default function ProductDetail() {
 
             {/* WHOLESALE - DYNAMIC 3 TIERS FROM ADMIN */}
             {hasWholesale && (
-              <div className="bg-gradient-to-br from-[#0A101D] to-gray-900 rounded-2xl p-4 border border-gray-800 mb-6 shadow-md text-white">
+              <div className="bg-gradient-to-br from-[#1B6B80] to-[#10404d] rounded-2xl p-4 border border-[#145363] mb-6 shadow-md text-white">
                 <div className="flex items-center justify-between mb-3">
-                  <p className="text-[11px] font-medium text-[#F2A900] uppercase tracking-widest flex items-center gap-2">
-                    <FiPackage size={14} /> Minimum Bulk Order: {wholesaleTier1Qty || wholesaleMinOrder || 2}
+                  <p className="text-[11px] font-black text-[#E8A922] uppercase tracking-widest flex items-center gap-2">
+                    <FiPackage size={14} /> Bulk Order Discounts
                   </p>
                 </div>
-                <div className="grid grid-cols-3 divide-x divide-gray-700">
+                <div className="grid grid-cols-3 divide-x divide-white/10">
 
                   {/* TIER 1 */}
                   <div className="text-center px-2">
-                    <p className="text-[10px] font-medium text-gray-400 mb-0.5">{wholesaleTier1Qty || wholesaleMinOrder || '2'} Pcs</p>
-                    <p className="font-semibold text-xs text-white">TZS {(wholesaleTier1Price ? Number(wholesaleTier1Price) : basePrice).toLocaleString()}</p>
+                    <p className="text-[10px] font-medium text-gray-300 mb-0.5">{wholesaleTier1Qty || wholesaleMinOrder || '2'} Pcs</p>
+                    <p className="font-bold text-xs text-white">TZS {(wholesaleTier1Price ? Number(wholesaleTier1Price) : basePrice).toLocaleString()}</p>
                   </div>
 
                   {/* TIER 2 */}
                   <div className="text-center px-2">
-                    <p className="text-[10px] font-medium text-gray-400 mb-0.5">{wholesaleTier2Qty ? `${wholesaleTier2Qty} Pcs` : 'Tier 2'}</p>
-                    <p className="font-semibold text-xs text-green-400">
+                    <p className="text-[10px] font-medium text-gray-300 mb-0.5">{wholesaleTier2Qty ? `${wholesaleTier2Qty} Pcs` : 'Tier 2'}</p>
+                    <p className="font-bold text-xs text-white">
                       {wholesaleTier2Price ? `TZS ${Number(wholesaleTier2Price).toLocaleString()}` : '-'}
                     </p>
                   </div>
 
                   {/* TIER 3 */}
                   <div className="text-center px-2">
-                    <p className="text-[10px] font-medium text-gray-400 mb-0.5">{wholesaleTier3Qty ? `${wholesaleTier3Qty} Pcs` : 'Tier 3'}</p>
-                    <p className="font-semibold text-xs text-[#F2A900]">
+                    <p className="text-[10px] font-medium text-gray-300 mb-0.5">{wholesaleTier3Qty ? `${wholesaleTier3Qty} Pcs` : 'Tier 3'}</p>
+                    <p className="font-black text-xs text-[#E8A922]">
                       {wholesaleTier3Price ? `TZS ${Number(wholesaleTier3Price).toLocaleString()}` : '-'}
                     </p>
                   </div>
@@ -548,11 +555,11 @@ export default function ProductDetail() {
             {/* RATINGS NA BRAND NEW/USED */}
             <div className="flex items-center flex-wrap gap-3 mb-6">
               <div className="flex items-center gap-1.5 bg-gray-50 w-max px-3 py-1.5 rounded-lg border border-gray-100">
-                <div className="flex text-[#F2A900]">
-                  <FiStar className="fill-[#F2A900]" size={14} />
-                  <FiStar className="fill-[#F2A900]" size={14} />
-                  <FiStar className="fill-[#F2A900]" size={14} />
-                  <FiStar className="fill-[#F2A900]" size={14} />
+                <div className="flex text-[#E8A922]">
+                  <FiStar className="fill-[#E8A922]" size={14} />
+                  <FiStar className="fill-[#E8A922]" size={14} />
+                  <FiStar className="fill-[#E8A922]" size={14} />
+                  <FiStar className="fill-[#E8A922]" size={14} />
                   <FiStar className="fill-gray-300 text-gray-300" size={14} />
                 </div>
                 <span className="text-[11px] font-bold text-gray-600 ml-1">4.0 (24 Reviews)</span>
@@ -571,9 +578,9 @@ export default function ProductDetail() {
               <div className="flex items-start gap-3">
                 {preInfo && preInfo.isPreOrder ? (
                   <>
-                    <FiPackage className="text-blue-600 mt-0.5 flex-shrink-0" size={20} />
+                    <FiPackage className="text-[#1B6B80] mt-0.5 flex-shrink-0" size={20} />
                     <div>
-                      <p className="font-semibold text-sm text-blue-800 mb-1">Available for Pre-Order</p>
+                      <p className="font-bold text-sm text-[#1B6B80] mb-1">Available for Pre-Order</p>
                       <p className="text-xs text-gray-500 font-medium leading-relaxed">
                         This item is available for pre-order and will be shipped once it arrives in stock.
                       </p>
@@ -583,7 +590,7 @@ export default function ProductDetail() {
                   <>
                     <FiCheckCircle className="text-green-600 mt-0.5 flex-shrink-0" size={20} />
                     <div>
-                      <p className="font-semibold text-sm text-green-700 mb-1">In Stock</p>
+                      <p className="font-bold text-sm text-green-700 mb-1">In Stock</p>
                       <p className="text-xs text-gray-500 font-medium leading-relaxed">
                         Item is available in our warehouse and is ready to be shipped immediately.
                       </p>
@@ -597,12 +604,12 @@ export default function ProductDetail() {
 
               {/* Delivery Information Block */}
               <div className="flex items-start gap-3">
-                <FiTruck className="text-gray-700 mt-0.5 flex-shrink-0" size={20} />
+                <FiTruck className="text-[#E8A922] mt-0.5 flex-shrink-0" size={20} />
                 <div>
-                  <p className="font-semibold text-sm text-gray-800 mb-1">Delivery Information</p>
+                  <p className="font-bold text-sm text-gray-800 mb-1">Delivery Information</p>
                   {preInfo && preInfo.isPreOrder ? (
                     <p className="text-[11px] font-medium text-gray-500 leading-relaxed">
-                      Shipping from <span className="font-semibold text-gray-800">{preInfo.origin}</span>. Est Delivery: <span className="font-semibold text-gray-800">{preInfo.estDays}</span>.
+                      Shipping from <span className="font-bold text-gray-800">{preInfo.origin}</span>. Est Delivery: <span className="font-bold text-gray-800">{preInfo.estDays}</span>.
                     </p>
                   ) : (
                     <p className="text-[11px] font-medium text-gray-500 leading-relaxed">
@@ -614,10 +621,10 @@ export default function ProductDetail() {
             </div>
 
             <div className="hidden lg:flex gap-3 mt-auto pt-4 border-t border-gray-100">
-              <button onClick={() => handleAddToCart(false)} className="flex-1 bg-[#F2A900] hover:bg-yellow-500 text-black font-semibold py-4 rounded-xl text-sm transition flex justify-center items-center gap-2 shadow-[0_4px_14px_rgba(242,169,0,0.3)] hover:scale-[1.02]">
+              <button onClick={() => handleAddToCart(false)} className="flex-1 bg-[#E8A922] hover:bg-[#D4981C] text-white font-black py-4 rounded-xl text-sm transition flex justify-center items-center gap-2 shadow-sm">
                 <FiShoppingCart size={18} /> Add To Cart
               </button>
-              <button onClick={() => handleAddToCart(true)} className="flex-1 bg-[#0A101D] hover:bg-gray-800 text-white font-semibold py-4 rounded-xl text-sm transition flex justify-center items-center gap-2 shadow-md hover:scale-[1.02]">
+              <button onClick={() => handleAddToCart(true)} className="flex-1 bg-[#1B6B80] hover:bg-[#145363] text-white font-black py-4 rounded-xl text-sm transition flex justify-center items-center gap-2 shadow-sm">
                 Buy It Now <FiChevronRight size={18} />
               </button>
             </div>
@@ -627,30 +634,30 @@ export default function ProductDetail() {
         {/* DETAILS SECTION BELOW */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-10 mb-12 px-4 lg:px-0">
           <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm h-max">
-            <h3 className="text-lg font-semibold text-[#0A101D] mb-4 flex items-center gap-2"><span className="w-1.5 h-5 bg-[#F2A900] rounded-full"></span> Product Overview</h3>
-            <p className="text-gray-600 text-sm leading-relaxed whitespace-pre-line font-normal">
+            <h3 className="text-lg font-black text-[#1B6B80] mb-4 flex items-center gap-2"><span className="w-1.5 h-5 bg-[#E8A922] rounded-full"></span> Product Overview</h3>
+            <p className="text-gray-600 text-sm leading-relaxed whitespace-pre-line font-medium">
               {product.description || `Elevate your experience with the ${product.name}. Designed to withstand daily use while providing optimal performance. Shop now and enjoy true quality from Jtex.`}
             </p>
           </div>
 
           <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
-            <h3 className="text-lg font-semibold text-[#0A101D] mb-4 flex items-center gap-2"><span className="w-1.5 h-5 bg-[#F2A900] rounded-full"></span> Specifications</h3>
+            <h3 className="text-lg font-black text-[#1B6B80] mb-4 flex items-center gap-2"><span className="w-1.5 h-5 bg-[#E8A922] rounded-full"></span> Specifications</h3>
 
             <div className="border border-gray-100 rounded-xl overflow-hidden flex flex-col">
               <div className="flex items-center justify-between py-3 px-4 border-b border-gray-100 bg-gray-50/50 text-sm">
-                <span className="font-semibold text-gray-500 uppercase tracking-wider text-[10px] w-1/3">Brand</span>
-                <span className="font-semibold text-gray-900 w-2/3">{product.brand || 'N/A'}</span>
+                <span className="font-bold text-gray-500 uppercase tracking-wider text-[10px] w-1/3">Brand</span>
+                <span className="font-black text-gray-900 w-2/3">{product.brand || 'N/A'}</span>
               </div>
               <div className="flex items-center justify-between py-3 px-4 border-b border-gray-100 text-sm">
-                <span className="font-semibold text-gray-500 uppercase tracking-wider text-[10px] w-1/3">Model</span>
-                <span className="font-medium text-blue-600 w-2/3">{displayModel}</span>
+                <span className="font-bold text-gray-500 uppercase tracking-wider text-[10px] w-1/3">Model</span>
+                <span className="font-bold text-[#1B6B80] w-2/3">{displayModel}</span>
               </div>
 
               {otherSpecsKeys.length > 0 ? (
                 <>
                   {visibleSpecsKeys.map((key, index) => (
                     <div key={key} className={`flex items-center justify-between py-3 px-4 text-sm ${index % 2 !== 0 ? 'bg-white' : 'bg-gray-50/50'} border-b border-gray-100`}>
-                      <span className="font-semibold text-gray-500 uppercase tracking-wider text-[10px] w-1/3">{key}</span>
+                      <span className="font-bold text-gray-500 uppercase tracking-wider text-[10px] w-1/3">{key}</span>
                       <span className="font-medium text-gray-900 w-2/3">{otherSpecs[key]}</span>
                     </div>
                   ))}
@@ -658,7 +665,7 @@ export default function ProductDetail() {
                   {otherSpecsKeys.length > 5 && (
                     <button
                       onClick={() => setShowAllSpecs(!showAllSpecs)}
-                      className="w-full py-4 text-xs font-semibold text-blue-600 bg-blue-50/50 hover:bg-blue-50 transition-colors flex items-center justify-center gap-1 mt-auto border-t border-blue-100"
+                      className="w-full py-4 text-xs font-bold text-[#1B6B80] bg-[#1B6B80]/5 hover:bg-[#1B6B80]/10 transition-colors flex items-center justify-center gap-1 mt-auto border-t border-[#1B6B80]/10"
                     >
                       {showAllSpecs ? 'View Less' : `See All Specifications (${otherSpecsKeys.length - 5} More)`}
                       <FiChevronDown className={`transition-transform ${showAllSpecs ? 'rotate-180' : ''}`} />
@@ -677,7 +684,7 @@ export default function ProductDetail() {
         {/* ========================================================= */}
         <div className="mb-12 px-4 lg:px-0">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl lg:text-2xl font-black text-gray-900">Similar Products</h2>
+            <h2 className="text-xl lg:text-2xl font-black text-[#1B6B80]">Similar Products</h2>
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 lg:gap-4">
@@ -690,32 +697,32 @@ export default function ProductDetail() {
                 <div
                   key={`sim-${item.id}`}
                   onClick={() => router.push(`/product/${generateSlug(item.name)}`)}
-                  className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm flex flex-col h-full group hover:border-[#F2A900] transition cursor-pointer"
+                  className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm flex flex-col h-full group hover:border-[#E8A922] transition cursor-pointer"
                 >
-                  <div className="relative w-full pt-[100%] bg-gray-50/50 rounded-xl mb-4 overflow-hidden border border-gray-50 flex-shrink-0">
-                    <span className="absolute top-2 left-2 bg-[#FF7A00] text-white text-[10px] font-black px-1.5 py-0.5 rounded z-20">-{visualDiscount}%</span>
+                  <div className="relative w-full pt-[100%] bg-white rounded-xl mb-4 overflow-hidden flex-shrink-0">
+                    <span className="absolute top-2 left-2 bg-[#1B6B80] text-white text-[10px] font-black px-1.5 py-0.5 rounded z-20">-{visualDiscount}%</span>
                     <button className="absolute top-2 right-2 text-gray-400 hover:text-red-500 lg:hidden z-20" onClick={(e) => toggleWishlist(e, item.id)}>
                       <FiHeart className={isWishlisted ? "fill-red-500 text-red-500" : ""} />
                     </button>
 
                     {getDisplayImage(item.imageUrl) ? (
-                      <img src={getImageUrl(getDisplayImage(item.imageUrl))} alt={item.name} className="absolute inset-0 w-full h-full object-contain mix-blend-multiply p-4 group-hover:scale-105 transition-transform duration-300" />
+                      <img src={getImageUrl(getDisplayImage(item.imageUrl))} alt={item.name} className="absolute inset-0 w-full h-full object-contain mix-blend-multiply p-1 group-hover:scale-105 transition-transform duration-300" />
                     ) : (
                       <div className="absolute inset-0 flex items-center justify-center text-5xl">📦</div>
                     )}
                   </div>
 
                   <div className="flex flex-col flex-grow">
-                    <h4 className="font-bold text-xs lg:text-sm text-gray-800 mb-2 line-clamp-2 leading-snug">{item.name}</h4>
+                    <h4 className="font-bold text-xs lg:text-sm text-[#1B6B80] mb-2 line-clamp-2 leading-snug">{item.name}</h4>
                     <div className="flex flex-col xl:flex-row xl:items-center gap-1 xl:gap-2 mb-2 mt-auto">
-                      <span className="font-black text-sm lg:text-base text-gray-900">TZS {item.price.toLocaleString()}</span>
+                      <span className="font-black text-sm lg:text-base text-[#E8A922]">TZS {item.price.toLocaleString()}</span>
                       <span className="text-[10px] text-gray-400 line-through">TZS {oldPrice.toLocaleString()}</span>
                     </div>
                     <div className="flex items-center justify-between mt-1 border-t border-gray-100 pt-3">
-                      <div className="flex items-center text-[#F2A900] text-[10px] font-bold">
+                      <div className="flex items-center text-[#E8A922] text-[10px] font-bold">
                         <span className="flex items-center tracking-tighter">★★★★★</span> <span className="text-gray-400 ml-1 font-medium hidden sm:inline-block">({Math.floor(Math.random() * 100) + 10})</span>
                       </div>
-                      <button onClick={(e) => { e.stopPropagation(); addToCart(item); alert(`1 item added to cart!`); }} className="w-8 h-8 bg-gray-50 border border-gray-200 rounded-lg flex items-center justify-center text-gray-600 hover:bg-[#F2A900] hover:text-black hover:border-[#F2A900] transition">
+                      <button onClick={(e) => { e.stopPropagation(); addToCart(item); alert(`1 item added to cart!`); }} className="w-8 h-8 bg-[#1B6B80]/5 border border-[#1B6B80]/10 rounded-lg flex items-center justify-center text-[#1B6B80] hover:bg-[#E8A922] hover:text-white hover:border-[#E8A922] transition">
                         <FiShoppingCart size={14} />
                       </button>
                     </div>
@@ -732,21 +739,21 @@ export default function ProductDetail() {
 
       {/* MOBILE BOTTOM NAV */}
       <div className="lg:hidden fixed bottom-0 left-0 w-full bg-white border-t border-gray-100 px-3 py-3 flex items-center gap-2 z-50 shadow-[0_-10px_30px_rgba(0,0,0,0.08)] pb-safe">
-        <div onClick={() => router.push('/')} className="flex flex-col items-center justify-center text-gray-400 hover:text-[#0A101D] w-12 cursor-pointer">
+        <div onClick={() => router.push('/')} className="flex flex-col items-center justify-center text-gray-400 hover:text-[#1B6B80] w-12 cursor-pointer transition">
           <FiHome size={22} className="mb-0.5" />
-          <span className="text-[9px] font-semibold">Store</span>
+          <span className="text-[9px] font-bold">Store</span>
         </div>
 
-        <div onClick={handleWhatsAppInquiry} className="flex flex-col items-center justify-center text-gray-400 hover:text-[#25D366] w-12 cursor-pointer">
+        <div onClick={handleWhatsAppInquiry} className="flex flex-col items-center justify-center text-gray-400 hover:text-[#25D366] w-12 cursor-pointer transition">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mb-0.5"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
-          <span className="text-[9px] font-semibold">Chat</span>
+          <span className="text-[9px] font-bold">Chat</span>
         </div>
 
         <div className="flex-1 flex gap-2 ml-1">
-          <button onClick={() => handleAddToCart(false)} className="flex-1 bg-[#F2A900] text-[#0A101D] font-semibold py-3.5 rounded-xl text-xs shadow-[0_4px_10px_rgba(242,169,0,0.3)] active:scale-95 transition-transform flex items-center justify-center gap-1.5">
+          <button onClick={() => handleAddToCart(false)} className="flex-1 bg-[#E8A922] text-white font-black py-3.5 rounded-xl text-xs shadow-sm active:scale-95 transition-transform flex items-center justify-center gap-1.5">
             <FiShoppingCart size={14} /> Add to Cart
           </button>
-          <button onClick={() => handleAddToCart(true)} className="flex-1 bg-[#0A101D] text-white font-semibold py-3.5 rounded-xl text-xs shadow-md active:scale-95 transition-transform">
+          <button onClick={() => handleAddToCart(true)} className="flex-1 bg-[#1B6B80] text-white font-black py-3.5 rounded-xl text-xs shadow-sm active:scale-95 transition-transform">
             Buy Now
           </button>
         </div>

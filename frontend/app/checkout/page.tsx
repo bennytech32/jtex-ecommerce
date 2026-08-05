@@ -6,7 +6,7 @@ import { useCart } from '../context/CartContext';
 import {
   FiArrowLeft, FiShoppingCart, FiMapPin, FiCreditCard,
   FiTrash2, FiChevronRight, FiShield, FiCheckCircle,
-  FiTruck, FiPhone, FiUser, FiStar, FiInfo, FiMinus, FiPlus, FiX, FiLock, FiMail
+  FiTruck, FiPhone, FiUser, FiStar, FiInfo, FiMinus, FiPlus, FiX, FiLock, FiMail, FiList
 } from 'react-icons/fi';
 
 // === HELPER FUNCTION: KUBADILI JINA LA RANGI KUWA RANGI HALISI ===
@@ -73,7 +73,7 @@ const ISLAND_REGIONS = [
 export default function CheckoutSystem() {
   const router = useRouter();
 
-  const { cart, removeFromCart, clearCart, addToCart } = useCart();
+  const { cart, removeFromCart, clearCart, addToCart, updateQuantity } = useCart();
   const [mounted, setMounted] = useState(false);
 
   const getApiUrl = () => process.env.NEXT_PUBLIC_API_URL || 'https://jtex-ecommerce-production.up.railway.app';
@@ -156,28 +156,28 @@ export default function CheckoutSystem() {
   const handleQuantityChange = (item: any, newQty: number) => {
     if (newQty < 1) return;
     const targetCartId = item.cartId || item.id;
-    const updatedItem = {
-      ...item,
-      quantity: newQty,
-      quantityToAdd: newQty,
-      qty: newQty,
-      cartId: targetCartId
-    };
-    if (removeFromCart) removeFromCart(targetCartId);
-    setTimeout(() => { if (addToCart) addToCart(updatedItem); }, 200);
+
+    // Check if we have the updateQuantity function from context (preferred method)
+    if (updateQuantity) {
+      updateQuantity(targetCartId, newQty);
+    } else {
+      // Fallback method
+      const updatedItem = {
+        ...item,
+        quantity: newQty,
+        quantityToAdd: newQty,
+        qty: newQty,
+        cartId: targetCartId
+      };
+      if (removeFromCart) removeFromCart(targetCartId);
+      setTimeout(() => { if (addToCart) addToCart(updatedItem); }, 200);
+    }
   };
 
   // States
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1);
   const [selectedPaymentType, setSelectedPaymentType] = useState(ALL_PAYMENT_TYPES[1]);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(PAYMENT_METHODS[0]);
-
-  // POPUP LOGIN STATES
-  const [showLoginModal, setShowLoginModal] = useState(false);
-  const [loginEmail, setLoginEmail] = useState('');
-  const [loginPassword, setLoginPassword] = useState('');
-  const [loginLoading, setLoginLoading] = useState(false);
-  const [loginError, setLoginError] = useState('');
 
   // Form States
   const [formData, setFormData] = useState({
@@ -264,56 +264,6 @@ export default function CheckoutSystem() {
   const advancePayment = selectedPaymentType.id === 'cod' ? Math.min(50000, totalAmount) : totalAmount;
   const remainingBalance = totalAmount - advancePayment;
 
-  const handlePopupLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoginLoading(true);
-    setLoginError('');
-
-    try {
-      const res = await fetch(`${getApiUrl()}/api/users/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: loginEmail, password: loginPassword })
-      });
-      const data = await res.json();
-
-      if (res.ok && data.token) {
-        localStorage.setItem('jtex_token', data.token);
-        localStorage.setItem('jtex_user', JSON.stringify(data.user || data));
-
-        const userObj = data.user || data;
-        let phoneVal = userObj.phone || '';
-        let extractedCode = '+255';
-
-        if (phoneVal.startsWith('+')) {
-          const match = EA_COUNTRIES.find(c => phoneVal.startsWith(c.code));
-          if (match) {
-            extractedCode = match.code;
-            phoneVal = phoneVal.replace(match.code, '').trim();
-          }
-        } else if (phoneVal.startsWith('0')) {
-          phoneVal = phoneVal.substring(1);
-        }
-
-        setFormData(prev => ({
-          ...prev,
-          fullName: userObj.name || '',
-          phoneCode: extractedCode,
-          phone: phoneVal,
-        }));
-
-        setShowLoginModal(false);
-        setCurrentStep(2);
-      } else {
-        setLoginError(data.message || 'Barua pepe au nenosiri si sahihi.');
-      }
-    } catch (err) {
-      setLoginError('Kuna shida ya mtandao. Tafadhali jaribu tena.');
-    } finally {
-      setLoginLoading(false);
-    }
-  };
-
   const handleProceedToShipping = () => {
     const savedUser = localStorage.getItem('jtex_user');
     if (cart.length === 0) {
@@ -321,7 +271,8 @@ export default function CheckoutSystem() {
       return;
     }
     if (!savedUser) {
-      setShowLoginModal(true);
+      // Redirect to main login page with checkout return URL
+      router.push('/login?redirect=/checkout');
       return;
     }
     setCurrentStep(2);
@@ -366,28 +317,28 @@ export default function CheckoutSystem() {
       <div className="absolute top-1/2 left-[15%] right-[15%] h-0.5 bg-gray-200 -z-10 -translate-y-1/2"></div>
 
       <div className="flex flex-col items-center gap-2 bg-white px-2">
-        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${currentStep >= 1 ? 'bg-[#F2A900] text-white shadow-md' : 'bg-gray-200 text-gray-400'}`}>
+        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${currentStep >= 1 ? 'bg-[#E8A922] text-white shadow-md' : 'bg-gray-200 text-gray-400'}`}>
           <FiShoppingCart size={14} />
         </div>
-        <span className={`text-[10px] sm:text-xs font-bold ${currentStep >= 1 ? 'text-gray-900' : 'text-gray-400'}`}>Cart</span>
+        <span className={`text-[10px] sm:text-xs font-bold ${currentStep >= 1 ? 'text-[#1B6B80]' : 'text-gray-400'}`}>Cart</span>
       </div>
 
-      <div className={`flex-1 h-0.5 ${currentStep >= 2 ? 'bg-[#F2A900]' : 'bg-transparent'}`}></div>
+      <div className={`flex-1 h-0.5 ${currentStep >= 2 ? 'bg-[#E8A922]' : 'bg-transparent'}`}></div>
 
       <div className="flex flex-col items-center gap-2 bg-white px-2">
-        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${currentStep >= 2 ? 'bg-[#F2A900] text-white shadow-md' : 'bg-gray-200 text-gray-400'}`}>
+        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${currentStep >= 2 ? 'bg-[#E8A922] text-white shadow-md' : 'bg-gray-200 text-gray-400'}`}>
           <FiTruck size={14} />
         </div>
-        <span className={`text-[10px] sm:text-xs font-bold ${currentStep >= 2 ? 'text-gray-900' : 'text-gray-400'}`}>Shipping</span>
+        <span className={`text-[10px] sm:text-xs font-bold ${currentStep >= 2 ? 'text-[#1B6B80]' : 'text-gray-400'}`}>Shipping</span>
       </div>
 
-      <div className={`flex-1 h-0.5 ${currentStep >= 3 ? 'bg-[#F2A900]' : 'bg-transparent'}`}></div>
+      <div className={`flex-1 h-0.5 ${currentStep >= 3 ? 'bg-[#E8A922]' : 'bg-transparent'}`}></div>
 
       <div className="flex flex-col items-center gap-2 bg-white px-2">
-        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${currentStep >= 3 ? 'bg-[#F2A900] text-white shadow-md' : 'bg-gray-200 text-gray-400'}`}>
+        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${currentStep >= 3 ? 'bg-[#E8A922] text-white shadow-md' : 'bg-gray-200 text-gray-400'}`}>
           <FiCreditCard size={14} />
         </div>
-        <span className={`text-[10px] sm:text-xs font-bold ${currentStep >= 3 ? 'text-gray-900' : 'text-gray-400'}`}>Payment</span>
+        <span className={`text-[10px] sm:text-xs font-bold ${currentStep >= 3 ? 'text-[#1B6B80]' : 'text-gray-400'}`}>Payment</span>
       </div>
     </div>
   );
@@ -397,92 +348,18 @@ export default function CheckoutSystem() {
   return (
     <div className="min-h-screen bg-[#F8FAFC] pb-24 md:pb-12">
 
-      {/* POPUP LOGIN MODAL */}
-      {showLoginModal && (
-        <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl w-full max-w-md overflow-hidden shadow-2xl relative transition-all border border-gray-100">
-
-            <button onClick={() => setShowLoginModal(false)} className="absolute top-4 right-4 p-2 bg-gray-50 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition z-10">
-              <FiX size={20} />
-            </button>
-
-            <div className="p-6 sm:p-8">
-              <div className="text-center mb-8">
-                <div className="w-16 h-16 bg-yellow-50 border-2 border-yellow-100 rounded-full flex items-center justify-center text-[#F2A900] mx-auto mb-4 shadow-sm">
-                  <FiUser size={28} />
-                </div>
-                <h2 className="text-2xl font-black text-[#0A101D] mb-2 tracking-tight">Karibu Tena!</h2>
-                <p className="text-xs text-gray-500 font-medium">Ingia kwenye akaunti yako ili kuendelea na manunuzi.</p>
-              </div>
-
-              {loginError && (
-                <div className="bg-red-50 text-red-600 p-3 rounded-xl text-xs font-bold mb-4 text-center border border-red-100 flex items-center justify-center gap-2">
-                  <FiInfo size={14} /> {loginError}
-                </div>
-              )}
-
-              <form onSubmit={handlePopupLogin} className="space-y-5">
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1.5 ml-1">Barua Pepe (Email) <span className="text-red-500">*</span></label>
-                  <div className="relative">
-                    <FiMail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                    <input
-                      type="email"
-                      required
-                      value={loginEmail}
-                      onChange={e => setLoginEmail(e.target.value)}
-                      className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-[#F2A900] focus:ring-2 focus:ring-[#F2A900]/20 transition-all"
-                      placeholder="Weka barua pepe yako"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <div className="flex items-center justify-between mb-1.5 ml-1 mr-1">
-                    <label className="block text-xs font-bold text-gray-700">Nenosiri (Password) <span className="text-red-500">*</span></label>
-                  </div>
-                  <div className="relative">
-                    <FiLock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                    <input
-                      type="password"
-                      required
-                      value={loginPassword}
-                      onChange={e => setLoginPassword(e.target.value)}
-                      className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-[#F2A900] focus:ring-2 focus:ring-[#F2A900]/20 transition-all"
-                      placeholder="Weka nenosiri lako"
-                    />
-                  </div>
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={loginLoading}
-                  className="w-full bg-[#F2A900] hover:bg-yellow-500 text-[#0A101D] font-black py-3.5 rounded-xl mt-4 flex items-center justify-center gap-2 transition shadow-[0_4px_14px_rgba(242,169,0,0.3)] disabled:bg-gray-300 disabled:shadow-none"
-                >
-                  {loginLoading ? <div className="w-5 h-5 border-2 border-[#0A101D] border-t-transparent rounded-full animate-spin"></div> : 'Ingia & Endelea'}
-                </button>
-              </form>
-
-              <div className="mt-8 text-center text-xs font-bold text-gray-500 border-t border-gray-100 pt-6">
-                Huna akaunti? <button type="button" onClick={() => router.push('/login')} className="text-blue-600 hover:text-[#F2A900] hover:underline transition ml-1">Jisajili Hapa</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
       <header className="bg-white sticky top-0 z-40 px-4 py-4 flex items-center justify-between border-b border-gray-100 shadow-sm">
         <button onClick={() => currentStep > 1 ? setCurrentStep(currentStep - 1 as any) : router.back()} className="p-2 hover:bg-gray-100 rounded-full transition">
-          <FiArrowLeft size={24} className="text-gray-800" />
+          <FiArrowLeft size={24} className="text-[#1B6B80]" />
         </button>
         <div className="text-center">
-          <h1 className="text-lg font-black text-gray-900 tracking-wide uppercase">
+          <h1 className="text-lg font-black text-[#1B6B80] tracking-wide uppercase">
             {currentStep === 1 && 'Shopping Cart'}
             {currentStep === 2 && 'Shipping Details'}
             {currentStep === 3 && 'Secure Payment'}
           </h1>
         </div>
-        <div className="flex items-center gap-1 text-green-600 text-[10px] font-bold bg-green-50 px-2 py-1.5 rounded-lg">
+        <div className="flex items-center gap-1 text-green-600 text-[10px] font-bold bg-green-50 px-2 py-1.5 rounded-lg border border-green-100">
           <FiShield /> <span className="hidden sm:inline">Secure Checkout</span>
         </div>
       </header>
@@ -496,8 +373,8 @@ export default function CheckoutSystem() {
             {/* STEP 1: CART */}
             {currentStep === 1 && (
               <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="font-black text-lg flex items-center gap-2"><FiShoppingCart className="text-[#F2A900]" /> My Cart ({cart?.length || 0} Items)</h2>
+                <div className="flex items-center justify-between mb-4 border-b border-gray-100 pb-4">
+                  <h2 className="font-black text-lg flex items-center gap-2 text-[#1B6B80]"><FiShoppingCart className="text-[#E8A922]" /> My Cart ({cart?.length || 0} Items)</h2>
                   {cart?.length > 0 && <button onClick={clearCart} className="text-red-500 text-xs font-bold hover:underline flex items-center gap-1"><FiTrash2 /> Clear All</button>}
                 </div>
 
@@ -511,12 +388,12 @@ export default function CheckoutSystem() {
                     const activeColor = item.selectedColor || colorOptions[0];
 
                     return (
-                      <div key={uniqueId} className="flex flex-col sm:flex-row gap-4 p-4 border border-gray-100 rounded-xl relative hover:border-[#F2A900] transition group">
+                      <div key={uniqueId} className="flex flex-col sm:flex-row gap-4 p-4 border border-gray-100 rounded-xl relative hover:border-[#E8A922] transition group">
                         <div className="w-20 h-20 bg-gray-50 rounded-lg flex items-center justify-center flex-shrink-0 p-2 border border-gray-200 mx-auto sm:mx-0">
                           {displayImage ? <img src={getImageUrl(displayImage)} alt={item.name} className="object-contain w-full h-full mix-blend-multiply" /> : <span className="text-3xl">{item.imageEmoji || '📦'}</span>}
                         </div>
                         <div className="flex-1 flex flex-col justify-center text-center sm:text-left">
-                          <h3 className="font-bold text-sm text-gray-900 pr-0 sm:pr-8 line-clamp-2">{item.name}</h3>
+                          <h3 className="font-bold text-sm text-[#1B6B80] pr-0 sm:pr-8 line-clamp-2">{item.name}</h3>
 
                           <div className="text-xs text-gray-500 mt-2 flex flex-wrap items-center justify-center sm:justify-start gap-2">
                             {colorOptions.length > 1 ? (
@@ -525,7 +402,7 @@ export default function CheckoutSystem() {
                                 <select
                                   value={activeColor || ''}
                                   onChange={(e) => handleColorChange(item, e.target.value)}
-                                  className="text-[10px] font-bold text-gray-800 bg-gray-50 border border-gray-200 rounded-md px-2 py-0.5 outline-none focus:border-[#F2A900] cursor-pointer"
+                                  className="text-[10px] font-bold text-[#1B6B80] bg-gray-50 border border-gray-200 rounded-md px-2 py-0.5 outline-none focus:border-[#E8A922] cursor-pointer"
                                 >
                                   {colorOptions.map((c: string, i: number) => (
                                     <option key={i} value={c}>{c}</option>
@@ -545,18 +422,18 @@ export default function CheckoutSystem() {
 
                           <div className="flex flex-col sm:flex-row items-center justify-between mt-3 gap-3 sm:gap-0">
                             <div className="flex flex-col">
-                              <span className="font-black text-gray-900 text-sm">TZS {(Number(item.price) * qty).toLocaleString()}</span>
+                              <span className="font-black text-[#1B6B80] text-sm">TZS {(Number(item.price) * qty).toLocaleString()}</span>
                               {qty > 1 && <span className="text-[10px] font-bold text-gray-400 mt-0.5">TZS {Number(item.price).toLocaleString()} each</span>}
                             </div>
 
                             <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden h-8 bg-gray-50">
-                              <button onClick={() => handleQuantityChange(item, qty - 1)} className="px-3 hover:bg-gray-200 text-gray-600 transition h-full flex items-center">
+                              <button onClick={() => handleQuantityChange(item, qty - 1)} className="px-3 hover:bg-gray-200 text-[#1B6B80] transition h-full flex items-center">
                                 <FiMinus size={12} />
                               </button>
-                              <span className="px-3 text-xs font-bold border-x border-gray-200 h-full flex items-center justify-center bg-white text-gray-900 min-w-[35px]">
+                              <span className="px-3 text-xs font-bold border-x border-gray-200 h-full flex items-center justify-center bg-white text-[#1B6B80] min-w-[35px]">
                                 {qty}
                               </span>
-                              <button onClick={() => handleQuantityChange(item, qty + 1)} className="px-3 hover:bg-gray-200 text-gray-600 transition h-full flex items-center">
+                              <button onClick={() => handleQuantityChange(item, qty + 1)} className="px-3 hover:bg-gray-200 text-[#1B6B80] transition h-full flex items-center">
                                 <FiPlus size={12} />
                               </button>
                             </div>
@@ -566,10 +443,10 @@ export default function CheckoutSystem() {
                       </div>
                     )
                   }) : (
-                    <div className="text-center py-10">
+                    <div className="text-center py-10 bg-gray-50 rounded-2xl border border-gray-100">
                       <FiShoppingCart className="mx-auto text-4xl text-gray-300 mb-4" />
                       <p className="text-gray-500 font-medium mb-4">Your cart is empty</p>
-                      <button onClick={() => router.push('/')} className="bg-[#0A101D] text-white px-6 py-2 rounded-xl text-sm font-bold">Continue Shopping</button>
+                      <button onClick={() => router.push('/')} className="bg-[#1B6B80] hover:bg-[#145363] text-white px-6 py-2.5 rounded-xl text-sm font-bold transition">Continue Shopping</button>
                     </div>
                   )}
                 </div>
@@ -580,19 +457,19 @@ export default function CheckoutSystem() {
             {currentStep === 2 && (
               <div className="space-y-6">
                 <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100">
-                  <h2 className="font-black text-base flex items-center gap-2 mb-4"><FiUser className="text-[#F2A900]" /> Shipping Details</h2>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <h2 className="font-black text-base flex items-center gap-2 mb-4 text-[#1B6B80] border-b border-gray-100 pb-3"><FiUser className="text-[#E8A922]" /> Shipping Details</h2>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
                     <div className="sm:col-span-2">
                       <label className="block text-xs font-bold text-gray-600 mb-1.5">Full Name <span className="text-red-500">*</span></label>
                       <div className="relative">
-                        <FiUser className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                        <input type="text" required value={formData.fullName} onChange={(e) => setFormData({ ...formData, fullName: e.target.value })} className="w-full pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-[#F2A900]" />
+                        <FiUser className="absolute left-3 top-1/2 -translate-y-1/2 text-[#1B6B80]" />
+                        <input type="text" required value={formData.fullName} onChange={(e) => setFormData({ ...formData, fullName: e.target.value })} className="w-full pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-[#E8A922]" />
                       </div>
                     </div>
 
                     <div>
                       <label className="block text-xs font-bold text-gray-600 mb-1.5">Country <span className="text-red-500">*</span></label>
-                      <select value={formData.country} onChange={(e) => setFormData({ ...formData, country: e.target.value })} className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-[#F2A900] appearance-none cursor-pointer">
+                      <select value={formData.country} onChange={(e) => setFormData({ ...formData, country: e.target.value })} className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-[#E8A922] appearance-none cursor-pointer">
                         {EA_COUNTRIES.map(c => (
                           <option key={c.name} value={c.name}>{c.flag} {c.name}</option>
                         ))}
@@ -607,7 +484,7 @@ export default function CheckoutSystem() {
                           <span>{formData.phoneCode}</span>
                         </div>
                         <div className="relative flex-1">
-                          <input type="tel" required value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} placeholder="767 123 456" className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-[#F2A900]" />
+                          <input type="tel" required value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} placeholder="767 123 456" className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-[#E8A922]" />
                         </div>
                       </div>
                     </div>
@@ -615,7 +492,7 @@ export default function CheckoutSystem() {
                     {isTanzania ? (
                       <div>
                         <label className="block text-xs font-bold text-gray-600 mb-1.5">Region <span className="text-red-500">*</span></label>
-                        <select value={formData.region} onChange={(e) => setFormData({ ...formData, region: e.target.value })} className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-[#F2A900]">
+                        <select value={formData.region} onChange={(e) => setFormData({ ...formData, region: e.target.value })} className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-[#E8A922]">
                           {TANZANIA_REGIONS.map(region => (
                             <option key={region} value={region}>{region}</option>
                           ))}
@@ -624,23 +501,23 @@ export default function CheckoutSystem() {
                     ) : (
                       <div>
                         <label className="block text-xs font-bold text-gray-600 mb-1.5">City/State <span className="text-red-500">*</span></label>
-                        <input type="text" required value={formData.region} onChange={(e) => setFormData({ ...formData, region: e.target.value })} placeholder="City or State" className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-[#F2A900]" />
+                        <input type="text" required value={formData.region} onChange={(e) => setFormData({ ...formData, region: e.target.value })} placeholder="City or State" className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-[#E8A922]" />
                       </div>
                     )}
 
                     <div className="sm:col-span-2">
                       <label className="block text-xs font-bold text-gray-600 mb-1.5">Full Address / Landmark <span className="text-red-500">*</span></label>
                       <div className="relative">
-                        <FiMapPin className="absolute left-3 top-3 text-gray-400" />
-                        <textarea required rows={2} value={formData.address} onChange={(e) => setFormData({ ...formData, address: e.target.value })} placeholder="E.g., Kinondoni, Mkwajuni" className="w-full pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-[#F2A900]"></textarea>
+                        <FiMapPin className="absolute left-3 top-3 text-[#1B6B80]" />
+                        <textarea required rows={2} value={formData.address} onChange={(e) => setFormData({ ...formData, address: e.target.value })} placeholder="E.g., Kinondoni, Mkwajuni" className="w-full pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-[#E8A922]"></textarea>
                       </div>
                     </div>
                   </div>
                 </div>
 
                 <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100">
-                  <h2 className="font-black text-base flex items-center gap-2 mb-4"><FiTruck className="text-[#F2A900]" /> Shipping Method</h2>
-                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                  <h2 className="font-black text-base flex items-center gap-2 mb-4 text-[#1B6B80] border-b border-gray-100 pb-3"><FiTruck className="text-[#E8A922]" /> Shipping Method</h2>
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 pt-2">
                     {availableShippingMethods.map((method) => {
                       const isComingSoon = method.id === 'bodaboda';
                       const isSelected = selectedShipping?.id === method.id;
@@ -649,16 +526,16 @@ export default function CheckoutSystem() {
                         <div
                           key={method.id}
                           onClick={() => !isComingSoon && setSelectedShipping(method)}
-                          className={`relative p-3 sm:p-4 rounded-xl border-2 transition flex flex-col items-start gap-2 ${isComingSoon ? 'opacity-60 cursor-not-allowed bg-gray-50 border-gray-100' : (isSelected ? 'border-[#F2A900] bg-yellow-50/30 shadow-sm cursor-pointer' : 'border-gray-100 bg-white hover:border-gray-200 cursor-pointer')}`}
+                          className={`relative p-3 sm:p-4 rounded-xl border-2 transition flex flex-col items-start gap-2 ${isComingSoon ? 'opacity-60 cursor-not-allowed bg-gray-50 border-gray-100' : (isSelected ? 'border-[#E8A922] bg-[#E8A922]/10 shadow-sm cursor-pointer' : 'border-gray-100 bg-white hover:border-[#1B6B80]/30 cursor-pointer')}`}
                         >
                           {!isComingSoon && isSelected ? (
-                            <div className="absolute top-3 right-3 text-[#F2A900]"><FiCheckCircle size={18} className="fill-[#F2A900] text-white" /></div>
+                            <div className="absolute top-3 right-3 text-[#E8A922]"><FiCheckCircle size={18} className="fill-[#E8A922] text-white" /></div>
                           ) : (
                             !isComingSoon && <div className="absolute top-3 right-3 w-4.5 h-4.5 rounded-full border border-gray-300"></div>
                           )}
                           <span className="text-2xl">{method.emoji}</span>
                           <div>
-                            <h4 className="font-bold text-sm text-gray-900">{method.name}</h4>
+                            <h4 className="font-bold text-sm text-[#1B6B80]">{method.name}</h4>
                             <p className="text-xs font-black mt-1">
                               {isComingSoon ? <span className="text-red-500">Coming Soon</span> : <span className="text-gray-900">Negotiable</span>}
                             </p>
@@ -672,49 +549,52 @@ export default function CheckoutSystem() {
               </div>
             )}
 
-            {/* STEP 3: PAYMENT UI MPYA */}
+            {/* STEP 3: PAYMENT UI MPYA - FULLY VISIBLE ON MOBILE */}
             {currentStep === 3 && (
               <div className="space-y-6">
+
+                {/* 1. Payment Type Selection */}
                 <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100">
-                  <h2 className="font-black text-base flex items-center gap-2 mb-4">💳 Payment Type</h2>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+                  <h2 className="font-black text-base flex items-center gap-2 mb-4 text-[#1B6B80] border-b border-gray-100 pb-3">💳 Payment Type</h2>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 pt-2">
                     {availablePaymentTypes.map((type) => (
                       <div
                         key={type.id}
                         onClick={() => setSelectedPaymentType(type)}
-                        className={`relative p-4 rounded-xl border cursor-pointer transition flex items-start gap-3 ${selectedPaymentType.id === type.id ? 'border-[#F2A900] bg-yellow-50/50 shadow-sm' : 'border-gray-200 bg-white hover:border-gray-300'}`}
+                        className={`relative p-4 rounded-xl border cursor-pointer transition flex items-start gap-3 ${selectedPaymentType.id === type.id ? 'border-[#E8A922] bg-[#E8A922]/10 shadow-sm' : 'border-gray-200 bg-white hover:border-[#1B6B80]/30'}`}
                       >
                         <div className="mt-0.5">
                           {selectedPaymentType.id === type.id ? (
-                            <FiCheckCircle size={18} className="text-[#F2A900] fill-[#F2A900] text-white" />
+                            <FiCheckCircle size={18} className="text-[#E8A922] fill-[#E8A922] text-white" />
                           ) : (
                             <div className="w-4.5 h-4.5 rounded-full border-2 border-gray-300"></div>
                           )}
                         </div>
                         <div>
-                          <h4 className="font-bold text-sm text-gray-900 leading-none">{type.name}</h4>
+                          <h4 className="font-bold text-sm text-[#1B6B80] leading-none">{type.name}</h4>
                           <p className="text-[10px] text-gray-500 mt-1.5">{type.desc}</p>
                         </div>
                       </div>
                     ))}
                   </div>
-                  <div className="mt-4 flex items-center gap-2 bg-yellow-50/80 p-3 rounded-lg border border-yellow-100/50">
-                    <FiStar className="text-[#F2A900]" size={14} />
-                    <p className="text-xs font-bold text-gray-800">Good choice! <span className="font-medium text-gray-600 ml-1">You will pay {selectedPaymentType.id === 'cod' ? 'the advance amount now and the rest upon delivery' : 'the full amount now and your order will be processed'}.</span></p>
+                  <div className="mt-4 flex items-center gap-2 bg-[#1B6B80]/5 p-3 rounded-lg border border-[#1B6B80]/10">
+                    <FiStar className="text-[#E8A922] flex-shrink-0" size={16} />
+                    <p className="text-xs font-bold text-[#1B6B80]">Good choice! <span className="font-medium text-gray-600 ml-1">You will pay {selectedPaymentType.id === 'cod' ? 'the advance amount now and the rest upon delivery' : 'the full amount now and your order will be processed'}.</span></p>
                   </div>
                 </div>
 
+                {/* 2. Payment Gateway Selection (Always visible now) */}
                 <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100">
-                  <h2 className="font-black text-base flex items-center gap-2 mb-4"><FiCreditCard className="text-[#F2A900]" /> Payment Method</h2>
-                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
+                  <h2 className="font-black text-base flex items-center gap-2 mb-4 text-[#1B6B80] border-b border-gray-100 pb-3"><FiCreditCard className="text-[#E8A922]" /> Payment Method</h2>
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 pt-2">
                     {PAYMENT_METHODS.map((method) => (
                       <div
                         key={method.id}
                         onClick={() => setSelectedPaymentMethod(method)}
-                        className={`relative p-3 rounded-xl border cursor-pointer transition flex flex-col items-center text-center gap-2 ${selectedPaymentMethod.id === method.id ? 'border-[#F2A900] bg-yellow-50/50 shadow-sm' : 'border-gray-200 bg-white hover:border-gray-300'}`}
+                        className={`relative p-3 rounded-xl border cursor-pointer transition flex flex-col items-center text-center gap-2 ${selectedPaymentMethod.id === method.id ? 'border-[#E8A922] bg-[#E8A922]/10 shadow-sm' : 'border-gray-200 bg-white hover:border-[#1B6B80]/30'}`}
                       >
                         {selectedPaymentMethod.id === method.id && (
-                          <FiCheckCircle size={16} className="absolute top-2 right-2 text-[#F2A900] fill-[#F2A900] text-white" />
+                          <FiCheckCircle size={16} className="absolute top-2 right-2 text-[#E8A922] fill-[#E8A922] text-white" />
                         )}
                         {method.icon === 'VISA' ? (
                           <span className="font-black text-blue-800 italic text-2xl tracking-tighter mt-1 mb-1">VISA</span>
@@ -724,7 +604,7 @@ export default function CheckoutSystem() {
                           <span className="text-2xl mt-1">{method.icon}</span>
                         )}
                         <div>
-                          <h4 className="font-bold text-xs text-gray-900">{method.name}</h4>
+                          <h4 className="font-bold text-xs text-[#1B6B80]">{method.name}</h4>
                           <p className="text-[9px] font-medium text-gray-500 mt-0.5">{method.desc}</p>
                         </div>
                       </div>
@@ -734,7 +614,7 @@ export default function CheckoutSystem() {
                   {/* MOBILE MONEY DETAILS */}
                   {selectedPaymentMethod.id === 'mobile_money' && (
                     <div className="animate-fade-in border-t border-gray-100 pt-5">
-                      <h3 className="text-xs font-bold text-gray-800 mb-3 uppercase tracking-wider flex items-center gap-2"><FiInfo className="text-blue-500" /> Akaunti za Mitandao (Lipa Namba)</h3>
+                      <h3 className="text-xs font-bold text-[#1B6B80] mb-3 uppercase tracking-wider flex items-center gap-2"><FiInfo className="text-[#E8A922]" /> Akaunti za Mitandao (Lipa Namba)</h3>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
                         <div className="border border-red-200 bg-red-50/30 p-4 rounded-xl flex items-center gap-4 hover:shadow-sm transition">
                           <div className="w-12 h-12 bg-red-600 rounded-full flex items-center justify-center font-black text-white text-lg">M</div>
@@ -745,16 +625,16 @@ export default function CheckoutSystem() {
                           </div>
                         </div>
                         <div className="border border-blue-200 bg-blue-50/30 p-4 rounded-xl flex items-center gap-4 hover:shadow-sm transition">
-                          <div className="w-12 h-12 bg-[#0A101D] rounded-full flex items-center justify-center font-black text-yellow-400 text-sm italic">Mixx</div>
+                          <div className="w-12 h-12 bg-[#1B6B80] rounded-full flex items-center justify-center font-black text-[#E8A922] text-sm italic">Mixx</div>
                           <div>
                             <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wide">Mixx By Yas</p>
-                            <p className="text-xl font-black text-blue-700 tracking-wider">7101850</p>
+                            <p className="text-xl font-black text-[#1B6B80] tracking-wider">7101850</p>
                             <p className="text-[11px] font-bold text-gray-800 mt-0.5">Name | Jtex</p>
                           </div>
                         </div>
                       </div>
                       <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 text-xs text-gray-600 font-medium">
-                        <p className="font-bold text-gray-900 mb-2">Jinsi ya Kulipia kwa M-Pesa:</p>
+                        <p className="font-bold text-[#1B6B80] mb-2">Jinsi ya Kulipia kwa M-Pesa:</p>
                         <ol className="list-decimal ml-4 space-y-1.5 text-[11px]">
                           <li>Piga <strong>*150*00#</strong></li>
                           <li>Chagua 4. <strong>Lipa kwa M-Pesa</strong></li>
@@ -770,7 +650,7 @@ export default function CheckoutSystem() {
                   {/* BANK TRANSFER DETAILS */}
                   {selectedPaymentMethod.id === 'bank' && (
                     <div className="animate-fade-in border-t border-gray-100 pt-5">
-                      <h3 className="text-xs font-bold text-gray-800 mb-3 uppercase tracking-wider flex items-center gap-2"><FiInfo className="text-green-500" /> Akaunti za Benki</h3>
+                      <h3 className="text-xs font-bold text-[#1B6B80] mb-3 uppercase tracking-wider flex items-center gap-2"><FiInfo className="text-[#E8A922]" /> Akaunti za Benki</h3>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
                         <div className="border border-blue-200 bg-blue-50/30 p-4 rounded-xl flex items-center gap-4 hover:shadow-sm transition">
                           <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center font-black text-white text-[10px]">NMB</div>
@@ -795,6 +675,7 @@ export default function CheckoutSystem() {
                     </div>
                   )}
 
+                  {/* CARDS REDIRECT INFO */}
                   {(selectedPaymentMethod.id === 'visa' || selectedPaymentMethod.id === 'mastercard') && (
                     <div className="animate-fade-in border-t border-gray-100 pt-5 text-center py-4">
                       <p className="text-sm font-bold text-gray-500">You will be redirected to the secure {selectedPaymentMethod.name} gateway to complete this payment.</p>
@@ -802,7 +683,7 @@ export default function CheckoutSystem() {
                   )}
 
                   <div className="hidden lg:flex gap-3 mt-8 border-t border-gray-100 pt-6">
-                    <button type="button" onClick={() => setCurrentStep(2)} className="px-6 py-4 bg-gray-100 text-gray-600 font-bold rounded-xl text-sm hover:bg-gray-200 transition">Back</button>
+                    <button type="button" onClick={() => setCurrentStep(2)} className="px-6 py-4 bg-gray-100 text-[#1B6B80] font-bold rounded-xl text-sm hover:bg-gray-200 transition">Back</button>
                     <button type="button" onClick={handleWhatsAppOrder} className="flex-1 bg-[#25D366] hover:bg-[#1EBE5D] text-white font-black py-4 rounded-xl transition shadow-lg flex items-center justify-center gap-2">
                       <FiPhone className="text-xl" /> Confirm via WhatsApp
                     </button>
@@ -810,7 +691,7 @@ export default function CheckoutSystem() {
                 </div>
 
                 <div className="lg:hidden bg-white rounded-2xl p-4 shadow-sm border border-gray-100 mb-6">
-                  <h2 className="font-black text-base flex items-center gap-2 mb-4">📝 Pricing Summary</h2>
+                  <h2 className="font-black text-base flex items-center gap-2 mb-4 text-[#1B6B80]"><FiList className="text-[#E8A922]" /> Pricing Summary</h2>
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between text-gray-600 font-medium"><span>Subtotal</span><span>TZS {subtotal.toLocaleString()}</span></div>
                     <div className="flex justify-between text-gray-600 font-medium">
@@ -819,19 +700,23 @@ export default function CheckoutSystem() {
                     </div>
                   </div>
                   <div className="border-t border-gray-100 mt-3 pt-3 flex justify-between items-center">
-                    <span className="font-bold text-gray-900">Total Products</span>
-                    <span className="font-black text-xl text-gray-900">TZS {subtotal.toLocaleString()}</span>
+                    <span className="font-bold text-[#1B6B80]">Total Amount</span>
+                    <span className="font-black text-xl text-[#1B6B80]">TZS {subtotal.toLocaleString()}</span>
                   </div>
+
                   {selectedPaymentType.id === 'cod' && (
-                    <div className="mt-4 bg-yellow-50/80 border border-[#F2A900]/30 rounded-xl flex">
-                      <div className="p-3 w-[45%] flex flex-col justify-center border-r border-[#F2A900]/30">
-                        <div className="flex items-center gap-1.5 text-[10px] text-gray-600 font-bold mb-1"><span className="w-5 h-5 bg-[#F2A900] text-black rounded flex items-center justify-center"><FiCreditCard size={12} /></span> Advance (20%)</div>
-                        <div className="font-black text-green-700 text-sm">TZS {advancePayment.toLocaleString()}</div>
+                    <div className="mt-4 bg-[#E8A922]/10 border border-[#E8A922]/30 rounded-xl flex overflow-hidden">
+                      <div className="p-3 w-[45%] flex flex-col justify-center border-r border-[#E8A922]/30 bg-[#E8A922]/5">
+                        <div className="flex items-center gap-1.5 text-[10px] text-[#1B6B80] font-bold mb-1">
+                          <span className="w-5 h-5 bg-[#E8A922] text-white rounded flex items-center justify-center"><FiCreditCard size={12} /></span>
+                          Advance
+                        </div>
+                        <div className="font-black text-[#1B6B80] text-sm">TZS {advancePayment.toLocaleString()}</div>
                       </div>
-                      <div className="p-3 flex-1 flex flex-col justify-center bg-white rounded-r-xl border-y border-r border-transparent">
-                        <div className="text-[10px] text-gray-600 font-bold mb-1">Remaining Balance</div>
-                        <div className="font-black text-gray-900 text-sm">TZS {remainingBalance.toLocaleString()}</div>
-                        <div className="text-[8px] text-gray-400 mt-0.5">Balance will be paid upon delivery.</div>
+                      <div className="p-3 flex-1 flex flex-col justify-center bg-white">
+                        <div className="text-[10px] text-gray-500 font-bold mb-1">Remaining Balance</div>
+                        <div className="font-black text-red-600 text-sm">TZS {remainingBalance.toLocaleString()}</div>
+                        <div className="text-[8px] text-gray-400 mt-0.5 leading-tight">Balance will be paid upon delivery.</div>
                       </div>
                     </div>
                   )}
@@ -840,12 +725,12 @@ export default function CheckoutSystem() {
             )}
           </div>
 
-          {/* ======================= RIGHT COLUMN (Order Summary) ======================= */}
+          {/* ======================= RIGHT COLUMN (Order Summary - DESKTOP ONLY) ======================= */}
           <div className="hidden lg:block w-[380px] flex-shrink-0">
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 sticky top-24">
               <div className="flex items-center justify-between border-b border-gray-100 pb-4 mb-4">
-                <h2 className="font-black text-lg">Order Summary <span className="text-sm font-medium text-gray-500">({cart.length} Items)</span></h2>
-                {currentStep < 3 && <button onClick={() => setCurrentStep(1)} className="text-xs font-bold text-gray-500 hover:text-black">Edit Cart ✏️</button>}
+                <h2 className="font-black text-lg text-[#1B6B80]">Order Summary <span className="text-sm font-medium text-gray-500">({cart.length} Items)</span></h2>
+                {currentStep < 3 && <button onClick={() => setCurrentStep(1)} className="text-xs font-bold text-[#E8A922] hover:text-[#D4981C] transition">Edit Cart ✏️</button>}
               </div>
 
               <div className="space-y-5 mb-6 max-h-[400px] overflow-y-auto custom-scrollbar pr-2">
@@ -862,14 +747,14 @@ export default function CheckoutSystem() {
                         {displayImage ? <img src={getImageUrl(displayImage)} alt={item.name} className="object-contain w-full h-full mix-blend-multiply" /> : <span className="text-xl">{item.imageEmoji || '📦'}</span>}
                       </div>
                       <div className="flex-1">
-                        <h4 className="text-xs font-bold text-gray-900 line-clamp-1 mb-1">{item.name}</h4>
+                        <h4 className="text-xs font-bold text-[#1B6B80] line-clamp-1 mb-1">{item.name}</h4>
 
                         <div className="flex items-center gap-2 mb-2">
                           {colorOptions.length > 1 ? (
                             <select
                               value={activeColor || ''}
                               onChange={(e) => handleColorChange(item, e.target.value)}
-                              className="text-[10px] font-bold text-gray-800 bg-gray-50 border border-gray-200 rounded px-1 py-0.5 outline-none focus:border-[#F2A900] cursor-pointer"
+                              className="text-[10px] font-bold text-gray-800 bg-gray-50 border border-gray-200 rounded px-1 py-0.5 outline-none focus:border-[#E8A922] cursor-pointer"
                             >
                               {colorOptions.map((c: string, i: number) => (
                                 <option key={i} value={c}>{c}</option>
@@ -885,19 +770,19 @@ export default function CheckoutSystem() {
                           )}
 
                           <div className="flex items-center border border-gray-200 rounded overflow-hidden bg-gray-50 h-5">
-                            <button onClick={() => handleQuantityChange(item, qty - 1)} className="px-1.5 hover:bg-gray-200 text-gray-600 transition h-full flex items-center">
+                            <button onClick={() => handleQuantityChange(item, qty - 1)} className="px-1.5 hover:bg-gray-200 text-[#1B6B80] transition h-full flex items-center">
                               <FiMinus size={8} />
                             </button>
-                            <span className="px-1.5 text-[10px] font-bold border-x border-gray-200 h-full flex items-center justify-center bg-white text-gray-900 min-w-[20px]">
+                            <span className="px-1.5 text-[10px] font-bold border-x border-gray-200 h-full flex items-center justify-center bg-white text-[#1B6B80] min-w-[20px]">
                               {qty}
                             </span>
-                            <button onClick={() => handleQuantityChange(item, qty + 1)} className="px-1.5 hover:bg-gray-200 text-gray-600 transition h-full flex items-center">
+                            <button onClick={() => handleQuantityChange(item, qty + 1)} className="px-1.5 hover:bg-gray-200 text-[#1B6B80] transition h-full flex items-center">
                               <FiPlus size={8} />
                             </button>
                           </div>
                         </div>
                       </div>
-                      <div className="text-xs font-black text-right flex flex-col justify-start">
+                      <div className="text-xs font-black text-right flex flex-col justify-start text-gray-900">
                         <span>TZS {(Number(item.price) * qty).toLocaleString()}</span>
                       </div>
                     </div>
@@ -915,8 +800,8 @@ export default function CheckoutSystem() {
 
               <div className="border-t border-gray-200 pt-4 mb-6">
                 <div className="flex justify-between items-end">
-                  <span className="font-bold text-gray-900">Total Products</span>
-                  <span className="font-black text-xl text-gray-900">TZS {subtotal.toLocaleString()}</span>
+                  <span className="font-bold text-[#1B6B80]">Total Amount</span>
+                  <span className="font-black text-xl text-[#1B6B80]">TZS {subtotal.toLocaleString()}</span>
                 </div>
               </div>
 
@@ -933,14 +818,14 @@ export default function CheckoutSystem() {
                     }
                   }}
                   disabled={cart.length === 0}
-                  className="w-full bg-[#F2A900] disabled:bg-gray-300 disabled:text-gray-500 hover:bg-yellow-500 text-black font-black py-4 rounded-xl flex items-center justify-center gap-2 transition shadow-md"
+                  className="w-full bg-[#E8A922] disabled:bg-gray-300 disabled:text-gray-500 hover:bg-[#D4981C] text-white font-black py-4 rounded-xl flex items-center justify-center gap-2 transition shadow-md"
                 >
                   {currentStep === 1 ? 'Proceed to Checkout' : 'Continue to Payment'}
                 </button>
               )}
 
               <div className="mt-4 flex flex-col gap-3 border-t border-gray-100 pt-4">
-                <div className="flex items-center justify-center gap-1.5 text-[10px] text-gray-500 font-medium"><FiShield className="text-green-500" /> Your information is safe with us</div>
+                <div className="flex items-center justify-center gap-1.5 text-[10px] text-gray-500 font-medium"><FiShield className="text-[#1B6B80]" /> Your information is safe with us</div>
                 <div className="flex justify-between mt-2">
                   <div className="flex flex-col items-center gap-1 w-1/3"><FiShield className="text-gray-400 text-lg" /><span className="text-[8px] font-bold text-center">Secure Manual Payment</span></div>
                   <div className="flex flex-col items-center gap-1 w-1/3 border-x border-gray-100"><FiCheckCircle className="text-gray-400 text-lg" /><span className="text-[8px] font-bold text-center">Quality Guarantee</span></div>
@@ -957,7 +842,7 @@ export default function CheckoutSystem() {
           <div className="flex items-center justify-between gap-4">
             <div className="flex flex-col">
               <span className="text-[10px] font-bold text-gray-500">Products Total</span>
-              <span className="text-sm font-black text-gray-900">TZS {subtotal.toLocaleString()}</span>
+              <span className="text-sm font-black text-[#1B6B80]">TZS {subtotal.toLocaleString()}</span>
             </div>
             <button
               onClick={() => {
@@ -971,19 +856,19 @@ export default function CheckoutSystem() {
                 }
               }}
               disabled={cart.length === 0}
-              className="flex-1 bg-[#F2A900] disabled:bg-gray-300 text-black font-black py-3.5 rounded-xl flex items-center justify-center gap-1 shadow-sm"
+              className="flex-1 bg-[#E8A922] disabled:bg-gray-300 text-white font-black py-3.5 rounded-xl flex items-center justify-center gap-1 shadow-sm transition hover:bg-[#D4981C]"
             >
               {currentStep === 1 ? 'Proceed to Checkout' : 'Continue to Payment'} <FiChevronRight />
             </button>
           </div>
         ) : (
           <div className="flex flex-col gap-2">
-            <div className="flex items-center justify-center gap-1 text-[10px] text-green-600 font-bold mb-1">
+            <div className="flex items-center justify-center gap-1 text-[10px] text-[#1B6B80] font-bold mb-1">
               <FiShield /> Submit your order safely via WhatsApp
             </div>
             <button
               onClick={handleWhatsAppOrder}
-              className="w-full bg-[#25D366] text-white font-black py-4 rounded-xl flex items-center justify-center gap-2 shadow-sm"
+              className="w-full bg-[#25D366] text-white font-black py-4 rounded-xl flex items-center justify-center gap-2 shadow-sm transition hover:bg-[#1EBE5D]"
             >
               <FiPhone className="text-xl" /> Confirm via WhatsApp <FiChevronRight />
             </button>
