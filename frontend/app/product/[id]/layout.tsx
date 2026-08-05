@@ -3,17 +3,19 @@ import { Metadata } from 'next';
 const SITE_URL = 'https://jtex.co.tz';
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://jtex-ecommerce-production.up.railway.app';
 
-export async function generateMetadata(props: any): Promise<Metadata> {
-    // FIX KUBWA: Tuna-await params ili kuzuia error ya "undefined" kwenye Next.js
-    const params = await Promise.resolve(props.params);
-    const id = params?.id || '';
+export async function generateMetadata(
+    { params }: { params: { id: string } | Promise<{ id: string }> }
+): Promise<Metadata> {
+
+    // FIX: Kusoma params kwa usalama kwenye matoleo yote ya Next.js
+    const resolvedParams = await Promise.resolve(params);
+    const id = resolvedParams?.id || '';
 
     const fallbackImage = `${SITE_URL}/logo.png`;
     const fallbackTitle = 'Jtex E-Commerce | Best Quality, Best Prices';
     const fallbackDesc = 'Shop the latest gadgets, electronics, fashion and more at Jtex Africa.';
 
     try {
-        // Tunavuta bidhaa moja kwa moja, bila cache ili Next.js isilale
         const res = await fetch(`${API_URL}/api/products`, { cache: 'no-store' });
 
         if (res.ok) {
@@ -34,10 +36,9 @@ export async function generateMetadata(props: any): Promise<Metadata> {
                     imgPath = product.imageUrl;
                 }
 
-                // HAPA NDIPO TUNALAZIMISHA PICHA IWE NA HTTPS KAMILI
-                const finalImageUrl = imgPath.startsWith('http')
-                    ? imgPath
-                    : `${API_URL.replace(/\/$/, '')}${imgPath.startsWith('/') ? '' : '/'}${imgPath}`;
+                const cleanApiUrl = API_URL.replace(/\/$/, '');
+                const cleanImg = imgPath.startsWith('/') ? imgPath : `/${imgPath}`;
+                const finalImageUrl = imgPath.startsWith('http') ? imgPath : `${cleanApiUrl}${cleanImg}`;
 
                 const title = `${product.name} | Jtex`;
                 const desc = product.description ? product.description.slice(0, 150) + '...' : fallbackDesc;
@@ -46,10 +47,13 @@ export async function generateMetadata(props: any): Promise<Metadata> {
                     title: title,
                     description: desc,
                     metadataBase: new URL(SITE_URL),
+                    alternates: {
+                        canonical: `/product/${id}`, // Hii inaondoa lile tatizo la "undefined"
+                    },
                     openGraph: {
                         title: title,
                         description: desc,
-                        url: `${SITE_URL}/product/${id}`,
+                        url: `/product/${id}`,
                         images: [
                             {
                                 url: finalImageUrl,
@@ -74,15 +78,17 @@ export async function generateMetadata(props: any): Promise<Metadata> {
         console.error("Metadata error:", error);
     }
 
-    // KAMA API IMELALA AU KUNA ERROR, LAZIMISHA KUTUMIA DOMAIN YAKO BILA LOCALHOST
     return {
         title: fallbackTitle,
         description: fallbackDesc,
         metadataBase: new URL(SITE_URL),
+        alternates: {
+            canonical: `/product/${id}`,
+        },
         openGraph: {
             title: fallbackTitle,
             description: fallbackDesc,
-            url: `${SITE_URL}/product/${id}`,
+            url: `/product/${id}`,
             images: [
                 {
                     url: fallbackImage,
