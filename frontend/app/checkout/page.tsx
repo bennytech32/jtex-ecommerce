@@ -73,7 +73,8 @@ const ISLAND_REGIONS = [
 export default function CheckoutSystem() {
   const router = useRouter();
 
-  const { cart, removeFromCart, clearCart, addToCart, updateQuantity } = useCart();
+  // FIX: Tumeondoa updateQuantity hapa ili kuzuia Type Error ya TypeScript
+  const { cart, removeFromCart, clearCart, addToCart } = useCart();
   const [mounted, setMounted] = useState(false);
 
   const getApiUrl = () => process.env.NEXT_PUBLIC_API_URL || 'https://jtex-ecommerce-production.up.railway.app';
@@ -153,25 +154,21 @@ export default function CheckoutSystem() {
     setTimeout(() => { if (addToCart) addToCart(updatedItem); }, 200);
   };
 
+  // FIX: Njia safi ya ku-update idadi bila kutegemea function ambayo haipo
   const handleQuantityChange = (item: any, newQty: number) => {
     if (newQty < 1) return;
     const targetCartId = item.cartId || item.id;
 
-    // Check if we have the updateQuantity function from context (preferred method)
-    if (updateQuantity) {
-      updateQuantity(targetCartId, newQty);
-    } else {
-      // Fallback method
-      const updatedItem = {
-        ...item,
-        quantity: newQty,
-        quantityToAdd: newQty,
-        qty: newQty,
-        cartId: targetCartId
-      };
-      if (removeFromCart) removeFromCart(targetCartId);
-      setTimeout(() => { if (addToCart) addToCart(updatedItem); }, 200);
-    }
+    const updatedItem = {
+      ...item,
+      quantity: newQty,
+      quantityToAdd: newQty,
+      qty: newQty,
+      cartId: targetCartId
+    };
+
+    if (removeFromCart) removeFromCart(targetCartId);
+    setTimeout(() => { if (addToCart) addToCart(updatedItem); }, 200);
   };
 
   // States
