@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCart } from './context/CartContext';
 import {
@@ -31,6 +31,9 @@ export default function HomePage() {
   const [userLocation, setUserLocation] = useState('Fetching...');
   const [userCountry, setUserCountry] = useState('...');
   const [countryCode, setCountryCode] = useState('tz');
+
+  // Ref for Categories Scroll
+  const categoriesScrollRef = useRef<HTMLDivElement>(null);
 
   // === WISHLIST STATE ===
   const [wishlist, setWishlist] = useState<string[]>([]);
@@ -169,29 +172,35 @@ export default function HomePage() {
     };
   }, []);
 
+  const scrollCategories = () => {
+    if (categoriesScrollRef.current) {
+      categoriesScrollRef.current.scrollBy({ left: 300, behavior: 'smooth' });
+    }
+  };
+
   const slides = [
     {
-      title: <>Best Quality,<br />Best Prices,<br /><span className="text-[#F2A900]">Only on Jtex</span></>,
+      title: <>Best Quality,<br />Best Prices,<br /><span className="text-[#E8A922]">Only on Jtex</span></>,
       subtitle: "Shop the latest gadgets, electronics, fashion and more at unbeatable prices.",
-      bg: "from-[#071626] to-[#0A1B30]",
+      bg: "from-[#1B6B80] to-[#10404d]",
       icon: "💻"
     },
     {
-      title: <>Mega Deals<br />On Top Brands,<br /><span className="text-[#F2A900]">Save Up to 50%</span></>,
+      title: <>Mega Deals<br />On Top Brands,<br /><span className="text-[#1B6B80]">Save Up to 50%</span></>,
       subtitle: "Upgrade your lifestyle with our premium selection of smartphones and accessories.",
-      bg: "from-[#1A0B1C] to-[#2D0F21]",
+      bg: "from-[#E8A922] to-[#c28a19]",
       icon: "📱"
     },
     {
-      title: <>Fast & Secure<br />Delivery to,<br /><span className="text-[#F2A900]">{userLocation.split(',')[0]}</span></>,
+      title: <>Fast & Secure<br />Delivery to,<br /><span className="text-[#E8A922]">{userLocation.split(',')[0]}</span></>,
       subtitle: `Order today and get your items delivered right to your doorstep anywhere in ${userCountry}.`,
-      bg: "from-[#051C1A] to-[#0A2D28]",
+      bg: "from-[#0d343f] to-[#1B6B80]",
       icon: "🚚"
     },
     {
-      title: <>Discover The<br />New Fashion,<br /><span className="text-[#F2A900]">Trending Now</span></>,
+      title: <>Discover The<br />New Fashion,<br /><span className="text-[#E8A922]">Trending Now</span></>,
       subtitle: "Step out in style with our latest clothing and footwear collections for you.",
-      bg: "from-[#2A1605] to-[#3D1E08]",
+      bg: "from-[#145363] to-[#0a2931]",
       icon: "🎒"
     }
   ];
@@ -202,13 +211,13 @@ export default function HomePage() {
 
   const getCategoryIcon = (catName: string) => {
     const lower = catName.toLowerCase();
-    if (lower.includes('electronic') || lower.includes('elektroniki')) return <FiHeadphones size={20} />;
-    if (lower.includes('computer') || lower.includes('laptop')) return <FiMonitor size={20} />;
-    if (lower.includes('phone') || lower.includes('mobile') || lower.includes('simu')) return <FiSmartphone size={20} />;
-    if (lower.includes('fashion') || lower.includes('cloth') || lower.includes('nguo')) return <FiShoppingBag size={20} />;
-    if (lower.includes('home') || lower.includes('kitchen')) return <FiCoffee size={20} />;
-    if (lower.includes('beaut') || lower.includes('urembo')) return <FiSmile size={20} />;
-    return <FiGrid size={20} />;
+    if (lower.includes('electronic') || lower.includes('elektroniki')) return <FiHeadphones size={18} />;
+    if (lower.includes('computer') || lower.includes('laptop')) return <FiMonitor size={18} />;
+    if (lower.includes('phone') || lower.includes('mobile') || lower.includes('simu')) return <FiSmartphone size={18} />;
+    if (lower.includes('fashion') || lower.includes('cloth') || lower.includes('nguo')) return <FiShoppingBag size={18} />;
+    if (lower.includes('home') || lower.includes('kitchen')) return <FiCoffee size={18} />;
+    if (lower.includes('beaut') || lower.includes('urembo')) return <FiSmile size={18} />;
+    return <FiGrid size={18} />;
   };
 
   const handleCategoryClick = () => {
@@ -220,60 +229,60 @@ export default function HomePage() {
       return (
         <nav className="bg-white rounded-2xl border border-gray-100 py-3 shadow-sm mb-6 flex flex-col">
           <button className="flex items-center gap-3 px-6 py-2.5 bg-gray-50 text-gray-900 font-bold transition" onClick={() => router.push('/')}><FiHome size={18} /> Home</button>
-          <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#F2A900] transition font-medium" onClick={() => router.push('/categories')}><FiGrid size={18} /> Categories</button>
+          <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#E8A922] transition font-medium" onClick={() => router.push('/categories')}><FiGrid size={18} /> Categories</button>
 
           <div className="border-t border-gray-100 my-2"></div>
 
-          <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#F2A900] transition font-medium" onClick={() => router.push('/deals')}>
+          <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#E8A922] transition font-medium" onClick={() => router.push('/deals')}>
             <FiZap size={18} /> Flash Sales <span className="ml-auto bg-red-100 text-red-600 text-[10px] font-black px-1.5 py-0.5 rounded">Hot</span>
           </button>
-          <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#F2A900] transition font-medium" onClick={() => router.push('/new-arrivals')}>
+          <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#E8A922] transition font-medium" onClick={() => router.push('/new-arrivals')}>
             <FiPackage size={18} /> New Arrivals <span className="ml-auto bg-green-100 text-green-600 text-[10px] font-black px-1.5 py-0.5 rounded">New</span>
           </button>
-          <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#F2A900] transition font-medium" onClick={() => router.push('/trending')}>
+          <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#E8A922] transition font-medium" onClick={() => router.push('/trending')}>
             <FiStar size={18} /> Trending Now
           </button>
 
           <div className="border-t border-gray-100 my-2"></div>
 
-          <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#F2A900] transition font-medium" onClick={() => router.push('/messages')}>
+          <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#E8A922] transition font-medium" onClick={() => router.push('/messages')}>
             <FiMessageCircle size={18} /> Messages
           </button>
-          <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#F2A900] transition font-medium" onClick={() => router.push('/notifications')}>
+          <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#E8A922] transition font-medium" onClick={() => router.push('/notifications')}>
             <FiBell size={18} /> Notifications
           </button>
-          <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#F2A900] transition font-medium" onClick={() => router.push('/checkout')}>
-            <FiShoppingCart size={18} /> Cart {cartCount > 0 && <span className="ml-auto bg-[#F2A900] text-white text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full">{cartCount}</span>}
+          <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#E8A922] transition font-medium" onClick={() => router.push('/checkout')}>
+            <FiShoppingCart size={18} /> Cart {cartCount > 0 && <span className="ml-auto bg-[#E8A922] text-white text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full">{cartCount}</span>}
           </button>
-          <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#F2A900] transition font-medium" onClick={() => router.push('/profile')}><FiUser size={18} /> Account</button>
-          <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#F2A900] transition font-medium" onClick={() => router.push('/settings')}><FiSettings size={18} /> Settings</button>
-          <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#F2A900] transition font-medium" onClick={() => router.push('/help')}><FiHeadphones size={18} /> Help & Support</button>
+          <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#E8A922] transition font-medium" onClick={() => router.push('/profile')}><FiUser size={18} /> Account</button>
+          <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#E8A922] transition font-medium" onClick={() => router.push('/settings')}><FiSettings size={18} /> Settings</button>
+          <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#E8A922] transition font-medium" onClick={() => router.push('/help')}><FiHeadphones size={18} /> Help & Support</button>
         </nav>
       );
     } else {
       return (
         <nav className="bg-white rounded-2xl border border-gray-100 py-3 shadow-sm mb-6 flex flex-col">
           <button className="flex items-center gap-3 px-6 py-2.5 bg-gray-50 text-gray-900 font-bold transition" onClick={() => router.push('/')}><FiHome size={18} /> Home</button>
-          <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#F2A900] transition font-medium" onClick={() => router.push('/categories')}><FiGrid size={18} /> Categories</button>
+          <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#E8A922] transition font-medium" onClick={() => router.push('/categories')}><FiGrid size={18} /> Categories</button>
 
           <div className="border-t border-gray-100 my-2"></div>
 
-          <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#F2A900] transition font-medium" onClick={() => router.push('/deals')}>
+          <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#E8A922] transition font-medium" onClick={() => router.push('/deals')}>
             <FiZap size={18} /> Flash Sales <span className="ml-auto bg-red-100 text-red-600 text-[10px] font-black px-1.5 py-0.5 rounded">Hot</span>
           </button>
-          <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#F2A900] transition font-medium" onClick={() => router.push('/new-arrivals')}>
+          <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#E8A922] transition font-medium" onClick={() => router.push('/new-arrivals')}>
             <FiPackage size={18} /> New Arrivals <span className="ml-auto bg-green-100 text-green-600 text-[10px] font-black px-1.5 py-0.5 rounded">New</span>
           </button>
-          <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#F2A900] transition font-medium" onClick={() => router.push('/trending')}>
+          <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#E8A922] transition font-medium" onClick={() => router.push('/trending')}>
             <FiStar size={18} /> Trending Now
           </button>
 
           <div className="border-t border-gray-100 my-2"></div>
 
-          <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#F2A900] transition font-medium" onClick={() => router.push('/help')}><FiHeadphones size={18} /> Support</button>
+          <button className="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-[#E8A922] transition font-medium" onClick={() => router.push('/help')}><FiHeadphones size={18} /> Support</button>
 
           <div className="px-6 mt-4 pt-4 border-t border-gray-100">
-            <button onClick={() => router.push('/login')} className="w-full bg-[#0A101D] text-white font-bold py-3 rounded-xl hover:bg-gray-800 transition shadow-sm text-xs">Sign In / Register</button>
+            <button onClick={() => router.push('/login')} className="w-full bg-[#1B6B80] text-white font-bold py-3 rounded-xl hover:bg-[#145363] transition shadow-sm text-xs">Sign In / Register</button>
           </div>
         </nav>
       );
@@ -290,11 +299,11 @@ export default function HomePage() {
 
       {/* FLOATING CART (Desktop Only) */}
       <div className="hidden lg:flex fixed bottom-10 right-10 z-50">
-        <button onClick={() => router.push('/checkout')} className="bg-[#F2A900] text-black w-14 h-14 rounded-full shadow-[0_10px_25px_rgba(242,169,0,0.5)] flex items-center justify-center hover:scale-110 transition-transform relative group">
+        <button onClick={() => router.push('/checkout')} className="bg-[#E8A922] text-white w-14 h-14 rounded-full shadow-[0_10px_25px_rgba(232,169,34,0.5)] flex items-center justify-center hover:scale-110 transition-transform relative group">
           <FiShoppingCart size={24} />
-          {cartCount > 0 && <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[11px] font-black w-5 h-5 flex items-center justify-center rounded-full border-2 border-white">{cartCount}</span>}
+          {cartCount > 0 && <span className="absolute -top-1 -right-1 bg-[#1B6B80] text-white text-[11px] font-black w-5 h-5 flex items-center justify-center rounded-full border-2 border-white">{cartCount}</span>}
 
-          <div className="absolute right-full mr-4 bg-[#0A101D] text-white text-xs font-bold px-3 py-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+          <div className="absolute right-full mr-4 bg-[#1B6B80] text-white text-xs font-bold px-3 py-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
             View Cart ({cartCount} items)
           </div>
         </button>
@@ -303,19 +312,17 @@ export default function HomePage() {
       {/* ========================================================= */}
       {/* 1. DESKTOP HEADER */}
       {/* ========================================================= */}
-      <header className="hidden lg:block bg-[#0A101D] text-white border-b border-gray-800 sticky top-0 z-40">
-        <div className="max-w-[1600px] mx-auto px-6 h-24 flex items-center justify-between gap-6">
+      <header className="hidden lg:block bg-[#1B6B80] text-white border-b border-[#145363] sticky top-0 z-40">
+        <div className="max-w-[1440px] xl:max-w-[1536px] mx-auto px-6 h-24 flex items-center justify-between gap-6">
           <div className="flex items-center gap-8 flex-shrink-0">
-            <img
-              src="/logo.png"
-              alt="Jtex Logo"
-              className="h-16 lg:h-20 cursor-pointer object-contain"
-              onClick={() => router.push('/')}
-            />
-            <div className="flex items-center gap-2 cursor-pointer hover:bg-gray-800/50 p-2 rounded-lg transition">
-              <FiMapPin className="text-gray-400" size={20} />
+            {/* LOGO VISIBILITY FIX */}
+            <div className="bg-white px-3 py-1.5 rounded-xl shadow-sm cursor-pointer" onClick={() => router.push('/')}>
+              <img src="/logo.png" alt="Jtex Logo" className="h-10 lg:h-12 object-contain" />
+            </div>
+            <div className="flex items-center gap-2 cursor-pointer hover:bg-[#145363] p-2 rounded-lg transition">
+              <FiMapPin className="text-gray-300" size={20} />
               <div className="flex flex-col leading-tight">
-                <span className="text-[10px] text-gray-400">Deliver to</span>
+                <span className="text-[10px] text-gray-300">Deliver to</span>
                 <span className="text-xs font-bold flex items-center gap-1">{userLocation} <FiChevronDown /></span>
               </div>
             </div>
@@ -334,13 +341,13 @@ export default function HomePage() {
                 onFocus={() => setShowDesktopSuggestions(true)}
                 onBlur={() => setTimeout(() => setShowDesktopSuggestions(false), 200)}
                 placeholder="Search products, brands..."
-                className="flex-1 h-full px-4 text-base text-gray-900 outline-none"
+                className="flex-1 h-full px-4 text-sm outline-none w-full text-gray-900"
               />
               <div className="flex items-center gap-3 px-3 text-gray-400">
                 <FiCamera className="cursor-pointer hover:text-gray-600" />
                 <FiMic className="cursor-pointer hover:text-gray-600" />
               </div>
-              <button type="submit" className="h-full px-8 bg-[#F2A900] text-black hover:bg-yellow-500 transition">
+              <button type="submit" className="h-full px-8 bg-[#E8A922] text-white hover:bg-[#D4981C] transition">
                 <FiSearch size={20} />
               </button>
             </form>
@@ -353,9 +360,8 @@ export default function HomePage() {
                     {filteredSuggestions.map((prod) => (
                       <li
                         key={prod.id}
-                        // HAPA INATUMIA URL SAFI KWA SLUG
                         onClick={() => router.push(`/product/${generateSlug(prod.name)}`)}
-                        className="px-4 py-3 hover:bg-gray-50 cursor-pointer flex items-center gap-4 border-b border-gray-50 last:border-0 transition"
+                        className="px-4 py-3 hover:bg-[#E8A922]/10 cursor-pointer flex items-center gap-4 border-b border-gray-50 last:border-0 transition"
                       >
                         <div className="w-12 h-12 bg-gray-50 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0 border border-gray-100 p-1">
                           {getDisplayImage(prod.imageUrl) ? (
@@ -364,7 +370,7 @@ export default function HomePage() {
                         </div>
                         <div className="flex flex-col flex-1 min-w-0">
                           <span className="text-sm font-bold text-gray-800 truncate">{prod.name}</span>
-                          <span className="text-xs font-black text-[#F2A900]">TZS {prod.price.toLocaleString()}</span>
+                          <span className="text-xs font-black text-[#E8A922]">TZS {prod.price.toLocaleString()}</span>
                         </div>
                       </li>
                     ))}
@@ -379,20 +385,20 @@ export default function HomePage() {
           </div>
 
           <div className="flex items-center gap-4 flex-shrink-0">
-            <button className="flex items-center gap-2 hover:bg-gray-800/50 p-2 rounded-lg transition">
+            <button className="flex items-center gap-2 hover:bg-[#145363] p-2 rounded-lg transition">
               <img src={`https://flagcdn.com/w20/${countryCode}.png`} alt={userCountry} className="w-5 rounded-sm" />
               <span className="text-xs font-bold uppercase">{countryCode} <FiChevronDown className="inline" /></span>
             </button>
-            <button onClick={() => router.push('/checkout')} className="relative flex flex-col items-center hover:bg-gray-800/50 p-2 rounded-lg transition">
-              <FiShoppingCart size={24} className="text-gray-300" />
-              <span className="text-[10px] font-bold mt-1">Cart</span>
-              {cartCount > 0 && <span className="absolute top-0 right-1 bg-[#F2A900] text-black text-[10px] font-black w-4 h-4 flex items-center justify-center rounded-full">{cartCount}</span>}
+            <button onClick={() => router.push('/checkout')} className="relative flex flex-col items-center hover:bg-[#145363] p-2 rounded-lg transition">
+              <FiShoppingCart size={24} className="text-gray-200" />
+              <span className="text-[10px] font-bold mt-1 text-gray-200">Cart</span>
+              {cartCount > 0 && <span className="absolute top-0 right-1 bg-[#E8A922] text-white text-[10px] font-black w-4 h-4 flex items-center justify-center rounded-full">{cartCount}</span>}
             </button>
-            <button onClick={() => router.push(isLoggedIn ? '/profile' : '/login')} className="flex flex-col items-center hover:bg-gray-800/50 p-2 rounded-lg transition">
-              <FiPackage size={24} className="text-gray-300" />
-              <span className="text-[10px] font-bold mt-1">Track Order</span>
+            <button onClick={() => router.push(isLoggedIn ? '/profile' : '/login')} className="flex flex-col items-center hover:bg-[#145363] p-2 rounded-lg transition">
+              <FiPackage size={24} className="text-gray-200" />
+              <span className="text-[10px] font-bold mt-1 text-gray-200">Track Order</span>
             </button>
-            <button onClick={() => router.push(isLoggedIn ? '/profile' : '/login')} className="flex items-center gap-2 border border-gray-700 bg-gray-800/50 hover:bg-gray-700 px-4 py-2.5 rounded-full transition">
+            <button onClick={() => router.push(isLoggedIn ? '/profile' : '/login')} className="flex items-center gap-2 border border-white/20 bg-[#145363]/50 hover:bg-[#10404d] px-4 py-2.5 rounded-full transition">
               <FiUser size={20} />
               <span className="text-xs font-bold">{isLoggedIn ? 'My Account' : 'Sign In'}</span>
             </button>
@@ -403,28 +409,31 @@ export default function HomePage() {
       {/* ========================================================= */}
       {/* 2. MOBILE HEADER */}
       {/* ========================================================= */}
-      <header className="lg:hidden bg-[#0A101D] text-white pt-4 pb-3 sticky top-0 z-50">
+      <header className="lg:hidden bg-[#1B6B80] text-white pt-4 pb-3 sticky top-0 z-50 border-b border-[#145363]">
         <div className="px-4 flex items-center justify-between mb-3">
           <div className="flex items-center gap-1.5 cursor-pointer">
-            <div className="w-6 h-6 rounded-full border border-gray-700 flex items-center justify-center bg-gray-800/50">
-              <FiMapPin className="text-[#F2A900]" size={12} />
+            <div className="w-6 h-6 rounded-full border border-white/20 flex items-center justify-center bg-[#145363]/50">
+              <FiMapPin className="text-[#E8A922]" size={12} />
             </div>
             <div className="flex flex-col">
-              <span className="text-[9px] text-gray-400 leading-tight">Deliver to</span>
+              <span className="text-[9px] text-gray-300 leading-tight">Deliver to</span>
               <span className="text-xs font-bold flex items-center gap-1 leading-tight">{userLocation.split(',')[0]} <FiChevronDown size={14} /></span>
             </div>
           </div>
 
-          <button className="flex items-center gap-1 bg-gray-800/60 px-2 py-1 rounded-md border border-gray-700 hover:bg-gray-700 transition">
-            <FiGlobe size={14} className="text-gray-300" />
-            <span className="text-[10px] font-bold text-gray-300">EN</span>
-          </button>
+          <div className="flex items-center gap-3">
+            {/* LOGO VISIBILITY FIX MOBILE */}
+            <div className="bg-white px-2 py-1 rounded-lg shadow-sm cursor-pointer" onClick={() => router.push('/')}>
+              <img src="/logo.png" alt="Jtex Logo" className="h-5 object-contain" />
+            </div>
+          </div>
         </div>
 
-        <div className="px-4 relative">
-          <form onSubmit={handleSearch} className="flex items-center h-12 bg-white rounded-xl overflow-hidden shadow-sm border border-gray-200">
-            <div className="pl-4 pr-3 flex items-center border-r border-gray-200 h-full bg-gray-50">
-              <span className="text-xs text-gray-600 font-bold">Search Jtex</span>
+        <div className="px-4 relative w-full">
+          {/* MOBILE SEARCH BAR FIX (Full width, responsive) */}
+          <form onSubmit={handleSearch} className="flex items-center h-11 bg-white rounded-xl overflow-hidden shadow-sm border border-gray-200 w-full">
+            <div className="hidden xs:flex pl-4 pr-3 items-center border-r border-gray-200 h-full bg-gray-50">
+              <span className="text-xs text-gray-600 font-bold">Search</span>
             </div>
             <input
               type="text"
@@ -432,15 +441,15 @@ export default function HomePage() {
               onChange={(e) => { setSearchQuery(e.target.value); setShowMobileSuggestions(true); }}
               onFocus={() => setShowMobileSuggestions(true)}
               onBlur={() => setTimeout(() => setShowMobileSuggestions(false), 200)}
-              placeholder="What are you looking for?"
-              className="flex-1 h-full px-3 text-base text-gray-900 outline-none bg-transparent placeholder-gray-400"
+              placeholder="Search products..."
+              className="flex-1 h-full px-3 text-sm xs:text-base text-gray-900 outline-none bg-transparent placeholder-gray-400 w-full min-w-0"
             />
-            <div className="flex items-center gap-2 px-2 text-gray-400 bg-white">
-              <FiMic size={18} className="cursor-pointer hover:text-gray-600" />
-              <FiCamera size={18} className="cursor-pointer hover:text-gray-600" />
+            <div className="flex items-center gap-1.5 px-2 text-gray-400 bg-white">
+              <FiMic size={16} className="cursor-pointer hover:text-gray-600 hidden xs:block" />
+              <FiCamera size={16} className="cursor-pointer hover:text-gray-600" />
             </div>
-            <button type="submit" className="h-full px-4 bg-[#F2A900] text-black flex items-center justify-center hover:bg-yellow-500 transition border-l border-[#F2A900]">
-              <FiSearch size={20} />
+            <button type="submit" className="h-full px-4 bg-[#E8A922] text-white flex items-center justify-center hover:bg-[#D4981C] transition border-l border-[#E8A922] flex-shrink-0">
+              <FiSearch size={18} />
             </button>
           </form>
 
@@ -452,9 +461,8 @@ export default function HomePage() {
                   {filteredSuggestions.map((prod) => (
                     <li
                       key={prod.id}
-                      // HAPA PIA INATUMIA URL SAFI KWA SLUG
                       onClick={() => router.push(`/product/${generateSlug(prod.name)}`)}
-                      className="px-4 py-3 hover:bg-gray-50 cursor-pointer flex items-center gap-3 border-b border-gray-50 last:border-0 transition"
+                      className="px-4 py-3 hover:bg-[#E8A922]/10 cursor-pointer flex items-center gap-3 border-b border-gray-50 last:border-0 transition"
                     >
                       <div className="w-10 h-10 bg-gray-50 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0 border border-gray-100 p-1">
                         {getDisplayImage(prod.imageUrl) ? (
@@ -463,7 +471,7 @@ export default function HomePage() {
                       </div>
                       <div className="flex flex-col flex-1 min-w-0">
                         <span className="text-xs font-bold text-gray-800 truncate">{prod.name}</span>
-                        <span className="text-[10px] font-black text-[#F2A900]">TZS {prod.price.toLocaleString()}</span>
+                        <span className="text-[10px] font-black text-[#E8A922]">TZS {prod.price.toLocaleString()}</span>
                       </div>
                     </li>
                   ))}
@@ -479,74 +487,82 @@ export default function HomePage() {
       </header>
 
       {/* ========================================================= */}
-      {/* 3. MAIN LAYOUT */}
+      {/* 3. MAIN LAYOUT (SIDEBAR + TOP CONTENT) */}
       {/* ========================================================= */}
-      <div className="max-w-[1600px] mx-auto lg:px-6 lg:py-6 flex gap-6 overflow-hidden">
+      <div className="max-w-[1440px] xl:max-w-[1536px] mx-auto lg:px-6 lg:py-6 flex gap-6 overflow-hidden">
 
         {/* DESKTOP SIDEBAR */}
         <aside className="hidden lg:flex flex-col w-[260px] flex-shrink-0">
           {renderSidebarMenu()}
-          <div className="bg-[#0A101D] text-white rounded-2xl p-6 relative overflow-hidden shadow-lg border border-gray-800">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-[#F2A900]/20 rounded-full blur-3xl"></div>
-            <p className="text-xs text-gray-400 font-bold mb-1">Special Offers</p>
-            <h3 className="text-3xl font-black text-[#F2A900] mb-2 leading-tight">Up to 40% Off</h3>
-            <p className="text-sm text-gray-300 font-medium mb-6">On selected items</p>
-            <button onClick={() => router.push('/categories')} className="bg-[#F2A900] text-black text-xs font-black px-6 py-2.5 rounded-lg flex items-center gap-2 hover:bg-yellow-500 transition shadow-md w-max">Shop Now <FiArrowRight /></button>
+          <div className="bg-[#1B6B80] text-white rounded-2xl p-6 relative overflow-hidden shadow-lg border border-[#145363]">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-[#E8A922]/20 rounded-full blur-3xl"></div>
+            <p className="text-xs text-gray-300 font-bold mb-1">Special Offers</p>
+            <h3 className="text-3xl font-black text-[#E8A922] mb-2 leading-tight">Up to 40% Off</h3>
+            <p className="text-sm text-gray-200 font-medium mb-6">On selected items</p>
+            <button onClick={() => router.push('/categories')} className="bg-[#E8A922] text-white text-xs font-black px-6 py-2.5 rounded-lg flex items-center gap-2 hover:bg-[#D4981C] transition shadow-md w-max">Shop Now <FiArrowRight /></button>
           </div>
         </aside>
 
         {/* MAIN CONTENT AREA */}
-        <main className="flex-1 min-w-0 pb-6 relative">
+        <main className="flex-1 min-w-0 relative">
 
-          <div className="hidden lg:flex items-center bg-white rounded-2xl border border-gray-100 px-4 py-4 shadow-sm mb-6 overflow-hidden">
-            <div className="flex items-center gap-3 w-full overflow-x-auto hide-scrollbar">
+          {/* DESKTOP CATEGORIES RIBBON (SIMPLIFIED SCROLL) */}
+          <div className="hidden lg:flex items-center bg-white rounded-2xl border border-gray-100 px-4 py-4 shadow-sm mb-6 overflow-hidden relative">
+            <div ref={categoriesScrollRef} className="flex items-center gap-3 w-full overflow-x-auto hide-scrollbar scroll-smooth pr-10">
               {dbCategories.map((cat, idx) => (
-                <button key={idx} onClick={handleCategoryClick} className="flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-yellow-50 text-gray-700 hover:text-[#F2A900] border border-gray-100 hover:border-[#F2A900]/30 rounded-xl transition cursor-pointer whitespace-nowrap">
-                  <span className="text-[#F2A900]">{getCategoryIcon(cat.name)}</span>
+                <button key={idx} onClick={handleCategoryClick} className="flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-[#E8A922]/10 text-gray-700 hover:text-[#E8A922] border border-gray-100 hover:border-[#E8A922]/30 rounded-xl transition cursor-pointer whitespace-nowrap">
+                  <span className="text-[#E8A922]">{getCategoryIcon(cat.name)}</span>
                   <span className="text-xs font-bold">{cat.name}</span>
                 </button>
               ))}
             </div>
+            {/* Scroll Indicator Button */}
+            <div className="absolute right-2 bg-gradient-to-l from-white pl-4 flex items-center h-full">
+              <button onClick={scrollCategories} className="w-8 h-8 bg-gray-100 hover:bg-[#E8A922] hover:text-white rounded-full flex items-center justify-center transition shadow-sm border border-gray-200">
+                <FiChevronRight size={18} />
+              </button>
+            </div>
           </div>
 
+          {/* MOBILE CATEGORIES RIBBON */}
           <div className="lg:hidden flex overflow-x-auto hide-scrollbar gap-4 px-4 py-5 bg-white mb-4 shadow-sm">
             {dbCategories.map((cat, idx) => (
               <div key={idx} onClick={handleCategoryClick} className="flex flex-col items-center gap-2 flex-shrink-0 cursor-pointer group">
-                <div className={`w-14 h-14 rounded-full flex items-center justify-center transition-all ${idx === 0 ? 'bg-yellow-50 text-[#F2A900] border border-yellow-200' : 'bg-gray-50 text-gray-600 border border-gray-100 group-hover:bg-gray-100'}`}>
+                <div className={`w-14 h-14 rounded-full flex items-center justify-center transition-all ${idx === 0 ? 'bg-[#E8A922]/10 text-[#E8A922] border border-[#E8A922]/30' : 'bg-gray-50 text-gray-600 border border-gray-100 group-hover:bg-gray-100'}`}>
                   {getCategoryIcon(cat.name)}
                 </div>
-                <span className={`text-[10px] font-bold ${idx === 0 ? 'text-[#F2A900]' : 'text-gray-700'} truncate w-16 text-center`}>{cat.name}</span>
+                <span className={`text-[10px] font-bold ${idx === 0 ? 'text-[#E8A922]' : 'text-gray-700'} truncate w-16 text-center`}>{cat.name}</span>
               </div>
             ))}
           </div>
 
           {/* Slider Hero Banner */}
           <div className="px-4 lg:px-0 mb-6 lg:mb-8">
-            <div className="relative w-full max-w-[1600px] h-[300px] md:h-[400px] mx-auto rounded-3xl overflow-hidden shadow-lg">
+            <div className="relative w-full max-w-full h-[250px] sm:h-[300px] md:h-[400px] mx-auto rounded-3xl overflow-hidden shadow-lg">
               {slides.map((slide, index) => (
                 <div
                   key={index}
                   className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${currentSlide === index ? 'opacity-100 z-10' : 'opacity-0 z-0'} bg-gradient-to-br ${slide.bg} p-6 lg:p-12 flex items-center`}
                 >
                   <div className="absolute right-0 top-0 w-full h-full opacity-20 pointer-events-none">
-                    <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="w-full h-full stroke-[#F2A900]" strokeWidth="0.5" fill="none">
+                    <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="w-full h-full stroke-[#E8A922]" strokeWidth="0.5" fill="none">
                       <circle cx="90" cy="50" r="40" />
                       <circle cx="90" cy="50" r="60" />
                       <circle cx="90" cy="50" r="80" />
                     </svg>
                   </div>
                   <div className="absolute -right-10 -bottom-10 lg:right-10 lg:bottom-0 w-40 lg:w-96 opacity-30 lg:opacity-100 pointer-events-none mix-blend-screen flex items-center justify-center h-full">
-                    <span className="text-[120px] lg:text-[250px]">{slide.icon}</span>
+                    <span className="text-[100px] sm:text-[150px] lg:text-[250px]">{slide.icon}</span>
                   </div>
 
-                  <div className="relative z-10 max-w-sm lg:max-w-xl">
-                    <h1 className="text-3xl lg:text-5xl font-black text-white mb-3 lg:mb-6 leading-tight">
+                  <div className="relative z-10 max-w-[75%] lg:max-w-xl">
+                    <h1 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-black text-white mb-3 lg:mb-6 leading-tight">
                       {slide.title}
                     </h1>
-                    <p className="text-gray-300 text-xs lg:text-base font-medium mb-6 lg:mb-10 leading-relaxed max-w-[280px] lg:max-w-md">
+                    <p className="text-gray-100 text-[10px] sm:text-xs lg:text-base font-medium mb-6 lg:mb-10 leading-relaxed max-w-[280px] lg:max-w-md">
                       {slide.subtitle}
                     </p>
-                    <button onClick={() => router.push('/categories')} className="bg-[#F2A900] text-black font-black px-6 lg:px-8 py-2.5 lg:py-3.5 rounded-xl flex items-center gap-2 hover:bg-yellow-500 transition shadow-[0_0_20px_rgba(242,169,0,0.3)] text-sm lg:text-base">
+                    <button onClick={() => router.push('/categories')} className="bg-[#E8A922] text-white font-black px-6 lg:px-8 py-2.5 lg:py-3.5 rounded-xl flex items-center gap-2 hover:bg-[#D4981C] transition shadow-[0_0_20px_rgba(232,169,34,0.3)] text-sm lg:text-base">
                       <span className="hidden lg:inline">Shop Now</span>
                       <span className="lg:hidden">Buy Now</span>
                       <FiArrowRight />
@@ -560,7 +576,7 @@ export default function HomePage() {
                   <button
                     key={idx}
                     onClick={() => setCurrentSlide(idx)}
-                    className={`h-2 rounded-full transition-all duration-300 ${currentSlide === idx ? 'w-6 bg-[#F2A900]' : 'w-2 bg-white/50 hover:bg-white'}`}
+                    className={`h-2 rounded-full transition-all duration-300 ${currentSlide === idx ? 'w-6 bg-[#E8A922]' : 'w-2 bg-white/50 hover:bg-white'}`}
                   ></button>
                 ))}
               </div>
@@ -574,7 +590,7 @@ export default function HomePage() {
                 <div><h4 className="font-black text-xs lg:text-sm text-gray-900">FREE Delivery</h4><p className="text-[10px] lg:text-xs text-gray-500">on orders over TZS 50,000</p></div>
               </div>
               <div className="hidden lg:flex items-center gap-3 lg:gap-4 flex-shrink-0 flex-1 min-w-[200px] border-l border-gray-200 pl-6">
-                <div className="w-10 h-10 lg:w-12 lg:h-12 bg-yellow-50 text-[#F2A900] rounded-full flex items-center justify-center border border-yellow-100"><FiShield size={20} /></div>
+                <div className="w-10 h-10 lg:w-12 lg:h-12 bg-[#E8A922]/10 text-[#E8A922] rounded-full flex items-center justify-center border border-[#E8A922]/20"><FiShield size={20} /></div>
                 <div><h4 className="font-black text-xs lg:text-sm text-gray-900">Money-back Guarantee</h4><p className="text-[10px] lg:text-xs text-gray-500">for up to 60 days</p></div>
               </div>
               <div className="flex items-center gap-3 lg:gap-4 flex-shrink-0 flex-1 min-w-[200px] lg:border-l border-gray-200 lg:pl-6">
@@ -592,11 +608,11 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Flash Sales Section */}
-          <div className="px-4 lg:px-0 mb-12">
+          {/* Flash Sales Section - Restricted by Sidebar */}
+          <div className="px-4 lg:px-0 mb-12 w-full">
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
               <div className="flex items-center gap-2">
-                <FiZap size={24} className="text-[#F2A900] fill-[#F2A900]" />
+                <FiZap size={24} className="text-[#E8A922] fill-[#E8A922]" />
                 <h2 className="text-xl lg:text-2xl font-black text-gray-900">Flash Sales</h2>
                 <span className="hidden lg:inline-block ml-4 text-xs font-bold text-gray-500">Limited time offers - Don't miss out!</span>
               </div>
@@ -605,22 +621,22 @@ export default function HomePage() {
                 <div className="flex items-center gap-2">
                   <span className="text-[10px] font-bold text-gray-500 uppercase">Ends in:</span>
                   <div className="flex items-center gap-1.5">
-                    <div className="flex flex-col items-center"><div className="bg-[#0A101D] text-white text-sm font-black w-8 h-8 flex items-center justify-center rounded-md">{String(timeLeft.hrs).padStart(2, '0')}</div><span className="text-[8px] font-bold text-gray-500 mt-0.5 uppercase">Hrs</span></div>
+                    <div className="flex flex-col items-center"><div className="bg-[#1B6B80] text-white text-sm font-black w-8 h-8 flex items-center justify-center rounded-md">{String(timeLeft.hrs).padStart(2, '0')}</div><span className="text-[8px] font-bold text-gray-500 mt-0.5 uppercase">Hrs</span></div>
                     <span className="text-xl font-bold text-gray-800 pb-3">:</span>
-                    <div className="flex flex-col items-center"><div className="bg-[#0A101D] text-white text-sm font-black w-8 h-8 flex items-center justify-center rounded-md">{String(timeLeft.mins).padStart(2, '0')}</div><span className="text-[8px] font-bold text-gray-500 mt-0.5 uppercase">Mins</span></div>
+                    <div className="flex flex-col items-center"><div className="bg-[#1B6B80] text-white text-sm font-black w-8 h-8 flex items-center justify-center rounded-md">{String(timeLeft.mins).padStart(2, '0')}</div><span className="text-[8px] font-bold text-gray-500 mt-0.5 uppercase">Mins</span></div>
                     <span className="text-xl font-bold text-gray-800 pb-3">:</span>
-                    <div className="flex flex-col items-center"><div className="bg-[#0A101D] text-white text-sm font-black w-8 h-8 flex items-center justify-center rounded-md">{String(timeLeft.secs).padStart(2, '0')}</div><span className="text-[8px] font-bold text-gray-500 mt-0.5 uppercase">Secs</span></div>
+                    <div className="flex flex-col items-center"><div className="bg-[#1B6B80] text-white text-sm font-black w-8 h-8 flex items-center justify-center rounded-md">{String(timeLeft.secs).padStart(2, '0')}</div><span className="text-[8px] font-bold text-gray-500 mt-0.5 uppercase">Secs</span></div>
                   </div>
                 </div>
-                <button onClick={() => router.push('/deals')} className="text-xs font-bold text-blue-600 flex items-center gap-1 hover:underline">View All <FiChevronRight /></button>
+                <button onClick={() => router.push('/deals')} className="text-xs font-bold text-[#1B6B80] flex items-center gap-1 hover:underline">View All <FiChevronRight /></button>
               </div>
             </div>
 
             {isLoading ? (
-              <div className="flex justify-center py-10"><div className="w-8 h-8 border-4 border-[#F2A900] border-t-transparent rounded-full animate-spin"></div></div>
+              <div className="flex justify-center py-10"><div className="w-8 h-8 border-4 border-[#E8A922] border-t-transparent rounded-full animate-spin"></div></div>
             ) : (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 lg:gap-4">
-                {products.slice(0, 5).map((product: any) => {
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 lg:gap-4">
+                {products.slice(0, 4).map((product: any) => {
                   const visualDiscount = getDeterministicDiscount(product.id);
                   const oldPrice = Math.round(product.price / (1 - (visualDiscount / 100)));
 
@@ -628,10 +644,10 @@ export default function HomePage() {
                     <div
                       key={product.id}
                       onClick={() => router.push(`/product/${generateSlug(product.name)}`)}
-                      className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm flex flex-col h-full group hover:border-[#F2A900] transition cursor-pointer"
+                      className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm flex flex-col h-full group hover:border-[#E8A922] transition cursor-pointer"
                     >
                       <div className="relative w-full pt-[100%] bg-gray-50/50 rounded-xl mb-4 overflow-hidden border border-gray-50 flex-shrink-0">
-                        <span className="absolute top-2 left-2 bg-[#FF7A00] text-white text-[10px] font-black px-1.5 py-0.5 rounded z-20">-{visualDiscount}%</span>
+                        <span className="absolute top-2 left-2 bg-[#E8A922] text-white text-[10px] font-black px-1.5 py-0.5 rounded z-20">-{visualDiscount}%</span>
                         <button className="absolute top-2 right-2 text-gray-400 hover:text-red-500 lg:hidden z-20" onClick={(e) => { e.stopPropagation(); toggleWishlist(e, product.id); }}><FiHeart className={wishlist.includes(product.id) ? "fill-red-500 text-red-500" : ""} /></button>
 
                         {getDisplayImage(product.imageUrl) ? (
@@ -644,14 +660,14 @@ export default function HomePage() {
                       <div className="flex flex-col flex-grow">
                         <h4 className="font-bold text-xs lg:text-sm text-gray-800 mb-2 line-clamp-2 leading-snug">{product.name}</h4>
                         <div className="flex flex-col xl:flex-row xl:items-center gap-1 xl:gap-2 mb-2 mt-auto">
-                          <span className="font-black text-sm lg:text-base text-gray-900">TZS {product.price.toLocaleString()}</span>
+                          <span className="font-black text-sm lg:text-base text-[#1B6B80]">TZS {product.price.toLocaleString()}</span>
                           <span className="text-[10px] text-gray-400 line-through">TZS {oldPrice.toLocaleString()}</span>
                         </div>
                         <div className="flex items-center justify-between mt-1 border-t border-gray-100 pt-3">
-                          <div className="flex items-center text-[#F2A900] text-[10px] font-bold">
+                          <div className="flex items-center text-[#E8A922] text-[10px] font-bold">
                             <span className="flex items-center tracking-tighter">★★★★★</span> <span className="text-gray-400 ml-1 font-medium hidden sm:inline-block">({Math.floor(Math.random() * 100) + 10})</span>
                           </div>
-                          <button onClick={(e) => { e.stopPropagation(); addToCart(product); }} className="w-8 h-8 bg-gray-50 border border-gray-200 rounded-lg flex items-center justify-center text-gray-600 hover:bg-[#F2A900] hover:text-black hover:border-[#F2A900] transition">
+                          <button onClick={(e) => { e.stopPropagation(); addToCart(product); }} className="w-8 h-8 bg-gray-50 border border-gray-200 rounded-lg flex items-center justify-center text-gray-600 hover:bg-[#E8A922] hover:text-white hover:border-[#E8A922] transition">
                             <FiShoppingCart size={14} />
                           </button>
                         </div>
@@ -662,159 +678,97 @@ export default function HomePage() {
               </div>
             )}
           </div>
+        </main>
+      </div>
 
-          {/* ========================================================= */}
-          {/* NEW ARRIVALS SECTION */}
-          {/* ========================================================= */}
-          <div className="px-4 lg:px-0 mb-12">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-2">
-                <FiPackage size={24} className="text-green-600" />
-                <h2 className="text-xl lg:text-2xl font-black text-gray-900">New Arrivals</h2>
-              </div>
-              <button onClick={() => router.push('/new-arrivals')} className="text-xs font-bold text-gray-500 flex items-center gap-1 hover:text-black transition">See All <FiChevronRight /></button>
+      {/* ========================================================= */}
+      {/* FULL WIDTH SECTIONS (Vunja Mpaka wa Sidebar Hapa Chini) */}
+      {/* ========================================================= */}
+      <div className="max-w-[1440px] xl:max-w-[1536px] mx-auto lg:px-6 pb-6 overflow-hidden">
+
+        {/* ========================================================= */}
+        {/* NEW ARRIVALS SECTION - FULL WIDTH */}
+        {/* ========================================================= */}
+        <div className="px-4 lg:px-0 mb-12">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-2">
+              <FiPackage size={24} className="text-[#1B6B80]" />
+              <h2 className="text-xl lg:text-2xl font-black text-gray-900">New Arrivals</h2>
             </div>
-
-            {isLoading ? (
-              <div className="flex justify-center py-10"><div className="w-8 h-8 border-4 border-[#F2A900] border-t-transparent rounded-full animate-spin"></div></div>
-            ) : (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 lg:gap-4">
-                {fallbackNewArrivals.map((product: any) => {
-                  return (
-                    <div
-                      key={product.id}
-                      onClick={() => router.push(`/product/${generateSlug(product.name)}`)}
-                      className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm flex flex-col h-full group hover:border-[#F2A900] transition cursor-pointer relative"
-                    >
-                      <div className="absolute top-0 right-0 bg-green-500 text-white text-[9px] font-black px-3 py-1 rounded-bl-xl z-20 shadow-sm uppercase tracking-wider">
-                        NEW
-                      </div>
-
-                      <div className="relative w-full pt-[100%] bg-gray-50/50 rounded-xl mb-4 overflow-hidden border border-gray-50 flex-shrink-0">
-                        {getDisplayImage(product.imageUrl) ? (
-                          <img src={getImageUrl(getDisplayImage(product.imageUrl))} alt={product.name} className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                        ) : (
-                          <div className="absolute inset-0 flex items-center justify-center text-5xl">📦</div>
-                        )}
-                      </div>
-
-                      <div className="flex flex-col flex-grow">
-                        <h4 className="font-bold text-xs lg:text-sm text-gray-800 mb-2 line-clamp-2 leading-snug group-hover:text-blue-600 transition">{product.name}</h4>
-                        <div className="mt-auto flex flex-col gap-2 border-t border-gray-100 pt-3">
-                          <span className="font-black text-sm lg:text-base text-gray-900">TZS {product.price.toLocaleString()}</span>
-                          <button onClick={(e) => { e.stopPropagation(); addToCart(product); }} className="w-full py-2 bg-gray-50 border border-gray-200 rounded-lg flex items-center justify-center text-gray-700 font-bold text-[11px] hover:bg-[#F2A900] hover:text-black hover:border-[#F2A900] transition gap-2">
-                            <FiShoppingCart size={14} /> Add To Cart
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            )}
+            <button onClick={() => router.push('/new-arrivals')} className="text-xs font-bold text-gray-500 flex items-center gap-1 hover:text-[#1B6B80] transition">See All <FiChevronRight /></button>
           </div>
 
-          {/* ========================================================= */}
-          {/* TRENDING NOW SECTION */}
-          {/* ========================================================= */}
-          <div className="px-4 lg:px-0 mb-10">
-            <div className="flex items-center justify-between mb-6 bg-gradient-to-r from-gray-900 to-gray-800 p-4 lg:p-6 rounded-2xl shadow-md">
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <FiStar size={24} className="text-[#F2A900] fill-current" />
-                  <h2 className="text-xl lg:text-2xl font-black text-white">Trending Now</h2>
-                </div>
-                <p className="text-xs text-gray-400">Most loved by customers this week.</p>
-              </div>
-              <button onClick={() => router.push('/trending')} className="text-xs font-bold text-[#F2A900] flex items-center gap-1 hover:text-white transition">See All <FiChevronRight /></button>
-            </div>
+          {isLoading ? (
+            <div className="flex justify-center py-10"><div className="w-8 h-8 border-4 border-[#E8A922] border-t-transparent rounded-full animate-spin"></div></div>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 lg:gap-4">
+              {fallbackNewArrivals.map((product: any) => {
+                return (
+                  <div
+                    key={product.id}
+                    onClick={() => router.push(`/product/${generateSlug(product.name)}`)}
+                    className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm flex flex-col h-full group hover:border-[#E8A922] transition cursor-pointer relative"
+                  >
+                    <div className="absolute top-0 right-0 bg-[#1B6B80] text-white text-[9px] font-black px-3 py-1 rounded-bl-xl z-20 shadow-sm uppercase tracking-wider">
+                      NEW
+                    </div>
 
-            {isLoading ? (
-              <div className="flex justify-center py-10"><div className="w-8 h-8 border-4 border-[#F2A900] border-t-transparent rounded-full animate-spin"></div></div>
-            ) : (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 lg:gap-4">
-                {fallbackTrending.map((product: any) => {
-                  return (
-                    <div
-                      key={product.id}
-                      onClick={() => router.push(`/product/${generateSlug(product.name)}`)}
-                      className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm flex flex-col h-full group hover:border-[#F2A900] transition cursor-pointer"
-                    >
-                      <div className="relative w-full pt-[100%] bg-gray-50/50 rounded-xl mb-4 overflow-hidden border border-gray-50 flex-shrink-0">
-                        <div className="absolute top-2 left-2 w-8 h-8 bg-white rounded-full shadow flex items-center justify-center z-20">
-                          <span className="text-[#F2A900] text-lg">🔥</span>
-                        </div>
+                    <div className="relative w-full pt-[100%] bg-gray-50/50 rounded-xl mb-4 overflow-hidden border border-gray-50 flex-shrink-0">
+                      {getDisplayImage(product.imageUrl) ? (
+                        <img src={getImageUrl(getDisplayImage(product.imageUrl))} alt={product.name} className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                      ) : (
+                        <div className="absolute inset-0 flex items-center justify-center text-5xl">📦</div>
+                      )}
+                    </div>
 
-                        {getDisplayImage(product.imageUrl) ? (
-                          <img src={getImageUrl(getDisplayImage(product.imageUrl))} alt={product.name} className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                        ) : (
-                          <div className="absolute inset-0 flex items-center justify-center text-5xl">📦</div>
-                        )}
-                      </div>
-
-                      <div className="flex flex-col flex-grow text-center">
-                        <div className="flex items-center justify-center text-[#F2A900] text-[10px] mb-2">★★★★★ <span className="text-gray-400 ml-1">({Math.floor(Math.random() * 200) + 50})</span></div>
-                        <h4 className="font-bold text-xs lg:text-sm text-gray-800 mb-2 line-clamp-2 leading-snug">{product.name}</h4>
-                        <span className="font-black text-sm lg:text-base text-[#0A101D] mb-3 mt-auto">TZS {product.price.toLocaleString()}</span>
-                        <button onClick={(e) => { e.stopPropagation(); addToCart(product); }} className="w-full py-2 bg-[#0A101D] text-white rounded-lg flex items-center justify-center font-bold text-[11px] hover:bg-[#F2A900] hover:text-black transition">
-                          Add To Cart
+                    <div className="flex flex-col flex-grow">
+                      <h4 className="font-bold text-xs lg:text-sm text-gray-800 mb-2 line-clamp-2 leading-snug group-hover:text-[#1B6B80] transition">{product.name}</h4>
+                      <div className="mt-auto flex flex-col gap-2 border-t border-gray-100 pt-3">
+                        <span className="font-black text-sm lg:text-base text-[#1B6B80]">TZS {product.price.toLocaleString()}</span>
+                        <button onClick={(e) => { e.stopPropagation(); addToCart(product); }} className="w-full py-2 bg-gray-50 border border-gray-200 rounded-lg flex items-center justify-center text-gray-700 font-bold text-[11px] hover:bg-[#E8A922] hover:text-white hover:border-[#E8A922] transition gap-2">
+                          <FiShoppingCart size={14} /> Add To Cart
                         </button>
                       </div>
                     </div>
-                  )
-                })}
-              </div>
-            )}
-          </div>
-
-          {/* ========================================================= */}
-          {/* TOP BRANDS SECTION */}
-          {/* ========================================================= */}
-          <div className="px-4 lg:px-0 mb-12">
-            <div className="flex items-center justify-between mb-4 bg-gradient-to-r from-[#0A101D] to-gray-800 p-4 lg:p-6 rounded-2xl shadow-md">
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <FiAward size={24} className="text-[#F2A900]" />
-                  <h2 className="text-xl lg:text-2xl font-black text-white">Top Brands</h2>
-                </div>
-                <p className="text-xs text-gray-400">Premium Partners & Certified Products</p>
-              </div>
-              <button onClick={() => router.push('/categories')} className="text-xs font-bold text-[#F2A900] flex items-center gap-1 hover:text-white transition">Shop All <FiChevronRight /></button>
-            </div>
-
-            <div className="bg-white rounded-2xl border border-gray-100 py-4 mb-6 shadow-sm overflow-hidden relative flex items-center">
-              <div className="marquee-container items-center gap-10 lg:gap-20 px-4">
-                {[...brandLogos, ...brandLogos].map((num, idx) => (
-                  <div key={`brand-${idx}`} className="flex-shrink-0 flex items-center justify-center">
-                    <img
-                      src={`/${num}.png`}
-                      alt={`Brand ${num}`}
-                      className="h-8 lg:h-10 object-contain grayscale hover:grayscale-0 transition-all duration-300 cursor-pointer"
-                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                    />
                   </div>
-                ))}
+                )
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* ========================================================= */}
+        {/* TRENDING NOW SECTION - FULL WIDTH (NEW STYLE) */}
+        {/* ========================================================= */}
+        <div className="px-4 lg:px-0 mb-12">
+          <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+            <div className="flex items-center justify-between bg-[#1B6B80] p-4 lg:p-5 shadow-sm">
+              <div>
+                <div className="flex items-center gap-2 mb-0.5">
+                  <FiStar size={20} className="text-[#E8A922] fill-[#E8A922]" />
+                  <h2 className="text-lg lg:text-xl font-black text-white">Trending Now</h2>
+                </div>
+                <p className="text-xs text-gray-300">Most loved by customers this week.</p>
               </div>
+              <button onClick={() => router.push('/trending')} className="text-xs font-bold text-[#E8A922] flex items-center gap-1 hover:text-white transition">See All <FiChevronRight /></button>
             </div>
 
-            {isLoading ? (
-              <div className="flex justify-center py-10"><div className="w-8 h-8 border-4 border-[#F2A900] border-t-transparent rounded-full animate-spin"></div></div>
-            ) : (
-              <>
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 lg:gap-4 mb-8">
-                  {products.slice(5, 15).map((product: any) => {
-                    const visualDiscount = getDeterministicDiscount(product.id);
-                    const oldPrice = Math.round(product.price / (1 - (visualDiscount / 100)));
-
+            <div className="p-4 lg:p-6 bg-white">
+              {isLoading ? (
+                <div className="flex justify-center py-10"><div className="w-8 h-8 border-4 border-[#E8A922] border-t-transparent rounded-full animate-spin"></div></div>
+              ) : (
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 lg:gap-4">
+                  {fallbackTrending.map((product: any) => {
                     return (
                       <div
-                        key={`brand-prod-${product.id}`}
+                        key={product.id}
                         onClick={() => router.push(`/product/${generateSlug(product.name)}`)}
-                        className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm flex flex-col h-full group hover:border-[#F2A900] transition cursor-pointer"
+                        className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm flex flex-col h-full group hover:border-[#E8A922] transition cursor-pointer"
                       >
                         <div className="relative w-full pt-[100%] bg-gray-50/50 rounded-xl mb-4 overflow-hidden border border-gray-50 flex-shrink-0">
-                          <span className="absolute top-2 left-2 bg-blue-600 text-white text-[10px] font-black px-1.5 py-0.5 rounded z-20 flex items-center gap-1"><FiCheckCircle size={10} /> Verified</span>
-                          <button className="absolute top-2 right-2 text-gray-400 hover:text-red-500 lg:hidden z-20" onClick={(e) => { e.stopPropagation(); toggleWishlist(e, product.id); }}><FiHeart className={wishlist.includes(product.id) ? "fill-red-500 text-red-500" : ""} /></button>
+                          <div className="absolute top-2 left-2 w-8 h-8 bg-white rounded-full shadow flex items-center justify-center z-20">
+                            <span className="text-[#E8A922] text-lg">🔥</span>
+                          </div>
 
                           {getDisplayImage(product.imageUrl) ? (
                             <img src={getImageUrl(getDisplayImage(product.imageUrl))} alt={product.name} className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
@@ -823,36 +777,113 @@ export default function HomePage() {
                           )}
                         </div>
 
-                        <div className="flex flex-col flex-grow">
-                          <h4 className="font-bold text-xs lg:text-sm text-gray-800 mb-2 line-clamp-2 leading-snug group-hover:text-[#F2A900] transition">{product.name}</h4>
-                          <div className="flex flex-col xl:flex-row xl:items-center gap-1 xl:gap-2 mb-2 mt-auto">
-                            <span className="font-black text-sm lg:text-base text-gray-900">TZS {product.price.toLocaleString()}</span>
-                            <span className="text-[10px] text-gray-400 line-through">TZS {oldPrice.toLocaleString()}</span>
-                          </div>
-                          <div className="flex items-center justify-between mt-1 border-t border-gray-100 pt-3">
-                            <div className="flex items-center text-[#F2A900] text-[10px] font-bold">
-                              <span className="flex items-center tracking-tighter">★★★★★</span> <span className="text-gray-400 ml-1 font-medium hidden sm:inline-block">({Math.floor(Math.random() * 100) + 10})</span>
-                            </div>
-                            <button onClick={(e) => { e.stopPropagation(); addToCart(product); }} className="w-8 h-8 bg-gray-50 border border-gray-200 rounded-lg flex items-center justify-center text-gray-600 hover:bg-[#F2A900] hover:text-black hover:border-[#F2A900] transition">
-                              <FiShoppingCart size={14} />
-                            </button>
-                          </div>
+                        <div className="flex flex-col flex-grow text-center">
+                          <div className="flex items-center justify-center text-[#E8A922] text-[10px] mb-2">★★★★★ <span className="text-gray-400 ml-1">({Math.floor(Math.random() * 200) + 50})</span></div>
+                          <h4 className="font-bold text-xs lg:text-sm text-gray-800 mb-2 line-clamp-2 leading-snug">{product.name}</h4>
+                          <span className="font-black text-sm lg:text-base text-[#1B6B80] mb-3 mt-auto">TZS {product.price.toLocaleString()}</span>
+                          <button onClick={(e) => { e.stopPropagation(); addToCart(product); }} className="w-full py-2 bg-[#1B6B80] text-white rounded-lg flex items-center justify-center font-bold text-[11px] hover:bg-[#145363] transition">
+                            Add To Cart
+                          </button>
                         </div>
                       </div>
                     )
                   })}
                 </div>
-
-                <div className="flex justify-center">
-                  <button onClick={() => router.push('/categories')} className="bg-white border-2 border-gray-200 text-gray-800 font-black px-12 py-3.5 rounded-xl flex items-center gap-2 hover:border-[#F2A900] hover:bg-yellow-50 hover:text-[#0A101D] transition shadow-sm">
-                    View More Products <FiChevronDown className="animate-bounce mt-1" />
-                  </button>
-                </div>
-              </>
-            )}
+              )}
+            </div>
           </div>
+        </div>
 
-        </main>
+        {/* ========================================================= */}
+        {/* TOP BRANDS SECTION (REWORKED TO BE INSIDE A CARD & FULL WIDTH) */}
+        {/* ========================================================= */}
+        <div className="px-4 lg:px-0 mb-12">
+          <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+            <div className="flex items-center justify-between bg-[#1B6B80] p-4 lg:p-5 shadow-sm">
+              <div>
+                <div className="flex items-center gap-2 mb-0.5">
+                  <FiAward size={20} className="text-[#E8A922]" />
+                  <h2 className="text-lg lg:text-xl font-black text-white">Top Brands</h2>
+                </div>
+                <p className="text-xs text-gray-300">Premium Partners & Certified Products</p>
+              </div>
+              <button onClick={() => router.push('/categories')} className="hidden sm:flex text-xs font-bold text-[#E8A922] items-center gap-1 hover:text-white transition">Shop All <FiChevronRight /></button>
+            </div>
+
+            {/* Brands Logo Scroller Inside the Card */}
+            <div className="bg-gray-50 border-b border-gray-100 py-6 overflow-hidden relative flex items-center">
+              <div className="marquee-container items-center gap-10 lg:gap-16 px-4">
+                {[...brandLogos, ...brandLogos].map((num, idx) => (
+                  <div key={`brand-${idx}`} className="flex-shrink-0 flex items-center justify-center">
+                    <img
+                      src={`/${num}.png`}
+                      alt={`Brand ${num}`}
+                      className="h-8 lg:h-12 object-contain grayscale opacity-60 hover:grayscale-0 hover:opacity-100 transition-all duration-300 cursor-pointer drop-shadow-sm"
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Products Below Brands */}
+            <div className="p-4 lg:p-6 bg-white">
+              {isLoading ? (
+                <div className="flex justify-center py-10"><div className="w-8 h-8 border-4 border-[#E8A922] border-t-transparent rounded-full animate-spin"></div></div>
+              ) : (
+                <>
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 lg:gap-4 mb-4">
+                    {products.slice(5, 10).map((product: any) => {
+                      const visualDiscount = getDeterministicDiscount(product.id);
+                      const oldPrice = Math.round(product.price / (1 - (visualDiscount / 100)));
+
+                      return (
+                        <div
+                          key={`brand-prod-${product.id}`}
+                          onClick={() => router.push(`/product/${generateSlug(product.name)}`)}
+                          className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm flex flex-col h-full group hover:border-[#E8A922] transition cursor-pointer"
+                        >
+                          <div className="relative w-full pt-[100%] bg-gray-50/50 rounded-xl mb-4 overflow-hidden border border-gray-50 flex-shrink-0">
+                            <span className="absolute top-2 left-2 bg-[#1B6B80] text-white text-[10px] font-black px-1.5 py-0.5 rounded z-20 flex items-center gap-1"><FiCheckCircle size={10} /> Verified</span>
+                            <button className="absolute top-2 right-2 text-gray-400 hover:text-red-500 lg:hidden z-20" onClick={(e) => { e.stopPropagation(); toggleWishlist(e, product.id); }}><FiHeart className={wishlist.includes(product.id) ? "fill-red-500 text-red-500" : ""} /></button>
+
+                            {getDisplayImage(product.imageUrl) ? (
+                              <img src={getImageUrl(getDisplayImage(product.imageUrl))} alt={product.name} className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                            ) : (
+                              <div className="absolute inset-0 flex items-center justify-center text-5xl">📦</div>
+                            )}
+                          </div>
+
+                          <div className="flex flex-col flex-grow">
+                            <h4 className="font-bold text-xs lg:text-sm text-gray-800 mb-2 line-clamp-2 leading-snug group-hover:text-[#1B6B80] transition">{product.name}</h4>
+                            <div className="flex flex-col xl:flex-row xl:items-center gap-1 xl:gap-2 mb-2 mt-auto">
+                              <span className="font-black text-sm lg:text-base text-[#1B6B80]">TZS {product.price.toLocaleString()}</span>
+                              <span className="text-[10px] text-gray-400 line-through">TZS {oldPrice.toLocaleString()}</span>
+                            </div>
+                            <div className="flex items-center justify-between mt-1 border-t border-gray-100 pt-3">
+                              <div className="flex items-center text-[#E8A922] text-[10px] font-bold">
+                                <span className="flex items-center tracking-tighter">★★★★★</span> <span className="text-gray-400 ml-1 font-medium hidden sm:inline-block">({Math.floor(Math.random() * 100) + 10})</span>
+                              </div>
+                              <button onClick={(e) => { e.stopPropagation(); addToCart(product); }} className="w-8 h-8 bg-gray-50 border border-gray-200 rounded-lg flex items-center justify-center text-gray-600 hover:bg-[#E8A922] hover:text-white hover:border-[#E8A922] transition">
+                                <FiShoppingCart size={14} />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                  <div className="flex justify-center mt-6">
+                    <button onClick={() => router.push('/categories')} className="bg-white border-2 border-gray-200 text-[#1B6B80] font-black px-12 py-3 rounded-xl flex items-center gap-2 hover:border-[#E8A922] hover:bg-[#E8A922]/10 transition shadow-sm text-sm">
+                      View All Brands Catalog
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+
       </div>
 
       <style>{`
@@ -868,65 +899,70 @@ export default function HomePage() {
         .marquee-container:hover {
           animation-play-state: paused;
         }
+        /* Hides scrollbar but allows smooth scrolling */
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
 
-      <footer className="bg-[#0A101D] text-gray-300 py-12 lg:py-16 pb-28 lg:pb-16">
+      <footer className="bg-[#1B6B80] text-gray-200 py-12 lg:py-16 pb-28 lg:pb-16 border-t border-[#145363]">
         <div className="max-w-[1500px] mx-auto px-6 lg:px-8">
-          <div className="flex flex-col lg:flex-row items-center justify-between border-b border-gray-800 pb-10 mb-10 gap-6">
+          <div className="flex flex-col lg:flex-row items-center justify-between border-b border-[#145363] pb-10 mb-10 gap-6">
             <div className="text-center lg:text-left">
               <h3 className="text-xl font-black text-white mb-2">Subscribe to our Newsletter</h3>
-              <p className="text-sm text-gray-400">Get the latest updates on new products and upcoming sales.</p>
+              <p className="text-sm text-gray-300">Get the latest updates on new products and upcoming sales.</p>
             </div>
             <div className="flex w-full lg:w-auto">
               <input type="email" placeholder="Enter your email address" className="px-4 py-3 rounded-l-xl w-full lg:w-80 text-gray-900 outline-none text-base" />
-              <button className="bg-[#F2A900] text-black px-6 py-3 rounded-r-xl font-bold flex items-center gap-2 hover:bg-yellow-500 transition text-sm">Subscribe <FiSend /></button>
+              <button className="bg-[#E8A922] text-white px-6 py-3 rounded-r-xl font-bold flex items-center gap-2 hover:bg-[#D4981C] transition text-sm">Subscribe <FiSend /></button>
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-8 mb-10">
             <div>
-              <img src="/logo.png" alt="Jtex Logo" className="h-24 lg:h-32 object-contain mb-6 mx-auto lg:mx-0" />
-              <p className="text-sm text-gray-400 leading-relaxed mb-6">Your one-stop destination for the best quality electronics, fashion, and home appliances in {userCountry}. Shop smart, live better.</p>
-              <div className="flex gap-4">
-                <a href="#" className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-[#F2A900] hover:text-black transition"><FiFacebook size={18} /></a>
-                <a href="#" className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-[#F2A900] hover:text-black transition"><FiTwitter size={18} /></a>
-                <a href="#" className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-[#F2A900] hover:text-black transition"><FiInstagram size={18} /></a>
-                <a href="#" className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-[#F2A900] hover:text-black transition"><FiLinkedin size={18} /></a>
+              <div className="bg-white px-3 py-2 rounded-xl inline-block mb-6 shadow-sm">
+                <img src="/logo.png" alt="Jtex Logo" className="h-16 lg:h-20 object-contain" />
+              </div>
+              <p className="text-sm text-gray-300 leading-relaxed mb-6">Your one-stop destination for the best quality electronics, fashion, and home appliances in {userCountry}. Shop smart, live better.</p>
+              <div className="flex gap-4 justify-center lg:justify-start">
+                <a href="#" className="w-10 h-10 rounded-full bg-[#145363] flex items-center justify-center hover:bg-[#E8A922] hover:text-white transition"><FiFacebook size={18} /></a>
+                <a href="#" className="w-10 h-10 rounded-full bg-[#145363] flex items-center justify-center hover:bg-[#E8A922] hover:text-white transition"><FiTwitter size={18} /></a>
+                <a href="#" className="w-10 h-10 rounded-full bg-[#145363] flex items-center justify-center hover:bg-[#E8A922] hover:text-white transition"><FiInstagram size={18} /></a>
+                <a href="#" className="w-10 h-10 rounded-full bg-[#145363] flex items-center justify-center hover:bg-[#E8A922] hover:text-white transition"><FiLinkedin size={18} /></a>
               </div>
             </div>
 
             <div>
-              <h4 className="text-white font-black text-lg mb-6">Quick Links</h4>
-              <ul className="space-y-3 text-sm font-medium">
-                <li><button onClick={() => router.push('/about')} className="hover:text-[#F2A900] transition">About Us</button></li>
-                <li><button onClick={() => router.push('/categories')} className="hover:text-[#F2A900] transition">Shop Categories</button></li>
-                <li><button onClick={() => router.push('/deals')} className="hover:text-[#F2A900] transition">Flash Sales</button></li>
-                <li><button onClick={() => router.push('/help')} className="hover:text-[#F2A900] transition">Contact Us</button></li>
+              <h4 className="text-white font-black text-lg mb-6 text-center lg:text-left">Quick Links</h4>
+              <ul className="space-y-3 text-sm font-medium text-center lg:text-left">
+                <li><button onClick={() => router.push('/about')} className="hover:text-[#E8A922] transition">About Us</button></li>
+                <li><button onClick={() => router.push('/categories')} className="hover:text-[#E8A922] transition">Shop Categories</button></li>
+                <li><button onClick={() => router.push('/deals')} className="hover:text-[#E8A922] transition">Flash Sales</button></li>
+                <li><button onClick={() => router.push('/help')} className="hover:text-[#E8A922] transition">Contact Us</button></li>
               </ul>
             </div>
 
             <div>
-              <h4 className="text-white font-black text-lg mb-6">Customer Service</h4>
-              <ul className="space-y-3 text-sm font-medium">
-                <li><button onClick={() => router.push('/profile')} className="hover:text-[#F2A900] transition">My Account</button></li>
-                <li><button onClick={() => router.push('/profile')} className="hover:text-[#F2A900] transition">Order Tracking</button></li>
-                <li><button onClick={() => router.push('/help')} className="hover:text-[#F2A900] transition">Returns & Exchanges</button></li>
-                <li><button onClick={() => router.push('/help')} className="hover:text-[#F2A900] transition">Shipping Information</button></li>
-                <li><button onClick={() => router.push('/help')} className="hover:text-[#F2A900] transition">FAQs</button></li>
+              <h4 className="text-white font-black text-lg mb-6 text-center lg:text-left">Customer Service</h4>
+              <ul className="space-y-3 text-sm font-medium text-center lg:text-left">
+                <li><button onClick={() => router.push('/profile')} className="hover:text-[#E8A922] transition">My Account</button></li>
+                <li><button onClick={() => router.push('/profile')} className="hover:text-[#E8A922] transition">Order Tracking</button></li>
+                <li><button onClick={() => router.push('/help')} className="hover:text-[#E8A922] transition">Returns & Exchanges</button></li>
+                <li><button onClick={() => router.push('/help')} className="hover:text-[#E8A922] transition">Shipping Information</button></li>
+                <li><button onClick={() => router.push('/help')} className="hover:text-[#E8A922] transition">FAQs</button></li>
               </ul>
             </div>
 
             <div>
-              <h4 className="text-white font-black text-lg mb-6">Contact Us</h4>
-              <ul className="space-y-4 text-sm font-medium">
-                <li className="flex items-start gap-3"><FiMapPin className="text-[#F2A900] text-lg flex-shrink-0 mt-0.5" /><span>Dar es Salaam, Kariakoo</span></li>
-                <li className="flex items-center gap-3"><FiPhone className="text-[#F2A900] text-lg flex-shrink-0" /><span>WhatsApp: +255 767 949 581</span></li>
-                <li className="flex items-center gap-3"><FiMail className="text-[#F2A900] text-lg flex-shrink-0" /><span>support@jtex.co.tz</span></li>
+              <h4 className="text-white font-black text-lg mb-6 text-center lg:text-left">Contact Us</h4>
+              <ul className="space-y-4 text-sm font-medium flex flex-col items-center lg:items-start">
+                <li className="flex items-start gap-3"><FiMapPin className="text-[#E8A922] text-lg flex-shrink-0 mt-0.5" /><span>Dar es Salaam, Kariakoo</span></li>
+                <li className="flex items-center gap-3"><FiPhone className="text-[#E8A922] text-lg flex-shrink-0" /><span>WhatsApp: +255 767 949 581</span></li>
+                <li className="flex items-center gap-3"><FiMail className="text-[#E8A922] text-lg flex-shrink-0" /><span>support@jtex.co.tz</span></li>
               </ul>
-              <div className="mt-6">
-                <p className="text-[10px] text-gray-500 mb-2 font-bold uppercase tracking-wider">We Accept</p>
-                <div className="flex gap-2">
-                  <div className="w-10 h-6 bg-white rounded flex items-center justify-center text-[8px] font-black text-blue-800">VISA</div>
+              <div className="mt-6 text-center lg:text-left">
+                <p className="text-[10px] text-gray-300 mb-2 font-bold uppercase tracking-wider">We Accept</p>
+                <div className="flex gap-2 justify-center lg:justify-start">
+                  <div className="w-10 h-6 bg-white rounded flex items-center justify-center text-[8px] font-black text-[#1B6B80]">VISA</div>
                   <div className="w-10 h-6 bg-white rounded flex items-center justify-center text-[8px] font-black text-red-600">MASTER</div>
                   <div className="w-10 h-6 bg-green-600 rounded flex items-center justify-center text-[8px] font-black text-white">M-PESA</div>
                 </div>
@@ -934,7 +970,7 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="border-t border-gray-800 pt-8 flex flex-col md:flex-row items-center justify-between gap-4 text-xs font-medium text-gray-500">
+          <div className="border-t border-[#145363] pt-8 flex flex-col md:flex-row items-center justify-between gap-4 text-xs font-medium text-gray-300 text-center">
             <p>&copy; {new Date().getFullYear()} Jtex Marketplace. All rights reserved.</p>
             <div className="flex gap-6">
               <a href="#" className="hover:text-white transition">Privacy Policy</a>
@@ -946,7 +982,7 @@ export default function HomePage() {
       </footer>
 
       <div className="lg:hidden fixed bottom-0 left-0 w-full bg-white border-t border-gray-100 flex justify-around items-center h-[60px] px-2 z-50 shadow-[0_-10px_20px_rgba(0,0,0,0.03)] pb-safe">
-        <button onClick={() => router.push('/')} className="flex flex-col items-center gap-1 text-[#F2A900]">
+        <button onClick={() => router.push('/')} className="flex flex-col items-center gap-1 text-[#1B6B80]">
           <FiHome size={22} className="fill-current" />
           <span className="text-[10px] font-black">Home</span>
         </button>
@@ -956,16 +992,16 @@ export default function HomePage() {
         </button>
 
         <div className="relative -top-6">
-          <button className="w-14 h-14 bg-[#0A101D] text-white rounded-full flex items-center justify-center shadow-lg border-4 border-white hover:scale-105 transition-transform" onClick={() => router.push('/deals')}>
-            <FiZap size={24} className="fill-current text-[#F2A900]" />
+          <button className="w-14 h-14 bg-[#1B6B80] text-white rounded-full flex items-center justify-center shadow-lg border-4 border-white hover:scale-105 transition-transform" onClick={() => router.push('/deals')}>
+            <FiZap size={24} className="fill-current text-[#E8A922]" />
           </button>
-          <span className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[10px] font-bold text-gray-800 whitespace-nowrap">Flash Sales</span>
+          <span className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[10px] font-bold text-[#1B6B80] whitespace-nowrap">Flash Sales</span>
         </div>
 
         <button onClick={() => router.push('/checkout')} className="flex flex-col items-center gap-1 text-gray-400 hover:text-gray-800 transition relative">
           <FiShoppingCart size={22} />
           <span className="text-[10px] font-bold">Cart</span>
-          {cartCount > 0 && <span className="absolute -top-1.5 -right-1.5 bg-[#F2A900] text-black text-[10px] font-black w-4 h-4 flex items-center justify-center rounded-full">{cartCount}</span>}
+          {cartCount > 0 && <span className="absolute -top-1.5 -right-1.5 bg-[#E8A922] text-white text-[10px] font-black w-4 h-4 flex items-center justify-center rounded-full">{cartCount}</span>}
         </button>
         <button onClick={() => router.push(isLoggedIn ? '/profile' : '/login')} className="flex flex-col items-center gap-1 text-gray-400 hover:text-gray-800 transition">
           <FiUser size={22} />

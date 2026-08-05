@@ -7,16 +7,21 @@ import {
     FiCreditCard, FiPrinter, FiBox, FiDollarSign,
     FiClock, FiUser, FiSmartphone, FiArrowLeft, FiCheckCircle,
     FiShoppingCart, FiFileText, FiShield, FiUserPlus, FiPercent,
-    FiPieChart, FiUsers, FiSettings, FiMenu, FiX, FiTag, FiMonitor, FiSave, FiLogOut
+    FiPieChart, FiUsers, FiSettings, FiMenu, FiX, FiTag, FiMonitor, FiSave, FiLogOut,
+    FiTrendingDown, FiBarChart2
 } from 'react-icons/fi';
+import {
+    LineChart, Line, BarChart, Bar, XAxis, YAxis,
+    CartesianGrid, Tooltip, ResponsiveContainer
+} from 'recharts';
 
 export default function StoreManagementSystem() {
     const router = useRouter();
     const [currentTime, setCurrentTime] = useState(new Date());
 
     // === SYSTEM NAVIGATION STATE ===
-    const [activeModule, setActiveModule] = useState<'dashboard' | 'pos' | 'customers' | 'invoices' | 'warranties' | 'settings'>('dashboard');
-    const [sidebarOpen, setSidebarOpen] = useState(false); // Default false for mobile
+    const [activeModule, setActiveModule] = useState<'dashboard' | 'pos' | 'customers' | 'invoices' | 'warranties' | 'expenses' | 'reports' | 'settings'>('dashboard');
+    const [sidebarOpen, setSidebarOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [showMobileCart, setShowMobileCart] = useState(false);
 
@@ -48,7 +53,7 @@ export default function StoreManagementSystem() {
     const [amountTendered, setAmountTendered] = useState<string>('');
 
     // Universal Printing State
-    const [printType, setPrintType] = useState<'receipt' | 'invoice' | 'warranty' | null>(null);
+    const [printType, setPrintType] = useState<'receipt' | 'invoice' | 'proforma' | 'delivery' | 'warranty' | null>(null);
     const [printData, setPrintData] = useState<any>(null);
 
     const warrantyOptions = ['None', '3 Months', '6 Months', '1 Year', '2 Years'];
@@ -66,6 +71,17 @@ export default function StoreManagementSystem() {
     const [manualWarranty, setManualWarranty] = useState({
         customerName: '', customerPhone: '', items: [{ desc: '', period: '1 Year' }]
     });
+
+    // === DUMMY CHART DATA ===
+    const salesData = [
+        { name: 'Mon', sales: 1200000 },
+        { name: 'Tue', sales: 2100000 },
+        { name: 'Wed', sales: 1800000 },
+        { name: 'Thu', sales: 3000000 },
+        { name: 'Fri', sales: 2400000 },
+        { name: 'Sat', sales: 3500000 },
+        { name: 'Sun', sales: 4200000 },
+    ];
 
     // === API HELPERS ===
     const getApiUrl = () => {
@@ -88,7 +104,6 @@ export default function StoreManagementSystem() {
 
     // === AUTHENTICATION & DATA FETCHING ===
     useEffect(() => {
-        // 1. SECURITY CHECK: Ensure user is logged in as Admin
         const adminToken = localStorage.getItem('jtex_admin_token');
         if (!adminToken) {
             alert("Access Denied. You must log in as an administrator.");
@@ -136,13 +151,11 @@ export default function StoreManagementSystem() {
 
         fetchAllData();
 
-        // Auto-open sidebar on larger screens
         if (window.innerWidth >= 1024) setSidebarOpen(true);
 
         return () => clearInterval(timer);
     }, []);
 
-    // Logout Function
     const handleLogout = () => {
         localStorage.removeItem('jtex_admin_token');
         localStorage.removeItem('jtex_admin_user');
@@ -317,13 +330,13 @@ export default function StoreManagementSystem() {
         }
     };
 
-    const executePrint = (type: 'receipt' | 'invoice' | 'warranty', dataToPrint: any = printData) => {
+    const executePrint = (type: 'receipt' | 'invoice' | 'proforma' | 'delivery' | 'warranty', dataToPrint: any = printData) => {
         setPrintData(dataToPrint);
         setPrintType(type);
         setTimeout(() => {
             window.print();
             setPrintType(null);
-        }, 500);
+        }, 800); // Give images time to load
     };
 
     const resetPOS = () => {
@@ -336,14 +349,15 @@ export default function StoreManagementSystem() {
     };
 
     // ============================================================================
-    // PRINT TEMPLATES (Overlays entire screen when printing)
+    // PRINT TEMPLATES (100% Matching Images)
     // ============================================================================
     if (printType && printData) {
         return (
-            <div className="bg-white text-black p-4 sm:p-8 min-h-screen">
-                {/* 1. RECEIPT TEMPLATE */}
+            <div className="bg-gray-100 flex justify-center py-8 min-h-screen">
+
+                {/* 1. RECEIPT TEMPLATE (THERMAL) */}
                 {printType === 'receipt' && (
-                    <div className="max-w-[300px] mx-auto font-mono text-sm">
+                    <div className="bg-white max-w-[300px] mx-auto font-mono text-sm p-6 shadow-xl">
                         <div className="text-center mb-4">
                             <h2 className="font-black text-xl uppercase tracking-widest mb-1">JTEX TECH</h2>
                             <p>Kariakoo, Dar es Salaam</p>
@@ -391,143 +405,122 @@ export default function StoreManagementSystem() {
                     </div>
                 )}
 
-                {/* 2. INVOICE TEMPLATE */}
-                {printType === 'invoice' && (
-                    <div className="max-w-4xl mx-auto font-sans">
-                        <div className="flex flex-col sm:flex-row justify-between items-start mb-10 border-b-4 border-[#0A101D] pb-6 gap-4">
-                            <div>
-                                <img src="/logo.png" alt="Jtex Logo" className="h-12 sm:h-16 mb-2 grayscale" />
-                                <h1 className="text-3xl sm:text-4xl font-black text-gray-900 tracking-tight">TAX INVOICE</h1>
-                                <p className="text-gray-500 font-bold mt-1">Invoice #: INV-{Math.floor(Math.random() * 100000)}</p>
-                            </div>
-                            <div className="sm:text-right text-sm">
-                                <h3 className="font-black text-lg text-gray-900">Jtex Technologies</h3>
-                                <p>TanHouse, Dar es Salaam</p>
-                                <p>TIN: 123-456-789 | VRN: 987654321</p>
-                                <p>Email: info@jtex.co.tz | Tel: +255 767 949 581</p>
-                            </div>
-                        </div>
-                        <div className="flex flex-col sm:flex-row justify-between mb-10 gap-6">
-                            <div className="sm:w-1/2">
-                                <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Billed To:</h4>
-                                <h2 className="text-xl font-black text-gray-900">{printData.customerName || 'Walk-in Customer'}</h2>
-                                {printData.customerPhone && <p className="text-gray-600 mt-1">Phone: {printData.customerPhone}</p>}
-                            </div>
-                            <div className="sm:w-1/2 sm:text-right">
-                                <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Invoice Details:</h4>
-                                <p><span className="font-bold">Date:</span> {new Date(printData.date || new Date()).toLocaleDateString()}</p>
-                                <p><span className="font-bold">Payment Method:</span> <span className="uppercase">{printData.paymentMethod || 'N/A'}</span></p>
-                                <p><span className="font-bold">Status:</span> <span className="text-green-600 font-black">PAID</span></p>
-                            </div>
-                        </div>
-                        <div className="overflow-x-auto mb-10">
-                            <table className="w-full border-collapse min-w-[600px]">
-                                <thead>
-                                    <tr className="bg-[#0A101D] text-white text-sm">
-                                        <th className="p-3 text-left w-12">#</th>
-                                        <th className="p-3 text-left">Description</th>
-                                        <th className="p-3 text-center">Warranty</th>
-                                        <th className="p-3 text-center">Qty</th>
-                                        <th className="p-3 text-right">Unit Price</th>
-                                        <th className="p-3 text-right">Total</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {printData.items.map((item: any, idx: number) => (
-                                        <tr key={idx} className="border-b border-gray-200 text-sm">
-                                            <td className="p-3 font-bold">{idx + 1}</td>
-                                            <td className="p-3 font-bold text-gray-800">{item.name || item.desc} {item.isOnline === false && <span className="text-[10px] text-gray-400">(Offline)</span>}</td>
-                                            <td className="p-3 text-center text-gray-500">{item.warranty && item.warranty !== 'None' ? item.warranty : '-'}</td>
-                                            <td className="p-3 text-center">{item.qty}</td>
-                                            <td className="p-3 text-right">{(item.price).toLocaleString()}</td>
-                                            <td className="p-3 text-right font-bold">{(item.price * item.qty).toLocaleString()}</td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                        <div className="flex flex-col sm:flex-row justify-between items-start mb-12 gap-8">
-                            <div className="w-full sm:w-1/2 sm:pr-10 order-2 sm:order-1">
-                                <h4 className="font-bold text-gray-800 text-sm mb-2">Terms & Conditions</h4>
-                                <p className="text-xs text-gray-500 whitespace-pre-wrap">{docSettings.invoiceTerms}</p>
-                            </div>
-                            <div className="w-full sm:w-72 space-y-3 text-sm order-1 sm:order-2">
-                                <div className="flex justify-between border-b border-gray-100 pb-2"><span>Subtotal:</span><span className="font-bold">TZS {(printData.subtotal || 0).toLocaleString()}</span></div>
-                                {printData.discount > 0 && <div className="flex justify-between border-b border-gray-100 pb-2 text-green-600"><span>Discount:</span><span className="font-bold">- TZS {printData.discount.toLocaleString()}</span></div>}
-                                <div className="flex justify-between text-xl font-black text-[#0A101D] pt-2"><span>Total:</span><span>TZS {(printData.total || 0).toLocaleString()}</span></div>
-                            </div>
-                        </div>
+                {/* 2. A4 DOCUMENTS (INVOICE, PROFORMA, DELIVERY NOTE, WARRANTY) */}
+                {['invoice', 'proforma', 'delivery', 'warranty'].includes(printType) && (
+                    <div className="a4-container shadow-2xl">
 
-                        <div className="flex justify-between items-end mt-20 pt-6 border-t border-gray-200">
-                            <div className="text-center w-48 sm:w-64">
-                                <div className="border-b border-gray-800 mb-2"></div>
-                                <p className="text-xs font-bold text-gray-500">Authorized Signature & Stamp</p>
+                        {/* THE BACKGROUND IMAGES FOR 100% MATCH */}
+                        {printType === 'invoice' && <img src="/invoice.PNG" className="a4-bg" alt="Invoice Background" />}
+                        {printType === 'proforma' && <img src="/parfoma invoince.PNG" className="a4-bg" alt="Proforma Background" />}
+                        {printType === 'delivery' && <img src="/delivery note.PNG" className="a4-bg" alt="Delivery Note Background" />}
+                        {/* Warranty fallback using invoice bg if no warranty bg provided */}
+                        {printType === 'warranty' && <img src="/invoice.PNG" className="a4-bg opacity-30" alt="Warranty Background" />}
+
+                        <div className="a4-content h-full flex flex-col font-sans">
+
+                            {/* TOP SECTION: CUSTOMER & DATES (Positioned below the image header) */}
+                            <div className="flex justify-between mt-8 mb-8">
+                                <div className="w-1/2">
+                                    <h4 className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">
+                                        {printType === 'delivery' ? 'Deliver To:' : 'Billed To:'}
+                                    </h4>
+                                    <h2 className="text-xl font-black text-[#0A101D]">{printData.customerName || 'Walk-in Customer'}</h2>
+                                    {printData.customerPhone && <p className="text-gray-600 text-sm mt-0.5">Phone: {printData.customerPhone}</p>}
+                                </div>
+                                <div className="w-1/3 text-right text-sm">
+                                    <p className="mb-1"><span className="font-bold text-gray-500">Date:</span> <span className="font-semibold text-gray-900">{new Date(printData.date || new Date()).toLocaleDateString()}</span></p>
+                                    <p className="mb-1"><span className="font-bold text-gray-500">Document #:</span> <span className="font-semibold text-gray-900">DOC-{Math.floor(Math.random() * 100000)}</span></p>
+                                    {printType !== 'delivery' && (
+                                        <p><span className="font-bold text-gray-500">Payment:</span> <span className="font-semibold text-[#F2A900] uppercase">{printData.paymentMethod || 'N/A'}</span></p>
+                                    )}
+                                </div>
                             </div>
+
+                            {/* MAIN TABLE */}
+                            <div className="flex-1">
+                                <table className="w-full border-collapse">
+                                    <thead>
+                                        <tr className="border-b-2 border-[#0A101D] text-[#0A101D] text-sm">
+                                            <th className="py-3 text-left w-10 font-black">#</th>
+                                            <th className="py-3 text-left font-black">Description of Goods</th>
+                                            {printType === 'warranty' && <th className="py-3 text-center font-black">Warranty Period</th>}
+                                            <th className="py-3 text-center font-black">Qty</th>
+                                            {printType !== 'delivery' && <th className="py-3 text-right font-black">Unit Price</th>}
+                                            {printType !== 'delivery' && <th className="py-3 text-right font-black">Total Amount</th>}
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {printData.items.map((item: any, idx: number) => (
+                                            <tr key={idx} className="border-b border-gray-200 text-sm">
+                                                <td className="py-4 font-bold text-gray-500">{idx + 1}</td>
+                                                <td className="py-4 font-bold text-gray-900">{item.name || item.desc}</td>
+                                                {printType === 'warranty' && <td className="py-4 text-center font-bold text-[#F2A900]">{item.warranty || item.period || '-'}</td>}
+                                                <td className="py-4 text-center font-semibold">{item.qty || 1}</td>
+                                                {printType !== 'delivery' && <td className="py-4 text-right text-gray-600">{(item.price).toLocaleString()}</td>}
+                                                {printType !== 'delivery' && <td className="py-4 text-right font-black text-[#0A101D]">{(item.price * (item.qty || 1)).toLocaleString()}</td>}
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            {/* BOTTOM SECTION: TOTALS & TERMS */}
+                            <div className="mt-8 flex justify-between items-end">
+                                <div className="w-1/2">
+                                    <h4 className="font-bold text-gray-800 text-xs mb-1 uppercase">Terms & Conditions</h4>
+                                    <p className="text-[10px] text-gray-500 whitespace-pre-wrap leading-relaxed">
+                                        {printType === 'warranty' ? docSettings.warrantyTerms : docSettings.invoiceTerms}
+                                    </p>
+
+                                    <div className="mt-8">
+                                        <div className="border-b border-gray-400 w-48 mb-1"></div>
+                                        <p className="text-[10px] font-bold text-gray-500 uppercase">Authorized Signature</p>
+                                    </div>
+                                </div>
+
+                                {printType !== 'delivery' && (
+                                    <div className="w-64 space-y-2 text-sm bg-gray-50 p-4 rounded-xl border border-gray-200">
+                                        <div className="flex justify-between text-gray-600"><span>Subtotal:</span><span className="font-bold">TZS {(printData.subtotal || 0).toLocaleString()}</span></div>
+                                        {printData.discount > 0 && <div className="flex justify-between text-green-600"><span>Discount:</span><span className="font-bold">- TZS {printData.discount.toLocaleString()}</span></div>}
+                                        <div className="border-t border-gray-300 my-2"></div>
+                                        <div className="flex justify-between text-xl font-black text-[#0A101D]"><span>Total:</span><span>TZS {(printData.total || 0).toLocaleString()}</span></div>
+                                    </div>
+                                )}
+                            </div>
+
                         </div>
                     </div>
                 )}
 
-                {/* 3. WARRANTY CERTIFICATE TEMPLATE */}
-                {printType === 'warranty' && (
-                    <div className="max-w-4xl mx-auto font-sans border-[4px] sm:border-[8px] border-[#0A101D] p-6 sm:p-10 relative min-h-[600px] sm:min-h-[800px]">
-                        <div className="absolute top-10 right-10 text-[#F2A900] opacity-10 sm:opacity-20"><FiShield size={100} className="sm:w-[150px] sm:h-[150px]" /></div>
-                        <div className="text-center mb-8 sm:mb-10 relative z-10">
-                            <img src="/logo.png" alt="Jtex Logo" className="h-12 sm:h-16 mx-auto mb-4 grayscale" />
-                            <h1 className="text-2xl sm:text-3xl font-black text-gray-900 uppercase tracking-widest border-b-2 border-[#F2A900] inline-block pb-2">Warranty Certificate</h1>
-                        </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8 mb-8 sm:mb-10 relative z-10 text-xs sm:text-sm">
-                            <div>
-                                <h3 className="font-black text-gray-900 border-b border-gray-200 pb-2 mb-3">Customer Information</h3>
-                                <p><span className="font-bold text-gray-500">Name:</span> {printData.customerName}</p>
-                                <p><span className="font-bold text-gray-500">Phone:</span> {printData.customerPhone || 'N/A'}</p>
-                                <p><span className="font-bold text-gray-500">Date Issued:</span> {new Date(printData.date || new Date()).toLocaleDateString()}</p>
-                            </div>
-                            <div>
-                                <h3 className="font-black text-gray-900 border-b border-gray-200 pb-2 mb-3">Dealer Information</h3>
-                                <p><span className="font-bold text-gray-500">Company:</span> Jtex Technologies</p>
-                                <p><span className="font-bold text-gray-500">Location:</span> Dar es Salaam, Tanzania</p>
-                                <p><span className="font-bold text-gray-500">Contact:</span> +255 767 949 581</p>
-                            </div>
-                        </div>
-
-                        <div className="overflow-x-auto mb-8 sm:mb-10 relative z-10">
-                            <table className="w-full border border-gray-200 text-xs sm:text-sm min-w-[500px]">
-                                <thead className="bg-gray-100">
-                                    <tr>
-                                        <th className="p-3 text-left border-b border-gray-200">Covered Product Description</th>
-                                        <th className="p-3 text-left border-b border-gray-200">Warranty Period</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {printData.items.filter((i: any) => i.warranty && i.warranty !== 'None' || i.period).map((item: any, idx: number) => (
-                                        <tr key={idx} className="border-b border-gray-200">
-                                            <td className="p-3 font-bold">{item.name || item.desc}</td>
-                                            <td className="p-3 font-black text-[#F2A900]">{item.warranty || item.period}</td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-
-                        <div className="mb-10 text-xs text-gray-600 space-y-2 leading-relaxed bg-gray-50 p-4 rounded-lg relative z-10">
-                            <h4 className="font-black text-gray-900 text-sm mb-2">Terms and Conditions</h4>
-                            <p className="whitespace-pre-wrap">{docSettings.warrantyTerms}</p>
-                        </div>
-
-                        <div className="flex justify-between items-end pt-10 sm:px-10 mt-auto">
-                            <div className="text-center">
-                                <div className="border-b border-gray-800 w-32 sm:w-48 mb-2 h-10"></div>
-                                <p className="text-[10px] sm:text-xs font-bold text-gray-500">Customer Signature</p>
-                            </div>
-                            <div className="text-center">
-                                <div className="border-b border-gray-800 w-32 sm:w-48 mb-2 h-10 flex items-end justify-center"><span className="font-serif italic text-lg sm:text-xl text-blue-800">Jtex Auth</span></div>
-                                <p className="text-[10px] sm:text-xs font-bold text-gray-500">Authorized Signature & Stamp</p>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                <style>{`@media print { @page { margin: 0; } body { background: white; margin: 0; padding: 20px; } }`}</style>
+                <style>{`
+                    @media print {
+                        @page { size: A4; margin: 0; }
+                        body { margin: 0; background: white; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+                        .a4-container { box-shadow: none !important; }
+                    }
+                    .a4-container {
+                        width: 210mm;
+                        height: 297mm;
+                        position: relative;
+                        background: white;
+                        overflow: hidden;
+                        page-break-after: always;
+                    }
+                    .a4-bg {
+                        position: absolute;
+                        top: 0;
+                        left: 0;
+                        width: 100%;
+                        height: 100%;
+                        z-index: 1;
+                        object-fit: cover;
+                    }
+                    .a4-content {
+                        position: relative;
+                        z-index: 10;
+                        padding: 45mm 20mm 35mm 20mm; /* Top padding clears image headers, Bottom clears footers */
+                    }
+                `}</style>
             </div>
         );
     }
@@ -561,10 +554,16 @@ export default function StoreManagementSystem() {
                         <FiUsers size={20} /> <span>Customers</span>
                     </button>
                     <button onClick={() => { setActiveModule('invoices'); if (window.innerWidth < 1024) setSidebarOpen(true); }} className={`w-full flex items-center gap-4 px-3 py-3 rounded-xl transition ${activeModule === 'invoices' ? 'bg-[#F2A900] text-black font-bold shadow-lg' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}>
-                        <FiFileText size={20} /> <span>Generate Invoices</span>
+                        <FiFileText size={20} /> <span>Manual Invoices</span>
                     </button>
                     <button onClick={() => { setActiveModule('warranties'); if (window.innerWidth < 1024) setSidebarOpen(true); }} className={`w-full flex items-center gap-4 px-3 py-3 rounded-xl transition ${activeModule === 'warranties' ? 'bg-[#F2A900] text-black font-bold shadow-lg' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}>
-                        <FiShield size={20} /> <span>Generate Warranties</span>
+                        <FiShield size={20} /> <span>Warranties</span>
+                    </button>
+                    <button onClick={() => { setActiveModule('expenses'); if (window.innerWidth < 1024) setSidebarOpen(true); }} className={`w-full flex items-center gap-4 px-3 py-3 rounded-xl transition ${activeModule === 'expenses' ? 'bg-[#F2A900] text-black font-bold shadow-lg' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}>
+                        <FiTrendingDown size={20} /> <span>Store Expenses</span>
+                    </button>
+                    <button onClick={() => { setActiveModule('reports'); if (window.innerWidth < 1024) setSidebarOpen(true); }} className={`w-full flex items-center gap-4 px-3 py-3 rounded-xl transition ${activeModule === 'reports' ? 'bg-[#F2A900] text-black font-bold shadow-lg' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}>
+                        <FiBarChart2 size={20} /> <span>Sales Reports</span>
                     </button>
                     <button onClick={() => { setActiveModule('settings'); if (window.innerWidth < 1024) setSidebarOpen(true); }} className={`w-full flex items-center gap-4 px-3 py-3 rounded-xl transition ${activeModule === 'settings' ? 'bg-[#F2A900] text-black font-bold shadow-lg' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}>
                         <FiSettings size={20} /> <span>Doc Settings</span>
@@ -592,8 +591,10 @@ export default function StoreManagementSystem() {
                             {activeModule === 'dashboard' && 'Store Overview'}
                             {activeModule === 'pos' && 'Point of Sale'}
                             {activeModule === 'customers' && 'Customers'}
-                            {activeModule === 'invoices' && 'Invoice Gen'}
-                            {activeModule === 'warranties' && 'Warranty Gen'}
+                            {activeModule === 'invoices' && 'Invoice Generator'}
+                            {activeModule === 'warranties' && 'Warranty Generator'}
+                            {activeModule === 'expenses' && 'Store Expenses'}
+                            {activeModule === 'reports' && 'Sales Reports'}
                             {activeModule === 'settings' && 'Doc Settings'}
                         </h2>
                     </div>
@@ -602,7 +603,6 @@ export default function StoreManagementSystem() {
                         <div className="flex items-center gap-2 bg-[#0A101D] text-white px-3 sm:px-4 py-1.5 rounded-lg shadow-sm">
                             <FiUser /> <span className="hidden sm:inline">Admin</span>
                         </div>
-                        {/* Mobile Cart Toggle */}
                         {activeModule === 'pos' && (
                             <button
                                 onClick={() => setShowMobileCart(!showMobileCart)}
@@ -643,6 +643,22 @@ export default function StoreManagementSystem() {
                                 <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 border-l-4 border-l-purple-500">
                                     <p className="text-gray-500 text-sm font-bold mb-1">Store Status</p>
                                     <h3 className="text-xl font-black text-green-600 mt-2 flex items-center gap-2"><FiCheckCircle /> Active & Synced</h3>
+                                </div>
+                            </div>
+
+                            {/* GRAPH SECTION */}
+                            <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm mb-8">
+                                <h3 className="text-sm font-black text-gray-900 mb-6 uppercase tracking-wider">7-Day Sales Overview</h3>
+                                <div className="h-72 w-full">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <LineChart data={salesData}>
+                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
+                                            <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#6B7280', fontSize: 12 }} dy={10} />
+                                            <YAxis axisLine={false} tickLine={false} tick={{ fill: '#6B7280', fontSize: 12 }} dx={-10} tickFormatter={(value) => `${value / 1000000}M`} />
+                                            <Tooltip cursor={{ stroke: '#F3F4F6', strokeWidth: 2 }} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} formatter={(value: any) => [`TZS ${value.toLocaleString()}`, 'Sales']} />
+                                            <Line type="monotone" dataKey="sales" stroke="#F2A900" strokeWidth={4} dot={{ r: 4, fill: '#0A101D', strokeWidth: 2 }} activeDot={{ r: 6, fill: '#F2A900' }} />
+                                        </LineChart>
+                                    </ResponsiveContainer>
                                 </div>
                             </div>
                         </div>
@@ -720,23 +736,35 @@ export default function StoreManagementSystem() {
                                     </div>
                                 </div>
 
-                                <button
-                                    onClick={() => {
-                                        const sub = manualInvoice.items.reduce((sum, item) => sum + (item.price * item.qty), 0);
-                                        const payload = {
-                                            ...manualInvoice,
-                                            subtotal: sub,
-                                            total: sub,
-                                            discount: 0,
-                                            paymentMethod: 'Custom',
-                                            date: new Date().toISOString()
-                                        };
-                                        executePrint('invoice', payload);
-                                    }}
-                                    className="w-full bg-[#0A101D] text-white font-black py-3 rounded-xl mt-6 hover:bg-[#F2A900] hover:text-black transition"
-                                >
-                                    Generate & Print Invoice
-                                </button>
+                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-6">
+                                    <button
+                                        onClick={() => {
+                                            const sub = manualInvoice.items.reduce((sum, item) => sum + (item.price * item.qty), 0);
+                                            executePrint('invoice', { ...manualInvoice, subtotal: sub, total: sub, paymentMethod: 'Custom', date: new Date().toISOString() });
+                                        }}
+                                        className="w-full bg-[#0A101D] text-white font-bold py-3 rounded-xl hover:bg-[#F2A900] hover:text-black transition text-xs"
+                                    >
+                                        Print Invoice
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            const sub = manualInvoice.items.reduce((sum, item) => sum + (item.price * item.qty), 0);
+                                            executePrint('proforma', { ...manualInvoice, subtotal: sub, total: sub, paymentMethod: 'Custom', date: new Date().toISOString() });
+                                        }}
+                                        className="w-full bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 transition text-xs"
+                                    >
+                                        Print Proforma
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            const sub = manualInvoice.items.reduce((sum, item) => sum + (item.price * item.qty), 0);
+                                            executePrint('delivery', { ...manualInvoice, subtotal: sub, total: sub, paymentMethod: 'Custom', date: new Date().toISOString() });
+                                        }}
+                                        className="w-full col-span-2 sm:col-span-1 bg-teal-600 text-white font-bold py-3 rounded-xl hover:bg-teal-700 transition text-xs"
+                                    >
+                                        Print Delivery
+                                    </button>
+                                </div>
                             </div>
 
                             {/* Invoice History List */}
@@ -820,6 +848,27 @@ export default function StoreManagementSystem() {
                         </div>
                     )}
 
+                    {/* NEW MODULES PLACEHOLDERS */}
+                    {activeModule === 'expenses' && (
+                        <div className="p-8 w-full flex items-center justify-center bg-gray-50">
+                            <div className="text-center">
+                                <FiTrendingDown size={48} className="mx-auto text-gray-300 mb-4" />
+                                <h2 className="text-xl font-black text-gray-800">Store Expenses Module</h2>
+                                <p className="text-gray-500 mt-2">Track your daily and monthly store expenses here. (Coming Soon)</p>
+                            </div>
+                        </div>
+                    )}
+
+                    {activeModule === 'reports' && (
+                        <div className="p-8 w-full flex items-center justify-center bg-gray-50">
+                            <div className="text-center">
+                                <FiBarChart2 size={48} className="mx-auto text-gray-300 mb-4" />
+                                <h2 className="text-xl font-black text-gray-800">Sales & Analytic Reports</h2>
+                                <p className="text-gray-500 mt-2">Generate comprehensive Excel and PDF reports. (Coming Soon)</p>
+                            </div>
+                        </div>
+                    )}
+
                     {/* 5. DOCUMENT SETTINGS MODULE */}
                     {activeModule === 'settings' && (
                         <div className="p-4 sm:p-8 w-full overflow-y-auto">
@@ -857,10 +906,10 @@ export default function StoreManagementSystem() {
                         </div>
                     )}
 
-                    {/* 6. POS TERMINAL MODULE (Duka na Custom Items) */}
+                    {/* 6. POS TERMINAL MODULE */}
                     {activeModule === 'pos' && (
                         <div className="flex-1 flex flex-col lg:flex-row overflow-hidden relative">
-                            {/* L: Products (Takes full width on mobile, flexible on desktop) */}
+                            {/* L: Products */}
                             <div className={`flex-1 flex flex-col bg-gray-100 transition-all ${showMobileCart ? 'hidden lg:flex' : 'flex'}`}>
                                 <div className="p-4 bg-white border-b border-gray-200 flex flex-col sm:flex-row items-stretch sm:items-center justify-between shadow-sm gap-3">
                                     <div className="relative w-full sm:w-96">
@@ -904,7 +953,6 @@ export default function StoreManagementSystem() {
                                             >
                                                 {!product.isOnline && <span className="absolute top-2 left-2 bg-gray-800 text-white text-[8px] px-1.5 py-0.5 rounded font-black z-10 shadow">STORE ONLY</span>}
 
-                                                {/* PRODUCT IMAGE FIX */}
                                                 <div className="w-full h-24 sm:h-28 bg-gray-50 rounded-xl mb-3 flex items-center justify-center border border-gray-100 group-hover:bg-yellow-50/50 relative overflow-hidden">
                                                     {getDisplayImage(product.imageUrl) ? (
                                                         <img src={getImageUrl(getDisplayImage(product.imageUrl))} alt={product.name} className="absolute inset-0 w-full h-full object-contain mix-blend-multiply p-2" />
@@ -926,10 +974,9 @@ export default function StoreManagementSystem() {
                                 </div>
                             </div>
 
-                            {/* R: Cart (Sidebar on Desktop, Full screen overlay on Mobile if active) */}
+                            {/* R: Cart */}
                             <div className={`lg:w-[350px] xl:w-[420px] bg-white border-l border-gray-200 flex flex-col shadow-2xl z-30 flex-shrink-0 absolute lg:relative inset-0 lg:inset-auto ${showMobileCart ? 'flex' : 'hidden lg:flex'}`}>
 
-                                {/* Mobile Cart Header with Close Button */}
                                 <div className="lg:hidden p-4 bg-[#0A101D] text-white flex justify-between items-center">
                                     <h2 className="font-black text-lg flex items-center gap-2"><FiShoppingCart className="text-[#F2A900]" /> Current Order</h2>
                                     <button onClick={() => setShowMobileCart(false)} className="bg-gray-800 p-2 rounded text-gray-300 hover:text-white"><FiX size={20} /></button>
@@ -995,7 +1042,6 @@ export default function StoreManagementSystem() {
                                                         <h4 className="font-bold text-xs text-gray-800 line-clamp-2 leading-snug">{item.name}</h4>
                                                     </div>
 
-                                                    {/* Warranty Selector */}
                                                     <div className="flex items-center gap-2 mt-1">
                                                         <FiShield className="text-green-600" size={12} />
                                                         <select
@@ -1265,7 +1311,7 @@ export default function StoreManagementSystem() {
             {/* ============================================== */}
             {successModal && !printType && (
                 <div className="fixed inset-0 bg-gray-900/90 z-[90] flex items-center justify-center p-4 animate-fade-in backdrop-blur-sm">
-                    <div className="bg-white rounded-3xl w-full max-w-xl p-6 sm:p-10 text-center shadow-2xl relative overflow-hidden">
+                    <div className="bg-white rounded-3xl w-full max-w-2xl p-6 sm:p-10 text-center shadow-2xl relative overflow-hidden">
                         <div className="absolute top-0 left-0 w-full h-2 bg-green-500"></div>
 
                         <div className="w-16 h-16 sm:w-24 sm:h-24 bg-green-50 text-green-500 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6">
@@ -1273,27 +1319,34 @@ export default function StoreManagementSystem() {
                         </div>
 
                         <h2 className="text-2xl sm:text-3xl font-black text-gray-900 mb-2">Payment Successful!</h2>
-                        <p className="text-xs sm:text-sm text-gray-500 font-medium mb-8 sm:mb-10">Transaction completed for <span className="font-bold text-gray-800">TZS {total.toLocaleString()}</span>. Please select the document to print for the customer.</p>
+                        <p className="text-xs sm:text-sm text-gray-500 font-medium mb-8 sm:mb-10">Transaction completed for <span className="font-bold text-gray-800">TZS {total.toLocaleString()}</span>. Select a document to print.</p>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-8 sm:mb-10">
-                            <button onClick={() => executePrint('receipt')} className="flex sm:flex-col items-center justify-center gap-3 p-4 sm:p-6 border-2 border-gray-100 rounded-2xl hover:border-[#F2A900] hover:bg-yellow-50 transition group">
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-8 sm:mb-10">
+                            <button onClick={() => executePrint('receipt')} className="flex flex-col items-center justify-center gap-3 p-4 sm:p-6 border-2 border-gray-100 rounded-2xl hover:border-[#F2A900] hover:bg-yellow-50 transition group">
                                 <FiFileText size={24} className="sm:w-8 sm:h-8 text-gray-400 group-hover:text-[#F2A900]" />
-                                <div className="flex flex-col items-start sm:items-center">
-                                    <span className="font-black text-sm text-gray-800">Print Receipt</span>
+                                <div className="flex flex-col items-center">
+                                    <span className="font-black text-xs sm:text-sm text-gray-800">Receipt</span>
                                     <span className="text-[10px] text-gray-500 font-bold uppercase">(Thermal)</span>
                                 </div>
                             </button>
-                            <button onClick={() => executePrint('invoice')} className="flex sm:flex-col items-center justify-center gap-3 p-4 sm:p-6 border-2 border-gray-100 rounded-2xl hover:border-blue-500 hover:bg-blue-50 transition group">
+                            <button onClick={() => executePrint('invoice')} className="flex flex-col items-center justify-center gap-3 p-4 sm:p-6 border-2 border-gray-100 rounded-2xl hover:border-blue-500 hover:bg-blue-50 transition group">
                                 <FiFileText size={24} className="sm:w-8 sm:h-8 text-gray-400 group-hover:text-blue-500" />
-                                <div className="flex flex-col items-start sm:items-center">
-                                    <span className="font-black text-sm text-gray-800">Print Invoice</span>
+                                <div className="flex flex-col items-center">
+                                    <span className="font-black text-xs sm:text-sm text-gray-800">Invoice</span>
                                     <span className="text-[10px] text-gray-500 font-bold uppercase">(A4 Doc)</span>
                                 </div>
                             </button>
-                            <button onClick={() => executePrint('warranty')} className="flex sm:flex-col items-center justify-center gap-3 p-4 sm:p-6 border-2 border-gray-100 rounded-2xl hover:border-green-500 hover:bg-green-50 transition group">
+                            <button onClick={() => executePrint('delivery')} className="flex flex-col items-center justify-center gap-3 p-4 sm:p-6 border-2 border-gray-100 rounded-2xl hover:border-teal-500 hover:bg-teal-50 transition group">
+                                <FiTruck size={24} className="sm:w-8 sm:h-8 text-gray-400 group-hover:text-teal-500" />
+                                <div className="flex flex-col items-center">
+                                    <span className="font-black text-xs sm:text-sm text-gray-800">Delivery</span>
+                                    <span className="text-[10px] text-gray-500 font-bold uppercase">(A4 Doc)</span>
+                                </div>
+                            </button>
+                            <button onClick={() => executePrint('warranty')} className="flex flex-col items-center justify-center gap-3 p-4 sm:p-6 border-2 border-gray-100 rounded-2xl hover:border-green-500 hover:bg-green-50 transition group">
                                 <FiShield size={24} className="sm:w-8 sm:h-8 text-gray-400 group-hover:text-green-500" />
-                                <div className="flex flex-col items-start sm:items-center">
-                                    <span className="font-black text-sm text-gray-800">Warranty</span>
+                                <div className="flex flex-col items-center">
+                                    <span className="font-black text-xs sm:text-sm text-gray-800">Warranty</span>
                                     <span className="text-[10px] text-gray-500 font-bold uppercase">(Certificate)</span>
                                 </div>
                             </button>
