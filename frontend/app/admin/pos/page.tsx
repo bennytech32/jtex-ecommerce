@@ -8,7 +8,7 @@ import {
     FiClock, FiUser, FiSmartphone, FiArrowLeft, FiCheckCircle,
     FiShoppingCart, FiFileText, FiShield, FiUserPlus, FiPercent,
     FiPieChart, FiUsers, FiSettings, FiMenu, FiX, FiTag, FiMonitor, FiSave, FiLogOut,
-    FiTrendingDown, FiBarChart2
+    FiTrendingDown, FiBarChart2, FiTruck
 } from 'react-icons/fi';
 import {
     LineChart, Line, BarChart, Bar, XAxis, YAxis,
@@ -39,7 +39,7 @@ export default function StoreManagementSystem() {
 
     // Customer Selection & Registration
     const [selectedCustomer, setSelectedCustomer] = useState<{ name: string, phone: string }>({ name: 'Walk-in Customer', phone: '' });
-    const [newCustomerModal, setNewCustomerModal] = useState(false);
+    const [newCustomerModal, useStateNewCustomerModal] = useState(false);
     const [newCustomerData, setNewCustomerData] = useState({ name: '', phone: '', email: '' });
 
     // Custom Offline Item Modal
@@ -325,7 +325,7 @@ export default function StoreManagementSystem() {
         } catch (error) {
             console.error("Error saving customer:", error);
         } finally {
-            setNewCustomerModal(false);
+            useStateNewCustomerModal(false);
             setNewCustomerData({ name: '', phone: '', email: '' });
         }
     };
@@ -672,7 +672,7 @@ export default function StoreManagementSystem() {
                                     <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                                     <input type="text" placeholder="Search customers..." className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-xl focus:border-[#F2A900] outline-none" />
                                 </div>
-                                <button onClick={() => setNewCustomerModal(true)} className="w-full sm:w-auto bg-[#0A101D] text-white px-4 py-2 rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-[#F2A900] hover:text-black transition">
+                                <button onClick={() => useStateNewCustomerModal(true)} className="w-full sm:w-auto bg-[#0A101D] text-white px-4 py-2 rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-[#F2A900] hover:text-black transition">
                                     <FiUserPlus /> Add New Customer
                                 </button>
                             </div>
@@ -1128,7 +1128,7 @@ export default function StoreManagementSystem() {
             {newCustomerModal && (
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[80] flex items-center justify-center p-4">
                     <div className="bg-white rounded-3xl w-full max-w-md p-6 shadow-2xl relative">
-                        <button onClick={() => setNewCustomerModal(false)} className="absolute top-4 right-4 text-gray-400 hover:text-red-500"><FiX size={24} /></button>
+                        <button onClick={() => useStateNewCustomerModal(false)} className="absolute top-4 right-4 text-gray-400 hover:text-red-500"><FiX size={24} /></button>
                         <h2 className="text-xl font-black text-gray-900 mb-6 flex items-center gap-2"><FiUserPlus className="text-[#F2A900]" /> Register New Customer</h2>
                         <div className="space-y-4">
                             <div>
