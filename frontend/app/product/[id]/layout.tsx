@@ -3,7 +3,11 @@ import { Metadata } from 'next';
 const SITE_URL = 'https://jtex.co.tz';
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://jtex-ecommerce-production.up.railway.app';
 
-export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
+export async function generateMetadata(props: any): Promise<Metadata> {
+    // FIX KUBWA: Tuna-await params ili kuzuia error ya "undefined" kwenye Next.js
+    const params = await Promise.resolve(props.params);
+    const id = params?.id || '';
+
     const fallbackImage = `${SITE_URL}/logo.png`;
     const fallbackTitle = 'Jtex E-Commerce | Best Quality, Best Prices';
     const fallbackDesc = 'Shop the latest gadgets, electronics, fashion and more at Jtex Africa.';
@@ -14,11 +18,11 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
 
         if (res.ok) {
             const products = await res.json();
-            const decodedId = decodeURIComponent(params.id);
+            const decodedId = decodeURIComponent(id);
 
             const product = products.find((p: any) => {
                 const slug = p.name ? p.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '') : '';
-                return p.id === decodedId || slug === decodedId;
+                return String(p.id) === String(decodedId) || slug === decodedId;
             });
 
             if (product) {
@@ -41,10 +45,11 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
                 return {
                     title: title,
                     description: desc,
+                    metadataBase: new URL(SITE_URL),
                     openGraph: {
                         title: title,
                         description: desc,
-                        url: `${SITE_URL}/product/${params.id}`,
+                        url: `${SITE_URL}/product/${id}`,
                         images: [
                             {
                                 url: finalImageUrl,
@@ -69,7 +74,7 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
         console.error("Metadata error:", error);
     }
 
-    // KAMA API IMELALA AU KUNA ERROR, LALAZIMISHA KUTUMIA DOMAIN YAKO BILA LOCALHOST
+    // KAMA API IMELALA AU KUNA ERROR, LAZIMISHA KUTUMIA DOMAIN YAKO BILA LOCALHOST
     return {
         title: fallbackTitle,
         description: fallbackDesc,
@@ -77,7 +82,7 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
         openGraph: {
             title: fallbackTitle,
             description: fallbackDesc,
-            url: `${SITE_URL}/product/${params.id}`,
+            url: `${SITE_URL}/product/${id}`,
             images: [
                 {
                     url: fallbackImage,
