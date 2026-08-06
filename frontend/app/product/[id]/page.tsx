@@ -156,6 +156,20 @@ export default function ProductDetail() {
     if (currentImageIndex > 0) scrollToImage(currentImageIndex - 1);
   };
 
+  // KITU MPYA: Inabadilisha picha kulingana na rangi iliyochaguliwa
+  const handleColorChange = (color: string) => {
+    setSelectedColor(color);
+
+    // Kama picha zako zina majina ya rangi (k.m. 'red.png' au zina jina la rangi ndani ya URL)
+    const matchingImageIndex = images.findIndex(img =>
+      img.toLowerCase().includes(color.toLowerCase())
+    );
+
+    if (matchingImageIndex !== -1) {
+      scrollToImage(matchingImageIndex);
+    }
+  };
+
   // --- CART ADDING ---
   const handleAddToCart = (redirect: boolean = false) => {
     const productToAdd = {
@@ -266,9 +280,7 @@ export default function ProductDetail() {
   return (
     <div className="min-h-screen bg-gray-50/30 text-gray-900 font-sans pb-24 lg:pb-0 overflow-x-hidden">
 
-      {/* ========================================================= */}
-      {/* HEADERS (DESKTOP) - NO LOGO */}
-      {/* ========================================================= */}
+      {/* HEADERS (DESKTOP) */}
       <header className="hidden lg:block bg-[#1B6B80] text-white border-b border-[#145363] sticky top-0 z-40">
         <div className="max-w-[1440px] xl:max-w-[1536px] mx-auto px-6 h-20 flex items-center justify-between gap-6">
           <div className="flex items-center gap-4 flex-shrink-0">
@@ -282,7 +294,6 @@ export default function ProductDetail() {
             </div>
           </div>
 
-          {/* ACTIVE SEARCH DESKTOP */}
           <div className="flex-1 max-w-2xl relative mx-auto">
             <form onSubmit={handleSearch} className="flex items-center h-11 bg-white rounded-lg overflow-hidden shadow-sm w-full">
               <input
@@ -299,7 +310,6 @@ export default function ProductDetail() {
               </button>
             </form>
 
-            {/* LIVE SEARCH SUGGESTIONS DROPDOWN (DESKTOP) */}
             {showDesktopSuggestions && searchQuery.trim() !== '' && (
               <div className="absolute top-full mt-2 left-0 w-full bg-white rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.1)] border border-gray-100 overflow-hidden z-50">
                 {filteredSuggestions.length > 0 ? (
@@ -315,7 +325,7 @@ export default function ProductDetail() {
                             <img src={getImageUrl(getDisplayImage(prod.imageUrl))} className="w-full h-full object-contain mix-blend-multiply" alt="" />
                           ) : <FiPackage className="text-gray-400" />}
                         </div>
-                        <div className="flex flex-col flex-1 min-w-0">
+                        <div className="flex flex-col flex-grow min-w-0">
                           <span className="text-sm font-bold text-gray-800 truncate">{prod.name}</span>
                           <span className="text-xs font-black text-[#E8A922]">TZS {prod.price.toLocaleString()}</span>
                         </div>
@@ -343,9 +353,7 @@ export default function ProductDetail() {
         </div>
       </header>
 
-      {/* ========================================================= */}
-      {/* HEADERS (MOBILE) - NO LOGO */}
-      {/* ========================================================= */}
+      {/* HEADERS (MOBILE) */}
       <header className="lg:hidden bg-[#1B6B80] text-white pt-4 pb-3 sticky top-0 z-50 border-b border-[#145363]">
         <div className="px-4 flex items-center justify-between mb-3">
           <div className="flex items-center gap-2 cursor-pointer" onClick={() => router.back()}>
@@ -363,7 +371,6 @@ export default function ProductDetail() {
           </div>
         </div>
 
-        {/* MOBILE SEARCH BAR W/ SUGGESTIONS */}
         <div className="px-4 relative w-full">
           <form onSubmit={handleSearch} className="flex items-center h-10 bg-white rounded-xl overflow-hidden shadow-sm w-full">
             <input
@@ -378,7 +385,6 @@ export default function ProductDetail() {
             <button type="submit" className="h-full px-4 bg-[#E8A922] text-white flex-shrink-0"><FiSearch size={16} /></button>
           </form>
 
-          {/* LIVE SEARCH SUGGESTIONS DROPDOWN (MOBILE) */}
           {showMobileSuggestions && searchQuery.trim() !== '' && (
             <div className="absolute top-full mt-2 left-4 right-4 bg-white rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.15)] border border-gray-100 overflow-hidden z-50">
               {filteredSuggestions.length > 0 ? (
@@ -414,9 +420,7 @@ export default function ProductDetail() {
       <main className="max-w-[1440px] xl:max-w-[1536px] mx-auto lg:px-6 lg:py-8 mt-2 lg:mt-0">
         <div className="flex flex-col lg:flex-row gap-0 lg:gap-8 mb-8 lg:mb-12 bg-white lg:rounded-3xl lg:border border-gray-100 lg:p-6 lg:shadow-sm">
 
-          {/* ========================================================= */}
           {/* IMAGE SECTION */}
-          {/* ========================================================= */}
           <div className="w-full lg:w-[55%] flex flex-col-reverse lg:flex-row gap-4 relative px-4 lg:px-0">
             <div className="hidden lg:flex flex-col gap-3 w-20 flex-shrink-0 max-h-[500px] overflow-y-auto hide-scrollbar">
               {images.map((imgStr, idx) => (
@@ -426,7 +430,6 @@ export default function ProductDetail() {
               ))}
             </div>
 
-            {/* Picha Kubwa: bg-white badala ya bg-gray-50, border imeondolewa ili isiache frame */}
             <div className="flex-1 w-full bg-white rounded-2xl relative h-[350px] lg:h-[500px] overflow-hidden group">
               <button onClick={(e) => toggleWishlist(e, product.id)} className="absolute top-4 right-4 z-20 w-10 h-10 bg-white/90 backdrop-blur rounded-full flex items-center justify-center text-gray-400 hover:text-red-500 shadow-md transition border border-gray-100">
                 <FiHeart className={`text-lg ${isMainProductWishlisted ? "fill-red-500 text-red-500" : ""}`} />
@@ -452,7 +455,6 @@ export default function ProductDetail() {
               <div ref={sliderRef} onScroll={handleScroll} className="w-full h-full flex overflow-x-auto snap-x snap-mandatory hide-scrollbar smooth-scroll scroll-smooth bg-white">
                 {images.length > 0 ? (
                   images.map((imgStr, idx) => (
-                    // Padding imeondolewa (p-0) ili ifit vizuri mpaka kwenye pembe na object-contain inazuia isikatwe
                     <div key={idx} className="w-full h-full flex-shrink-0 snap-center flex items-center justify-center relative">
                       <img src={imgStr} className="w-full h-full object-contain mix-blend-multiply" />
                     </div>
@@ -472,9 +474,7 @@ export default function ProductDetail() {
             </div>
           </div>
 
-          {/* ========================================================= */}
           {/* PRODUCT DETAILS & BUYING OPTIONS */}
-          {/* ========================================================= */}
           <div className="w-full lg:w-[45%] flex flex-col px-4 lg:px-0 py-6 lg:py-0">
 
             <div className="flex flex-wrap items-center gap-2 mb-3">
@@ -483,13 +483,39 @@ export default function ProductDetail() {
 
             <h1 className="text-xl sm:text-2xl lg:text-3xl font-black text-[#1B6B80] leading-tight mb-4">{product.name}</h1>
 
-            <div className="flex flex-col mb-4 bg-gray-50/50 border border-gray-100 p-4 rounded-2xl">
-              <span className="text-3xl lg:text-4xl font-black text-[#E8A922] leading-none tracking-tight">TSH {basePrice.toLocaleString()}</span>
+            {/* SEHEMU YA BEI: RETAIL PRICE & WHOLESALE PRICE */}
+            <div className="flex flex-col mb-4 bg-gray-50/50 border border-gray-100 p-4 rounded-2xl gap-3">
+              <div>
+                <span className="text-xs font-bold text-gray-500 block uppercase tracking-wider mb-1">Retail Price</span>
+                <span className="text-3xl lg:text-4xl font-black text-[#E8A922] leading-none tracking-tight">TSH {basePrice.toLocaleString()}</span>
+              </div>
 
-              {/* WHOLESALE BADGES */}
               {hasWholesale && (
-                <div className="flex items-center gap-2 mt-3">
-                  <span className="text-[10px] text-[#1B6B80] bg-[#1B6B80]/10 border border-[#1B6B80]/20 px-2 py-1 rounded-md font-bold uppercase tracking-wider">Discounts available for bulk orders</span>
+                <div className="border-t border-gray-200 pt-3">
+                  <span className="text-xs font-bold text-[#1B6B80] block uppercase tracking-wider mb-2">Wholesale Pricing Available</span>
+                  <div className="grid grid-cols-3 gap-2 bg-white p-3 rounded-xl border border-gray-100 shadow-sm">
+                    {/* TIER 1 */}
+                    <div className="text-center">
+                      <p className="text-[10px] font-bold text-gray-400 uppercase">{wholesaleTier1Qty || wholesaleMinOrder || '2+'} Pcs</p>
+                      <p className="font-extrabold text-sm text-[#1B6B80]">TZS {(wholesaleTier1Price ? Number(wholesaleTier1Price) : basePrice).toLocaleString()}</p>
+                    </div>
+
+                    {/* TIER 2 */}
+                    <div className="text-center border-x border-gray-100 px-1">
+                      <p className="text-[10px] font-bold text-gray-400 uppercase">{wholesaleTier2Qty ? `${wholesaleTier2Qty}+ Pcs` : 'Tier 2'}</p>
+                      <p className="font-extrabold text-sm text-[#1B6B80]">
+                        {wholesaleTier2Price ? `TZS ${Number(wholesaleTier2Price).toLocaleString()}` : '-'}
+                      </p>
+                    </div>
+
+                    {/* TIER 3 */}
+                    <div className="text-center">
+                      <p className="text-[10px] font-bold text-gray-400 uppercase">{wholesaleTier3Qty ? `${wholesaleTier3Qty}+ Pcs` : 'Tier 3'}</p>
+                      <p className="font-black text-sm text-[#E8A922]">
+                        {wholesaleTier3Price ? `TZS ${Number(wholesaleTier3Price).toLocaleString()}` : '-'}
+                      </p>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
@@ -505,49 +531,13 @@ export default function ProductDetail() {
                     const isWhite = cssColor === '#FFFFFF' || cssColor.toLowerCase() === 'white';
 
                     return (
-                      <div key={i} className="flex flex-col items-center gap-1.5 cursor-pointer group" onClick={() => setSelectedColor(c)}>
+                      <div key={i} className="flex flex-col items-center gap-1.5 cursor-pointer group" onClick={() => handleColorChange(c)}>
                         <div className={`w-6 h-6 rounded-full flex items-center justify-center transition-all duration-300 ${isSelected ? 'ring-2 ring-offset-2 ring-[#E8A922] scale-110' : 'ring-1 ring-gray-200 hover:ring-gray-300'}`} style={{ backgroundColor: cssColor }}>
                           {isSelected && <FiCheck className={isWhite ? 'text-black' : 'text-white'} size={12} />}
                         </div>
                       </div>
                     );
                   })}
-                </div>
-              </div>
-            )}
-
-            {/* WHOLESALE - DYNAMIC 3 TIERS FROM ADMIN */}
-            {hasWholesale && (
-              <div className="bg-gradient-to-br from-[#1B6B80] to-[#10404d] rounded-2xl p-4 border border-[#145363] mb-6 shadow-md text-white">
-                <div className="flex items-center justify-between mb-3">
-                  <p className="text-[11px] font-black text-[#E8A922] uppercase tracking-widest flex items-center gap-2">
-                    <FiPackage size={14} /> Bulk Order Discounts
-                  </p>
-                </div>
-                <div className="grid grid-cols-3 divide-x divide-white/10">
-
-                  {/* TIER 1 */}
-                  <div className="text-center px-2">
-                    <p className="text-[10px] font-medium text-gray-300 mb-0.5">{wholesaleTier1Qty || wholesaleMinOrder || '2'} Pcs</p>
-                    <p className="font-bold text-xs text-white">TZS {(wholesaleTier1Price ? Number(wholesaleTier1Price) : basePrice).toLocaleString()}</p>
-                  </div>
-
-                  {/* TIER 2 */}
-                  <div className="text-center px-2">
-                    <p className="text-[10px] font-medium text-gray-300 mb-0.5">{wholesaleTier2Qty ? `${wholesaleTier2Qty} Pcs` : 'Tier 2'}</p>
-                    <p className="font-bold text-xs text-white">
-                      {wholesaleTier2Price ? `TZS ${Number(wholesaleTier2Price).toLocaleString()}` : '-'}
-                    </p>
-                  </div>
-
-                  {/* TIER 3 */}
-                  <div className="text-center px-2">
-                    <p className="text-[10px] font-medium text-gray-300 mb-0.5">{wholesaleTier3Qty ? `${wholesaleTier3Qty} Pcs` : 'Tier 3'}</p>
-                    <p className="font-black text-xs text-[#E8A922]">
-                      {wholesaleTier3Price ? `TZS ${Number(wholesaleTier3Price).toLocaleString()}` : '-'}
-                    </p>
-                  </div>
-
                 </div>
               </div>
             )}
@@ -574,7 +564,6 @@ export default function ProductDetail() {
 
             {/* STATUS YA INSTOCK NA DELIVERY */}
             <div className="mb-6 bg-gray-50 border border-gray-100 p-4 rounded-2xl flex flex-col gap-4">
-              {/* In Stock / Pre-order Block */}
               <div className="flex items-start gap-3">
                 {preInfo && preInfo.isPreOrder ? (
                   <>
@@ -599,10 +588,8 @@ export default function ProductDetail() {
                 )}
               </div>
 
-              {/* Separator */}
               <div className="border-t border-gray-200"></div>
 
-              {/* Delivery Information Block */}
               <div className="flex items-start gap-3">
                 <FiTruck className="text-[#E8A922] mt-0.5 flex-shrink-0" size={20} />
                 <div>
@@ -679,9 +666,7 @@ export default function ProductDetail() {
           </div>
         </div>
 
-        {/* ========================================================= */}
         {/* SIMILAR PRODUCTS SECTION */}
-        {/* ========================================================= */}
         <div className="mb-12 px-4 lg:px-0">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl lg:text-2xl font-black text-[#1B6B80]">Similar Products</h2>
@@ -728,7 +713,7 @@ export default function ProductDetail() {
                     </div>
                   </div>
                 </div>
-              )
+              );
             })}
           </div>
         </div>

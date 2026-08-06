@@ -6,7 +6,7 @@ import { useCart } from '../context/CartContext';
 import {
   FiArrowLeft, FiShoppingCart, FiMapPin, FiCreditCard,
   FiTrash2, FiChevronRight, FiShield, FiCheckCircle,
-  FiTruck, FiPhone, FiUser, FiStar, FiInfo, FiMinus, FiPlus, FiX, FiLock, FiMail, FiList
+  FiTruck, FiPhone, FiUser, FiStar, FiInfo, FiMinus, FiPlus, FiX, FiLock, FiMail, FiList, FiCheck
 } from 'react-icons/fi';
 
 // === HELPER FUNCTION: KUBADILI JINA LA RANGI KUWA RANGI HALISI ===
@@ -38,7 +38,7 @@ const ALL_PAYMENT_TYPES = [
   { id: 'store', name: 'Pay at Store', desc: 'Pay when you pick up' }
 ];
 
-// === PAYMENT METHODS (GATEWAYS) ===
+// === PAYMENT METHODS ===
 const PAYMENT_METHODS = [
   { id: 'mobile_money', name: 'Mobile Money', desc: 'Pay via Lipa Namba', icon: '📱' },
   { id: 'bank', name: 'Bank Transfer', desc: 'Direct to our bank', icon: '🏦' },
@@ -46,7 +46,6 @@ const PAYMENT_METHODS = [
   { id: 'mastercard', name: 'MasterCard', desc: 'Debit/Credit Card', icon: '🔴🟠' }
 ];
 
-// === NCHI NA MIKOA PAMOJA NA BENDERA ZAKE ===
 const EA_COUNTRIES = [
   { name: "Tanzania", code: "+255", flag: "🇹🇿" },
   { name: "Kenya", code: "+254", flag: "🇰🇪" },
@@ -73,16 +72,19 @@ const ISLAND_REGIONS = [
 export default function CheckoutSystem() {
   const router = useRouter();
 
-  // FIX: Tumeondoa updateQuantity hapa ili kuzuia Type Error ya TypeScript
-  const { cart, removeFromCart, clearCart, addToCart } = useCart();
+  // Tunavuta Mfumo Mzima na function mpya toka CartContext!
+  const cartContext = useCart() as any;
+  const cart = cartContext.cart || [];
+  const removeFromCart = cartContext.removeFromCart;
+  const clearCart = cartContext.clearCart;
+  const updateQuantity = cartContext.updateQuantity;
+  const updateItemColor = cartContext.updateItemColor;
+
   const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   const getApiUrl = () => process.env.NEXT_PUBLIC_API_URL || 'https://jtex-ecommerce-production.up.railway.app';
-
-  const getImageUrl = (url: string) => {
-    if (!url) return '';
-    return url.startsWith('http') ? url : `${getApiUrl()}${url}`;
-  };
+  const getImageUrl = (url: string) => url ? (url.startsWith('http') ? url : `${getApiUrl()}${url}`) : '';
 
   const getImagesArray = (imgData: string) => {
     if (!imgData) return [];
@@ -94,15 +96,46 @@ export default function CheckoutSystem() {
     }
   };
 
-  const getItemQuantity = (item: any) => {
-    return Number(item.quantity || item.quantityToAdd || item.qty || 1);
+  const getItemQuantity = (item: any) => Number(item.quantity || item.quantityToAdd || item.qty || 1);
+
+  // === DYNAMIC PRICE SYNC ===
+  const getItemDynamicPrice = (item: any) => {
+    const qty = getItemQuantity(item);
+    let basePrice = Number(item.price || item.originalPrice || 0);
+
+    try {
+      let specs = item.specifications;
+      if (typeof specs === 'string') {
+        try { specs = JSON.parse(specs); } catch (e) { }
+      }
+
+      if (specs && specs.isWholesale === 'Yes') {
+        let tiers: { min: number, price: number }[] = [];
+        const parseTier = (qStr: any, pStr: any) => {
+          if (!qStr || !pStr) return;
+          let min = parseInt(String(qStr).trim().replace('+', '').split('-')[0]);
+          if (!isNaN(min) && !isNaN(Number(pStr))) tiers.push({ min, price: Number(pStr) });
+        };
+
+        parseTier(specs.wholesaleTier1Qty || specs.wholesaleMinOrder, specs.wholesaleTier1Price);
+        parseTier(specs.wholesaleTier2Qty, specs.wholesaleTier2Price);
+        parseTier(specs.wholesaleTier3Qty, specs.wholesaleTier3Price);
+
+        tiers.sort((a, b) => b.min - a.min);
+        for (let t of tiers) {
+          if (qty >= t.min) return t.price;
+        }
+      }
+    } catch (error) { }
+
+    return basePrice;
   };
 
+  // === COLOR EXTRACTION ===
   const getColorOptions = (item: any) => {
     let options: string[] = [];
     try {
       let parsed = item.specifications;
-
       if (typeof parsed === 'string') {
         try { parsed = JSON.parse(parsed); } catch (e) { }
       }
@@ -111,64 +144,20 @@ export default function CheckoutSystem() {
       }
 
       if (parsed && typeof parsed === 'object') {
-        const colorKey = Object.keys(parsed).find(k =>
-          ['color', 'colors', 'colour', 'colours', 'rangi'].includes(k.toLowerCase().trim())
-        );
+        const colorKey = Object.keys(parsed).find(k => ['color', 'colors', 'colour', 'colours', 'rangi'].includes(k.toLowerCase().trim()));
         if (colorKey && parsed[colorKey]) {
-          options = String(parsed[colorKey]).split(/[\/,|]/).map((c: string) => c.trim()).filter(Boolean);
+          options = String(parsed[colorKey]).split(/[\/,|]/).map(c => c.trim()).filter(Boolean);
         }
       }
-    } catch (e) {
-      console.error("Color parse error:", e);
-    }
+    } catch (e) { }
 
     if (options.length === 0) {
-      const rootColor = item.Color || item.color || item.Colors || item.colors || item.Colour || item.colour || item.Rangi || item.rangi;
-      if (rootColor) {
-        options = String(rootColor).split(/[\/,|]/).map((c: string) => c.trim()).filter(Boolean);
-      }
+      const rootColor = item.Color || item.color || item.Colors || item.colors || item.Rangi;
+      if (rootColor) options = String(rootColor).split(/[\/,|]/).map(c => c.trim()).filter(Boolean);
     }
 
-    if (options.length === 0 && item.selectedColor) {
-      options = [item.selectedColor];
-    }
-
+    if (options.length === 0 && item.selectedColor) options = [item.selectedColor];
     return options;
-  };
-
-  const handleColorChange = (item: any, newColor: string) => {
-    if (item.selectedColor === newColor) return;
-    const oldCartId = item.cartId || item.id;
-    const qty = getItemQuantity(item);
-
-    const updatedItem = {
-      ...item,
-      selectedColor: newColor,
-      cartId: `${item.id}-${newColor}`,
-      quantity: qty,
-      quantityToAdd: qty,
-      qty: qty
-    };
-
-    if (removeFromCart) removeFromCart(oldCartId);
-    setTimeout(() => { if (addToCart) addToCart(updatedItem); }, 200);
-  };
-
-  // FIX: Njia safi ya ku-update idadi bila kutegemea function ambayo haipo
-  const handleQuantityChange = (item: any, newQty: number) => {
-    if (newQty < 1) return;
-    const targetCartId = item.cartId || item.id;
-
-    const updatedItem = {
-      ...item,
-      quantity: newQty,
-      quantityToAdd: newQty,
-      qty: newQty,
-      cartId: targetCartId
-    };
-
-    if (removeFromCart) removeFromCart(targetCartId);
-    setTimeout(() => { if (addToCart) addToCart(updatedItem); }, 200);
   };
 
   // States
@@ -178,13 +167,7 @@ export default function CheckoutSystem() {
 
   // Form States
   const [formData, setFormData] = useState({
-    fullName: '',
-    phoneCode: '+255',
-    phone: '',
-    country: 'Tanzania',
-    region: 'Dar es Salaam',
-    district: '',
-    address: ''
+    fullName: '', phoneCode: '+255', phone: '', country: 'Tanzania', region: 'Dar es Salaam', district: '', address: ''
   });
 
   const isTanzania = formData.country === 'Tanzania';
@@ -194,16 +177,12 @@ export default function CheckoutSystem() {
   const availablePaymentTypes = isTanzania ? ALL_PAYMENT_TYPES : ALL_PAYMENT_TYPES.filter(type => type.id !== 'cod');
 
   useEffect(() => {
-    if (!isTanzania && selectedPaymentType.id === 'cod') {
-      setSelectedPaymentType(availablePaymentTypes[0]);
-    }
+    if (!isTanzania && selectedPaymentType.id === 'cod') setSelectedPaymentType(availablePaymentTypes[0]);
   }, [isTanzania, selectedPaymentType, availablePaymentTypes]);
 
   useEffect(() => {
     const selectedCountryObj = EA_COUNTRIES.find(c => c.name === formData.country);
-    if (selectedCountryObj) {
-      setFormData(prev => ({ ...prev, phoneCode: selectedCountryObj.code }));
-    }
+    if (selectedCountryObj) setFormData(prev => ({ ...prev, phoneCode: selectedCountryObj.code }));
   }, [formData.country]);
 
   const availableShippingMethods = ALL_SHIPPING_METHODS.filter(method => {
@@ -211,18 +190,14 @@ export default function CheckoutSystem() {
     if (method.id === 'bodaboda') return isDarEsSalaam;
     if (method.id === 'boat') return isIsland;
     if (method.id === 'bus') return !isIsland;
-    if (method.id === 'aeroplane') return true;
     return true;
   });
 
   const [selectedShipping, setSelectedShipping] = useState(availableShippingMethods.find(m => m.id !== 'bodaboda') || availableShippingMethods[0]);
 
   useEffect(() => {
-    setMounted(true);
-    // Hapa tunazuia bodaboda isichaguliwe kama default kwa sababu ni "Coming Soon"
     if (!availableShippingMethods.find(m => m.id === selectedShipping?.id) || selectedShipping?.id === 'bodaboda') {
-      const validMethod = availableShippingMethods.find(m => m.id !== 'bodaboda') || availableShippingMethods[0];
-      setSelectedShipping(validMethod);
+      setSelectedShipping(availableShippingMethods.find(m => m.id !== 'bodaboda') || availableShippingMethods[0]);
     }
   }, [formData.region, formData.country, availableShippingMethods, selectedShipping?.id]);
 
@@ -240,21 +215,15 @@ export default function CheckoutSystem() {
             extractedCode = match.code;
             phoneVal = phoneVal.replace(match.code, '').trim();
           }
-        } else if (phoneVal.startsWith('0')) {
-          phoneVal = phoneVal.substring(1);
-        }
+        } else if (phoneVal.startsWith('0')) phoneVal = phoneVal.substring(1);
 
-        setFormData(prev => ({
-          ...prev,
-          fullName: parsedUser.name || '',
-          phoneCode: extractedCode,
-          phone: phoneVal,
-        }));
+        setFormData(prev => ({ ...prev, fullName: parsedUser.name || '', phoneCode: extractedCode, phone: phoneVal }));
       } catch (e) { }
     }
   }, []);
 
-  const subtotal = cart?.reduce((acc: number, item: any) => acc + (Number(item.price) * getItemQuantity(item)), 0) || 0;
+  // === MAhesabu yanatumia cart ya Global moja kwa moja!
+  const subtotal = cart.reduce((acc: number, item: any) => acc + (getItemDynamicPrice(item) * getItemQuantity(item)), 0);
   const deliveryFee = 0;
   const totalAmount = subtotal + deliveryFee;
 
@@ -268,7 +237,6 @@ export default function CheckoutSystem() {
       return;
     }
     if (!savedUser) {
-      // Redirect to main login page with checkout return URL
       router.push('/login?redirect=/checkout');
       return;
     }
@@ -288,20 +256,19 @@ export default function CheckoutSystem() {
 
     let itemsText = cart.map((item: any, index: number) => {
       const qty = getItemQuantity(item);
+      const dynamicPrice = getItemDynamicPrice(item);
       const colorOptions = getColorOptions(item);
       const activeColor = item.selectedColor || colorOptions[0];
       const colorText = activeColor ? ` (Color: ${activeColor})` : '';
 
-      return `${index + 1}. ${item.name}${colorText} - Qty: ${qty} (TZS ${(Number(item.price) * qty).toLocaleString()})`;
+      return `${index + 1}. ${item.name}${colorText} - Qty: ${qty} (TZS ${(dynamicPrice * qty).toLocaleString()})`;
     }).join('%0A');
 
     const paymentInfo = selectedPaymentType.id === 'cod'
       ? `Nimelipia Kianzio (Advance): TZS ${advancePayment.toLocaleString()}%0ASalia langu ni: TZS ${remainingBalance.toLocaleString()} (Nitalipa nikipokea mzigo)`
       : `Nimelipia Full Amount: TZS ${totalAmount.toLocaleString()}`;
 
-    const shippingPriceInfo = "Negotiable";
-
-    const message = `Habari Jtex, nimefanya manunuzi mtandaoni.%0A%0A*BIDHAA ZANGU:*%0A${itemsText}%0A%0A*TAARIFA ZANGU:*%0AJina: ${formData.fullName}%0ASimu: ${fullPhoneNumber}%0ANchi: ${formData.country}%0AMkoa/Mji: ${formData.region}%0AAnwani: ${formData.address}%0A%0A*NJIA YA KUSAFIRISHA:*%0A${selectedShipping.name} (${shippingPriceInfo})%0A%0A*JUMLA KUU BIDHAA:* TZS ${subtotal.toLocaleString()}%0A%0A*MALIPO YALIYOTEULIWA:*%0ANjia: ${selectedPaymentMethod.name}%0A${paymentInfo}%0A%0ATafadhali thibitisha order yangu.`;
+    const message = `Habari Jtex, nimefanya manunuzi mtandaoni.%0A%0A*BIDHAA ZANGU:*%0A${itemsText}%0A%0A*TAARIFA ZANGU:*%0AJina: ${formData.fullName}%0ASimu: ${fullPhoneNumber}%0ANchi: ${formData.country}%0AMkoa/Mji: ${formData.region}%0AAnwani: ${formData.address}%0A%0A*NJIA YA KUSAFIRISHA:*%0A${selectedShipping.name} (Negotiable)%0A%0A*JUMLA KUU BIDHAA:* TZS ${subtotal.toLocaleString()}%0A%0A*MALIPO YALIYOTEULIWA:*%0ANjia: ${selectedPaymentMethod.name}%0A${paymentInfo}%0A%0ATafadhali thibitisha order yangu.`;
 
     const whatsappUrl = `https://wa.me/${businessPhone}?text=${message}`;
     clearCart();
@@ -312,25 +279,20 @@ export default function CheckoutSystem() {
   const renderStepper = () => (
     <div className="flex items-center justify-center gap-2 sm:gap-4 mb-8 relative px-4 max-w-lg mx-auto">
       <div className="absolute top-1/2 left-[15%] right-[15%] h-0.5 bg-gray-200 -z-10 -translate-y-1/2"></div>
-
       <div className="flex flex-col items-center gap-2 bg-white px-2">
         <div className={`w-8 h-8 rounded-full flex items-center justify-center ${currentStep >= 1 ? 'bg-[#E8A922] text-white shadow-md' : 'bg-gray-200 text-gray-400'}`}>
           <FiShoppingCart size={14} />
         </div>
         <span className={`text-[10px] sm:text-xs font-bold ${currentStep >= 1 ? 'text-[#1B6B80]' : 'text-gray-400'}`}>Cart</span>
       </div>
-
       <div className={`flex-1 h-0.5 ${currentStep >= 2 ? 'bg-[#E8A922]' : 'bg-transparent'}`}></div>
-
       <div className="flex flex-col items-center gap-2 bg-white px-2">
         <div className={`w-8 h-8 rounded-full flex items-center justify-center ${currentStep >= 2 ? 'bg-[#E8A922] text-white shadow-md' : 'bg-gray-200 text-gray-400'}`}>
           <FiTruck size={14} />
         </div>
         <span className={`text-[10px] sm:text-xs font-bold ${currentStep >= 2 ? 'text-[#1B6B80]' : 'text-gray-400'}`}>Shipping</span>
       </div>
-
       <div className={`flex-1 h-0.5 ${currentStep >= 3 ? 'bg-[#E8A922]' : 'bg-transparent'}`}></div>
-
       <div className="flex flex-col items-center gap-2 bg-white px-2">
         <div className={`w-8 h-8 rounded-full flex items-center justify-center ${currentStep >= 3 ? 'bg-[#E8A922] text-white shadow-md' : 'bg-gray-200 text-gray-400'}`}>
           <FiCreditCard size={14} />
@@ -367,19 +329,21 @@ export default function CheckoutSystem() {
         <div className="flex flex-col lg:flex-row gap-6">
           <div className="flex-1 space-y-6">
 
-            {/* STEP 1: CART */}
+            {/* STEP 1: CART (MOBILE & TABLET VIEW) */}
             {currentStep === 1 && (
               <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100">
                 <div className="flex items-center justify-between mb-4 border-b border-gray-100 pb-4">
-                  <h2 className="font-black text-lg flex items-center gap-2 text-[#1B6B80]"><FiShoppingCart className="text-[#E8A922]" /> My Cart ({cart?.length || 0} Items)</h2>
-                  {cart?.length > 0 && <button onClick={clearCart} className="text-red-500 text-xs font-bold hover:underline flex items-center gap-1"><FiTrash2 /> Clear All</button>}
+                  <h2 className="font-black text-lg flex items-center gap-2 text-[#1B6B80]"><FiShoppingCart className="text-[#E8A922]" /> My Cart ({cart.length || 0} Items)</h2>
+                  {cart.length > 0 && <button onClick={clearCart} className="text-red-500 text-xs font-bold hover:underline flex items-center gap-1"><FiTrash2 /> Clear All</button>}
                 </div>
 
                 <div className="space-y-4">
-                  {cart?.length > 0 ? cart.map((item: any) => {
+                  {cart.length > 0 ? cart.map((item: any) => {
                     const displayImage = getImagesArray(item.imageUrl)[0];
                     const qty = getItemQuantity(item);
+                    const dynamicPrice = getItemDynamicPrice(item);
                     const uniqueId = item.cartId || item.id;
+                    const originalId = item.id;
 
                     const colorOptions = getColorOptions(item);
                     const activeColor = item.selectedColor || colorOptions[0];
@@ -392,45 +356,54 @@ export default function CheckoutSystem() {
                         <div className="flex-1 flex flex-col justify-center text-center sm:text-left">
                           <h3 className="font-bold text-sm text-[#1B6B80] pr-0 sm:pr-8 line-clamp-2">{item.name}</h3>
 
-                          <div className="text-xs text-gray-500 mt-2 flex flex-wrap items-center justify-center sm:justify-start gap-2">
-                            {colorOptions.length > 1 ? (
-                              <div className="flex items-center gap-1">
-                                <span className="text-[10px] font-bold text-gray-500 uppercase">Color:</span>
-                                <select
-                                  value={activeColor || ''}
-                                  onChange={(e) => handleColorChange(item, e.target.value)}
-                                  className="text-[10px] font-bold text-[#1B6B80] bg-gray-50 border border-gray-200 rounded-md px-2 py-0.5 outline-none focus:border-[#E8A922] cursor-pointer"
-                                >
-                                  {colorOptions.map((c: string, i: number) => (
-                                    <option key={i} value={c}>{c}</option>
-                                  ))}
-                                </select>
+                          {/* RANGI DISPLAY */}
+                          <div className="flex flex-col items-center sm:items-start gap-1.5 mt-3 mb-1">
+                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Color: <span className="text-[#1B6B80] capitalize font-black">{activeColor || 'Standard'}</span></span>
+
+                            {colorOptions.length > 0 ? (
+                              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 pt-0.5">
+                                {colorOptions.map((c: string, i: number) => {
+                                  const isSelected = activeColor === c;
+                                  const cssColor = getColorCode(c);
+                                  const isWhite = cssColor === '#FFFFFF' || cssColor.toLowerCase() === 'white';
+                                  return (
+                                    <div
+                                      key={i}
+                                      onClick={() => updateItemColor && updateItemColor(uniqueId, c, originalId)}
+                                      className={`w-6 h-6 rounded-full flex items-center justify-center cursor-pointer transition-all duration-200 ${isSelected ? 'ring-2 ring-offset-2 ring-[#E8A922] scale-110' : 'ring-1 ring-gray-200 hover:ring-gray-300'}`}
+                                      style={{ backgroundColor: cssColor }}
+                                    >
+                                      {isSelected && <FiCheck className={isWhite ? 'text-black' : 'text-white'} size={12} />}
+                                    </div>
+                                  )
+                                })}
                               </div>
                             ) : (
                               activeColor && (
-                                <span className="flex items-center gap-1.5 font-bold uppercase text-[10px] text-gray-600">
-                                  <span className="w-3.5 h-3.5 rounded-full border border-gray-300 shadow-sm" style={{ backgroundColor: getColorCode(activeColor) }}></span>
-                                  Color: {activeColor}
+                                <span className="flex items-center gap-1 font-bold uppercase text-[9px] text-gray-700 bg-gray-50 border border-gray-200 px-1.5 py-0.5 rounded w-max">
+                                  <span className="w-2.5 h-2.5 rounded-full border border-gray-300" style={{ backgroundColor: getColorCode(activeColor) }}></span>
+                                  {activeColor}
                                 </span>
                               )
                             )}
-                            {item.storage && <span className="font-bold text-[10px] uppercase hidden sm:inline">| {item.storage}</span>}
                           </div>
+
+                          {item.storage && <span className="font-bold text-[10px] uppercase text-gray-500 mt-1">Storage: {item.storage}</span>}
 
                           <div className="flex flex-col sm:flex-row items-center justify-between mt-3 gap-3 sm:gap-0">
                             <div className="flex flex-col">
-                              <span className="font-black text-[#1B6B80] text-sm">TZS {(Number(item.price) * qty).toLocaleString()}</span>
-                              {qty > 1 && <span className="text-[10px] font-bold text-gray-400 mt-0.5">TZS {Number(item.price).toLocaleString()} each</span>}
+                              <span className="font-black text-[#1B6B80] text-sm">TZS {(dynamicPrice * qty).toLocaleString()}</span>
+                              {qty > 1 && <span className="text-[10px] font-bold text-green-600 mt-0.5">TZS {dynamicPrice.toLocaleString()} each</span>}
                             </div>
 
-                            <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden h-8 bg-gray-50">
-                              <button onClick={() => handleQuantityChange(item, qty - 1)} className="px-3 hover:bg-gray-200 text-[#1B6B80] transition h-full flex items-center">
+                            <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden h-8 bg-gray-50 shadow-sm">
+                              <button onClick={() => updateQuantity && updateQuantity(uniqueId, qty - 1)} className="px-3 hover:bg-gray-200 text-[#1B6B80] transition h-full flex items-center">
                                 <FiMinus size={12} />
                               </button>
                               <span className="px-3 text-xs font-bold border-x border-gray-200 h-full flex items-center justify-center bg-white text-[#1B6B80] min-w-[35px]">
                                 {qty}
                               </span>
-                              <button onClick={() => handleQuantityChange(item, qty + 1)} className="px-3 hover:bg-gray-200 text-[#1B6B80] transition h-full flex items-center">
+                              <button onClick={() => updateQuantity && updateQuantity(uniqueId, qty + 1)} className="px-3 hover:bg-gray-200 text-[#1B6B80] transition h-full flex items-center">
                                 <FiPlus size={12} />
                               </button>
                             </div>
@@ -498,7 +471,7 @@ export default function CheckoutSystem() {
                     ) : (
                       <div>
                         <label className="block text-xs font-bold text-gray-600 mb-1.5">City/State <span className="text-red-500">*</span></label>
-                        <input type="text" required value={formData.region} onChange={(e) => setFormData({ ...formData, region: e.target.value })} placeholder="City or State" className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-[#E8A922]" />
+                        <input type="text" required value={formData.region} onChange={(e) => setFormData({ ...formData, region: e.target.value })} placeholder="City or State" className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-[#F2A900]" />
                       </div>
                     )}
 
@@ -546,11 +519,9 @@ export default function CheckoutSystem() {
               </div>
             )}
 
-            {/* STEP 3: PAYMENT UI MPYA - FULLY VISIBLE ON MOBILE */}
+            {/* STEP 3: PAYMENT TYPE & GATWAY */}
             {currentStep === 3 && (
               <div className="space-y-6">
-
-                {/* 1. Payment Type Selection */}
                 <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100">
                   <h2 className="font-black text-base flex items-center gap-2 mb-4 text-[#1B6B80] border-b border-gray-100 pb-3">💳 Payment Type</h2>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 pt-2">
@@ -580,7 +551,6 @@ export default function CheckoutSystem() {
                   </div>
                 </div>
 
-                {/* 2. Payment Gateway Selection (Always visible now) */}
                 <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100">
                   <h2 className="font-black text-base flex items-center gap-2 mb-4 text-[#1B6B80] border-b border-gray-100 pb-3"><FiCreditCard className="text-[#E8A922]" /> Payment Method</h2>
                   <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 pt-2">
@@ -734,6 +704,7 @@ export default function CheckoutSystem() {
                 {cart.map((item: any) => {
                   const displayImage = getImagesArray(item.imageUrl)[0];
                   const qty = getItemQuantity(item);
+                  const currentDynamicPrice = getItemDynamicPrice(item);
 
                   const colorOptions = getColorOptions(item);
                   const activeColor = item.selectedColor || colorOptions[0];
@@ -746,41 +717,54 @@ export default function CheckoutSystem() {
                       <div className="flex-1">
                         <h4 className="text-xs font-bold text-[#1B6B80] line-clamp-1 mb-1">{item.name}</h4>
 
-                        <div className="flex items-center gap-2 mb-2">
-                          {colorOptions.length > 1 ? (
-                            <select
-                              value={activeColor || ''}
-                              onChange={(e) => handleColorChange(item, e.target.value)}
-                              className="text-[10px] font-bold text-gray-800 bg-gray-50 border border-gray-200 rounded px-1 py-0.5 outline-none focus:border-[#E8A922] cursor-pointer"
-                            >
-                              {colorOptions.map((c: string, i: number) => (
-                                <option key={i} value={c}>{c}</option>
-                              ))}
-                            </select>
-                          ) : (
-                            activeColor && (
-                              <span className="flex items-center gap-1 font-bold uppercase text-[9px] text-gray-600 bg-gray-50 border border-gray-100 px-1 py-0.5 rounded">
-                                <span className="w-2 h-2 rounded-full border border-gray-300" style={{ backgroundColor: getColorCode(activeColor) }}></span>
-                                {activeColor}
-                              </span>
-                            )
-                          )}
+                        {/* RANGI FIX DESKTOP */}
+                        <div className="flex flex-col items-start gap-1 mt-1.5 mb-1.5">
+                          <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Color: <span className="text-[#1B6B80] capitalize">{activeColor || 'Standard'}</span></span>
 
+                          {colorOptions.length > 0 ? (
+                            <div className="flex flex-wrap items-center gap-1.5">
+                              {colorOptions.map((c: string, i: number) => {
+                                const isSelected = activeColor === c;
+                                const cssColor = getColorCode(c);
+                                const isWhite = cssColor === '#FFFFFF' || cssColor.toLowerCase() === 'white';
+                                return (
+                                  <div
+                                    key={i}
+                                    onClick={() => updateItemColor && updateItemColor(item.cartId || item.id, c, item.id)}
+                                    className={`w-4 h-4 rounded-full flex items-center justify-center cursor-pointer transition-all ${isSelected ? 'ring-2 ring-offset-1 ring-[#E8A922]' : 'ring-1 ring-gray-200'}`}
+                                    style={{ backgroundColor: cssColor }}
+                                    title={c}
+                                  >
+                                    {isSelected && <FiCheck className={isWhite ? 'text-black' : 'text-white'} size={8} />}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          ) : (
+                            <span className="flex items-center gap-1 font-bold uppercase text-[9px] text-gray-700 bg-gray-50 border border-gray-100 px-1 py-0.5 rounded w-max">
+                              <span className="w-2.5 h-2.5 rounded-full border border-gray-300" style={{ backgroundColor: getColorCode(activeColor || 'gray') }}></span>
+                              {activeColor || 'Standard'}
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="flex items-center gap-2 mb-2">
                           <div className="flex items-center border border-gray-200 rounded overflow-hidden bg-gray-50 h-5">
-                            <button onClick={() => handleQuantityChange(item, qty - 1)} className="px-1.5 hover:bg-gray-200 text-[#1B6B80] transition h-full flex items-center">
+                            <button onClick={() => updateQuantity && updateQuantity(item.cartId || item.id, qty - 1)} className="px-1.5 hover:bg-gray-200 text-[#1B6B80] transition h-full flex items-center">
                               <FiMinus size={8} />
                             </button>
                             <span className="px-1.5 text-[10px] font-bold border-x border-gray-200 h-full flex items-center justify-center bg-white text-[#1B6B80] min-w-[20px]">
                               {qty}
                             </span>
-                            <button onClick={() => handleQuantityChange(item, qty + 1)} className="px-1.5 hover:bg-gray-200 text-[#1B6B80] transition h-full flex items-center">
+                            <button onClick={() => updateQuantity && updateQuantity(item.cartId || item.id, qty + 1)} className="px-1.5 hover:bg-gray-200 text-[#1B6B80] transition h-full flex items-center">
                               <FiPlus size={8} />
                             </button>
                           </div>
                         </div>
+
                       </div>
                       <div className="text-xs font-black text-right flex flex-col justify-start text-gray-900">
-                        <span>TZS {(Number(item.price) * qty).toLocaleString()}</span>
+                        <span>TZS {(currentDynamicPrice * qty).toLocaleString()}</span>
                       </div>
                     </div>
                   )
