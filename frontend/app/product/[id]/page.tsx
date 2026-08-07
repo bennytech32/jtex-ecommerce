@@ -23,7 +23,13 @@ const getColorCode = (colorName: string) => {
     'titanium': '#878681', 'natural titanium': '#878681', 'blue titanium': '#2F3C4D',
     'red': '#FF0000', 'blue': '#0000FF', 'green': '#008000', 'yellow': '#FFFF00',
     'gold': '#FFD700', 'rose gold': '#B76E79', 'purple': '#800080', 'pink': '#FFC0CB',
-    'midnight': '#191970', 'starlight': '#F8F9FA'
+    'midnight': '#191970', 'starlight': '#F8F9FA',
+    // Rangi mpya kulingana na mduara wako
+    'teal': '#1B6B80',
+    'dark teal': '#1B6B80',
+    'jtex teal': '#1B6B80',
+    'orange': '#E8A922',
+    'amber': '#E8A922'
   };
   return colorsMap[c] || c;
 };
@@ -160,7 +166,6 @@ export default function ProductDetail() {
   const handleColorChange = (color: string) => {
     setSelectedColor(color);
 
-    // Kama picha zako zina majina ya rangi (k.m. 'red.png' au zina jina la rangi ndani ya URL)
     const matchingImageIndex = images.findIndex(img =>
       img.toLowerCase().includes(color.toLowerCase())
     );
@@ -250,7 +255,6 @@ export default function ProductDetail() {
   const basePrice = product.price;
   const isMainProductWishlisted = wishlist.includes(product.id);
 
-  // EXTRACTION YA DATA KUTOKA KWA ADMIN
   const {
     Model, Color, color, Colors, colors,
     isWholesale,
@@ -273,7 +277,6 @@ export default function ProductDetail() {
   const otherSpecsKeys = Object.keys(otherSpecs);
   const visibleSpecsKeys = showAllSpecs ? otherSpecsKeys : otherSpecsKeys.slice(0, 5);
 
-  // === TAFUTA SIMILAR PRODUCTS KWA KATEGORIA ===
   const similarProducts = allProducts.filter((p: any) => p.id !== product.id && p.category === product.category).slice(0, 5);
   const displaySimilar = similarProducts.length > 0 ? similarProducts : allProducts.filter((p: any) => p.id !== product.id).slice(0, 5);
 
@@ -492,28 +495,32 @@ export default function ProductDetail() {
 
               {hasWholesale && (
                 <div className="border-t border-gray-200 pt-3">
-                  <span className="text-xs font-bold text-[#1B6B80] block uppercase tracking-wider mb-2">Wholesale Pricing Available</span>
-                  <div className="grid grid-cols-3 gap-2 bg-white p-3 rounded-xl border border-gray-100 shadow-sm">
-                    {/* TIER 1 */}
-                    <div className="text-center">
-                      <p className="text-[10px] font-bold text-gray-400 uppercase">{wholesaleTier1Qty || wholesaleMinOrder || '2+'} Pcs</p>
-                      <p className="font-extrabold text-sm text-[#1B6B80]">TZS {(wholesaleTier1Price ? Number(wholesaleTier1Price) : basePrice).toLocaleString()}</p>
+                  {/* HAPA: RANGI MOJA (TEAL) KWA SANDUKU ZIMA LILILO NA VIFURUSHI VYOTE */}
+                  <div className="bg-[#1B6B80] p-4 rounded-xl shadow-md border border-[#145363]">
+                    <div className="flex items-center gap-2 mb-3 border-b border-white/20 pb-2">
+                      <FiPackage className="text-[#E8A922]" size={16} />
+                      <span className="text-xs font-black text-[#E8A922] uppercase tracking-wider">Wholesale Pricing Available</span>
                     </div>
 
-                    {/* TIER 2 */}
-                    <div className="text-center border-x border-gray-100 px-1">
-                      <p className="text-[10px] font-bold text-gray-400 uppercase">{wholesaleTier2Qty ? `${wholesaleTier2Qty}+ Pcs` : 'Tier 2'}</p>
-                      <p className="font-extrabold text-sm text-[#1B6B80]">
-                        {wholesaleTier2Price ? `TZS ${Number(wholesaleTier2Price).toLocaleString()}` : '-'}
-                      </p>
-                    </div>
+                    <div className="grid grid-cols-3 divide-x divide-white/20">
+                      <div className="text-center px-1">
+                        <p className="text-[10px] font-bold text-white/80 uppercase">{wholesaleTier1Qty || wholesaleMinOrder || '2+'} Pcs</p>
+                        <p className="font-black text-sm text-white mt-1">TZS {(wholesaleTier1Price ? Number(wholesaleTier1Price) : basePrice).toLocaleString()}</p>
+                      </div>
 
-                    {/* TIER 3 */}
-                    <div className="text-center">
-                      <p className="text-[10px] font-bold text-gray-400 uppercase">{wholesaleTier3Qty ? `${wholesaleTier3Qty}+ Pcs` : 'Tier 3'}</p>
-                      <p className="font-black text-sm text-[#E8A922]">
-                        {wholesaleTier3Price ? `TZS ${Number(wholesaleTier3Price).toLocaleString()}` : '-'}
-                      </p>
+                      <div className="text-center px-1">
+                        <p className="text-[10px] font-bold text-white/80 uppercase">{wholesaleTier2Qty ? `${wholesaleTier2Qty}+ Pcs` : 'Tier 2'}</p>
+                        <p className="font-black text-sm text-white mt-1">
+                          {wholesaleTier2Price ? `TZS ${Number(wholesaleTier2Price).toLocaleString()}` : '-'}
+                        </p>
+                      </div>
+
+                      <div className="text-center px-1">
+                        <p className="text-[10px] font-bold text-white/80 uppercase">{wholesaleTier3Qty ? `${wholesaleTier3Qty}+ Pcs` : 'Tier 3'}</p>
+                        <p className="font-black text-sm text-[#E8A922] mt-1">
+                          {wholesaleTier3Price ? `TZS ${Number(wholesaleTier3Price).toLocaleString()}` : '-'}
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>
