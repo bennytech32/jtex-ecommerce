@@ -164,7 +164,11 @@ export default function AdminDashboard() {
     { name: 'Jun', mauzo: 8000000 },
   ];
 
-  const getApiUrl = () => process.env.NEXT_PUBLIC_API_URL || 'https://jtex-ecommerce-production.up.railway.app';
+  // FIX: Kuhakikisha url haina slash mwishoni (ili kuzuia double slash mf. //api/users)
+  const getApiUrl = () => {
+    const url = process.env.NEXT_PUBLIC_API_URL || 'https://jtex-ecommerce-production.up.railway.app';
+    return url.replace(/\/$/, '');
+  };
 
   useEffect(() => {
     fetchData();
@@ -185,27 +189,78 @@ export default function AdminDashboard() {
   const fetchData = async () => {
     try {
       const apiUrl = getApiUrl();
+      let fetchedOrders: any[] = [];
+      let fetchedUsers: any[] = [];
+      let fetchedProducts: any[] = [];
 
-      const statsRes = await fetch(`${apiUrl}/api/dashboard`, { cache: 'no-store' });
-      if (statsRes.ok) setStats(await statsRes.json());
+      // 1. Fetch Orders
+      try {
+        const ordersRes = await fetch(`${apiUrl}/api/orders`, { cache: 'no-store' });
+        if (ordersRes.ok) {
+          const data = await ordersRes.json();
+          if (Array.isArray(data)) fetchedOrders = data;
+        }
+      } catch (e) { console.error("Kosa kuvuta orders", e) }
 
-      const ordersRes = await fetch(`${apiUrl}/api/orders`, { cache: 'no-store' });
-      if (ordersRes.ok) {
-        const ordersData = await ordersRes.json();
-        setAllOrders(ordersData);
-        let rev = 0, pend = 0;
-        ordersData.forEach((o: any) => {
-          if (o.status !== 'CANCELLED') rev += o.totalAmount;
-          if (o.status === 'PENDING') pend += 1;
-        });
-        setCalculatedStats({ revenue: rev, pending: pend });
-      }
+      // 2. Fetch Users (FIXED to ensure array)
+      try {
+        const usersRes = await fetch(`${apiUrl}/api/users`, { cache: 'no-store' });
+        if (usersRes.ok) {
+          const data = await usersRes.json();
+          if (Array.isArray(data)) fetchedUsers = data;
+        }
+      } catch (e) { console.error("Kosa kuvuta users", e) }
 
-      const usersRes = await fetch(`${apiUrl}/api/users`, { cache: 'no-store' });
-      if (usersRes.ok) setAllUsers(await usersRes.json());
+      // 3. Fetch Products
+      try {
+        const productsRes = await fetch(`${apiUrl}/api/products`, { cache: 'no-store' });
+        if (productsRes.ok) {
+          const data = await productsRes.json();
+          if (Array.isArray(data)) fetchedProducts = data;
+        }
+      } catch (e) { console.error("Kosa kuvuta products", e) }
 
-      const productsRes = await fetch(`${apiUrl}/api/products`, { cache: 'no-store' });
-      if (productsRes.ok) setRealProducts(await productsRes.json());
+      // Weka kwenye state ili tab nyingine zipate data
+      setAllOrders(fetchedOrders);
+      setAllUsers(fetchedUsers);
+      setRealProducts(fetchedProducts);
+
+      // CALCULATIONS ZA UKWELI KUTOKA KWENYE DATA
+      let rev = 0;
+      let pend = 0;
+
+      fetchedOrders.forEach((o: any) => {
+        if (o.status !== 'CANCELLED') {
+          rev += Number(o.totalAmount || 0);
+        }
+        if (o.status === 'PENDING') {
+          pend += 1;
+        }
+      });
+      setCalculatedStats({ revenue: rev, pending: pend });
+
+      let invValue = 0;
+      let lowStockCount = 0;
+      let outOfStockCount = 0;
+
+      fetchedProducts.forEach((p: any) => {
+        // FIX: Tumia stockQuantity au stock kutokana na jinsi DB yako ilivyokaa
+        const price = Number(p.price || 0);
+        const stock = Number(p.stock || p.stockQuantity || 0);
+        invValue += (price * stock);
+
+        if (stock === 0) outOfStockCount++;
+        else if (stock <= 5) lowStockCount++;
+      });
+
+      // Tunatumia data tulizocalculate kuhakikisha dashboard inasoma real-time
+      setStats({
+        totalProducts: fetchedProducts.length,
+        lowStock: lowStockCount,
+        outOfStock: outOfStockCount,
+        inventoryValue: invValue,
+        totalUsers: fetchedUsers.length
+      });
 
     } catch (error) {
       console.error("Kosa kuvuta data za admin:", error);
@@ -223,7 +278,7 @@ export default function AdminDashboard() {
       });
       if (res.ok) {
         alert(t.alertStatusSuccess);
-        fetchData();
+        fetchData(); // Vuta data upya baada ya kubadili status
       }
     } catch (error) {
       alert("Error updating order status.");
@@ -425,9 +480,9 @@ export default function AdminDashboard() {
                         TZS {product.price.toLocaleString()}
                       </td>
                       <td className="px-6 py-4 text-center">
-                        <span className={`px-2.5 py-1 rounded font-black text-xs ${(product.stock || 0) <= 5 ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'
+                        <span className={`px-2.5 py-1 rounded font-black text-xs ${(product.stock || product.stockQuantity || 0) <= 5 ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'
                           }`}>
-                          {product.stock || 0}
+                          {product.stock || product.stockQuantity || 0}
                         </span>
                       </td>
                     </tr>
@@ -485,9 +540,9 @@ export default function AdminDashboard() {
                             value={order.status}
                             onChange={(e) => handleUpdateStatus(order.id, e.target.value)}
                             className={`px-3 py-2 rounded-lg text-xs font-black uppercase tracking-wider outline-none cursor-pointer border-2 transition ${order.status === 'DELIVERED' ? 'bg-green-50 text-green-700 border-green-200 focus:border-green-500' :
-                                order.status === 'SHIPPED' ? 'bg-blue-50 text-blue-700 border-blue-200 focus:border-blue-500' :
-                                  order.status === 'CANCELLED' ? 'bg-red-50 text-red-700 border-red-200 focus:border-red-500' :
-                                    'bg-yellow-50 text-yellow-700 border-yellow-200 focus:border-yellow-500'
+                              order.status === 'SHIPPED' ? 'bg-blue-50 text-blue-700 border-blue-200 focus:border-blue-500' :
+                                order.status === 'CANCELLED' ? 'bg-red-50 text-red-700 border-red-200 focus:border-red-500' :
+                                  'bg-yellow-50 text-yellow-700 border-yellow-200 focus:border-yellow-500'
                               }`}
                           >
                             <option value="PENDING">{t.optPending}</option>

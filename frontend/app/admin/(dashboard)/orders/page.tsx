@@ -11,7 +11,7 @@ export default function AdminOrders() {
   // Mfumo wa kupata API URL ya live mtandaoni
   const getApiUrl = () => {
     const url = process.env.NEXT_PUBLIC_API_URL || 'https://jtex-ecommerce-production.up.railway.app';
-    return url.replace(/\/$/, ''); 
+    return url.replace(/\/$/, '');
   };
 
   const fetchOrders = async () => {
@@ -20,10 +20,20 @@ export default function AdminOrders() {
       const url = getApiUrl();
       // 'cache: no-store' inalazimisha kuvuta oda mpya zilizochongwa sasa hivi bila kutumia cache ya zamani
       const res = await fetch(`${url}/api/orders`, { cache: 'no-store' });
+
+      // FIX: Kama backend inarudisha 404 kwa sababu hakuna oda, tuichukulie kama array tupu badala ya error
+      if (res.status === 404) {
+        setOrders([]);
+        return;
+      }
+
       if (!res.ok) throw new Error(`Kosa la Server (Code ${res.status})`);
+
       const data = await res.json();
       if (Array.isArray(data)) {
         setOrders(data);
+      } else {
+        setOrders([]);
       }
     } catch (err: any) {
       console.error('Fetch Error:', err);
@@ -59,7 +69,7 @@ export default function AdminOrders() {
 
   // Kupata rangi ya Status beji
   const getStatusBadge = (status: string) => {
-    switch(status) {
+    switch (status) {
       case 'PENDING': return 'bg-yellow-100 text-yellow-700 border border-yellow-200';
       case 'PROCESSING': return 'bg-blue-100 text-blue-700 border border-blue-200';
       case 'SHIPPED': return 'bg-purple-100 text-purple-700 border border-purple-200';
@@ -106,12 +116,12 @@ export default function AdminOrders() {
         </div>
 
         {fetchError && (
-           <div className="p-6 bg-red-50 text-red-600 text-center flex flex-col items-center justify-center border-b border-gray-100">
-              <FiAlertCircle className="text-3xl mb-2" />
-              <p className="font-bold">Kuna tatizo la mtandao kuvuta data za oda</p>
-              <p className="text-xs mt-1">{fetchError}</p>
-              <button onClick={fetchOrders} className="mt-3 bg-red-600 text-white font-bold text-xs px-4 py-2 rounded-lg">Jaribu Tena</button>
-           </div>
+          <div className="p-6 bg-red-50 text-red-600 text-center flex flex-col items-center justify-center border-b border-gray-100">
+            <FiAlertCircle className="text-3xl mb-2" />
+            <p className="font-bold">Kuna tatizo la mtandao kuvuta data za oda</p>
+            <p className="text-xs mt-1">{fetchError}</p>
+            <button onClick={fetchOrders} className="mt-3 bg-red-600 text-white font-bold text-xs px-4 py-2 rounded-lg">Jaribu Tena</button>
+          </div>
         )}
 
         {isLoading ? (
@@ -152,7 +162,7 @@ export default function AdminOrders() {
                       </span>
                     </td>
                     <td className="px-6 py-4">
-                      <select 
+                      <select
                         value={order.status}
                         onChange={(e) => handleStatusChange(order.id, e.target.value)}
                         className="bg-white border-2 border-gray-200 text-xs font-black uppercase tracking-wider rounded-xl px-3 py-2 outline-none focus:border-[#F2A900] cursor-pointer transition shadow-sm"
