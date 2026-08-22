@@ -10,7 +10,7 @@ import {
   FiArrowRight, FiShield, FiTruck, FiRefreshCw, FiMic, FiCamera,
   FiHome, FiZap, FiChevronRight, FiMail, FiPhone, FiFacebook,
   FiTwitter, FiInstagram, FiLinkedin, FiSend, FiMessageCircle,
-  FiBell, FiSettings, FiArrowLeft, FiGlobe, FiStar, FiAward, FiCheckCircle
+  FiBell, FiSettings, FiArrowLeft, FiGlobe, FiStar, FiAward, FiCheckCircle, FiMoreHorizontal
 } from 'react-icons/fi';
 
 // HELPER MPYA: Kutengeneza URL safi kwa kutumia jina la bidhaa
@@ -32,11 +32,11 @@ export default function HomePage() {
   const [userCountry, setUserCountry] = useState('...');
   const [countryCode, setCountryCode] = useState('tz');
 
-  // Ref for Categories Scroll
-  const categoriesScrollRef = useRef<HTMLDivElement>(null);
-
   // === WISHLIST STATE ===
   const [wishlist, setWishlist] = useState<string[]>([]);
+
+  // === BANNERS STATE (Kutoka Admin) ===
+  const [banners, setBanners] = useState<any[]>([]);
 
   const toggleWishlist = (e: React.MouseEvent, productId: string) => {
     e.stopPropagation();
@@ -144,7 +144,22 @@ export default function HomePage() {
         setIsLoading(false);
       }
     };
+
+    // Fetch Banners kutoka kwa admin
+    const fetchBanners = async () => {
+      try {
+        const res = await fetch(`${getApiUrl()}/api/banners`);
+        if (res.ok) {
+          const data = await res.json();
+          setBanners(data);
+        }
+      } catch (error) {
+        console.error("Error fetching banners:", error);
+      }
+    };
+
     fetchData();
+    fetchBanners();
 
     const timer = setInterval(() => {
       setTimeLeft(prev => {
@@ -162,23 +177,23 @@ export default function HomePage() {
       });
     }, 1000);
 
-    const slideTimer = setInterval(() => {
-      setCurrentSlide(prev => (prev + 1) % 4);
-    }, 5000);
-
     return () => {
       clearInterval(timer);
-      clearInterval(slideTimer);
     };
   }, []);
 
-  const scrollCategories = () => {
-    if (categoriesScrollRef.current) {
-      categoriesScrollRef.current.scrollBy({ left: 300, behavior: 'smooth' });
-    }
-  };
+  // Slide Timer inajitegemea ili iendane na idadi ya banners zinazotoka kwa admin
+  useEffect(() => {
+    const slideCount = banners.length > 0 ? banners.length : 4;
+    const slideTimer = setInterval(() => {
+      setCurrentSlide(prev => (prev + 1) % slideCount);
+    }, 5000);
 
-  const slides = [
+    return () => clearInterval(slideTimer);
+  }, [banners.length]);
+
+  // Default Slides zikitokea admin hajaweka banner yoyote
+  const defaultSlides = [
     {
       title: <>Best Quality,<br />Best Prices,<br /><span className="text-[#E8A922]">Only on Jtex</span></>,
       subtitle: "Shop the latest gadgets, electronics, fashion and more at unbeatable prices.",
@@ -205,23 +220,28 @@ export default function HomePage() {
     }
   ];
 
+  // Tumia Banners za Admin kama zipo, kama hamna tumia defaultSlides
+  const activeSlides = banners.length > 0 ? banners : defaultSlides;
+
   const cartCount = cart?.length || 0;
 
   const brandLogos = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
 
-  const getCategoryIcon = (catName: string) => {
+  const getCategoryVisual = (catName: string) => {
     const lower = catName.toLowerCase();
-    if (lower.includes('electronic') || lower.includes('elektroniki')) return <FiHeadphones size={18} />;
-    if (lower.includes('computer') || lower.includes('laptop')) return <FiMonitor size={18} />;
-    if (lower.includes('phone') || lower.includes('mobile') || lower.includes('simu')) return <FiSmartphone size={18} />;
-    if (lower.includes('fashion') || lower.includes('cloth') || lower.includes('nguo')) return <FiShoppingBag size={18} />;
-    if (lower.includes('home') || lower.includes('kitchen')) return <FiCoffee size={18} />;
-    if (lower.includes('beaut') || lower.includes('urembo')) return <FiSmile size={18} />;
-    return <FiGrid size={18} />;
+    if (lower.includes('electronic') || lower.includes('elektroniki')) return { icon: '🎧', bg: 'bg-yellow-50' };
+    if (lower.includes('computer') || lower.includes('laptop')) return { icon: '💻', bg: 'bg-blue-50' };
+    if (lower.includes('phone') || lower.includes('mobile') || lower.includes('simu')) return { icon: '📱', bg: 'bg-gray-100' };
+    if (lower.includes('fashion') || lower.includes('cloth') || lower.includes('nguo')) return { icon: '👗', bg: 'bg-red-50' };
+    if (lower.includes('home') || lower.includes('kitchen')) return { icon: '🛋️', bg: 'bg-teal-50' };
+    if (lower.includes('beaut') || lower.includes('urembo')) return { icon: '💄', bg: 'bg-pink-50' };
+    if (lower.includes('shoe') || lower.includes('viatu')) return { icon: '👟', bg: 'bg-orange-50' };
+    return { icon: '🛍️', bg: 'bg-purple-50' };
   };
 
-  const handleCategoryClick = () => {
-    router.push('/categories');
+  const handleCategoryClick = (slug?: string) => {
+    if (slug) router.push(`/categories?category=${slug}`);
+    else router.push('/categories');
   };
 
   const renderSidebarMenu = () => {
@@ -506,63 +526,92 @@ export default function HomePage() {
         {/* MAIN CONTENT AREA */}
         <main className="flex-1 min-w-0 relative">
 
-          {/* DESKTOP CATEGORIES RIBBON (SIMPLIFIED SCROLL) */}
-          <div className="hidden lg:flex items-center bg-white rounded-2xl border border-gray-100 px-4 py-4 shadow-sm mb-6 overflow-hidden relative">
-            <div ref={categoriesScrollRef} className="flex items-center gap-3 w-full overflow-x-auto hide-scrollbar scroll-smooth pr-10">
-              {dbCategories.map((cat, idx) => (
-                <button key={idx} onClick={handleCategoryClick} className="flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-[#E8A922]/10 text-gray-700 hover:text-[#E8A922] border border-gray-100 hover:border-[#E8A922]/30 rounded-xl transition cursor-pointer whitespace-nowrap">
-                  <span className="text-[#E8A922]">{getCategoryIcon(cat.name)}</span>
-                  <span className="text-xs font-bold">{cat.name}</span>
+          {/* DESKTOP CATEGORIES RIBBON (CAPPED AT 8 + MORE BUTTON) */}
+          <div className="hidden lg:flex items-center bg-white rounded-2xl border border-gray-100 px-6 py-5 shadow-sm mb-6 overflow-hidden relative">
+            <div className="flex items-center gap-6 w-full hide-scrollbar flex-wrap">
+              {dbCategories.slice(0, 8).map((cat, idx) => {
+                const visual = getCategoryVisual(cat.name);
+                return (
+                  <button key={idx} onClick={() => handleCategoryClick(cat.slug)} className="flex flex-col items-center gap-2 hover:opacity-80 transition cursor-pointer whitespace-nowrap group min-w-[70px]">
+                    <div className={`w-16 h-16 rounded-full flex items-center justify-center transition-transform transform group-hover:scale-105 ${visual.bg} shadow-sm border border-black/5`}>
+                      <span className="text-3xl drop-shadow-sm">{visual.icon}</span>
+                    </div>
+                    <span className="text-xs font-bold text-gray-800">{cat.name}</span>
+                  </button>
+                )
+              })}
+
+              {/* "More/All Categories" Button Desktop */}
+              {dbCategories.length > 8 && (
+                <button onClick={() => handleCategoryClick()} className="flex flex-col items-center gap-2 hover:opacity-80 transition cursor-pointer whitespace-nowrap group min-w-[70px]">
+                  <div className="w-16 h-16 rounded-full flex items-center justify-center transition-transform transform group-hover:scale-105 bg-gray-100 shadow-sm border border-black/5 text-gray-600">
+                    <FiMoreHorizontal size={28} />
+                  </div>
+                  <span className="text-xs font-bold text-gray-800">All Categories</span>
                 </button>
-              ))}
-            </div>
-            {/* Scroll Indicator Button */}
-            <div className="absolute right-2 bg-gradient-to-l from-white pl-4 flex items-center h-full">
-              <button onClick={scrollCategories} className="w-8 h-8 bg-gray-100 hover:bg-[#E8A922] hover:text-white rounded-full flex items-center justify-center transition shadow-sm border border-gray-200">
-                <FiChevronRight size={18} />
-              </button>
+              )}
             </div>
           </div>
 
-          {/* MOBILE CATEGORIES RIBBON */}
-          <div className="lg:hidden flex overflow-x-auto hide-scrollbar gap-4 px-4 py-5 bg-white mb-4 shadow-sm">
-            {dbCategories.map((cat, idx) => (
-              <div key={idx} onClick={handleCategoryClick} className="flex flex-col items-center gap-2 flex-shrink-0 cursor-pointer group">
-                <div className={`w-14 h-14 rounded-full flex items-center justify-center transition-all ${idx === 0 ? 'bg-[#E8A922]/10 text-[#E8A922] border border-[#E8A922]/30' : 'bg-gray-50 text-gray-600 border border-gray-100 group-hover:bg-gray-100'}`}>
-                  {getCategoryIcon(cat.name)}
+          {/* MOBILE CATEGORIES RIBBON (CAPPED AT 4 + MORE BUTTON) */}
+          <div className="lg:hidden flex justify-between gap-2 px-4 py-6 bg-white mb-4 shadow-sm border-b border-gray-100">
+            {dbCategories.slice(0, 4).map((cat, idx) => {
+              const visual = getCategoryVisual(cat.name);
+              return (
+                <div key={idx} onClick={() => handleCategoryClick(cat.slug)} className="flex flex-col items-center gap-2 flex-shrink-0 cursor-pointer group w-1/5">
+                  <div className={`w-14 h-14 sm:w-16 sm:h-16 rounded-full flex items-center justify-center transition-transform transform group-hover:scale-105 ${visual.bg} shadow-sm border border-black/5`}>
+                    <span className="text-2xl sm:text-3xl drop-shadow-sm">{visual.icon}</span>
+                  </div>
+                  <span className="text-[10px] font-bold text-gray-800 text-center leading-tight truncate w-full px-1">{cat.name}</span>
                 </div>
-                <span className={`text-[10px] font-bold ${idx === 0 ? 'text-[#E8A922]' : 'text-gray-700'} truncate w-16 text-center`}>{cat.name}</span>
+              );
+            })}
+
+            {/* "More" Button Mobile */}
+            <div onClick={() => handleCategoryClick()} className="flex flex-col items-center gap-2 flex-shrink-0 cursor-pointer group w-1/5">
+              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full flex items-center justify-center transition-transform transform group-hover:scale-105 bg-gray-100 shadow-sm border border-black/5 text-gray-600">
+                <FiMoreHorizontal size={24} />
               </div>
-            ))}
+              <span className="text-[10px] font-bold text-gray-800 text-center leading-tight">More</span>
+            </div>
           </div>
 
-          {/* Slider Hero Banner */}
+          {/* Slider Hero Banner - DYNAMIC KUTOKA ADMIN */}
           <div className="px-4 lg:px-0 mb-6 lg:mb-8">
             <div className="relative w-full max-w-full h-[250px] sm:h-[300px] md:h-[400px] mx-auto rounded-3xl overflow-hidden shadow-lg">
-              {slides.map((slide, index) => (
+              {activeSlides.map((slide, index) => (
                 <div
                   key={index}
-                  className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${currentSlide === index ? 'opacity-100 z-10' : 'opacity-0 z-0'} bg-gradient-to-br ${slide.bg} p-6 lg:p-12 flex items-center`}
+                  className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${currentSlide === index ? 'opacity-100 z-10' : 'opacity-0 z-0'} ${slide.bg ? 'bg-gradient-to-br ' + slide.bg : ''} p-6 lg:p-12 flex items-center`}
+                  style={slide.backgroundColor ? { backgroundColor: slide.backgroundColor } : {}}
                 >
                   <div className="absolute right-0 top-0 w-full h-full opacity-20 pointer-events-none">
-                    <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="w-full h-full stroke-[#E8A922]" strokeWidth="0.5" fill="none">
+                    <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="w-full h-full stroke-white/50" strokeWidth="0.5" fill="none">
                       <circle cx="90" cy="50" r="40" />
                       <circle cx="90" cy="50" r="60" />
                       <circle cx="90" cy="50" r="80" />
                     </svg>
                   </div>
-                  <div className="absolute -right-10 -bottom-10 lg:right-10 lg:bottom-0 w-40 lg:w-96 opacity-30 lg:opacity-100 pointer-events-none mix-blend-screen flex items-center justify-center h-full">
-                    <span className="text-[100px] sm:text-[150px] lg:text-[250px]">{slide.icon}</span>
+
+                  {/* Support for Image (kama kwenye "from admin.png") au Icon */}
+                  <div className="absolute -right-10 -bottom-10 lg:right-10 lg:bottom-0 w-40 lg:w-96 opacity-40 lg:opacity-100 pointer-events-none mix-blend-normal flex items-center justify-center h-full">
+                    {slide.imageUrl ? (
+                      <img src={getImageUrl(slide.imageUrl)} alt="Banner Graphic" className="w-full max-h-[80%] object-contain drop-shadow-2xl" />
+                    ) : (
+                      <span className="text-[100px] sm:text-[150px] lg:text-[250px] mix-blend-screen">{slide.icon}</span>
+                    )}
                   </div>
 
                   <div className="relative z-10 max-w-[75%] lg:max-w-xl">
-                    <h1 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-black text-white mb-3 lg:mb-6 leading-tight">
+                    <h1 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-black text-white mb-3 lg:mb-6 leading-tight whitespace-pre-wrap drop-shadow-sm">
                       {slide.title}
                     </h1>
-                    <p className="text-gray-100 text-[10px] sm:text-xs lg:text-base font-medium mb-6 lg:mb-10 leading-relaxed max-w-[280px] lg:max-w-md">
-                      {slide.subtitle}
-                    </p>
-                    <button onClick={() => router.push('/categories')} className="bg-[#E8A922] text-white font-black px-6 lg:px-8 py-2.5 lg:py-3.5 rounded-xl flex items-center gap-2 hover:bg-[#D4981C] transition shadow-[0_0_20px_rgba(232,169,34,0.3)] text-sm lg:text-base">
+                    {slide.subtitle && (
+                      <p className="text-gray-50 text-[10px] sm:text-xs lg:text-base font-medium mb-6 lg:mb-10 leading-relaxed max-w-[280px] lg:max-w-md drop-shadow">
+                        {slide.subtitle}
+                      </p>
+                    )}
+                    <button onClick={() => router.push(slide.link || '/categories')} className="bg-[#E8A922] text-white font-black px-6 lg:px-8 py-2.5 lg:py-3.5 rounded-xl flex items-center gap-2 hover:bg-[#D4981C] transition shadow-[0_0_20px_rgba(232,169,34,0.3)] text-sm lg:text-base border border-[#E8A922]/50 w-max">
                       <span className="hidden lg:inline">Shop Now</span>
                       <span className="lg:hidden">Buy Now</span>
                       <FiArrowRight />
@@ -572,11 +621,11 @@ export default function HomePage() {
               ))}
 
               <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 z-20">
-                {slides.map((_, idx) => (
+                {activeSlides.map((_, idx) => (
                   <button
                     key={idx}
                     onClick={() => setCurrentSlide(idx)}
-                    className={`h-2 rounded-full transition-all duration-300 ${currentSlide === idx ? 'w-6 bg-[#E8A922]' : 'w-2 bg-white/50 hover:bg-white'}`}
+                    className={`h-2 rounded-full transition-all duration-300 ${currentSlide === idx ? 'w-6 bg-white' : 'w-2 bg-white/40 hover:bg-white/80'}`}
                   ></button>
                 ))}
               </div>
@@ -875,7 +924,7 @@ export default function HomePage() {
                   </div>
                   <div className="flex justify-center mt-6">
                     <button onClick={() => router.push('/categories')} className="bg-white border-2 border-gray-200 text-[#1B6B80] font-black px-12 py-3 rounded-xl flex items-center gap-2 hover:border-[#E8A922] hover:bg-[#E8A922]/10 transition shadow-sm text-sm">
-                      View All Brands Catalog
+                      View All Products
                     </button>
                   </div>
                 </>

@@ -116,3 +116,21 @@ enum OrderStatus {
   DELIVERED
   CANCELLED
 }
+
+// ====================================================================
+// 4. MARKETING & UI MODELS (BANNERS)
+// ====================================================================
+
+model Banner {
+  id          String   @id @default(uuid())
+  title       String   // Mfano: "Mega Deals\nOn Top Brands"
+  subtitle    String?  // Maelezo madogo chini ya title
+  bg          String?  // Tailwind colors, mfano: "from-[#E8A922] to-[#c28a19]"
+  icon        String?  // Mfano: "📱"
+  imageUrl    String?  @db.Text // Link ya picha kama admin ameweka picha badala ya icon
+  link        String?  // Sehemu itakayoelekea ukibonyeza "Shop Now" (mf. "/categories")
+  isActive    Boolean  @default(true) // Admin anaweza ku-on au ku-off banner
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
