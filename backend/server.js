@@ -137,9 +137,9 @@ app.get('/api/products/:id', async (req, res) => {
 // 3. Kuweka bidhaa mpya (Pamoja na Picha Cloudinary)
 app.post('/api/products', upload.array('images', 5), async (req, res) => {
   try {
-    const { 
-      sku, name, category, brand, model, badge, condition, 
-      buyingPrice, price, stockQuantity, specifications, preOrderInfo 
+    const {
+      sku, name, category, brand, model, badge, condition,
+      buyingPrice, price, stockQuantity, specifications, preOrderInfo
     } = req.body;
 
     // Kusanya Link za picha zilizorudi kutoka Cloudinary
@@ -177,9 +177,9 @@ app.post('/api/products', upload.array('images', 5), async (req, res) => {
 // 4. Kuedit bidhaa
 app.put('/api/products/:id', upload.array('images', 5), async (req, res) => {
   try {
-    const { 
-      sku, name, category, brand, model, badge, condition, 
-      buyingPrice, price, stockQuantity, specifications, preOrderInfo 
+    const {
+      sku, name, category, brand, model, badge, condition,
+      buyingPrice, price, stockQuantity, specifications, preOrderInfo
     } = req.body;
 
     // Tafuta bidhaa ya zamani kwanza
@@ -226,6 +226,56 @@ app.delete('/api/products/:id', async (req, res) => {
     res.json({ message: 'Bidhaa imefutwa kikamilifu.' });
   } catch (error) {
     res.status(500).json({ error: 'Imeshindwa kufuta bidhaa.' });
+  }
+});
+
+// ==========================================
+// BANNERS API ROUTES (MPYA - IMEONGEZWA HAPA)
+// ==========================================
+
+// 1. Kusoma banners zote zilizo-active (Kwa ajili ya Frontend/Wateja)
+app.get('/api/banners', async (req, res) => {
+  try {
+    const banners = await prisma.banner.findMany({
+      where: { isActive: true },
+      orderBy: { createdAt: 'desc' }
+    });
+    res.json(banners);
+  } catch (error) {
+    console.error("Kosa kuvuta banners:", error);
+    res.status(500).json({ error: 'Imeshindwa kusoma banners' });
+  }
+});
+
+// 2. Kuongeza banner mpya (Kwa ajili ya Admin Dashboard)
+app.post('/api/banners', async (req, res) => {
+  try {
+    const { title, subtitle, bg, icon, imageUrl, link, isActive } = req.body;
+    const newBanner = await prisma.banner.create({
+      data: {
+        title,
+        subtitle,
+        bg,
+        icon,
+        imageUrl,
+        link,
+        isActive: isActive !== undefined ? isActive : true
+      }
+    });
+    res.status(201).json(newBanner);
+  } catch (error) {
+    console.error("Kosa kuongeza banner:", error);
+    res.status(500).json({ error: 'Imeshindwa kuhifadhi banner mpya' });
+  }
+});
+
+// 3. Kufuta banner (Kwa ajili ya Admin Dashboard)
+app.delete('/api/banners/:id', async (req, res) => {
+  try {
+    await prisma.banner.delete({ where: { id: req.params.id } });
+    res.json({ message: 'Banner imefutwa kikamilifu.' });
+  } catch (error) {
+    res.status(500).json({ error: 'Imeshindwa kufuta banner.' });
   }
 });
 
