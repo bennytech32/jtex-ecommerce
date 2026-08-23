@@ -27,6 +27,9 @@ export default function HomePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
+  // STATE MPYA KWA AJILI YA KUONYESHA BIDHAA ZOTE BILA KWENDA CATEGORIES
+  const [showAllProducts, setShowAllProducts] = useState(false);
+
   const [user, setUser] = useState<any>(null);
   const [userLocation, setUserLocation] = useState('Fetching...');
   const [userCountry, setUserCountry] = useState('...');
@@ -882,7 +885,8 @@ export default function HomePage() {
               ) : (
                 <>
                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 lg:gap-4 mb-4">
-                    {products.slice(5, 10).map((product: any) => {
+                    {/* HAPA NDIPO MABADILIKO YALIPOFANYIKA */}
+                    {(showAllProducts ? products : products.slice(5, 10)).map((product: any) => {
                       const visualDiscount = getDeterministicDiscount(product.id);
                       const oldPrice = Math.round(product.price / (1 - (visualDiscount / 100)));
 
@@ -923,8 +927,9 @@ export default function HomePage() {
                     })}
                   </div>
                   <div className="flex justify-center mt-6">
-                    <button onClick={() => router.push('/categories')} className="bg-white border-2 border-gray-200 text-[#1B6B80] font-black px-12 py-3 rounded-xl flex items-center gap-2 hover:border-[#E8A922] hover:bg-[#E8A922]/10 transition shadow-sm text-sm">
-                      View All Products
+                    {/* BUTTON IMEBORESHWA HAPA KUONYESHA PRODUCTS ZOTE BADALA YA KWENDA CATEGORIES */}
+                    <button onClick={() => setShowAllProducts(!showAllProducts)} className="bg-white border-2 border-gray-200 text-[#1B6B80] font-black px-12 py-3 rounded-xl flex items-center gap-2 hover:border-[#E8A922] hover:bg-[#E8A922]/10 transition shadow-sm text-sm">
+                      {showAllProducts ? "Show Less" : "View All Products"}
                     </button>
                   </div>
                 </>

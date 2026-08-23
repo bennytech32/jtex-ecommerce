@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FiSettings, FiSave, FiGlobe, FiLock, FiTruck, FiMapPin, FiPercent, FiImage, FiUploadCloud, FiLayout } from 'react-icons/fi';
 
 const translations = {
@@ -102,9 +102,16 @@ const initialRegions = [
   { id: 'pemba_south', name: 'Pemba South', fee: 15000 }
 ];
 
+// Helper kwa ajili ya Live Server API
+const getApiUrl = () => {
+  const url = process.env.NEXT_PUBLIC_API_URL || 'https://jtex-ecommerce-production.up.railway.app';
+  return url.replace(/\/$/, '');
+};
+
 export default function AdminSettings() {
   const [lang, setLang] = useState<'en' | 'sw'>('en');
   const [activeTab, setActiveTab] = useState<'general' | 'banners' | 'shipping' | 'security'>('general');
+  const [isSaving, setIsSaving] = useState(false);
 
   // Dynamic editable states
   const [regions, setRegions] = useState(initialRegions);
@@ -120,6 +127,34 @@ export default function AdminSettings() {
   const [bannerHeading, setBannerHeading] = useState("Nunua Bidhaa Bora kwa Bei Nafuu");
 
   const t = translations[lang];
+
+  // ==========================================
+  // FETCH BANNERS FROM DB ON LOAD
+  // ==========================================
+  useEffect(() => {
+    const fetchBanners = async () => {
+      try {
+        const res = await fetch(`${getApiUrl()}/api/banners`, { cache: 'no-store' });
+        if (res.ok) {
+          const data = await res.json();
+          // Tuna-map data zilizotoka DB kuingia kwenye form ili admin azione
+          if (data.length > 0) {
+            setBannerHeading(data[0].title || "Nunua Bidhaa Bora kwa Bei Nafuu");
+            setHeroBanner(data[0].imageUrl || null);
+          }
+          if (data.length > 1) {
+            setPromoBanner(data[1].imageUrl || null);
+          }
+          if (data.length > 2) {
+            setBanner3(data[2].imageUrl || null);
+          }
+        }
+      } catch (error) {
+        console.error("Kosa kuvuta banners:", error);
+      }
+    };
+    fetchBanners();
+  }, []);
 
   const handleFeeChange = (id: string, newFee: number) => {
     setRegions(prev => prev.map(r => r.id === id ? { ...r, fee: newFee } : r));
@@ -142,21 +177,92 @@ export default function AdminSettings() {
 
   const handleSaveSettings = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSaving(true);
 
-    const configurationPayload = {
-      platformName,
-      contactEmail,
-      metaDescription,
-      upfrontPercent,
-      regions,
-      banner1: heroBanner,
-      banner2: promoBanner,
-      banner3: banner3,
-      bannerHeading
-    };
+    try {
+      // Kama tupo kwenye Tab ya Banners, tunazituma Database!
+      if (activeTab === 'banners') {
 
-    console.log("Saving Configuration to Live Server:", configurationPayload);
-    alert(t.alertSuccess);
+        // 1. Kwanza, futa Banners zote za zamani (kuzuia kulundikana kwenye DB)
+        const resFetch = await fetch(`${getApiUrl()}/api/banners`);
+        if (resFetch.ok) {
+          const existingBanners = await resFetch.json();
+          for (let banner of existingBanners) {
+            await fetch(`${getApiUrl()}/api/banners/${banner.id}`, { method: 'DELETE' });
+          }
+        }
+
+        // 2. Tengeneza Banners mpya kulingana na alivyoweka Admin
+        const newBanners = [];
+
+        // Hero Banner (Slide 1)
+        if (heroBanner) {
+          newBanners.push({
+            title: bannerHeading,
+            subtitle: "Jipatie bidhaa bora na original", // Subtitle ya default
+            bg: "from-[#1B6B80] to-[#10404d]", // Rangi za background
+            icon: "💻",
+            imageUrl: heroBanner,
+            link: "/categories",
+            isActive: true
+          });
+        }
+
+        // Promo Banner (Slide 2)
+        if (promoBanner) {
+          newBanners.push({
+            title: "Punguzo Kubwa\nOkoa hadi 50%",
+            subtitle: "Nunua sasa, lipa kidogo kidogo",
+            bg: "from-[#E8A922] to-[#c28a19]",
+            icon: "📱",
+            imageUrl: promoBanner,
+            link: "/deals",
+            isActive: true
+          });
+        }
+
+        // Banner 3 (Slide 3)
+        if (banner3) {
+          newBanners.push({
+            title: "Usafiri wa Haraka\nMikoani Kote",
+            subtitle: "Tunakuletea mzigo wako mpaka mlangoni kwako",
+            bg: "from-[#0d343f] to-[#1B6B80]",
+            icon: "🚚",
+            imageUrl: banner3,
+            link: "/help",
+            isActive: true
+          });
+        }
+
+        // 3. Tuma (POST) kila banner mpya kwenda kwenye Database
+        for (let bannerPayload of newBanners) {
+          await fetch(`${getApiUrl()}/api/banners`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(bannerPayload)
+          });
+        }
+
+        alert(t.alertSuccess);
+      }
+      else {
+        // Logika ya tab zingine inabaki kama ilivyo mwanzo
+        const configurationPayload = {
+          platformName,
+          contactEmail,
+          metaDescription,
+          upfrontPercent,
+          regions
+        };
+        console.log("Saving Configuration to Live Server:", configurationPayload);
+        alert(t.alertSuccess);
+      }
+    } catch (error) {
+      console.error("Error saving settings:", error);
+      alert("Kuna tatizo limetokea wakati wa kuhifadhi. Tafadhali jaribu tena.");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -276,8 +382,8 @@ export default function AdminSettings() {
                       <FiImage className="text-blue-500" /> {t.heroBannerLabel}
                     </label>
                     {heroBanner ? (
-                      <div className="relative w-full h-40 sm:h-56 rounded-xl overflow-hidden border-2 border-gray-200 mb-3 group">
-                        <img src={heroBanner} alt="Hero Banner" className="w-full h-full object-cover" />
+                      <div className="relative w-full h-40 sm:h-56 rounded-xl overflow-hidden border-2 border-gray-200 mb-3 group bg-gray-100">
+                        <img src={heroBanner} alt="Hero Banner" className="w-full h-full object-contain" />
                         <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
                           <label className="cursor-pointer bg-white text-gray-900 px-4 py-2 rounded-lg font-bold text-xs shadow-md">
                             Badilisha Picha
@@ -312,8 +418,8 @@ export default function AdminSettings() {
                       <FiImage className="text-green-500" /> {t.promoBannerLabel}
                     </label>
                     {promoBanner ? (
-                      <div className="relative w-full h-32 sm:h-40 rounded-xl overflow-hidden border-2 border-gray-200 group">
-                        <img src={promoBanner} alt="Promo Banner" className="w-full h-full object-cover" />
+                      <div className="relative w-full h-32 sm:h-40 rounded-xl overflow-hidden border-2 border-gray-200 group bg-gray-100">
+                        <img src={promoBanner} alt="Promo Banner" className="w-full h-full object-contain" />
                         <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
                           <label className="cursor-pointer bg-white text-gray-900 px-4 py-2 rounded-lg font-bold text-xs shadow-md">
                             Badilisha Picha
@@ -336,8 +442,8 @@ export default function AdminSettings() {
                       <FiImage className="text-[#F2A900]" /> {t.banner3Label}
                     </label>
                     {banner3 ? (
-                      <div className="relative w-full h-32 sm:h-40 rounded-xl overflow-hidden border-2 border-gray-200 group">
-                        <img src={banner3} alt="Banner 3" className="w-full h-full object-cover" />
+                      <div className="relative w-full h-32 sm:h-40 rounded-xl overflow-hidden border-2 border-gray-200 group bg-gray-100">
+                        <img src={banner3} alt="Banner 3" className="w-full h-full object-contain" />
                         <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
                           <label className="cursor-pointer bg-white text-gray-900 px-4 py-2 rounded-lg font-bold text-xs shadow-md">
                             Badilisha Picha
@@ -356,8 +462,12 @@ export default function AdminSettings() {
 
                 </div>
 
-                <button type="submit" className="bg-[#0F172A] text-white px-6 py-3 rounded-xl text-sm font-black flex items-center gap-2 hover:bg-gray-800 transition shadow-md">
-                  <FiSave /> {t.saveBtn}
+                <button
+                  type="submit"
+                  disabled={isSaving}
+                  className={`bg-[#0F172A] text-white px-6 py-3 rounded-xl text-sm font-black flex items-center gap-2 hover:bg-gray-800 transition shadow-md ${isSaving ? 'opacity-70 cursor-not-allowed' : ''}`}
+                >
+                  <FiSave /> {isSaving ? "Inahifadhi..." : t.saveBtn}
                 </button>
               </form>
             </div>
