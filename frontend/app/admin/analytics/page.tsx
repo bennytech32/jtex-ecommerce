@@ -207,7 +207,7 @@ export default function AdminAnalytics() {
             </div>
             {/* Decorative background element */}
             <div className="absolute -right-6 -bottom-6 opacity-10 group-hover:opacity-20 transition-opacity duration-300 pointer-events-none transform group-hover:scale-110">
-              {React.cloneElement(stat.icon as React.ReactElement, { size: 100 })}
+              {React.cloneElement(stat.icon as React.ReactElement<{ size?: number }>, { size: 100 })}
             </div>
           </div>
         ))}
