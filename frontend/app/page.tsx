@@ -669,7 +669,7 @@ export default function HomePage() {
             {isLoading ? (
               <div className="flex justify-center py-10"><div className="w-8 h-8 border-4 border-[#E8A922] border-t-transparent rounded-full animate-spin"></div></div>
             ) : (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 lg:gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 lg:gap-4 bg-transparent">
                 {products.slice(0, 4).map((product: any) => {
                   const visualDiscount = getDeterministicDiscount(product.id);
                   const oldPrice = Math.round(product.price / (1 - (visualDiscount / 100)));
@@ -678,10 +678,10 @@ export default function HomePage() {
                     <div
                       key={product.id}
                       onClick={() => router.push(`/product/${generateSlug(product.name)}`)}
-                      className="bg-white border border-gray-100 rounded-2xl p-4 flex flex-col h-full group hover:border-[#E8A922] shadow-sm hover:shadow-md transition cursor-pointer relative"
+                      className="bg-white p-3 flex flex-col h-full group cursor-pointer relative"
                     >
-                      <div className="relative w-full pt-[100%] bg-gray-50/50 mb-4 overflow-hidden rounded-xl flex-shrink-0">
-                        <span className="absolute top-2 left-2 bg-[#E8A922] text-white text-[10px] font-black px-1.5 py-0.5 rounded z-20">-{visualDiscount}%</span>
+                      <div className="relative w-full pt-[100%] bg-gray-50/50 mb-3 overflow-hidden flex-shrink-0">
+                        <span className="absolute top-2 left-2 bg-[#E8A922] text-white text-[10px] font-black px-1.5 py-0.5 z-20">-{visualDiscount}%</span>
                         <button className="absolute top-2 right-2 text-gray-400 hover:text-red-500 lg:hidden z-20" onClick={(e) => { e.stopPropagation(); toggleWishlist(e, product.id); }}><FiHeart className={wishlist.includes(product.id) ? "fill-red-500 text-red-500" : ""} /></button>
 
                         {getDisplayImage(product.imageUrl) ? (
@@ -697,11 +697,11 @@ export default function HomePage() {
                           <span className="font-black text-sm lg:text-base text-[#1B6B80]">TZS {product.price.toLocaleString()}</span>
                           <span className="text-[10px] text-gray-400 line-through">TZS {oldPrice.toLocaleString()}</span>
                         </div>
-                        <div className="flex items-center justify-between mt-1 border-t border-gray-100 pt-3">
+                        <div className="flex items-center justify-between mt-1 pt-2 border-t border-gray-100">
                           <div className="flex items-center text-[#E8A922] text-[10px] font-bold">
                             <span className="flex items-center tracking-tighter">★★★★★</span> <span className="text-gray-400 ml-1 font-medium hidden sm:inline-block">({Math.floor(Math.random() * 100) + 10})</span>
                           </div>
-                          <button onClick={(e) => { e.stopPropagation(); addToCart(product); }} className="w-8 h-8 bg-gray-50 border border-gray-200 rounded-lg flex items-center justify-center text-gray-600 hover:bg-[#E8A922] hover:text-white hover:border-[#E8A922] transition">
+                          <button onClick={(e) => { e.stopPropagation(); addToCart(product); }} className="w-8 h-8 bg-gray-50 rounded-lg flex items-center justify-center text-gray-600 hover:bg-[#E8A922] hover:text-white transition">
                             <FiShoppingCart size={14} />
                           </button>
                         </div>
@@ -735,19 +735,19 @@ export default function HomePage() {
           {isLoading ? (
             <div className="flex justify-center py-10"><div className="w-8 h-8 border-4 border-[#E8A922] border-t-transparent rounded-full animate-spin"></div></div>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 lg:gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 lg:gap-4 bg-transparent">
               {fallbackNewArrivals.map((product: any) => {
                 return (
                   <div
                     key={product.id}
                     onClick={() => router.push(`/product/${generateSlug(product.name)}`)}
-                    className="bg-white border border-gray-100 rounded-2xl p-4 flex flex-col h-full group hover:border-[#E8A922] shadow-sm hover:shadow-md transition cursor-pointer relative"
+                    className="bg-white p-3 flex flex-col h-full group cursor-pointer relative"
                   >
-                    <div className="absolute top-0 right-0 bg-[#1B6B80] text-white text-[9px] font-black px-3 py-1 rounded-bl-xl rounded-tr-2xl z-20 shadow-sm uppercase tracking-wider">
+                    <div className="absolute top-0 right-0 bg-[#1B6B80] text-white text-[9px] font-black px-3 py-1 z-20 shadow-sm uppercase tracking-wider">
                       NEW
                     </div>
 
-                    <div className="relative w-full pt-[100%] bg-gray-50/50 mb-4 overflow-hidden rounded-xl flex-shrink-0">
+                    <div className="relative w-full pt-[100%] bg-gray-50/50 mb-3 overflow-hidden flex-shrink-0">
                       {getDisplayImage(product.imageUrl) ? (
                         <img src={getImageUrl(getDisplayImage(product.imageUrl))} alt={product.name} className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                       ) : (
@@ -757,9 +757,9 @@ export default function HomePage() {
 
                     <div className="flex flex-col flex-grow">
                       <h4 className="font-bold text-xs lg:text-sm text-gray-800 mb-2 line-clamp-2 leading-snug group-hover:text-[#1B6B80] transition">{product.name}</h4>
-                      <div className="mt-auto flex flex-col gap-2 border-t border-gray-100 pt-3">
+                      <div className="mt-auto flex flex-col gap-2 pt-2 border-t border-gray-100">
                         <span className="font-black text-sm lg:text-base text-[#1B6B80]">TZS {product.price.toLocaleString()}</span>
-                        <button onClick={(e) => { e.stopPropagation(); addToCart(product); }} className="w-full py-2 bg-gray-50 border border-gray-200 rounded-lg flex items-center justify-center text-gray-700 font-bold text-[11px] hover:bg-[#E8A922] hover:text-white hover:border-[#E8A922] transition gap-2">
+                        <button onClick={(e) => { e.stopPropagation(); addToCart(product); }} className="w-full py-2 bg-gray-50 rounded-lg flex items-center justify-center text-gray-700 font-bold text-[11px] hover:bg-[#E8A922] hover:text-white transition gap-2">
                           <FiShoppingCart size={14} /> Add To Cart
                         </button>
                       </div>
@@ -772,37 +772,105 @@ export default function HomePage() {
         </div>
 
         {/* ========================================================= */}
-        {/* TRENDING NOW SECTION */}
+        {/* TRENDING NOW SECTION (FREELY WITHOUT OUTER BOX WRAPPER) */}
         {/* ========================================================= */}
         <div className="px-4 lg:px-0 mb-12">
-          <div className="bg-white border border-gray-100 shadow-sm rounded-3xl overflow-hidden">
-            <div className="flex items-center justify-between bg-[#1B6B80] p-4 lg:p-5 shadow-sm">
-              <div>
-                <div className="flex items-center gap-2 mb-0.5">
-                  <FiStar size={20} className="text-[#E8A922] fill-[#E8A922]" />
-                  <h2 className="text-lg lg:text-xl font-black text-white">Trending Now</h2>
-                </div>
-                <p className="text-xs text-gray-300">Most loved by customers this week.</p>
-              </div>
-              <button onClick={() => router.push('/trending')} className="text-xs font-bold text-[#E8A922] flex items-center gap-1 hover:text-white transition">See All <FiChevronRight /></button>
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-2">
+              <FiStar size={24} className="text-[#E8A922] fill-[#E8A922]" />
+              <h2 className="text-xl lg:text-2xl font-black text-gray-900">Trending Now</h2>
             </div>
+            <button onClick={() => router.push('/trending')} className="text-xs font-bold text-gray-500 flex items-center gap-1 hover:text-[#1B6B80] transition">See All <FiChevronRight /></button>
+          </div>
 
-            <div className="bg-white p-4 lg:p-6">
-              {isLoading ? (
-                <div className="flex justify-center py-10"><div className="w-8 h-8 border-4 border-[#E8A922] border-t-transparent rounded-full animate-spin"></div></div>
-              ) : (
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 lg:gap-4">
-                  {fallbackTrending.map((product: any) => {
+          <div className="bg-white">
+            {isLoading ? (
+              <div className="flex justify-center py-10"><div className="w-8 h-8 border-4 border-[#E8A922] border-t-transparent rounded-full animate-spin"></div></div>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 lg:gap-4">
+                {fallbackTrending.map((product: any) => {
+                  return (
+                    <div
+                      key={product.id}
+                      onClick={() => router.push(`/product/${generateSlug(product.name)}`)}
+                      className="bg-white p-3 flex flex-col h-full group cursor-pointer relative"
+                    >
+                      <div className="relative w-full pt-[100%] bg-gray-50/50 mb-3 overflow-hidden flex-shrink-0">
+                        <div className="absolute top-2 left-2 w-8 h-8 bg-white rounded-full shadow flex items-center justify-center z-20">
+                          <span className="text-[#E8A922] text-lg">🔥</span>
+                        </div>
+
+                        {getDisplayImage(product.imageUrl) ? (
+                          <img src={getImageUrl(getDisplayImage(product.imageUrl))} alt={product.name} className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                        ) : (
+                          <div className="absolute inset-0 flex items-center justify-center text-5xl">📦</div>
+                        )}
+                      </div>
+
+                      <div className="flex flex-col flex-grow text-center">
+                        <div className="flex items-center justify-center text-[#E8A922] text-[10px] mb-2">★★★★★ <span className="text-gray-400 ml-1">({Math.floor(Math.random() * 200) + 50})</span></div>
+                        <h4 className="font-bold text-xs lg:text-sm text-gray-800 mb-2 line-clamp-2 leading-snug">{product.name}</h4>
+                        <span className="font-black text-sm lg:text-base text-[#1B6B80] mb-3 mt-auto">TZS {product.price.toLocaleString()}</span>
+                        <button onClick={(e) => { e.stopPropagation(); addToCart(product); }} className="w-full py-2 bg-[#1B6B80] text-white rounded-lg flex items-center justify-center font-bold text-[11px] hover:bg-[#145363] transition">
+                          Add To Cart
+                        </button>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* ========================================================= */}
+        {/* TOP BRANDS SECTION (FREELY WITHOUT OUTER BOX WRAPPER) */}
+        {/* ========================================================= */}
+        <div className="px-4 lg:px-0 mb-12">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-2">
+              <FiAward size={24} className="text-[#1B6B80]" />
+              <h2 className="text-xl lg:text-2xl font-black text-gray-900">Top Brands</h2>
+            </div>
+            <button onClick={() => router.push('/categories')} className="text-xs font-bold text-gray-500 flex items-center gap-1 hover:text-[#1B6B80] transition">Shop All <FiChevronRight /></button>
+          </div>
+
+          {/* Brands Logo Scroller */}
+          <div className="bg-gray-50 border-y border-gray-100 py-6 mb-6 overflow-hidden relative flex items-center">
+            <div className="marquee-container items-center gap-10 lg:gap-16 px-4">
+              {[...brandLogos, ...brandLogos].map((num, idx) => (
+                <div key={`brand-${idx}`} className="flex-shrink-0 flex items-center justify-center">
+                  <img
+                    src={`/${num}.png`}
+                    alt={`Brand ${num}`}
+                    className="h-8 lg:h-12 object-contain grayscale opacity-60 hover:grayscale-0 hover:opacity-100 transition-all duration-300 cursor-pointer drop-shadow-sm"
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Products Below Brands */}
+          <div className="bg-white">
+            {isLoading ? (
+              <div className="flex justify-center py-10"><div className="w-8 h-8 border-4 border-[#E8A922] border-t-transparent rounded-full animate-spin"></div></div>
+            ) : (
+              <>
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 lg:gap-4 mb-6">
+                  {(showAllProducts ? products : products.slice(5, 10)).map((product: any) => {
+                    const visualDiscount = getDeterministicDiscount(product.id);
+                    const oldPrice = Math.round(product.price / (1 - (visualDiscount / 100)));
+
                     return (
                       <div
-                        key={product.id}
+                        key={`brand-prod-${product.id}`}
                         onClick={() => router.push(`/product/${generateSlug(product.name)}`)}
-                        className="bg-white border border-gray-100 rounded-2xl p-4 flex flex-col h-full group hover:border-[#E8A922] shadow-sm hover:shadow-md transition cursor-pointer relative"
+                        className="bg-white p-3 flex flex-col h-full group cursor-pointer relative"
                       >
-                        <div className="relative w-full pt-[100%] bg-gray-50/50 mb-4 overflow-hidden rounded-xl flex-shrink-0">
-                          <div className="absolute top-2 left-2 w-8 h-8 bg-white rounded-full shadow flex items-center justify-center z-20">
-                            <span className="text-[#E8A922] text-lg">🔥</span>
-                          </div>
+                        <div className="relative w-full pt-[100%] bg-gray-50/50 mb-3 overflow-hidden flex-shrink-0">
+                          <span className="absolute top-2 left-2 bg-[#1B6B80] text-white text-[10px] font-black px-1.5 py-0.5 z-20 flex items-center gap-1"><FiCheckCircle size={10} /> Verified</span>
+                          <button className="absolute top-2 right-2 text-gray-400 hover:text-red-500 lg:hidden z-20" onClick={(e) => { e.stopPropagation(); toggleWishlist(e, product.id); }}><FiHeart className={wishlist.includes(product.id) ? "fill-red-500 text-red-500" : ""} /></button>
 
                           {getDisplayImage(product.imageUrl) ? (
                             <img src={getImageUrl(getDisplayImage(product.imageUrl))} alt={product.name} className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
@@ -811,110 +879,32 @@ export default function HomePage() {
                           )}
                         </div>
 
-                        <div className="flex flex-col flex-grow text-center">
-                          <div className="flex items-center justify-center text-[#E8A922] text-[10px] mb-2">★★★★★ <span className="text-gray-400 ml-1">({Math.floor(Math.random() * 200) + 50})</span></div>
-                          <h4 className="font-bold text-xs lg:text-sm text-gray-800 mb-2 line-clamp-2 leading-snug">{product.name}</h4>
-                          <span className="font-black text-sm lg:text-base text-[#1B6B80] mb-3 mt-auto">TZS {product.price.toLocaleString()}</span>
-                          <button onClick={(e) => { e.stopPropagation(); addToCart(product); }} className="w-full py-2 bg-[#1B6B80] text-white rounded-lg flex items-center justify-center font-bold text-[11px] hover:bg-[#145363] transition">
-                            Add To Cart
-                          </button>
+                        <div className="flex flex-col flex-grow">
+                          <h4 className="font-bold text-xs lg:text-sm text-gray-800 mb-2 line-clamp-2 leading-snug group-hover:text-[#1B6B80] transition">{product.name}</h4>
+                          <div className="flex flex-col xl:flex-row xl:items-center gap-1 xl:gap-2 mb-2 mt-auto">
+                            <span className="font-black text-sm lg:text-base text-[#1B6B80]">TZS {product.price.toLocaleString()}</span>
+                            <span className="text-[10px] text-gray-400 line-through">TZS {oldPrice.toLocaleString()}</span>
+                          </div>
+                          <div className="flex items-center justify-between mt-1 pt-2 border-t border-gray-100">
+                            <div className="flex items-center text-[#E8A922] text-[10px] font-bold">
+                              <span className="flex items-center tracking-tighter">★★★★★</span> <span className="text-gray-400 ml-1 font-medium hidden sm:inline-block">({Math.floor(Math.random() * 100) + 10})</span>
+                            </div>
+                            <button onClick={(e) => { e.stopPropagation(); addToCart(product); }} className="w-8 h-8 bg-gray-50 rounded-lg flex items-center justify-center text-gray-600 hover:bg-[#E8A922] hover:text-white transition">
+                              <FiShoppingCart size={14} />
+                            </button>
+                          </div>
                         </div>
                       </div>
                     )
                   })}
                 </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* ========================================================= */}
-        {/* TOP BRANDS SECTION */}
-        {/* ========================================================= */}
-        <div className="px-4 lg:px-0 mb-12">
-          <div className="bg-white border border-gray-100 shadow-sm rounded-3xl overflow-hidden">
-            <div className="flex items-center justify-between bg-[#1B6B80] p-4 lg:p-5 shadow-sm">
-              <div>
-                <div className="flex items-center gap-2 mb-0.5">
-                  <FiAward size={20} className="text-[#E8A922]" />
-                  <h2 className="text-lg lg:text-xl font-black text-white">Top Brands</h2>
+                <div className="flex justify-center mb-6 mt-4">
+                  <button onClick={() => setShowAllProducts(!showAllProducts)} className="bg-white border-2 border-gray-200 text-[#1B6B80] font-black px-12 py-3 rounded-xl flex items-center gap-2 hover:border-[#E8A922] hover:bg-[#E8A922]/10 transition shadow-sm text-sm">
+                    {showAllProducts ? "Show Less" : "View All Products"}
+                  </button>
                 </div>
-                <p className="text-xs text-gray-300">Premium Partners & Certified Products</p>
-              </div>
-              <button onClick={() => router.push('/categories')} className="hidden sm:flex text-xs font-bold text-[#E8A922] items-center gap-1 hover:text-white transition">Shop All <FiChevronRight /></button>
-            </div>
-
-            {/* Brands Logo Scroller Inside the Card */}
-            <div className="bg-gray-50 border-b border-gray-100 py-6 overflow-hidden relative flex items-center">
-              <div className="marquee-container items-center gap-10 lg:gap-16 px-4">
-                {[...brandLogos, ...brandLogos].map((num, idx) => (
-                  <div key={`brand-${idx}`} className="flex-shrink-0 flex items-center justify-center">
-                    <img
-                      src={`/${num}.png`}
-                      alt={`Brand ${num}`}
-                      className="h-8 lg:h-12 object-contain grayscale opacity-60 hover:grayscale-0 hover:opacity-100 transition-all duration-300 cursor-pointer drop-shadow-sm"
-                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Products Below Brands */}
-            <div className="bg-white p-4 lg:p-6">
-              {isLoading ? (
-                <div className="flex justify-center py-10"><div className="w-8 h-8 border-4 border-[#E8A922] border-t-transparent rounded-full animate-spin"></div></div>
-              ) : (
-                <>
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 lg:gap-4 mb-4">
-                    {(showAllProducts ? products : products.slice(5, 10)).map((product: any) => {
-                      const visualDiscount = getDeterministicDiscount(product.id);
-                      const oldPrice = Math.round(product.price / (1 - (visualDiscount / 100)));
-
-                      return (
-                        <div
-                          key={`brand-prod-${product.id}`}
-                          onClick={() => router.push(`/product/${generateSlug(product.name)}`)}
-                          className="bg-white border border-gray-100 rounded-2xl p-4 flex flex-col h-full group hover:border-[#E8A922] shadow-sm hover:shadow-md transition cursor-pointer relative"
-                        >
-                          <div className="relative w-full pt-[100%] bg-gray-50/50 mb-4 overflow-hidden rounded-xl flex-shrink-0">
-                            <span className="absolute top-2 left-2 bg-[#1B6B80] text-white text-[10px] font-black px-1.5 py-0.5 rounded z-20 flex items-center gap-1"><FiCheckCircle size={10} /> Verified</span>
-                            <button className="absolute top-2 right-2 text-gray-400 hover:text-red-500 lg:hidden z-20" onClick={(e) => { e.stopPropagation(); toggleWishlist(e, product.id); }}><FiHeart className={wishlist.includes(product.id) ? "fill-red-500 text-red-500" : ""} /></button>
-
-                            {getDisplayImage(product.imageUrl) ? (
-                              <img src={getImageUrl(getDisplayImage(product.imageUrl))} alt={product.name} className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                            ) : (
-                              <div className="absolute inset-0 flex items-center justify-center text-5xl">📦</div>
-                            )}
-                          </div>
-
-                          <div className="flex flex-col flex-grow">
-                            <h4 className="font-bold text-xs lg:text-sm text-gray-800 mb-2 line-clamp-2 leading-snug group-hover:text-[#1B6B80] transition">{product.name}</h4>
-                            <div className="flex flex-col xl:flex-row xl:items-center gap-1 xl:gap-2 mb-2 mt-auto">
-                              <span className="font-black text-sm lg:text-base text-[#1B6B80]">TZS {product.price.toLocaleString()}</span>
-                              <span className="text-[10px] text-gray-400 line-through">TZS {oldPrice.toLocaleString()}</span>
-                            </div>
-                            <div className="flex items-center justify-between mt-1 border-t border-gray-100 pt-3">
-                              <div className="flex items-center text-[#E8A922] text-[10px] font-bold">
-                                <span className="flex items-center tracking-tighter">★★★★★</span> <span className="text-gray-400 ml-1 font-medium hidden sm:inline-block">({Math.floor(Math.random() * 100) + 10})</span>
-                              </div>
-                              <button onClick={(e) => { e.stopPropagation(); addToCart(product); }} className="w-8 h-8 bg-gray-50 border border-gray-200 rounded-lg flex items-center justify-center text-gray-600 hover:bg-[#E8A922] hover:text-white hover:border-[#E8A922] transition">
-                                <FiShoppingCart size={14} />
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
-                  <div className="flex justify-center mb-6 mt-4">
-                    <button onClick={() => setShowAllProducts(!showAllProducts)} className="bg-white border-2 border-gray-200 text-[#1B6B80] font-black px-12 py-3 rounded-xl flex items-center gap-2 hover:border-[#E8A922] hover:bg-[#E8A922]/10 transition shadow-sm text-sm">
-                      {showAllProducts ? "Show Less" : "View All Products"}
-                    </button>
-                  </div>
-                </>
-              )}
-            </div>
+              </>
+            )}
           </div>
         </div>
 
