@@ -529,13 +529,13 @@ export default function HomePage() {
         {/* MAIN CONTENT AREA */}
         <main className="flex-1 min-w-0 relative">
 
-          {/* DESKTOP CATEGORIES RIBBON (CAPPED AT 8 + MORE BUTTON) */}
+          {/* DESKTOP CATEGORIES RIBBON (SLIDER/SCROLL) */}
           <div className="hidden lg:flex items-center bg-white rounded-2xl border border-gray-100 px-6 py-5 shadow-sm mb-6 overflow-hidden relative">
-            <div className="flex items-center gap-6 w-full hide-scrollbar flex-wrap">
-              {dbCategories.slice(0, 8).map((cat, idx) => {
+            <div className="flex items-center gap-6 w-full overflow-x-auto hide-scrollbar flex-nowrap">
+              {dbCategories.map((cat, idx) => {
                 const visual = getCategoryVisual(cat.name);
                 return (
-                  <button key={idx} onClick={() => handleCategoryClick(cat.slug)} className="flex flex-col items-center gap-2 hover:opacity-80 transition cursor-pointer whitespace-nowrap group min-w-[70px]">
+                  <button key={idx} onClick={() => handleCategoryClick(cat.slug)} className="flex flex-col items-center gap-2 hover:opacity-80 transition cursor-pointer whitespace-nowrap group min-w-[70px] flex-shrink-0">
                     <div className={`w-16 h-16 rounded-full flex items-center justify-center transition-transform transform group-hover:scale-105 ${visual.bg} shadow-sm border border-black/5`}>
                       <span className="text-3xl drop-shadow-sm">{visual.icon}</span>
                     </div>
@@ -543,25 +543,15 @@ export default function HomePage() {
                   </button>
                 )
               })}
-
-              {/* "More/All Categories" Button Desktop */}
-              {dbCategories.length > 8 && (
-                <button onClick={() => handleCategoryClick()} className="flex flex-col items-center gap-2 hover:opacity-80 transition cursor-pointer whitespace-nowrap group min-w-[70px]">
-                  <div className="w-16 h-16 rounded-full flex items-center justify-center transition-transform transform group-hover:scale-105 bg-gray-100 shadow-sm border border-black/5 text-gray-600">
-                    <FiMoreHorizontal size={28} />
-                  </div>
-                  <span className="text-xs font-bold text-gray-800">All Categories</span>
-                </button>
-              )}
             </div>
           </div>
 
-          {/* MOBILE CATEGORIES RIBBON (CAPPED AT 4 + MORE BUTTON) */}
-          <div className="lg:hidden flex justify-between gap-2 px-4 py-6 bg-white mb-4 shadow-sm border-b border-gray-100">
-            {dbCategories.slice(0, 4).map((cat, idx) => {
+          {/* MOBILE CATEGORIES RIBBON (SLIDER/SCROLL) */}
+          <div className="lg:hidden flex gap-4 px-4 py-6 bg-white mb-4 shadow-sm border-b border-gray-100 overflow-x-auto hide-scrollbar flex-nowrap">
+            {dbCategories.map((cat, idx) => {
               const visual = getCategoryVisual(cat.name);
               return (
-                <div key={idx} onClick={() => handleCategoryClick(cat.slug)} className="flex flex-col items-center gap-2 flex-shrink-0 cursor-pointer group w-1/5">
+                <div key={idx} onClick={() => handleCategoryClick(cat.slug)} className="flex flex-col items-center gap-2 flex-shrink-0 cursor-pointer group min-w-[72px]">
                   <div className={`w-14 h-14 sm:w-16 sm:h-16 rounded-full flex items-center justify-center transition-transform transform group-hover:scale-105 ${visual.bg} shadow-sm border border-black/5`}>
                     <span className="text-2xl sm:text-3xl drop-shadow-sm">{visual.icon}</span>
                   </div>
@@ -569,14 +559,6 @@ export default function HomePage() {
                 </div>
               );
             })}
-
-            {/* "More" Button Mobile */}
-            <div onClick={() => handleCategoryClick()} className="flex flex-col items-center gap-2 flex-shrink-0 cursor-pointer group w-1/5">
-              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full flex items-center justify-center transition-transform transform group-hover:scale-105 bg-gray-100 shadow-sm border border-black/5 text-gray-600">
-                <FiMoreHorizontal size={24} />
-              </div>
-              <span className="text-[10px] font-bold text-gray-800 text-center leading-tight">More</span>
-            </div>
           </div>
 
           {/* Slider Hero Banner - DYNAMIC KUTOKA ADMIN */}
@@ -687,7 +669,7 @@ export default function HomePage() {
             {isLoading ? (
               <div className="flex justify-center py-10"><div className="w-8 h-8 border-4 border-[#E8A922] border-t-transparent rounded-full animate-spin"></div></div>
             ) : (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 lg:gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-0 bg-white border-l border-t border-gray-100 shadow-sm">
                 {products.slice(0, 4).map((product: any) => {
                   const visualDiscount = getDeterministicDiscount(product.id);
                   const oldPrice = Math.round(product.price / (1 - (visualDiscount / 100)));
@@ -696,9 +678,9 @@ export default function HomePage() {
                     <div
                       key={product.id}
                       onClick={() => router.push(`/product/${generateSlug(product.name)}`)}
-                      className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm flex flex-col h-full group hover:border-[#E8A922] transition cursor-pointer"
+                      className="bg-white border-r border-b border-gray-100 p-4 flex flex-col h-full group hover:shadow-xl transition cursor-pointer relative z-10 hover:z-20"
                     >
-                      <div className="relative w-full pt-[100%] bg-gray-50/50 rounded-xl mb-4 overflow-hidden border border-gray-50 flex-shrink-0">
+                      <div className="relative w-full pt-[100%] bg-gray-50/50 mb-4 overflow-hidden flex-shrink-0">
                         <span className="absolute top-2 left-2 bg-[#E8A922] text-white text-[10px] font-black px-1.5 py-0.5 rounded z-20">-{visualDiscount}%</span>
                         <button className="absolute top-2 right-2 text-gray-400 hover:text-red-500 lg:hidden z-20" onClick={(e) => { e.stopPropagation(); toggleWishlist(e, product.id); }}><FiHeart className={wishlist.includes(product.id) ? "fill-red-500 text-red-500" : ""} /></button>
 
@@ -739,7 +721,7 @@ export default function HomePage() {
       <div className="max-w-[1440px] xl:max-w-[1536px] mx-auto lg:px-6 pb-6 overflow-hidden">
 
         {/* ========================================================= */}
-        {/* NEW ARRIVALS SECTION - FULL WIDTH */}
+        {/* NEW ARRIVALS SECTION - FULL WIDTH BORDERLESS */}
         {/* ========================================================= */}
         <div className="px-4 lg:px-0 mb-12">
           <div className="flex items-center justify-between mb-6">
@@ -753,19 +735,19 @@ export default function HomePage() {
           {isLoading ? (
             <div className="flex justify-center py-10"><div className="w-8 h-8 border-4 border-[#E8A922] border-t-transparent rounded-full animate-spin"></div></div>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 lg:gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-0 bg-white border-l border-t border-gray-100 shadow-sm">
               {fallbackNewArrivals.map((product: any) => {
                 return (
                   <div
                     key={product.id}
                     onClick={() => router.push(`/product/${generateSlug(product.name)}`)}
-                    className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm flex flex-col h-full group hover:border-[#E8A922] transition cursor-pointer relative"
+                    className="bg-white border-r border-b border-gray-100 p-4 flex flex-col h-full group hover:shadow-xl transition cursor-pointer relative z-10 hover:z-20"
                   >
                     <div className="absolute top-0 right-0 bg-[#1B6B80] text-white text-[9px] font-black px-3 py-1 rounded-bl-xl z-20 shadow-sm uppercase tracking-wider">
                       NEW
                     </div>
 
-                    <div className="relative w-full pt-[100%] bg-gray-50/50 rounded-xl mb-4 overflow-hidden border border-gray-50 flex-shrink-0">
+                    <div className="relative w-full pt-[100%] bg-gray-50/50 mb-4 overflow-hidden flex-shrink-0">
                       {getDisplayImage(product.imageUrl) ? (
                         <img src={getImageUrl(getDisplayImage(product.imageUrl))} alt={product.name} className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                       ) : (
@@ -790,10 +772,10 @@ export default function HomePage() {
         </div>
 
         {/* ========================================================= */}
-        {/* TRENDING NOW SECTION - FULL WIDTH (NEW STYLE) */}
+        {/* TRENDING NOW SECTION - FULL WIDTH (BORDERLESS GRID) */}
         {/* ========================================================= */}
         <div className="px-4 lg:px-0 mb-12">
-          <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+          <div className="bg-white border border-gray-100 shadow-sm overflow-hidden">
             <div className="flex items-center justify-between bg-[#1B6B80] p-4 lg:p-5 shadow-sm">
               <div>
                 <div className="flex items-center gap-2 mb-0.5">
@@ -805,19 +787,19 @@ export default function HomePage() {
               <button onClick={() => router.push('/trending')} className="text-xs font-bold text-[#E8A922] flex items-center gap-1 hover:text-white transition">See All <FiChevronRight /></button>
             </div>
 
-            <div className="p-4 lg:p-6 bg-white">
+            <div className="bg-white">
               {isLoading ? (
                 <div className="flex justify-center py-10"><div className="w-8 h-8 border-4 border-[#E8A922] border-t-transparent rounded-full animate-spin"></div></div>
               ) : (
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 lg:gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-0">
                   {fallbackTrending.map((product: any) => {
                     return (
                       <div
                         key={product.id}
                         onClick={() => router.push(`/product/${generateSlug(product.name)}`)}
-                        className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm flex flex-col h-full group hover:border-[#E8A922] transition cursor-pointer"
+                        className="bg-white border-r border-b border-gray-100 p-4 flex flex-col h-full group hover:shadow-xl transition cursor-pointer relative z-10 hover:z-20"
                       >
-                        <div className="relative w-full pt-[100%] bg-gray-50/50 rounded-xl mb-4 overflow-hidden border border-gray-50 flex-shrink-0">
+                        <div className="relative w-full pt-[100%] bg-gray-50/50 mb-4 overflow-hidden flex-shrink-0">
                           <div className="absolute top-2 left-2 w-8 h-8 bg-white rounded-full shadow flex items-center justify-center z-20">
                             <span className="text-[#E8A922] text-lg">🔥</span>
                           </div>
@@ -833,7 +815,7 @@ export default function HomePage() {
                           <div className="flex items-center justify-center text-[#E8A922] text-[10px] mb-2">★★★★★ <span className="text-gray-400 ml-1">({Math.floor(Math.random() * 200) + 50})</span></div>
                           <h4 className="font-bold text-xs lg:text-sm text-gray-800 mb-2 line-clamp-2 leading-snug">{product.name}</h4>
                           <span className="font-black text-sm lg:text-base text-[#1B6B80] mb-3 mt-auto">TZS {product.price.toLocaleString()}</span>
-                          <button onClick={(e) => { e.stopPropagation(); addToCart(product); }} className="w-full py-2 bg-[#1B6B80] text-white rounded-lg flex items-center justify-center font-bold text-[11px] hover:bg-[#145363] transition">
+                          <button onClick={(e) => { e.stopPropagation(); addToCart(product); }} className="w-full py-2 bg-[#1B6B80] text-white flex items-center justify-center font-bold text-[11px] hover:bg-[#145363] transition">
                             Add To Cart
                           </button>
                         </div>
@@ -847,10 +829,10 @@ export default function HomePage() {
         </div>
 
         {/* ========================================================= */}
-        {/* TOP BRANDS SECTION (REWORKED TO BE INSIDE A CARD & FULL WIDTH) */}
+        {/* TOP BRANDS SECTION (BORDERLESS PRODUCTS) */}
         {/* ========================================================= */}
         <div className="px-4 lg:px-0 mb-12">
-          <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+          <div className="bg-white border border-gray-100 shadow-sm overflow-hidden">
             <div className="flex items-center justify-between bg-[#1B6B80] p-4 lg:p-5 shadow-sm">
               <div>
                 <div className="flex items-center gap-2 mb-0.5">
@@ -878,13 +860,13 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Products Below Brands */}
-            <div className="p-4 lg:p-6 bg-white">
+            {/* Products Below Brands (Borderless) */}
+            <div className="bg-white">
               {isLoading ? (
                 <div className="flex justify-center py-10"><div className="w-8 h-8 border-4 border-[#E8A922] border-t-transparent rounded-full animate-spin"></div></div>
               ) : (
                 <>
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 lg:gap-4 mb-4">
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-0 mb-4 border-b border-gray-100">
                     {/* HAPA NDIPO MABADILIKO YALIPOFANYIKA */}
                     {(showAllProducts ? products : products.slice(5, 10)).map((product: any) => {
                       const visualDiscount = getDeterministicDiscount(product.id);
@@ -894,10 +876,10 @@ export default function HomePage() {
                         <div
                           key={`brand-prod-${product.id}`}
                           onClick={() => router.push(`/product/${generateSlug(product.name)}`)}
-                          className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm flex flex-col h-full group hover:border-[#E8A922] transition cursor-pointer"
+                          className="bg-white border-r border-b border-gray-100 p-4 flex flex-col h-full group hover:shadow-xl transition cursor-pointer relative z-10 hover:z-20"
                         >
-                          <div className="relative w-full pt-[100%] bg-gray-50/50 rounded-xl mb-4 overflow-hidden border border-gray-50 flex-shrink-0">
-                            <span className="absolute top-2 left-2 bg-[#1B6B80] text-white text-[10px] font-black px-1.5 py-0.5 rounded z-20 flex items-center gap-1"><FiCheckCircle size={10} /> Verified</span>
+                          <div className="relative w-full pt-[100%] bg-gray-50/50 mb-4 overflow-hidden flex-shrink-0">
+                            <span className="absolute top-2 left-2 bg-[#1B6B80] text-white text-[10px] font-black px-1.5 py-0.5 z-20 flex items-center gap-1"><FiCheckCircle size={10} /> Verified</span>
                             <button className="absolute top-2 right-2 text-gray-400 hover:text-red-500 lg:hidden z-20" onClick={(e) => { e.stopPropagation(); toggleWishlist(e, product.id); }}><FiHeart className={wishlist.includes(product.id) ? "fill-red-500 text-red-500" : ""} /></button>
 
                             {getDisplayImage(product.imageUrl) ? (
@@ -917,7 +899,7 @@ export default function HomePage() {
                               <div className="flex items-center text-[#E8A922] text-[10px] font-bold">
                                 <span className="flex items-center tracking-tighter">★★★★★</span> <span className="text-gray-400 ml-1 font-medium hidden sm:inline-block">({Math.floor(Math.random() * 100) + 10})</span>
                               </div>
-                              <button onClick={(e) => { e.stopPropagation(); addToCart(product); }} className="w-8 h-8 bg-gray-50 border border-gray-200 rounded-lg flex items-center justify-center text-gray-600 hover:bg-[#E8A922] hover:text-white hover:border-[#E8A922] transition">
+                              <button onClick={(e) => { e.stopPropagation(); addToCart(product); }} className="w-8 h-8 bg-gray-50 border border-gray-200 rounded flex items-center justify-center text-gray-600 hover:bg-[#E8A922] hover:text-white hover:border-[#E8A922] transition">
                                 <FiShoppingCart size={14} />
                               </button>
                             </div>
@@ -926,7 +908,7 @@ export default function HomePage() {
                       )
                     })}
                   </div>
-                  <div className="flex justify-center mt-6">
+                  <div className="flex justify-center mb-6 mt-4">
                     {/* BUTTON IMEBORESHWA HAPA KUONYESHA PRODUCTS ZOTE BADALA YA KWENDA CATEGORIES */}
                     <button onClick={() => setShowAllProducts(!showAllProducts)} className="bg-white border-2 border-gray-200 text-[#1B6B80] font-black px-12 py-3 rounded-xl flex items-center gap-2 hover:border-[#E8A922] hover:bg-[#E8A922]/10 transition shadow-sm text-sm">
                       {showAllProducts ? "Show Less" : "View All Products"}
