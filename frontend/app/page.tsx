@@ -669,7 +669,7 @@ export default function HomePage() {
             {isLoading ? (
               <div className="flex justify-center py-10"><div className="w-8 h-8 border-4 border-[#E8A922] border-t-transparent rounded-full animate-spin"></div></div>
             ) : (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-0 bg-white border-l border-t border-gray-100 shadow-sm">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 lg:gap-4">
                 {products.slice(0, 4).map((product: any) => {
                   const visualDiscount = getDeterministicDiscount(product.id);
                   const oldPrice = Math.round(product.price / (1 - (visualDiscount / 100)));
@@ -678,9 +678,9 @@ export default function HomePage() {
                     <div
                       key={product.id}
                       onClick={() => router.push(`/product/${generateSlug(product.name)}`)}
-                      className="bg-white border-r border-b border-gray-100 p-4 flex flex-col h-full group hover:shadow-xl transition cursor-pointer relative z-10 hover:z-20"
+                      className="bg-white border border-gray-100 rounded-2xl p-4 flex flex-col h-full group hover:border-[#E8A922] shadow-sm hover:shadow-md transition cursor-pointer relative"
                     >
-                      <div className="relative w-full pt-[100%] bg-gray-50/50 mb-4 overflow-hidden flex-shrink-0">
+                      <div className="relative w-full pt-[100%] bg-gray-50/50 mb-4 overflow-hidden rounded-xl flex-shrink-0">
                         <span className="absolute top-2 left-2 bg-[#E8A922] text-white text-[10px] font-black px-1.5 py-0.5 rounded z-20">-{visualDiscount}%</span>
                         <button className="absolute top-2 right-2 text-gray-400 hover:text-red-500 lg:hidden z-20" onClick={(e) => { e.stopPropagation(); toggleWishlist(e, product.id); }}><FiHeart className={wishlist.includes(product.id) ? "fill-red-500 text-red-500" : ""} /></button>
 
@@ -721,7 +721,7 @@ export default function HomePage() {
       <div className="max-w-[1440px] xl:max-w-[1536px] mx-auto lg:px-6 pb-6 overflow-hidden">
 
         {/* ========================================================= */}
-        {/* NEW ARRIVALS SECTION - FULL WIDTH BORDERLESS */}
+        {/* NEW ARRIVALS SECTION */}
         {/* ========================================================= */}
         <div className="px-4 lg:px-0 mb-12">
           <div className="flex items-center justify-between mb-6">
@@ -735,19 +735,19 @@ export default function HomePage() {
           {isLoading ? (
             <div className="flex justify-center py-10"><div className="w-8 h-8 border-4 border-[#E8A922] border-t-transparent rounded-full animate-spin"></div></div>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-0 bg-white border-l border-t border-gray-100 shadow-sm">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 lg:gap-4">
               {fallbackNewArrivals.map((product: any) => {
                 return (
                   <div
                     key={product.id}
                     onClick={() => router.push(`/product/${generateSlug(product.name)}`)}
-                    className="bg-white border-r border-b border-gray-100 p-4 flex flex-col h-full group hover:shadow-xl transition cursor-pointer relative z-10 hover:z-20"
+                    className="bg-white border border-gray-100 rounded-2xl p-4 flex flex-col h-full group hover:border-[#E8A922] shadow-sm hover:shadow-md transition cursor-pointer relative"
                   >
-                    <div className="absolute top-0 right-0 bg-[#1B6B80] text-white text-[9px] font-black px-3 py-1 rounded-bl-xl z-20 shadow-sm uppercase tracking-wider">
+                    <div className="absolute top-0 right-0 bg-[#1B6B80] text-white text-[9px] font-black px-3 py-1 rounded-bl-xl rounded-tr-2xl z-20 shadow-sm uppercase tracking-wider">
                       NEW
                     </div>
 
-                    <div className="relative w-full pt-[100%] bg-gray-50/50 mb-4 overflow-hidden flex-shrink-0">
+                    <div className="relative w-full pt-[100%] bg-gray-50/50 mb-4 overflow-hidden rounded-xl flex-shrink-0">
                       {getDisplayImage(product.imageUrl) ? (
                         <img src={getImageUrl(getDisplayImage(product.imageUrl))} alt={product.name} className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                       ) : (
@@ -772,10 +772,10 @@ export default function HomePage() {
         </div>
 
         {/* ========================================================= */}
-        {/* TRENDING NOW SECTION - FULL WIDTH (BORDERLESS GRID) */}
+        {/* TRENDING NOW SECTION */}
         {/* ========================================================= */}
         <div className="px-4 lg:px-0 mb-12">
-          <div className="bg-white border border-gray-100 shadow-sm overflow-hidden">
+          <div className="bg-white border border-gray-100 shadow-sm rounded-3xl overflow-hidden">
             <div className="flex items-center justify-between bg-[#1B6B80] p-4 lg:p-5 shadow-sm">
               <div>
                 <div className="flex items-center gap-2 mb-0.5">
@@ -787,19 +787,19 @@ export default function HomePage() {
               <button onClick={() => router.push('/trending')} className="text-xs font-bold text-[#E8A922] flex items-center gap-1 hover:text-white transition">See All <FiChevronRight /></button>
             </div>
 
-            <div className="bg-white">
+            <div className="bg-white p-4 lg:p-6">
               {isLoading ? (
                 <div className="flex justify-center py-10"><div className="w-8 h-8 border-4 border-[#E8A922] border-t-transparent rounded-full animate-spin"></div></div>
               ) : (
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-0">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 lg:gap-4">
                   {fallbackTrending.map((product: any) => {
                     return (
                       <div
                         key={product.id}
                         onClick={() => router.push(`/product/${generateSlug(product.name)}`)}
-                        className="bg-white border-r border-b border-gray-100 p-4 flex flex-col h-full group hover:shadow-xl transition cursor-pointer relative z-10 hover:z-20"
+                        className="bg-white border border-gray-100 rounded-2xl p-4 flex flex-col h-full group hover:border-[#E8A922] shadow-sm hover:shadow-md transition cursor-pointer relative"
                       >
-                        <div className="relative w-full pt-[100%] bg-gray-50/50 mb-4 overflow-hidden flex-shrink-0">
+                        <div className="relative w-full pt-[100%] bg-gray-50/50 mb-4 overflow-hidden rounded-xl flex-shrink-0">
                           <div className="absolute top-2 left-2 w-8 h-8 bg-white rounded-full shadow flex items-center justify-center z-20">
                             <span className="text-[#E8A922] text-lg">🔥</span>
                           </div>
@@ -815,7 +815,7 @@ export default function HomePage() {
                           <div className="flex items-center justify-center text-[#E8A922] text-[10px] mb-2">★★★★★ <span className="text-gray-400 ml-1">({Math.floor(Math.random() * 200) + 50})</span></div>
                           <h4 className="font-bold text-xs lg:text-sm text-gray-800 mb-2 line-clamp-2 leading-snug">{product.name}</h4>
                           <span className="font-black text-sm lg:text-base text-[#1B6B80] mb-3 mt-auto">TZS {product.price.toLocaleString()}</span>
-                          <button onClick={(e) => { e.stopPropagation(); addToCart(product); }} className="w-full py-2 bg-[#1B6B80] text-white flex items-center justify-center font-bold text-[11px] hover:bg-[#145363] transition">
+                          <button onClick={(e) => { e.stopPropagation(); addToCart(product); }} className="w-full py-2 bg-[#1B6B80] text-white rounded-lg flex items-center justify-center font-bold text-[11px] hover:bg-[#145363] transition">
                             Add To Cart
                           </button>
                         </div>
@@ -829,10 +829,10 @@ export default function HomePage() {
         </div>
 
         {/* ========================================================= */}
-        {/* TOP BRANDS SECTION (BORDERLESS PRODUCTS) */}
+        {/* TOP BRANDS SECTION */}
         {/* ========================================================= */}
         <div className="px-4 lg:px-0 mb-12">
-          <div className="bg-white border border-gray-100 shadow-sm overflow-hidden">
+          <div className="bg-white border border-gray-100 shadow-sm rounded-3xl overflow-hidden">
             <div className="flex items-center justify-between bg-[#1B6B80] p-4 lg:p-5 shadow-sm">
               <div>
                 <div className="flex items-center gap-2 mb-0.5">
@@ -860,14 +860,13 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Products Below Brands (Borderless) */}
-            <div className="bg-white">
+            {/* Products Below Brands */}
+            <div className="bg-white p-4 lg:p-6">
               {isLoading ? (
                 <div className="flex justify-center py-10"><div className="w-8 h-8 border-4 border-[#E8A922] border-t-transparent rounded-full animate-spin"></div></div>
               ) : (
                 <>
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-0 mb-4 border-b border-gray-100">
-                    {/* HAPA NDIPO MABADILIKO YALIPOFANYIKA */}
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 lg:gap-4 mb-4">
                     {(showAllProducts ? products : products.slice(5, 10)).map((product: any) => {
                       const visualDiscount = getDeterministicDiscount(product.id);
                       const oldPrice = Math.round(product.price / (1 - (visualDiscount / 100)));
@@ -876,10 +875,10 @@ export default function HomePage() {
                         <div
                           key={`brand-prod-${product.id}`}
                           onClick={() => router.push(`/product/${generateSlug(product.name)}`)}
-                          className="bg-white border-r border-b border-gray-100 p-4 flex flex-col h-full group hover:shadow-xl transition cursor-pointer relative z-10 hover:z-20"
+                          className="bg-white border border-gray-100 rounded-2xl p-4 flex flex-col h-full group hover:border-[#E8A922] shadow-sm hover:shadow-md transition cursor-pointer relative"
                         >
-                          <div className="relative w-full pt-[100%] bg-gray-50/50 mb-4 overflow-hidden flex-shrink-0">
-                            <span className="absolute top-2 left-2 bg-[#1B6B80] text-white text-[10px] font-black px-1.5 py-0.5 z-20 flex items-center gap-1"><FiCheckCircle size={10} /> Verified</span>
+                          <div className="relative w-full pt-[100%] bg-gray-50/50 mb-4 overflow-hidden rounded-xl flex-shrink-0">
+                            <span className="absolute top-2 left-2 bg-[#1B6B80] text-white text-[10px] font-black px-1.5 py-0.5 rounded z-20 flex items-center gap-1"><FiCheckCircle size={10} /> Verified</span>
                             <button className="absolute top-2 right-2 text-gray-400 hover:text-red-500 lg:hidden z-20" onClick={(e) => { e.stopPropagation(); toggleWishlist(e, product.id); }}><FiHeart className={wishlist.includes(product.id) ? "fill-red-500 text-red-500" : ""} /></button>
 
                             {getDisplayImage(product.imageUrl) ? (
@@ -899,7 +898,7 @@ export default function HomePage() {
                               <div className="flex items-center text-[#E8A922] text-[10px] font-bold">
                                 <span className="flex items-center tracking-tighter">★★★★★</span> <span className="text-gray-400 ml-1 font-medium hidden sm:inline-block">({Math.floor(Math.random() * 100) + 10})</span>
                               </div>
-                              <button onClick={(e) => { e.stopPropagation(); addToCart(product); }} className="w-8 h-8 bg-gray-50 border border-gray-200 rounded flex items-center justify-center text-gray-600 hover:bg-[#E8A922] hover:text-white hover:border-[#E8A922] transition">
+                              <button onClick={(e) => { e.stopPropagation(); addToCart(product); }} className="w-8 h-8 bg-gray-50 border border-gray-200 rounded-lg flex items-center justify-center text-gray-600 hover:bg-[#E8A922] hover:text-white hover:border-[#E8A922] transition">
                                 <FiShoppingCart size={14} />
                               </button>
                             </div>
@@ -909,7 +908,6 @@ export default function HomePage() {
                     })}
                   </div>
                   <div className="flex justify-center mb-6 mt-4">
-                    {/* BUTTON IMEBORESHWA HAPA KUONYESHA PRODUCTS ZOTE BADALA YA KWENDA CATEGORIES */}
                     <button onClick={() => setShowAllProducts(!showAllProducts)} className="bg-white border-2 border-gray-200 text-[#1B6B80] font-black px-12 py-3 rounded-xl flex items-center gap-2 hover:border-[#E8A922] hover:bg-[#E8A922]/10 transition shadow-sm text-sm">
                       {showAllProducts ? "Show Less" : "View All Products"}
                     </button>
