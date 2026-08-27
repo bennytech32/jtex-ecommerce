@@ -669,7 +669,7 @@ export default function HomePage() {
             {isLoading ? (
               <div className="flex justify-center py-10"><div className="w-8 h-8 border-4 border-[#E8A922] border-t-transparent rounded-full animate-spin"></div></div>
             ) : (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 lg:gap-4 bg-transparent">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-5 bg-transparent">
                 {products.slice(0, 4).map((product: any) => {
                   const visualDiscount = getDeterministicDiscount(product.id);
                   const oldPrice = Math.round(product.price / (1 - (visualDiscount / 100)));
@@ -678,10 +678,10 @@ export default function HomePage() {
                     <div
                       key={product.id}
                       onClick={() => router.push(`/product/${generateSlug(product.name)}`)}
-                      className="bg-white p-3 flex flex-col h-full group cursor-pointer relative"
+                      className="bg-white border border-gray-200 rounded-2xl p-3 lg:p-4 flex flex-col h-full group hover:border-[#E8A922]/50 hover:shadow-xl transition-all duration-300 cursor-pointer relative"
                     >
-                      <div className="relative w-full pt-[100%] bg-gray-50/50 mb-3 overflow-hidden flex-shrink-0">
-                        <span className="absolute top-2 left-2 bg-[#E8A922] text-white text-[10px] font-black px-1.5 py-0.5 z-20">-{visualDiscount}%</span>
+                      <div className="relative w-full pt-[100%] bg-gray-50 mb-3 rounded-xl overflow-hidden flex-shrink-0">
+                        <span className="absolute top-2 left-2 bg-[#E8A922] text-white text-[10px] font-black px-2 py-1 rounded z-20">-{visualDiscount}%</span>
                         <button className="absolute top-2 right-2 text-gray-400 hover:text-red-500 lg:hidden z-20" onClick={(e) => { e.stopPropagation(); toggleWishlist(e, product.id); }}><FiHeart className={wishlist.includes(product.id) ? "fill-red-500 text-red-500" : ""} /></button>
 
                         {getDisplayImage(product.imageUrl) ? (
@@ -692,12 +692,12 @@ export default function HomePage() {
                       </div>
 
                       <div className="flex flex-col flex-grow">
-                        <h4 className="font-bold text-xs lg:text-sm text-gray-800 mb-2 line-clamp-2 leading-snug">{product.name}</h4>
+                        <h4 className="font-bold text-xs lg:text-sm text-gray-800 mb-2 line-clamp-2 leading-snug group-hover:text-[#1B6B80] transition">{product.name}</h4>
                         <div className="flex flex-col xl:flex-row xl:items-center gap-1 xl:gap-2 mb-2 mt-auto">
                           <span className="font-black text-sm lg:text-base text-[#1B6B80]">TZS {product.price.toLocaleString()}</span>
                           <span className="text-[10px] text-gray-400 line-through">TZS {oldPrice.toLocaleString()}</span>
                         </div>
-                        <div className="flex items-center justify-between mt-1 pt-2 border-t border-gray-100">
+                        <div className="flex items-center justify-between mt-2">
                           <div className="flex items-center text-[#E8A922] text-[10px] font-bold">
                             <span className="flex items-center tracking-tighter">★★★★★</span> <span className="text-gray-400 ml-1 font-medium hidden sm:inline-block">({Math.floor(Math.random() * 100) + 10})</span>
                           </div>
@@ -735,19 +735,19 @@ export default function HomePage() {
           {isLoading ? (
             <div className="flex justify-center py-10"><div className="w-8 h-8 border-4 border-[#E8A922] border-t-transparent rounded-full animate-spin"></div></div>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 lg:gap-4 bg-transparent">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 lg:gap-5 bg-transparent">
               {fallbackNewArrivals.map((product: any) => {
                 return (
                   <div
                     key={product.id}
                     onClick={() => router.push(`/product/${generateSlug(product.name)}`)}
-                    className="bg-white p-3 flex flex-col h-full group cursor-pointer relative"
+                    className="bg-white border border-gray-200 rounded-2xl p-3 lg:p-4 flex flex-col h-full group hover:border-[#E8A922]/50 hover:shadow-xl transition-all duration-300 cursor-pointer relative"
                   >
-                    <div className="absolute top-0 right-0 bg-[#1B6B80] text-white text-[9px] font-black px-3 py-1 z-20 shadow-sm uppercase tracking-wider">
+                    <div className="absolute top-3 right-3 bg-[#1B6B80] text-white text-[9px] font-black px-2 py-1 rounded z-20 uppercase tracking-wider">
                       NEW
                     </div>
 
-                    <div className="relative w-full pt-[100%] bg-gray-50/50 mb-3 overflow-hidden flex-shrink-0">
+                    <div className="relative w-full pt-[100%] bg-gray-50 mb-3 rounded-xl overflow-hidden flex-shrink-0">
                       {getDisplayImage(product.imageUrl) ? (
                         <img src={getImageUrl(getDisplayImage(product.imageUrl))} alt={product.name} className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                       ) : (
@@ -757,9 +757,9 @@ export default function HomePage() {
 
                     <div className="flex flex-col flex-grow">
                       <h4 className="font-bold text-xs lg:text-sm text-gray-800 mb-2 line-clamp-2 leading-snug group-hover:text-[#1B6B80] transition">{product.name}</h4>
-                      <div className="mt-auto flex flex-col gap-2 pt-2 border-t border-gray-100">
+                      <div className="mt-auto flex flex-col gap-3 pt-2">
                         <span className="font-black text-sm lg:text-base text-[#1B6B80]">TZS {product.price.toLocaleString()}</span>
-                        <button onClick={(e) => { e.stopPropagation(); addToCart(product); }} className="w-full py-2 bg-gray-50 rounded-lg flex items-center justify-center text-gray-700 font-bold text-[11px] hover:bg-[#E8A922] hover:text-white transition gap-2">
+                        <button onClick={(e) => { e.stopPropagation(); addToCart(product); }} className="w-full py-2.5 bg-gray-50 border border-gray-200 rounded-lg flex items-center justify-center text-gray-700 font-bold text-[11px] hover:bg-[#E8A922] hover:text-white hover:border-[#E8A922] transition gap-2">
                           <FiShoppingCart size={14} /> Add To Cart
                         </button>
                       </div>
@@ -772,7 +772,7 @@ export default function HomePage() {
         </div>
 
         {/* ========================================================= */}
-        {/* TRENDING NOW SECTION (FREELY WITHOUT OUTER BOX WRAPPER) */}
+        {/* TRENDING NOW SECTION */}
         {/* ========================================================= */}
         <div className="px-4 lg:px-0 mb-12">
           <div className="flex items-center justify-between mb-6">
@@ -783,19 +783,19 @@ export default function HomePage() {
             <button onClick={() => router.push('/trending')} className="text-xs font-bold text-gray-500 flex items-center gap-1 hover:text-[#1B6B80] transition">See All <FiChevronRight /></button>
           </div>
 
-          <div className="bg-white">
+          <div className="bg-transparent">
             {isLoading ? (
               <div className="flex justify-center py-10"><div className="w-8 h-8 border-4 border-[#E8A922] border-t-transparent rounded-full animate-spin"></div></div>
             ) : (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 lg:gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 lg:gap-5">
                 {fallbackTrending.map((product: any) => {
                   return (
                     <div
                       key={product.id}
                       onClick={() => router.push(`/product/${generateSlug(product.name)}`)}
-                      className="bg-white p-3 flex flex-col h-full group cursor-pointer relative"
+                      className="bg-white border border-gray-200 rounded-2xl p-3 lg:p-4 flex flex-col h-full group hover:border-[#E8A922]/50 hover:shadow-xl transition-all duration-300 cursor-pointer relative"
                     >
-                      <div className="relative w-full pt-[100%] bg-gray-50/50 mb-3 overflow-hidden flex-shrink-0">
+                      <div className="relative w-full pt-[100%] bg-gray-50 mb-3 rounded-xl overflow-hidden flex-shrink-0">
                         <div className="absolute top-2 left-2 w-8 h-8 bg-white rounded-full shadow flex items-center justify-center z-20">
                           <span className="text-[#E8A922] text-lg">🔥</span>
                         </div>
@@ -809,9 +809,9 @@ export default function HomePage() {
 
                       <div className="flex flex-col flex-grow text-center">
                         <div className="flex items-center justify-center text-[#E8A922] text-[10px] mb-2">★★★★★ <span className="text-gray-400 ml-1">({Math.floor(Math.random() * 200) + 50})</span></div>
-                        <h4 className="font-bold text-xs lg:text-sm text-gray-800 mb-2 line-clamp-2 leading-snug">{product.name}</h4>
-                        <span className="font-black text-sm lg:text-base text-[#1B6B80] mb-3 mt-auto">TZS {product.price.toLocaleString()}</span>
-                        <button onClick={(e) => { e.stopPropagation(); addToCart(product); }} className="w-full py-2 bg-[#1B6B80] text-white rounded-lg flex items-center justify-center font-bold text-[11px] hover:bg-[#145363] transition">
+                        <h4 className="font-bold text-xs lg:text-sm text-gray-800 mb-2 line-clamp-2 leading-snug group-hover:text-[#1B6B80] transition">{product.name}</h4>
+                        <span className="font-black text-sm lg:text-base text-[#1B6B80] mb-4 mt-auto">TZS {product.price.toLocaleString()}</span>
+                        <button onClick={(e) => { e.stopPropagation(); addToCart(product); }} className="w-full py-2.5 bg-[#1B6B80] text-white rounded-lg flex items-center justify-center font-bold text-[11px] hover:bg-[#145363] transition">
                           Add To Cart
                         </button>
                       </div>
@@ -824,7 +824,7 @@ export default function HomePage() {
         </div>
 
         {/* ========================================================= */}
-        {/* TOP BRANDS SECTION (FREELY WITHOUT OUTER BOX WRAPPER) */}
+        {/* TOP BRANDS SECTION */}
         {/* ========================================================= */}
         <div className="px-4 lg:px-0 mb-12">
           <div className="flex items-center justify-between mb-6">
@@ -836,7 +836,7 @@ export default function HomePage() {
           </div>
 
           {/* Brands Logo Scroller */}
-          <div className="bg-gray-50 border-y border-gray-100 py-6 mb-6 overflow-hidden relative flex items-center">
+          <div className="bg-gray-50 border border-gray-200 rounded-2xl py-6 mb-6 overflow-hidden relative flex items-center">
             <div className="marquee-container items-center gap-10 lg:gap-16 px-4">
               {[...brandLogos, ...brandLogos].map((num, idx) => (
                 <div key={`brand-${idx}`} className="flex-shrink-0 flex items-center justify-center">
@@ -852,12 +852,12 @@ export default function HomePage() {
           </div>
 
           {/* Products Below Brands */}
-          <div className="bg-white">
+          <div className="bg-transparent">
             {isLoading ? (
               <div className="flex justify-center py-10"><div className="w-8 h-8 border-4 border-[#E8A922] border-t-transparent rounded-full animate-spin"></div></div>
             ) : (
               <>
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 lg:gap-4 mb-6">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 lg:gap-5 mb-6">
                   {(showAllProducts ? products : products.slice(5, 10)).map((product: any) => {
                     const visualDiscount = getDeterministicDiscount(product.id);
                     const oldPrice = Math.round(product.price / (1 - (visualDiscount / 100)));
@@ -866,10 +866,10 @@ export default function HomePage() {
                       <div
                         key={`brand-prod-${product.id}`}
                         onClick={() => router.push(`/product/${generateSlug(product.name)}`)}
-                        className="bg-white p-3 flex flex-col h-full group cursor-pointer relative"
+                        className="bg-white border border-gray-200 rounded-2xl p-3 lg:p-4 flex flex-col h-full group hover:border-[#E8A922]/50 hover:shadow-xl transition-all duration-300 cursor-pointer relative"
                       >
-                        <div className="relative w-full pt-[100%] bg-gray-50/50 mb-3 overflow-hidden flex-shrink-0">
-                          <span className="absolute top-2 left-2 bg-[#1B6B80] text-white text-[10px] font-black px-1.5 py-0.5 z-20 flex items-center gap-1"><FiCheckCircle size={10} /> Verified</span>
+                        <div className="relative w-full pt-[100%] bg-gray-50 mb-3 rounded-xl overflow-hidden flex-shrink-0">
+                          <span className="absolute top-2 left-2 bg-[#1B6B80] text-white text-[10px] font-black px-2 py-1 rounded z-20 flex items-center gap-1"><FiCheckCircle size={10} /> Verified</span>
                           <button className="absolute top-2 right-2 text-gray-400 hover:text-red-500 lg:hidden z-20" onClick={(e) => { e.stopPropagation(); toggleWishlist(e, product.id); }}><FiHeart className={wishlist.includes(product.id) ? "fill-red-500 text-red-500" : ""} /></button>
 
                           {getDisplayImage(product.imageUrl) ? (
@@ -885,7 +885,7 @@ export default function HomePage() {
                             <span className="font-black text-sm lg:text-base text-[#1B6B80]">TZS {product.price.toLocaleString()}</span>
                             <span className="text-[10px] text-gray-400 line-through">TZS {oldPrice.toLocaleString()}</span>
                           </div>
-                          <div className="flex items-center justify-between mt-1 pt-2 border-t border-gray-100">
+                          <div className="flex items-center justify-between mt-2">
                             <div className="flex items-center text-[#E8A922] text-[10px] font-bold">
                               <span className="flex items-center tracking-tighter">★★★★★</span> <span className="text-gray-400 ml-1 font-medium hidden sm:inline-block">({Math.floor(Math.random() * 100) + 10})</span>
                             </div>

@@ -6,7 +6,7 @@ import { useCart } from '../context/CartContext';
 import {
   FiArrowLeft, FiShoppingCart, FiMapPin, FiCreditCard,
   FiTrash2, FiChevronRight, FiShield, FiCheckCircle,
-  FiTruck, FiPhone, FiUser, FiStar, FiInfo, FiMinus, FiPlus, FiX, FiLock, FiMail, FiList, FiCheck
+  FiTruck, FiPhone, FiUser, FiStar, FiInfo, FiMinus, FiPlus, FiX, FiLock, FiMail, FiList, FiCheck, FiChevronDown, FiSearch
 } from 'react-icons/fi';
 
 // === HELPER FUNCTION: KUBADILI JINA LA RANGI KUWA RANGI HALISI ===
@@ -46,15 +46,63 @@ const PAYMENT_METHODS = [
   { id: 'mastercard', name: 'MasterCard', desc: 'Debit/Credit Card', icon: '🔴🟠' }
 ];
 
-const EA_COUNTRIES = [
-  { name: "Tanzania", code: "+255", flag: "🇹🇿" },
-  { name: "Kenya", code: "+254", flag: "🇰🇪" },
-  { name: "Uganda", code: "+256", flag: "🇺🇬" },
-  { name: "Rwanda", code: "+250", flag: "🇷🇼" },
+// === NCHI ZOTE ZA AFRIKA ===
+const AFRICAN_COUNTRIES = [
+  { name: "Algeria", code: "+213", flag: "🇩🇿" },
+  { name: "Angola", code: "+244", flag: "🇦🇴" },
+  { name: "Benin", code: "+229", flag: "🇧🇯" },
+  { name: "Botswana", code: "+267", flag: "🇧🇼" },
+  { name: "Burkina Faso", code: "+226", flag: "🇧🇫" },
   { name: "Burundi", code: "+257", flag: "🇧🇮" },
+  { name: "Cameroon", code: "+237", flag: "🇨🇲" },
+  { name: "Cape Verde", code: "+238", flag: "🇨🇻" },
+  { name: "Central African Republic", code: "+236", flag: "🇨🇫" },
+  { name: "Chad", code: "+235", flag: "🇹🇩" },
+  { name: "Comoros", code: "+269", flag: "🇰🇲" },
+  { name: "Congo (Brazzaville)", code: "+242", flag: "🇨🇬" },
+  { name: "DR Congo", code: "+243", flag: "🇨🇩" },
+  { name: "Djibouti", code: "+253", flag: "🇩🇯" },
+  { name: "Egypt", code: "+20", flag: "🇪🇬" },
+  { name: "Equatorial Guinea", code: "+240", flag: "🇬🇶" },
+  { name: "Eritrea", code: "+291", flag: "🇪🇷" },
+  { name: "Eswatini", code: "+268", flag: "🇸🇿" },
+  { name: "Ethiopia", code: "+251", flag: "🇪🇹" },
+  { name: "Gabon", code: "+241", flag: "🇬🇦" },
+  { name: "Gambia", code: "+220", flag: "🇬🇲" },
+  { name: "Ghana", code: "+233", flag: "🇬🇭" },
+  { name: "Guinea", code: "+224", flag: "🇬🇳" },
+  { name: "Guinea-Bissau", code: "+245", flag: "🇬🇼" },
+  { name: "Ivory Coast", code: "+225", flag: "🇨🇮" },
+  { name: "Kenya", code: "+254", flag: "🇰🇪" },
+  { name: "Lesotho", code: "+266", flag: "🇱🇸" },
+  { name: "Liberia", code: "+231", flag: "🇱🇷" },
+  { name: "Libya", code: "+218", flag: "🇱🇾" },
+  { name: "Madagascar", code: "+261", flag: "🇲🇬" },
+  { name: "Malawi", code: "+265", flag: "🇲🇼" },
+  { name: "Mali", code: "+223", flag: "🇲🇱" },
+  { name: "Mauritania", code: "+222", flag: "🇲🇷" },
+  { name: "Mauritius", code: "+230", flag: "🇲🇺" },
+  { name: "Morocco", code: "+212", flag: "🇲🇦" },
+  { name: "Mozambique", code: "+258", flag: "🇲🇿" },
+  { name: "Namibia", code: "+264", flag: "🇳🇦" },
+  { name: "Niger", code: "+227", flag: "🇳🇪" },
+  { name: "Nigeria", code: "+234", flag: "🇳🇬" },
+  { name: "Rwanda", code: "+250", flag: "🇷🇼" },
+  { name: "Sao Tome and Principe", code: "+239", flag: "🇸🇹" },
+  { name: "Senegal", code: "+221", flag: "🇸🇳" },
+  { name: "Seychelles", code: "+248", flag: "🇸🇨" },
+  { name: "Sierra Leone", code: "+232", flag: "🇸🇱" },
+  { name: "Somalia", code: "+252", flag: "🇸🇴" },
+  { name: "South Africa", code: "+27", flag: "🇿🇦" },
   { name: "South Sudan", code: "+211", flag: "🇸🇸" },
-  { name: "DR Congo", code: "+243", flag: "🇨🇩" }
-];
+  { name: "Sudan", code: "+249", flag: "🇸🇩" },
+  { name: "Tanzania", code: "+255", flag: "🇹🇿" },
+  { name: "Togo", code: "+228", flag: "🇹🇬" },
+  { name: "Tunisia", code: "+216", flag: "🇹🇳" },
+  { name: "Uganda", code: "+256", flag: "🇺🇬" },
+  { name: "Zambia", code: "+260", flag: "🇿🇲" },
+  { name: "Zimbabwe", code: "+263", flag: "🇿🇼" }
+].sort((a, b) => a.name.localeCompare(b.name));
 
 const TANZANIA_REGIONS = [
   "Arusha", "Dar es Salaam", "Dodoma", "Geita", "Iringa", "Kagera", "Katavi",
@@ -165,10 +213,16 @@ export default function CheckoutSystem() {
   const [selectedPaymentType, setSelectedPaymentType] = useState(ALL_PAYMENT_TYPES[1]);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(PAYMENT_METHODS[0]);
 
-  // Form States
+  // Form States (Updated to separate First and Last name)
   const [formData, setFormData] = useState({
-    fullName: '', phoneCode: '+255', phone: '', country: 'Tanzania', region: 'Dar es Salaam', district: '', address: ''
+    firstName: '', lastName: '', phoneCode: '+255', phone: '', country: 'Tanzania', region: '', address: '', isDefaultAddress: false
   });
+
+  // Modal States
+  const [showCountryModal, setShowCountryModal] = useState(false);
+  const [countrySearch, setCountrySearch] = useState('');
+  const [showRegionModal, setShowRegionModal] = useState(false);
+  const [regionSearch, setRegionSearch] = useState('');
 
   const isTanzania = formData.country === 'Tanzania';
   const isDarEsSalaam = isTanzania && formData.region === 'Dar es Salaam';
@@ -181,8 +235,11 @@ export default function CheckoutSystem() {
   }, [isTanzania, selectedPaymentType, availablePaymentTypes]);
 
   useEffect(() => {
-    const selectedCountryObj = EA_COUNTRIES.find(c => c.name === formData.country);
-    if (selectedCountryObj) setFormData(prev => ({ ...prev, phoneCode: selectedCountryObj.code }));
+    const selectedCountryObj = AFRICAN_COUNTRIES.find(c => c.name === formData.country);
+    if (selectedCountryObj) {
+      setFormData(prev => ({ ...prev, phoneCode: selectedCountryObj.code }));
+      if (!isTanzania) setFormData(prev => ({ ...prev, region: '' })); // Reset region if country changes
+    }
   }, [formData.country]);
 
   const availableShippingMethods = ALL_SHIPPING_METHODS.filter(method => {
@@ -208,16 +265,24 @@ export default function CheckoutSystem() {
         const parsedUser = JSON.parse(savedUser);
         let phoneVal = parsedUser.phone || '';
         let extractedCode = '+255';
+        let fName = '';
+        let lName = '';
+
+        if (parsedUser.name) {
+          const nameParts = parsedUser.name.split(' ');
+          fName = nameParts[0] || '';
+          lName = nameParts.slice(1).join(' ') || '';
+        }
 
         if (phoneVal.startsWith('+')) {
-          const match = EA_COUNTRIES.find(c => phoneVal.startsWith(c.code));
+          const match = AFRICAN_COUNTRIES.find(c => phoneVal.startsWith(c.code));
           if (match) {
             extractedCode = match.code;
             phoneVal = phoneVal.replace(match.code, '').trim();
           }
         } else if (phoneVal.startsWith('0')) phoneVal = phoneVal.substring(1);
 
-        setFormData(prev => ({ ...prev, fullName: parsedUser.name || '', phoneCode: extractedCode, phone: phoneVal }));
+        setFormData(prev => ({ ...prev, firstName: fName, lastName: lName, phoneCode: extractedCode, phone: phoneVal }));
       } catch (e) { }
     }
   }, []);
@@ -245,12 +310,13 @@ export default function CheckoutSystem() {
 
   const handleWhatsAppOrder = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (!formData.fullName || !formData.phone || !formData.address) {
+    if (!formData.firstName || !formData.phone || !formData.address) {
       alert("Tafadhali kamilisha kujaza taarifa zako za makazi kwanza.");
       setCurrentStep(2);
       return;
     }
 
+    const fullName = `${formData.firstName} ${formData.lastName}`.trim();
     const businessPhone = "255767949581";
     const fullPhoneNumber = `${formData.phoneCode}${formData.phone.startsWith('0') ? formData.phone.substring(1) : formData.phone}`;
 
@@ -268,7 +334,7 @@ export default function CheckoutSystem() {
       ? `Nimelipia Kianzio (Advance): TZS ${advancePayment.toLocaleString()}%0ASalia langu ni: TZS ${remainingBalance.toLocaleString()} (Nitalipa nikipokea mzigo)`
       : `Nimelipia Full Amount: TZS ${totalAmount.toLocaleString()}`;
 
-    const message = `Habari Jtex, nimefanya manunuzi mtandaoni.%0A%0A*BIDHAA ZANGU:*%0A${itemsText}%0A%0A*TAARIFA ZANGU:*%0AJina: ${formData.fullName}%0ASimu: ${fullPhoneNumber}%0ANchi: ${formData.country}%0AMkoa/Mji: ${formData.region}%0AAnwani: ${formData.address}%0A%0A*NJIA YA KUSAFIRISHA:*%0A${selectedShipping.name} (Negotiable)%0A%0A*JUMLA KUU BIDHAA:* TZS ${subtotal.toLocaleString()}%0A%0A*MALIPO YALIYOTEULIWA:*%0ANjia: ${selectedPaymentMethod.name}%0A${paymentInfo}%0A%0ATafadhali thibitisha order yangu.`;
+    const message = `Habari Jtex, nimefanya manunuzi mtandaoni.%0A%0A*BIDHAA ZANGU:*%0A${itemsText}%0A%0A*TAARIFA ZANGU:*%0AJina: ${fullName}%0ASimu: ${fullPhoneNumber}%0ANchi: ${formData.country}%0AMkoa/Mji: ${formData.region}%0AAnwani: ${formData.address}%0A%0A*NJIA YA KUSAFIRISHA:*%0A${selectedShipping.name} (Negotiable)%0A%0A*JUMLA KUU BIDHAA:* TZS ${subtotal.toLocaleString()}%0A%0A*MALIPO YALIYOTEULIWA:*%0ANjia: ${selectedPaymentMethod.name}%0A${paymentInfo}%0A%0ATafadhali thibitisha order yangu.`;
 
     const whatsappUrl = `https://wa.me/${businessPhone}?text=${message}`;
     clearCart();
@@ -280,27 +346,30 @@ export default function CheckoutSystem() {
     <div className="flex items-center justify-center gap-2 sm:gap-4 mb-8 relative px-4 max-w-lg mx-auto">
       <div className="absolute top-1/2 left-[15%] right-[15%] h-0.5 bg-gray-200 -z-10 -translate-y-1/2"></div>
       <div className="flex flex-col items-center gap-2 bg-white px-2">
-        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${currentStep >= 1 ? 'bg-[#E8A922] text-white shadow-md' : 'bg-gray-200 text-gray-400'}`}>
+        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${currentStep >= 1 ? 'bg-[#1B6B80] text-white shadow-md' : 'bg-gray-200 text-gray-400'}`}>
           <FiShoppingCart size={14} />
         </div>
         <span className={`text-[10px] sm:text-xs font-bold ${currentStep >= 1 ? 'text-[#1B6B80]' : 'text-gray-400'}`}>Cart</span>
       </div>
-      <div className={`flex-1 h-0.5 ${currentStep >= 2 ? 'bg-[#E8A922]' : 'bg-transparent'}`}></div>
+      <div className={`flex-1 h-0.5 ${currentStep >= 2 ? 'bg-[#1B6B80]' : 'bg-transparent'}`}></div>
       <div className="flex flex-col items-center gap-2 bg-white px-2">
-        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${currentStep >= 2 ? 'bg-[#E8A922] text-white shadow-md' : 'bg-gray-200 text-gray-400'}`}>
+        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${currentStep >= 2 ? 'bg-[#1B6B80] text-white shadow-md' : 'bg-gray-200 text-gray-400'}`}>
           <FiTruck size={14} />
         </div>
         <span className={`text-[10px] sm:text-xs font-bold ${currentStep >= 2 ? 'text-[#1B6B80]' : 'text-gray-400'}`}>Shipping</span>
       </div>
-      <div className={`flex-1 h-0.5 ${currentStep >= 3 ? 'bg-[#E8A922]' : 'bg-transparent'}`}></div>
+      <div className={`flex-1 h-0.5 ${currentStep >= 3 ? 'bg-[#1B6B80]' : 'bg-transparent'}`}></div>
       <div className="flex flex-col items-center gap-2 bg-white px-2">
-        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${currentStep >= 3 ? 'bg-[#E8A922] text-white shadow-md' : 'bg-gray-200 text-gray-400'}`}>
+        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${currentStep >= 3 ? 'bg-[#1B6B80] text-white shadow-md' : 'bg-gray-200 text-gray-400'}`}>
           <FiCreditCard size={14} />
         </div>
         <span className={`text-[10px] sm:text-xs font-bold ${currentStep >= 3 ? 'text-[#1B6B80]' : 'text-gray-400'}`}>Payment</span>
       </div>
     </div>
   );
+
+  const filteredCountries = AFRICAN_COUNTRIES.filter(c => c.name.toLowerCase().includes(countrySearch.toLowerCase()));
+  const filteredRegions = TANZANIA_REGIONS.filter(r => r.toLowerCase().includes(regionSearch.toLowerCase()));
 
   if (!mounted) return null;
 
@@ -312,14 +381,14 @@ export default function CheckoutSystem() {
           <FiArrowLeft size={24} className="text-[#1B6B80]" />
         </button>
         <div className="text-center">
-          <h1 className="text-lg font-black text-[#1B6B80] tracking-wide uppercase">
+          <h1 className="text-lg font-black text-[#1B6B80] tracking-wide">
             {currentStep === 1 && 'Shopping Cart'}
-            {currentStep === 2 && 'Shipping Details'}
+            {currentStep === 2 && 'Shopping Details'}
             {currentStep === 3 && 'Secure Payment'}
           </h1>
         </div>
-        <div className="flex items-center gap-1 text-green-600 text-[10px] font-bold bg-green-50 px-2 py-1.5 rounded-lg border border-green-100">
-          <FiShield /> <span className="hidden sm:inline">Secure Checkout</span>
+        <div className="flex items-center justify-center w-10 h-10">
+          <FiShield className="text-green-600 text-xl" />
         </div>
       </header>
 
@@ -423,70 +492,91 @@ export default function CheckoutSystem() {
               </div>
             )}
 
-            {/* STEP 2: SHIPPING */}
+            {/* STEP 2: SHIPPING (STYLED KAMA KWENYE PICHA) */}
             {currentStep === 2 && (
               <div className="space-y-6">
-                <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100">
-                  <h2 className="font-black text-base flex items-center gap-2 mb-4 text-[#1B6B80] border-b border-gray-100 pb-3"><FiUser className="text-[#E8A922]" /> Shipping Details</h2>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-                    <div className="sm:col-span-2">
-                      <label className="block text-xs font-bold text-gray-600 mb-1.5">Full Name <span className="text-red-500">*</span></label>
-                      <div className="relative">
-                        <FiUser className="absolute left-3 top-1/2 -translate-y-1/2 text-[#1B6B80]" />
-                        <input type="text" required value={formData.fullName} onChange={(e) => setFormData({ ...formData, fullName: e.target.value })} className="w-full pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-[#E8A922]" />
+                <div className="bg-white rounded-2xl p-5 sm:p-8 shadow-sm border border-gray-100">
+                  <div className="grid grid-cols-1 gap-5">
+
+                    {/* Full Name */}
+                    <div>
+                      <label className="block text-sm font-bold text-[#1B6B80] mb-2">Full Name <span className="text-red-500">*</span></label>
+                      <div className="space-y-3">
+                        <div className="relative">
+                          <FiUser className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg" />
+                          <input type="text" placeholder="First Name" required value={formData.firstName} onChange={(e) => setFormData({ ...formData, firstName: e.target.value })} className="w-full pl-12 pr-4 py-3.5 bg-white border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-[#1B6B80] transition" />
+                        </div>
+                        <div className="relative">
+                          <FiUser className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg" />
+                          <input type="text" placeholder="Last Name" required value={formData.lastName} onChange={(e) => setFormData({ ...formData, lastName: e.target.value })} className="w-full pl-12 pr-4 py-3.5 bg-white border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-[#1B6B80] transition" />
+                        </div>
                       </div>
                     </div>
 
+                    {/* Country Selector (Triggers Modal) */}
                     <div>
-                      <label className="block text-xs font-bold text-gray-600 mb-1.5">Country <span className="text-red-500">*</span></label>
-                      <select value={formData.country} onChange={(e) => setFormData({ ...formData, country: e.target.value })} className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-[#E8A922] appearance-none cursor-pointer">
-                        {EA_COUNTRIES.map(c => (
-                          <option key={c.name} value={c.name}>{c.flag} {c.name}</option>
-                        ))}
-                      </select>
+                      <label className="block text-sm font-bold text-[#1B6B80] mb-2">Country <span className="text-red-500">*</span></label>
+                      <div onClick={() => setShowCountryModal(true)} className="w-full px-4 py-3.5 bg-white border border-gray-200 rounded-xl flex items-center justify-between cursor-pointer hover:border-[#1B6B80] transition">
+                        <div className="flex items-center gap-3">
+                          <span className="text-2xl">{AFRICAN_COUNTRIES.find(c => c.name === formData.country)?.flag || '🌍'}</span>
+                          <span className="text-sm font-medium text-gray-900">{formData.country || 'Select Country'}</span>
+                        </div>
+                        <FiChevronDown className="text-gray-500 text-lg" />
+                      </div>
                     </div>
 
+                    {/* Phone Number */}
                     <div>
-                      <label className="block text-xs font-bold text-gray-600 mb-1.5">Phone Number <span className="text-red-500">*</span></label>
+                      <label className="block text-sm font-bold text-[#1B6B80] mb-2">Phone Number <span className="text-red-500">*</span></label>
                       <div className="flex gap-2">
-                        <div className="w-[95px] bg-gray-50 border border-gray-200 rounded-xl flex items-center justify-center text-sm font-bold text-gray-700 gap-1.5 flex-shrink-0">
-                          <span className="text-lg">{EA_COUNTRIES.find(c => c.name === formData.country)?.flag || '🇹🇿'}</span>
+                        <div onClick={() => setShowCountryModal(true)} className="w-[100px] bg-white border border-gray-200 rounded-xl flex items-center justify-center text-sm font-medium text-gray-900 gap-2 flex-shrink-0 cursor-pointer hover:border-[#1B6B80] transition">
+                          <span className="text-xl">{AFRICAN_COUNTRIES.find(c => c.name === formData.country)?.flag || '🌍'}</span>
                           <span>{formData.phoneCode}</span>
                         </div>
                         <div className="relative flex-1">
-                          <input type="tel" required value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} placeholder="767 123 456" className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-[#E8A922]" />
+                          <input type="tel" required value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} placeholder="7XX XXX XXX" className="w-full px-4 py-3.5 bg-white border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-[#1B6B80] transition tracking-wide" />
                         </div>
                       </div>
                     </div>
 
-                    {isTanzania ? (
-                      <div>
-                        <label className="block text-xs font-bold text-gray-600 mb-1.5">Region <span className="text-red-500">*</span></label>
-                        <select value={formData.region} onChange={(e) => setFormData({ ...formData, region: e.target.value })} className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-[#E8A922]">
-                          {TANZANIA_REGIONS.map(region => (
-                            <option key={region} value={region}>{region}</option>
-                          ))}
-                        </select>
-                      </div>
-                    ) : (
-                      <div>
-                        <label className="block text-xs font-bold text-gray-600 mb-1.5">City/State <span className="text-red-500">*</span></label>
-                        <input type="text" required value={formData.region} onChange={(e) => setFormData({ ...formData, region: e.target.value })} placeholder="City or State" className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-[#F2A900]" />
-                      </div>
-                    )}
+                    {/* Region Selector */}
+                    <div>
+                      <label className="block text-sm font-bold text-[#1B6B80] mb-2">Region <span className="text-red-500">*</span></label>
+                      {isTanzania ? (
+                        <div onClick={() => setShowRegionModal(true)} className="w-full px-4 py-3.5 bg-white border border-gray-200 rounded-xl flex items-center justify-between cursor-pointer hover:border-[#1B6B80] transition">
+                          <span className={`text-sm font-medium ${formData.region ? 'text-gray-900' : 'text-gray-400'}`}>{formData.region || 'Select your region'}</span>
+                          <FiChevronDown className="text-gray-500 text-lg" />
+                        </div>
+                      ) : (
+                        <input type="text" required value={formData.region} onChange={(e) => setFormData({ ...formData, region: e.target.value })} placeholder="Enter your State or Region" className="w-full px-4 py-3.5 bg-white border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-[#1B6B80] transition" />
+                      )}
+                    </div>
 
-                    <div className="sm:col-span-2">
-                      <label className="block text-xs font-bold text-gray-600 mb-1.5">Full Address / Landmark <span className="text-red-500">*</span></label>
+                    {/* Address / Landmark */}
+                    <div>
+                      <label className="block text-sm font-bold text-[#1B6B80] mb-2">Full Address / Landmark <span className="text-red-500">*</span></label>
                       <div className="relative">
-                        <FiMapPin className="absolute left-3 top-3 text-[#1B6B80]" />
-                        <textarea required rows={2} value={formData.address} onChange={(e) => setFormData({ ...formData, address: e.target.value })} placeholder="E.g., Kinondoni, Mkwajuni" className="w-full pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-[#E8A922]"></textarea>
+                        <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center justify-center w-6 h-6 bg-gray-100 rounded">
+                          <FiMapPin className="text-gray-500 text-sm" />
+                        </div>
+                        <input type="text" required value={formData.address} onChange={(e) => setFormData({ ...formData, address: e.target.value })} placeholder="E.g., Kinondoni, Mkwajuni" className="w-full pl-12 pr-4 py-3.5 bg-white border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-[#1B6B80] transition" />
                       </div>
                     </div>
+
+                    {/* Set Default Address Checkbox */}
+                    <div className="flex items-start gap-3 mt-2">
+                      <input type="checkbox" id="defaultAddress" checked={formData.isDefaultAddress} onChange={(e) => setFormData({ ...formData, isDefaultAddress: e.target.checked })} className="mt-1 w-4 h-4 text-[#E8A922] rounded border-gray-300 focus:ring-[#E8A922]" />
+                      <div>
+                        <label htmlFor="defaultAddress" className="text-sm font-bold text-gray-800 cursor-pointer">Set as default address</label>
+                        <p className="text-[10px] text-gray-500 mt-0.5">Hifadhi anwani hii kwa matumizi ya baadaye</p>
+                      </div>
+                    </div>
+
                   </div>
                 </div>
 
-                <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100">
-                  <h2 className="font-black text-base flex items-center gap-2 mb-4 text-[#1B6B80] border-b border-gray-100 pb-3"><FiTruck className="text-[#E8A922]" /> Shipping Method</h2>
+                <div className="bg-white rounded-2xl p-5 sm:p-8 shadow-sm border border-gray-100">
+                  <h2 className="font-black text-base flex items-center gap-2 mb-4 text-[#1B6B80]"><FiTruck className="text-[#E8A922]" /> Shipping Method</h2>
                   <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 pt-2">
                     {availableShippingMethods.map((method) => {
                       const isComingSoon = method.id === 'bodaboda';
@@ -791,7 +881,7 @@ export default function CheckoutSystem() {
                   onClick={() => {
                     if (currentStep === 1) handleProceedToShipping();
                     else if (currentStep === 2) {
-                      if (!formData.fullName || !formData.phone || !formData.address) {
+                      if (!formData.firstName || !formData.phone || !formData.address) {
                         alert("Please fill in all required shipping details.");
                         return;
                       }
@@ -818,7 +908,7 @@ export default function CheckoutSystem() {
         </div>
       </main>
 
-      <div className="lg:hidden fixed bottom-0 left-0 w-full bg-white border-t border-gray-100 p-4 shadow-[0_-10px_20px_rgba(0,0,0,0.03)] z-50">
+      <div className="lg:hidden fixed bottom-0 left-0 w-full bg-white border-t border-gray-100 p-4 shadow-[0_-10px_20px_rgba(0,0,0,0.03)] z-40">
         {currentStep < 3 ? (
           <div className="flex items-center justify-between gap-4">
             <div className="flex flex-col">
@@ -829,7 +919,7 @@ export default function CheckoutSystem() {
               onClick={() => {
                 if (currentStep === 1) handleProceedToShipping();
                 else {
-                  if (!formData.fullName || !formData.phone || !formData.address) {
+                  if (!formData.firstName || !formData.phone || !formData.address) {
                     alert("Please fill in all required shipping details.");
                     return;
                   }
@@ -849,13 +939,122 @@ export default function CheckoutSystem() {
             </div>
             <button
               onClick={handleWhatsAppOrder}
-              className="w-full bg-[#25D366] text-white font-black py-4 rounded-xl flex items-center justify-center gap-2 shadow-sm transition hover:bg-[#1EBE5D]"
+              className="w-full bg-[#E8A922] text-white font-black py-4 rounded-xl flex items-center justify-center gap-2 shadow-sm transition hover:bg-[#D4981C]"
             >
               <FiPhone className="text-xl" /> Confirm via WhatsApp <FiChevronRight />
             </button>
           </div>
         )}
       </div>
+
+      {/* ======================================================= */}
+      {/* OVERLAY MODALS KWA AJILI YA COUNTRY NA REGION */}
+      {/* ======================================================= */}
+
+      {/* COUNTRY MODAL */}
+      {showCountryModal && (
+        <div className="fixed inset-0 bg-white z-[100] flex flex-col animate-fade-in">
+          <div className="flex flex-col px-4 pt-6 pb-3 border-b border-gray-100 sticky top-0 bg-white">
+            <div className="flex justify-between items-center mb-4">
+              <button onClick={() => setShowCountryModal(false)} className="text-[#1B6B80]"><FiX size={24} /></button>
+            </div>
+            <h2 className="text-xl font-bold text-[#1B6B80]">Select country</h2>
+            <p className="text-sm text-gray-500 mb-4">Search and select your country.</p>
+            <div className="relative">
+              <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg" />
+              <input
+                type="text"
+                placeholder="Search country"
+                value={countrySearch}
+                onChange={(e) => setCountrySearch(e.target.value)}
+                className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none focus:border-[#1B6B80]"
+              />
+            </div>
+          </div>
+          <div className="flex-1 overflow-y-auto px-4 py-2 custom-scrollbar">
+            {filteredCountries.map(c => {
+              const isSelected = formData.country === c.name;
+              return (
+                <div
+                  key={c.name}
+                  onClick={() => {
+                    setFormData({ ...formData, country: c.name, phoneCode: c.code });
+                    setShowCountryModal(false);
+                    setCountrySearch('');
+                  }}
+                  className={`flex justify-between items-center py-4 border-b border-gray-50 cursor-pointer transition ${isSelected ? 'bg-blue-50/50 rounded-lg px-2 -mx-2' : 'hover:bg-gray-50'}`}
+                >
+                  <div className="flex items-center gap-4">
+                    <span className="text-3xl border border-gray-100 rounded shadow-sm">{c.flag}</span>
+                    <div className="flex flex-col">
+                      <span className="font-bold text-sm text-gray-900">{c.name}</span>
+                      <span className="text-xs text-gray-500">{c.code === '+255' ? 'TZ' : c.code.replace('+', '')}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm font-medium text-gray-600">{c.code}</span>
+                    {isSelected && <FiCheckCircle className="text-blue-600 fill-blue-600/10" size={20} />}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* REGION MODAL */}
+      {showRegionModal && (
+        <div className="fixed inset-0 bg-white z-[100] flex flex-col animate-fade-in">
+          <div className="flex flex-col px-4 pt-6 pb-3 border-b border-gray-100 sticky top-0 bg-white">
+            <div className="flex items-center justify-between mb-4">
+              <button onClick={() => setShowRegionModal(false)} className="text-[#1B6B80]"><FiArrowLeft size={24} /></button>
+            </div>
+            <div className="text-center mb-4">
+              <h2 className="text-xl font-bold text-[#1B6B80]">Search Region</h2>
+              <p className="text-sm text-gray-500">Search and select your region.</p>
+            </div>
+            <div className="relative">
+              <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg" />
+              <input
+                type="text"
+                placeholder="Search region"
+                value={regionSearch}
+                onChange={(e) => setRegionSearch(e.target.value)}
+                className="w-full pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-xl text-sm outline-none focus:border-[#1B6B80] shadow-sm"
+              />
+            </div>
+          </div>
+          <div className="flex-1 overflow-y-auto px-4 py-2 custom-scrollbar">
+            {filteredRegions.map(r => (
+              <div
+                key={r}
+                onClick={() => {
+                  setFormData({ ...formData, region: r });
+                  setShowRegionModal(false);
+                  setRegionSearch('');
+                }}
+                className="flex items-center gap-4 py-4 border-b border-gray-50 cursor-pointer hover:bg-gray-50 transition"
+              >
+                <div className="w-10 h-10 rounded-full bg-[#1B6B80] text-white flex items-center justify-center flex-shrink-0">
+                  <FiMapPin size={18} />
+                </div>
+                <div className="flex flex-col">
+                  <span className="font-bold text-sm text-gray-900">{r}</span>
+                  <span className="text-xs text-gray-500">{formData.country}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <style>{`
+        .animate-fade-in { animation: fadeIn 0.3s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+      `}</style>
     </div>
   );
 }
