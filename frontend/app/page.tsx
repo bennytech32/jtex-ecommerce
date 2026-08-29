@@ -10,13 +10,64 @@ import {
   FiArrowRight, FiShield, FiTruck, FiRefreshCw, FiMic, FiCamera,
   FiHome, FiZap, FiChevronRight, FiMail, FiPhone, FiFacebook,
   FiTwitter, FiInstagram, FiLinkedin, FiSend, FiMessageCircle,
-  FiBell, FiSettings, FiArrowLeft, FiGlobe, FiStar, FiAward, FiCheckCircle, FiMoreHorizontal
+  FiBell, FiSettings, FiArrowLeft, FiGlobe, FiStar, FiAward,
+  FiCheckCircle, FiMoreHorizontal, FiTarget, FiTool, FiBriefcase
 } from 'react-icons/fi';
 
 // HELPER MPYA: Kutengeneza URL safi kwa kutumia jina la bidhaa
 const generateSlug = (name: string) => {
   if (!name) return '';
   return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+};
+
+// COMPONENT MPYA: Inahandle Picha zikigoma ku-load inaweka Icon Mbadala (Fallback)
+const CategoryItem = ({ cat, handleCategoryClick }: { cat: any, handleCategoryClick: (slug: string) => void }) => {
+  const [imgError, setImgError] = useState(false);
+  const visual = getCategoryVisual(cat.name);
+
+  return (
+    <button onClick={() => handleCategoryClick(cat.slug)} className="flex flex-col items-center gap-2 hover:opacity-80 transition cursor-pointer whitespace-nowrap group min-w-[72px] flex-shrink-0">
+      <div className={`w-14 h-14 sm:w-16 sm:h-16 rounded-full flex items-center justify-center transition-transform transform group-hover:scale-105 ${visual.bg} shadow-sm border border-black/5 overflow-hidden p-1.5`}>
+        {!imgError && visual.img ? (
+          <img
+            src={visual.img}
+            alt={cat.name}
+            className="w-full h-full object-contain mix-blend-multiply"
+            onError={() => setImgError(true)}
+          />
+        ) : (
+          visual.icon
+        )}
+      </div>
+      <span className="text-[10px] sm:text-xs font-bold text-gray-800 text-center leading-tight truncate w-full px-1">{cat.name}</span>
+    </button>
+  );
+};
+
+// Mapping ya Categories PNGs na Icons Mbadala kama picha zikigoma
+const getCategoryVisual = (catName: string) => {
+  const lower = catName.toLowerCase();
+
+  if (lower.includes('laptop') || lower.includes('computer')) return { img: '/Digital Product & Services.png', icon: <FiMonitor size={26} className="text-blue-500" />, bg: 'bg-blue-50' };
+  if (lower.includes('audio') || lower.includes('speaker')) return { img: '/electronics.png', icon: <FiHeadphones size={26} className="text-purple-500" />, bg: 'bg-purple-50' };
+  if (lower.includes('gaming') || lower.includes('console')) return { img: '/electronics.png', icon: <FiTarget size={26} className="text-red-500" />, bg: 'bg-red-50' };
+  if (lower.includes('printer') || lower.includes('scanner')) return { img: '/Digital Product & Services.png', icon: <FiMonitor size={26} className="text-blue-500" />, bg: 'bg-blue-50' };
+  if (lower.includes('mobile') || lower.includes('tablet') || lower.includes('phone')) return { img: '/mobile & tablet.png', icon: <FiSmartphone size={26} className="text-indigo-500" />, bg: 'bg-indigo-50' };
+  if (lower.includes('fashion') || lower.includes('beaut') || lower.includes('cloth') || lower.includes('shoe')) return { img: '/Fashion & Beauty.png', icon: <FiShoppingBag size={26} className="text-pink-500" />, bg: 'bg-pink-50' };
+  if (lower.includes('home') || lower.includes('living') || lower.includes('kitchen')) return { img: '/Home & Living.png', icon: <FiHome size={26} className="text-yellow-500" />, bg: 'bg-yellow-50' };
+  if (lower.includes('vehicle') || lower.includes('mashinery') || lower.includes('machinery')) return { img: '/vehicle and Mashinery.png', icon: <FiTruck size={26} className="text-gray-600" />, bg: 'bg-gray-100' };
+  if (lower.includes('food') || lower.includes('beverage')) return { img: '/food and breverage.jpg', icon: <FiCoffee size={26} className="text-orange-500" />, bg: 'bg-orange-50' };
+  if (lower.includes('sport') || lower.includes('outdoor')) return { img: '/sports and outdoor.PNG', icon: <FiSmile size={26} className="text-green-500" />, bg: 'bg-green-50' };
+  if (lower.includes('health') || lower.includes('wellnes')) return { img: '/health and wellnes.PNG', icon: <FiHeart size={26} className="text-red-400" />, bg: 'bg-blue-50' };
+  if (lower.includes('industr') || lower.includes('hardware') || lower.includes('construction')) return { img: '/indrustical.jpg', icon: <FiTool size={26} className="text-gray-700" />, bg: 'bg-gray-100' };
+  if (lower.includes('agricultur') || lower.includes('livestock')) return { img: '/agriculture and livestocks.jpg', icon: <FiGlobe size={26} className="text-green-600" />, bg: 'bg-green-100' };
+  if (lower.includes('baby') || lower.includes('toy')) return { img: '/baby and toys.PNG', icon: <FiSmile size={26} className="text-pink-400" />, bg: 'bg-pink-50' };
+  if (lower.includes('education') || lower.includes('book')) return { img: '/educations & books.PNG', icon: <FiMonitor size={26} className="text-indigo-600" />, bg: 'bg-indigo-50' };
+  if (lower.includes('job') || lower.includes('service')) return { img: '/jobs and services.PNG', icon: <FiBriefcase size={26} className="text-cyan-500" />, bg: 'bg-cyan-50' };
+  if (lower.includes('real estate') || lower.includes('property')) return { img: '/Real Estaste.PNG', icon: <FiHome size={26} className="text-teal-500" />, bg: 'bg-teal-50' };
+  if (lower.includes('stand') || lower.includes('accessori') || lower.includes('other')) return { img: '/Digital Product & Services.png', icon: <FiPackage size={26} className="text-gray-500" />, bg: 'bg-gray-50' };
+
+  return { img: null, icon: <FiGrid size={26} className="text-gray-400" />, bg: 'bg-gray-50' };
 };
 
 export default function HomePage() {
@@ -27,7 +78,6 @@ export default function HomePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-  // STATE MPYA KWA AJILI YA KUONYESHA BIDHAA ZOTE BILA KWENDA CATEGORIES
   const [showAllProducts, setShowAllProducts] = useState(false);
 
   const [user, setUser] = useState<any>(null);
@@ -35,10 +85,7 @@ export default function HomePage() {
   const [userCountry, setUserCountry] = useState('...');
   const [countryCode, setCountryCode] = useState('tz');
 
-  // === WISHLIST STATE ===
   const [wishlist, setWishlist] = useState<string[]>([]);
-
-  // === BANNERS STATE (Kutoka Admin) ===
   const [banners, setBanners] = useState<any[]>([]);
 
   const toggleWishlist = (e: React.MouseEvent, productId: string) => {
@@ -46,12 +93,10 @@ export default function HomePage() {
     setWishlist(prev => prev.includes(productId) ? prev.filter(id => id !== productId) : [...prev, productId]);
   };
 
-  // === SEARCH STATE ===
   const [searchQuery, setSearchQuery] = useState('');
   const [showDesktopSuggestions, setShowDesktopSuggestions] = useState(false);
   const [showMobileSuggestions, setShowMobileSuggestions] = useState(false);
 
-  // Filter bidhaa kwa ajili ya Live Search
   const filteredSuggestions = searchQuery.trim() === ''
     ? []
     : products.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase())).slice(0, 6);
@@ -59,7 +104,14 @@ export default function HomePage() {
   const handleSearch = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (searchQuery.trim() !== '') {
-      router.push(`/categories?search=${encodeURIComponent(searchQuery)}`);
+      const queryLower = searchQuery.toLowerCase().trim();
+      const matchedCategory = dbCategories.find(c => c.name.toLowerCase().includes(queryLower));
+
+      if (matchedCategory) {
+        router.push(`/categories?category=${matchedCategory.slug}`);
+      } else {
+        router.push(`/categories?search=${encodeURIComponent(searchQuery)}`);
+      }
     } else {
       router.push('/categories');
     }
@@ -148,7 +200,6 @@ export default function HomePage() {
       }
     };
 
-    // Fetch Banners kutoka kwa admin
     const fetchBanners = async () => {
       try {
         const res = await fetch(`${getApiUrl()}/api/banners`);
@@ -185,7 +236,6 @@ export default function HomePage() {
     };
   }, []);
 
-  // Slide Timer inajitegemea ili iendane na idadi ya banners zinazotoka kwa admin
   useEffect(() => {
     const slideCount = banners.length > 0 ? banners.length : 4;
     const slideTimer = setInterval(() => {
@@ -195,7 +245,6 @@ export default function HomePage() {
     return () => clearInterval(slideTimer);
   }, [banners.length]);
 
-  // Default Slides zikitokea admin hajaweka banner yoyote
   const defaultSlides = [
     {
       title: <>Best Quality,<br />Best Prices,<br /><span className="text-[#E8A922]">Only on Jtex</span></>,
@@ -223,24 +272,10 @@ export default function HomePage() {
     }
   ];
 
-  // Tumia Banners za Admin kama zipo, kama hamna tumia defaultSlides
   const activeSlides = banners.length > 0 ? banners : defaultSlides;
 
   const cartCount = cart?.length || 0;
-
   const brandLogos = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
-
-  const getCategoryVisual = (catName: string) => {
-    const lower = catName.toLowerCase();
-    if (lower.includes('electronic') || lower.includes('elektroniki')) return { icon: '🎧', bg: 'bg-yellow-50' };
-    if (lower.includes('computer') || lower.includes('laptop')) return { icon: '💻', bg: 'bg-blue-50' };
-    if (lower.includes('phone') || lower.includes('mobile') || lower.includes('simu')) return { icon: '📱', bg: 'bg-gray-100' };
-    if (lower.includes('fashion') || lower.includes('cloth') || lower.includes('nguo')) return { icon: '👗', bg: 'bg-red-50' };
-    if (lower.includes('home') || lower.includes('kitchen')) return { icon: '🛋️', bg: 'bg-teal-50' };
-    if (lower.includes('beaut') || lower.includes('urembo')) return { icon: '💄', bg: 'bg-pink-50' };
-    if (lower.includes('shoe') || lower.includes('viatu')) return { icon: '👟', bg: 'bg-orange-50' };
-    return { icon: '🛍️', bg: 'bg-purple-50' };
-  };
 
   const handleCategoryClick = (slug?: string) => {
     if (slug) router.push(`/categories?category=${slug}`);
@@ -338,7 +373,6 @@ export default function HomePage() {
       <header className="hidden lg:block bg-[#1B6B80] text-white border-b border-[#145363] sticky top-0 z-40">
         <div className="max-w-[1440px] xl:max-w-[1536px] mx-auto px-6 h-24 flex items-center justify-between gap-6">
           <div className="flex items-center gap-8 flex-shrink-0">
-            {/* LOGO VISIBILITY FIX */}
             <div className="bg-white px-3 py-1.5 rounded-xl shadow-sm cursor-pointer" onClick={() => router.push('/')}>
               <img src="/logo.png" alt="Jtex Logo" className="h-10 lg:h-12 object-contain" />
             </div>
@@ -351,7 +385,6 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* ACTIVE SEARCH DESKTOP */}
           <div className="flex-1 max-w-2xl relative">
             <form onSubmit={handleSearch} className="flex items-center h-12 bg-white rounded-lg overflow-hidden shadow-sm w-full">
               <button type="button" className="h-full px-4 text-gray-600 text-sm font-bold bg-gray-100 border-r border-gray-200 flex items-center gap-1 hover:bg-gray-200 transition">
@@ -364,7 +397,7 @@ export default function HomePage() {
                 onFocus={() => setShowDesktopSuggestions(true)}
                 onBlur={() => setTimeout(() => setShowDesktopSuggestions(false), 200)}
                 placeholder="Search products, brands..."
-                className="flex-1 h-full px-4 text-sm outline-none w-full text-gray-900"
+                className="flex-1 h-full px-4 text-[16px] outline-none w-full text-gray-900"
               />
               <div className="flex items-center gap-3 px-3 text-gray-400">
                 <FiCamera className="cursor-pointer hover:text-gray-600" />
@@ -375,7 +408,6 @@ export default function HomePage() {
               </button>
             </form>
 
-            {/* LIVE SEARCH SUGGESTIONS DROPDOWN (DESKTOP) */}
             {showDesktopSuggestions && searchQuery.trim() !== '' && (
               <div className="absolute top-full mt-2 left-0 w-full bg-white rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.1)] border border-gray-100 overflow-hidden z-50">
                 {filteredSuggestions.length > 0 ? (
@@ -445,7 +477,6 @@ export default function HomePage() {
           </div>
 
           <div className="flex items-center gap-3">
-            {/* LOGO VISIBILITY FIX MOBILE */}
             <div className="bg-white px-2 py-1 rounded-lg shadow-sm cursor-pointer" onClick={() => router.push('/')}>
               <img src="/logo.png" alt="Jtex Logo" className="h-5 object-contain" />
             </div>
@@ -453,7 +484,6 @@ export default function HomePage() {
         </div>
 
         <div className="px-4 relative w-full">
-          {/* MOBILE SEARCH BAR FIX (Full width, responsive) */}
           <form onSubmit={handleSearch} className="flex items-center h-11 bg-white rounded-xl overflow-hidden shadow-sm border border-gray-200 w-full">
             <div className="hidden xs:flex pl-4 pr-3 items-center border-r border-gray-200 h-full bg-gray-50">
               <span className="text-xs text-gray-600 font-bold">Search</span>
@@ -465,7 +495,7 @@ export default function HomePage() {
               onFocus={() => setShowMobileSuggestions(true)}
               onBlur={() => setTimeout(() => setShowMobileSuggestions(false), 200)}
               placeholder="Search products..."
-              className="flex-1 h-full px-3 text-sm xs:text-base text-gray-900 outline-none bg-transparent placeholder-gray-400 w-full min-w-0"
+              className="flex-1 h-full px-3 text-[16px] text-gray-900 outline-none bg-transparent placeholder-gray-400 w-full min-w-0"
             />
             <div className="flex items-center gap-1.5 px-2 text-gray-400 bg-white">
               <FiMic size={16} className="cursor-pointer hover:text-gray-600 hidden xs:block" />
@@ -476,7 +506,6 @@ export default function HomePage() {
             </button>
           </form>
 
-          {/* LIVE SEARCH SUGGESTIONS DROPDOWN (MOBILE) */}
           {showMobileSuggestions && searchQuery.trim() !== '' && (
             <div className="absolute top-full mt-2 left-4 right-4 bg-white rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.15)] border border-gray-100 overflow-hidden z-50">
               {filteredSuggestions.length > 0 ? (
@@ -529,39 +558,23 @@ export default function HomePage() {
         {/* MAIN CONTENT AREA */}
         <main className="flex-1 min-w-0 relative">
 
-          {/* DESKTOP CATEGORIES RIBBON (SLIDER/SCROLL) */}
+          {/* DESKTOP CATEGORIES RIBBON */}
           <div className="hidden lg:flex items-center bg-white rounded-2xl border border-gray-100 px-6 py-5 shadow-sm mb-6 overflow-hidden relative">
             <div className="flex items-center gap-6 w-full overflow-x-auto hide-scrollbar flex-nowrap">
-              {dbCategories.map((cat, idx) => {
-                const visual = getCategoryVisual(cat.name);
-                return (
-                  <button key={idx} onClick={() => handleCategoryClick(cat.slug)} className="flex flex-col items-center gap-2 hover:opacity-80 transition cursor-pointer whitespace-nowrap group min-w-[70px] flex-shrink-0">
-                    <div className={`w-16 h-16 rounded-full flex items-center justify-center transition-transform transform group-hover:scale-105 ${visual.bg} shadow-sm border border-black/5`}>
-                      <span className="text-3xl drop-shadow-sm">{visual.icon}</span>
-                    </div>
-                    <span className="text-xs font-bold text-gray-800">{cat.name}</span>
-                  </button>
-                )
-              })}
+              {dbCategories.map((cat, idx) => (
+                <CategoryItem key={idx} cat={cat} handleCategoryClick={handleCategoryClick} />
+              ))}
             </div>
           </div>
 
-          {/* MOBILE CATEGORIES RIBBON (SLIDER/SCROLL) */}
+          {/* MOBILE CATEGORIES RIBBON */}
           <div className="lg:hidden flex gap-4 px-4 py-6 bg-white mb-4 shadow-sm border-b border-gray-100 overflow-x-auto hide-scrollbar flex-nowrap">
-            {dbCategories.map((cat, idx) => {
-              const visual = getCategoryVisual(cat.name);
-              return (
-                <div key={idx} onClick={() => handleCategoryClick(cat.slug)} className="flex flex-col items-center gap-2 flex-shrink-0 cursor-pointer group min-w-[72px]">
-                  <div className={`w-14 h-14 sm:w-16 sm:h-16 rounded-full flex items-center justify-center transition-transform transform group-hover:scale-105 ${visual.bg} shadow-sm border border-black/5`}>
-                    <span className="text-2xl sm:text-3xl drop-shadow-sm">{visual.icon}</span>
-                  </div>
-                  <span className="text-[10px] font-bold text-gray-800 text-center leading-tight truncate w-full px-1">{cat.name}</span>
-                </div>
-              );
-            })}
+            {dbCategories.map((cat, idx) => (
+              <CategoryItem key={idx} cat={cat} handleCategoryClick={handleCategoryClick} />
+            ))}
           </div>
 
-          {/* Slider Hero Banner - DYNAMIC KUTOKA ADMIN */}
+          {/* Slider Hero Banner */}
           <div className="px-4 lg:px-0 mb-6 lg:mb-8">
             <div className="relative w-full max-w-full h-[250px] sm:h-[300px] md:h-[400px] mx-auto rounded-3xl overflow-hidden shadow-lg">
               {activeSlides.map((slide, index) => (
@@ -578,7 +591,6 @@ export default function HomePage() {
                     </svg>
                   </div>
 
-                  {/* Support for Image (kama kwenye "from admin.png") au Icon */}
                   <div className="absolute -right-10 -bottom-10 lg:right-10 lg:bottom-0 w-40 lg:w-96 opacity-40 lg:opacity-100 pointer-events-none mix-blend-normal flex items-center justify-center h-full">
                     {slide.imageUrl ? (
                       <img src={getImageUrl(slide.imageUrl)} alt="Banner Graphic" className="w-full max-h-[80%] object-contain drop-shadow-2xl" />
@@ -642,7 +654,7 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Flash Sales Section - Restricted by Sidebar */}
+          {/* Flash Sales Section */}
           <div className="px-4 lg:px-0 mb-12 w-full">
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
               <div className="flex items-center gap-2">
@@ -716,13 +728,11 @@ export default function HomePage() {
       </div>
 
       {/* ========================================================= */}
-      {/* FULL WIDTH SECTIONS (Vunja Mpaka wa Sidebar Hapa Chini) */}
+      {/* FULL WIDTH SECTIONS */}
       {/* ========================================================= */}
       <div className="max-w-[1440px] xl:max-w-[1536px] mx-auto lg:px-6 pb-6 overflow-hidden">
 
-        {/* ========================================================= */}
-        {/* NEW ARRIVALS SECTION */}
-        {/* ========================================================= */}
+        {/* NEW ARRIVALS */}
         <div className="px-4 lg:px-0 mb-12">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-2">
@@ -771,9 +781,7 @@ export default function HomePage() {
           )}
         </div>
 
-        {/* ========================================================= */}
-        {/* TRENDING NOW SECTION */}
-        {/* ========================================================= */}
+        {/* TRENDING NOW */}
         <div className="px-4 lg:px-0 mb-12">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-2">
@@ -823,9 +831,7 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* ========================================================= */}
-        {/* TOP BRANDS SECTION */}
-        {/* ========================================================= */}
+        {/* TOP BRANDS */}
         <div className="px-4 lg:px-0 mb-12">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-2">
@@ -835,7 +841,6 @@ export default function HomePage() {
             <button onClick={() => router.push('/categories')} className="text-xs font-bold text-gray-500 flex items-center gap-1 hover:text-[#1B6B80] transition">Shop All <FiChevronRight /></button>
           </div>
 
-          {/* Brands Logo Scroller */}
           <div className="bg-gray-50 border border-gray-200 rounded-2xl py-6 mb-6 overflow-hidden relative flex items-center">
             <div className="marquee-container items-center gap-10 lg:gap-16 px-4">
               {[...brandLogos, ...brandLogos].map((num, idx) => (
@@ -851,7 +856,6 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Products Below Brands */}
           <div className="bg-transparent">
             {isLoading ? (
               <div className="flex justify-center py-10"><div className="w-8 h-8 border-4 border-[#E8A922] border-t-transparent rounded-full animate-spin"></div></div>
@@ -923,7 +927,6 @@ export default function HomePage() {
         .marquee-container:hover {
           animation-play-state: paused;
         }
-        /* Hides scrollbar but allows smooth scrolling */
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
@@ -936,7 +939,7 @@ export default function HomePage() {
               <p className="text-sm text-gray-300">Get the latest updates on new products and upcoming sales.</p>
             </div>
             <div className="flex w-full lg:w-auto">
-              <input type="email" placeholder="Enter your email address" className="px-4 py-3 rounded-l-xl w-full lg:w-80 text-gray-900 outline-none text-base" />
+              <input type="email" placeholder="Enter your email address" className="px-4 py-3 rounded-l-xl w-full lg:w-80 text-gray-900 outline-none text-[16px]" />
               <button className="bg-[#E8A922] text-white px-6 py-3 rounded-r-xl font-bold flex items-center gap-2 hover:bg-[#D4981C] transition text-sm">Subscribe <FiSend /></button>
             </div>
           </div>
