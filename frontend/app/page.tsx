@@ -307,6 +307,25 @@ export default function HomePage() {
     else router.push('/categories');
   };
 
+  // Hesabu bidhaa kwenye kila category ili zipangwe (Vingi mbele, zisizokuwa na bidhaa nyuma)
+  const getCategoryCount = (cat: any) => {
+    if (!products || products.length === 0) return 0;
+    return products.filter((p: any) => {
+      if (!p.category) return false;
+      const cLower = p.category.toLowerCase();
+      const catSlug = cat.slug.toLowerCase();
+      const catName = cat.name.toLowerCase();
+      return cLower.includes(catSlug) || cLower.includes(catName) || catSlug.includes(cLower) || catName.includes(cLower);
+    }).length;
+  };
+
+  // Panga STATIC_CATEGORIES kulingana na wingi wa bidhaa (Kutoka nyingi kwenda chache)
+  const sortedStaticCategories = [...STATIC_CATEGORIES].sort((a, b) => {
+    const countA = getCategoryCount(a);
+    const countB = getCategoryCount(b);
+    return countB - countA;
+  });
+
   const renderSidebarMenu = () => {
     if (isLoggedIn) {
       return (
@@ -564,9 +583,29 @@ export default function HomePage() {
       </header>
 
       {/* ========================================================= */}
-      {/* 3. MAIN LAYOUT (SIDEBAR + TOP CONTENT) */}
+      {/* 3. MAIN LAYOUT (RIBBON + SIDEBAR + CONTENT) */}
       {/* ========================================================= */}
-      <div className="max-w-[1440px] xl:max-w-[1536px] mx-auto lg:px-6 lg:py-6 flex gap-6 overflow-hidden">
+
+      {/* DESKTOP CATEGORIES RIBBON - FULL WIDTH (Inajaza kuanzia juu ya Sidebar mpaka mwisho wa Main) */}
+      <div className="max-w-[1440px] xl:max-w-[1536px] mx-auto lg:px-6 lg:pt-6">
+        <div className="hidden lg:flex items-center bg-white rounded-2xl border border-gray-100 px-6 py-4 shadow-sm mb-6 overflow-hidden relative w-full">
+          <div className="flex items-center gap-6 sm:gap-7 w-full overflow-x-auto hide-scrollbar flex-nowrap py-1">
+            {sortedStaticCategories.map((cat, idx) => (
+              <CategoryItem key={idx} cat={cat} handleCategoryClick={handleCategoryClick} />
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* MOBILE CATEGORIES RIBBON - FULL WIDTH */}
+      <div className="lg:hidden flex gap-4 px-4 py-4 bg-white mb-4 shadow-sm border-b border-gray-100 overflow-x-auto hide-scrollbar flex-nowrap w-full">
+        {sortedStaticCategories.map((cat, idx) => (
+          <CategoryItem key={idx} cat={cat} handleCategoryClick={handleCategoryClick} />
+        ))}
+      </div>
+
+      {/* FLEX CONTAINER FOR SIDEBAR AND MAIN CONTENT */}
+      <div className="max-w-[1440px] xl:max-w-[1536px] mx-auto lg:px-6 pb-6 flex gap-6 overflow-hidden">
 
         {/* DESKTOP SIDEBAR */}
         <aside className="hidden lg:flex flex-col w-[260px] flex-shrink-0">
@@ -582,22 +621,6 @@ export default function HomePage() {
 
         {/* MAIN CONTENT AREA */}
         <main className="flex-1 min-w-0 relative">
-
-          {/* DESKTOP CATEGORIES RIBBON - FULL CIRCULAR IMAGES */}
-          <div className="hidden lg:flex items-center bg-white rounded-2xl border border-gray-100 px-6 py-4 shadow-sm mb-6 overflow-hidden relative">
-            <div className="flex items-center gap-6 sm:gap-7 w-full overflow-x-auto hide-scrollbar flex-nowrap py-1">
-              {STATIC_CATEGORIES.map((cat, idx) => (
-                <CategoryItem key={idx} cat={cat} handleCategoryClick={handleCategoryClick} />
-              ))}
-            </div>
-          </div>
-
-          {/* MOBILE CATEGORIES RIBBON - FULL CIRCULAR IMAGES */}
-          <div className="lg:hidden flex gap-4 px-4 py-4 bg-white mb-4 shadow-sm border-b border-gray-100 overflow-x-auto hide-scrollbar flex-nowrap">
-            {STATIC_CATEGORIES.map((cat, idx) => (
-              <CategoryItem key={idx} cat={cat} handleCategoryClick={handleCategoryClick} />
-            ))}
-          </div>
 
           {/* Slider Hero Banner */}
           <div className="px-4 lg:px-0 mb-6 lg:mb-8">
@@ -753,7 +776,7 @@ export default function HomePage() {
       </div>
 
       {/* ========================================================= */}
-      {/* FULL WIDTH SECTIONS */}
+      {/* FULL WIDTH SECTIONS (Chini ya Sidebar na Main) */}
       {/* ========================================================= */}
       <div className="max-w-[1440px] xl:max-w-[1536px] mx-auto lg:px-6 pb-6 overflow-hidden">
 
