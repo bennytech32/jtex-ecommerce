@@ -24,7 +24,6 @@ const getColorCode = (colorName: string) => {
     'red': '#FF0000', 'blue': '#0000FF', 'green': '#008000', 'yellow': '#FFFF00',
     'gold': '#FFD700', 'rose gold': '#B76E79', 'purple': '#800080', 'pink': '#FFC0CB',
     'midnight': '#191970', 'starlight': '#F8F9FA',
-    // Rangi mpya kulingana na mduara wako
     'teal': '#1B6B80',
     'dark teal': '#1B6B80',
     'jtex teal': '#1B6B80',
@@ -255,17 +254,29 @@ export default function ProductDetail() {
   const basePrice = product.price;
   const isMainProductWishlisted = wishlist.includes(product.id);
 
+  // EXCLUDE HIZI ZISIONEKANE KWENYE LIST YA SPECIFICATIONS ZA MTEJA
   const {
-    Model, Color, color, Colors, colors,
+    Color, color, Colors, colors,
     isWholesale,
     wholesaleMinOrder,
     wholesaleTier1Qty, wholesaleTier1Price,
     wholesaleTier2Qty, wholesaleTier2Price,
     wholesaleTier3Qty, wholesaleTier3Price,
+    "Main Category": mainCatKey,
+    "Subcategory": subCatKey,
     ...otherSpecs
   } = specs;
 
-  const displayModel = Model || product.model || 'N/A';
+  // HANDLE MODEL VISIBILITY: Kama iko wazi (empty), 'Model' haitaonekana.
+  const displayModel = specs.Model || product.model;
+  if (displayModel) {
+    delete otherSpecs.Model; // Toa kwenye otherSpecs maana tunaidisplay kivyake
+  }
+
+  // HAPA: Toa Brand kwenye otherSpecs ili isijirudie chini maana tunaidisplay kule juu
+  delete otherSpecs.Brand;
+  delete otherSpecs.brand;
+
   const displayCondition = product.condition || 'Brand New';
   const hasWholesale = isWholesale === 'Yes';
 
@@ -495,7 +506,6 @@ export default function ProductDetail() {
 
               {hasWholesale && (
                 <div className="border-t border-gray-200 pt-3">
-                  {/* HAPA: RANGI MOJA (TEAL) KWA SANDUKU ZIMA LILILO NA VIFURUSHI VYOTE */}
                   <div className="bg-[#1B6B80] p-4 rounded-xl shadow-md border border-[#145363]">
                     <div className="flex items-center gap-2 mb-3 border-b border-white/20 pb-2">
                       <FiPackage className="text-[#E8A922]" size={16} />
@@ -642,15 +652,19 @@ export default function ProductDetail() {
                 <span className="font-bold text-gray-500 uppercase tracking-wider text-[10px] w-1/3">Brand</span>
                 <span className="font-black text-gray-900 w-2/3">{product.brand || 'N/A'}</span>
               </div>
-              <div className="flex items-center justify-between py-3 px-4 border-b border-gray-100 text-sm">
-                <span className="font-bold text-gray-500 uppercase tracking-wider text-[10px] w-1/3">Model</span>
-                <span className="font-bold text-[#1B6B80] w-2/3">{displayModel}</span>
-              </div>
+
+              {/* TUNA-DISPLAY MODEL TU KAMA IPO */}
+              {displayModel && (
+                <div className="flex items-center justify-between py-3 px-4 border-b border-gray-100 text-sm">
+                  <span className="font-bold text-gray-500 uppercase tracking-wider text-[10px] w-1/3">Model</span>
+                  <span className="font-bold text-[#1B6B80] w-2/3">{displayModel}</span>
+                </div>
+              )}
 
               {otherSpecsKeys.length > 0 ? (
                 <>
                   {visibleSpecsKeys.map((key, index) => (
-                    <div key={key} className={`flex items-center justify-between py-3 px-4 text-sm ${index % 2 !== 0 ? 'bg-white' : 'bg-gray-50/50'} border-b border-gray-100`}>
+                    <div key={key} className={`flex items-center justify-between py-3 px-4 text-sm ${index % 2 !== (displayModel ? 0 : 1) ? 'bg-white' : 'bg-gray-50/50'} border-b border-gray-100`}>
                       <span className="font-bold text-gray-500 uppercase tracking-wider text-[10px] w-1/3">{key}</span>
                       <span className="font-medium text-gray-900 w-2/3">{otherSpecs[key]}</span>
                     </div>
