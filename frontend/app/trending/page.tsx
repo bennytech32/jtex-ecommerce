@@ -6,10 +6,31 @@ import { useCart } from '../context/CartContext';
 import { 
   FiShoppingCart, FiSearch, FiMapPin, FiUser, FiChevronDown, 
   FiArrowLeft, FiGlobe, FiMic, FiCamera, FiHome, FiGrid, 
-  FiZap, FiPackage, FiHeart, FiStar, FiTrendingUp, FiAward
+  FiZap, FiPackage, FiHeart, FiStar, FiTrendingUp, FiAward,
+  FiCoffee, FiSmile, FiTool, FiShoppingBag, FiBriefcase, FiMonitor, FiSmartphone, FiHeadphones, FiTruck
 } from 'react-icons/fi';
 
 import Footer from '../components/common/Footer';
+
+// Static categories - kutumika kwenye category ribbon
+const STATIC_CATEGORIES = [
+  { name: 'Food', slug: 'food', img: '/food.PNG', icon: <FiCoffee size={22} className="text-orange-500" />, bg: 'from-orange-400 to-red-400' },
+  { name: 'Sports', slug: 'sports', img: '/sports.PNG', icon: <FiSmile size={22} className="text-green-500" />, bg: 'from-green-400 to-emerald-500' },
+  { name: 'Health', slug: 'health', img: '/health.PNG', icon: <FiHeart size={22} className="text-red-400" />, bg: 'from-pink-400 to-rose-500' },
+  { name: 'Industrial', slug: 'industrial', img: '/industrial.PNG', icon: <FiTool size={22} className="text-gray-700" />, bg: 'from-gray-500 to-gray-700' },
+  { name: 'Agriculture', slug: 'agriculture', img: '/agriculture.PNG', icon: <FiGlobe size={22} className="text-green-600" />, bg: 'from-green-500 to-lime-600' },
+  { name: 'Construction', slug: 'construction', img: '/construction.PNG', icon: <FiTool size={22} className="text-yellow-600" />, bg: 'from-yellow-400 to-amber-500' },
+  { name: 'Baby', slug: 'baby', img: '/baby.PNG', icon: <FiSmile size={22} className="text-pink-400" />, bg: 'from-pink-300 to-purple-400' },
+  { name: 'Education', slug: 'education', img: '/education.PNG', icon: <FiMonitor size={22} className="text-indigo-600" />, bg: 'from-indigo-400 to-blue-500' },
+  { name: 'Jobs', slug: 'jobs', img: '/jobs.PNG', icon: <FiBriefcase size={22} className="text-cyan-500" />, bg: 'from-cyan-400 to-sky-500' },
+  { name: 'Real Estate', slug: 'realestate', img: '/realestate.PNG', icon: <FiHome size={22} className="text-teal-500" />, bg: 'from-teal-400 to-cyan-600' },
+  { name: 'Vehicle', slug: 'vehicle', img: '/vehicle.PNG', icon: <FiTruck size={22} className="text-gray-600" />, bg: 'from-slate-400 to-gray-600' },
+  { name: 'Home', slug: 'home', img: '/home.PNG', icon: <FiHome size={22} className="text-yellow-500" />, bg: 'from-yellow-300 to-orange-400' },
+  { name: 'Fashion', slug: 'fashion', img: '/fashion.PNG', icon: <FiShoppingBag size={22} className="text-pink-500" />, bg: 'from-pink-500 to-rose-400' },
+  { name: 'Digital', slug: 'digital', img: '/digital.PNG', icon: <FiMonitor size={22} className="text-blue-500" />, bg: 'from-blue-400 to-indigo-500' },
+  { name: 'Mobile', slug: 'mobile', img: '/mobile.PNG', icon: <FiSmartphone size={22} className="text-indigo-500" />, bg: 'from-violet-400 to-indigo-600' },
+  { name: 'Electronics', slug: 'electronics', img: '/electronics.PNG', icon: <FiHeadphones size={22} className="text-purple-500" />, bg: 'from-purple-400 to-violet-600' },
+];
 
 export default function TrendingPage() {
   const router = useRouter();
@@ -186,6 +207,27 @@ export default function TrendingPage() {
 
       <main className="max-w-[1600px] mx-auto lg:px-6 lg:py-8 pb-24 mt-4">
          
+         {/* CATEGORY RIBBON - FULL CIRCULAR IMAGES */}
+         <div className="px-4 lg:px-0 mb-6">
+           <div className="flex overflow-x-auto hide-scrollbar gap-4 sm:gap-6 bg-white rounded-2xl border border-gray-100 px-6 py-4 shadow-sm">
+             <button onClick={() => router.push('/categories')} className="flex flex-col items-center gap-2 hover:opacity-90 transition cursor-pointer whitespace-nowrap group min-w-[70px] sm:min-w-[76px] flex-shrink-0">
+               <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-gradient-to-br from-[#1B6B80] to-[#145363] flex items-center justify-center shadow-sm group-hover:scale-105 transition-all border-2 border-gray-100">
+                 <FiGrid size={24} className="text-white" />
+               </div>
+               <span className="text-[11px] sm:text-xs font-semibold text-gray-700 text-center">All</span>
+             </button>
+             {STATIC_CATEGORIES.map((cat, idx) => (
+               <button key={idx} onClick={() => router.push(`/categories?category=${cat.slug}`)} className="flex flex-col items-center gap-2 hover:opacity-90 transition cursor-pointer whitespace-nowrap group min-w-[70px] sm:min-w-[76px] flex-shrink-0">
+                 <div className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-white border-2 border-gray-100 group-hover:border-[#1B6B80] shadow-sm flex items-center justify-center p-1.5 overflow-hidden transition-all group-hover:scale-105 group-hover:shadow-md">
+                   <img src={cat.img} alt={cat.name} className="w-full h-full object-contain transition-transform group-hover:scale-110"
+                     onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                 </div>
+                 <span className="text-[11px] sm:text-xs font-semibold text-gray-700 text-center truncate w-16 group-hover:text-[#1B6B80] transition-colors">{cat.name}</span>
+               </button>
+             ))}
+           </div>
+         </div>
+
          {/* Professional Trending Banner */}
          <div className="px-4 lg:px-0 mb-8">
             <div className="w-full bg-gradient-to-r from-[#0A101D] via-gray-900 to-[#1c2742] rounded-2xl p-6 lg:p-10 shadow-lg relative overflow-hidden flex flex-col sm:flex-row items-center justify-between gap-6 border border-gray-800">

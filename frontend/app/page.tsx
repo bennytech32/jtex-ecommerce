@@ -20,69 +20,79 @@ const generateSlug = (name: string) => {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
 };
 
-// COMPONENT MPYA: Inahandle Picha zikigoma ku-load inaweka Icon Mbadala (Fallback)
+// Static categories zote kutoka picha zilizouploadiwa kwenye public
+const STATIC_CATEGORIES = [
+  { name: 'Food', slug: 'food', img: '/food.PNG', icon: <FiCoffee size={24} className="text-orange-500" /> },
+  { name: 'Sports', slug: 'sports', img: '/sports.PNG', icon: <FiSmile size={24} className="text-green-500" /> },
+  { name: 'Health', slug: 'health', img: '/health.PNG', icon: <FiHeart size={24} className="text-red-400" /> },
+  { name: 'Industrial', slug: 'industrial', img: '/industrial.PNG', icon: <FiTool size={24} className="text-gray-700" /> },
+  { name: 'Agriculture', slug: 'agriculture', img: '/agriculture.PNG', icon: <FiGlobe size={24} className="text-green-600" /> },
+  { name: 'Construction', slug: 'construction', img: '/construction.PNG', icon: <FiTool size={24} className="text-yellow-600" /> },
+  { name: 'Baby', slug: 'baby', img: '/baby.PNG', icon: <FiSmile size={24} className="text-pink-400" /> },
+  { name: 'Education', slug: 'education', img: '/education.PNG', icon: <FiMonitor size={24} className="text-indigo-600" /> },
+  { name: 'Jobs', slug: 'jobs', img: '/jobs.PNG', icon: <FiBriefcase size={24} className="text-cyan-500" /> },
+  { name: 'Real Estate', slug: 'realestate', img: '/realestate.PNG', icon: <FiHome size={24} className="text-teal-500" /> },
+  { name: 'Vehicles', slug: 'vehicle', img: '/vehicle.PNG', icon: <FiTruck size={24} className="text-gray-600" /> },
+  { name: 'Home', slug: 'home', img: '/home.PNG', icon: <FiHome size={24} className="text-yellow-500" /> },
+  { name: 'Fashion', slug: 'fashion', img: '/fashion.PNG', icon: <FiShoppingBag size={24} className="text-pink-500" /> },
+  { name: 'Digital', slug: 'digital', img: '/digital.PNG', icon: <FiMonitor size={24} className="text-blue-500" /> },
+  { name: 'Mobile', slug: 'mobile', img: '/mobile.PNG', icon: <FiSmartphone size={24} className="text-indigo-500" /> },
+  { name: 'Electronics', slug: 'electronics', img: '/electronics.PNG', icon: <FiHeadphones size={24} className="text-purple-500" /> },
+];
+
+// COMPONENT YA CATEGORY: Picha kamili ya duara yenye border safi kama kwenye mfano
 const CategoryItem = ({ cat, handleCategoryClick }: { cat: any, handleCategoryClick: (slug: string) => void }) => {
   const [imgError, setImgError] = useState(false);
-  const visual = getCategoryVisual(cat.name);
+  const visual = cat.img ? { img: cat.img, icon: cat.icon } : getCategoryVisual(cat.name);
 
   return (
-    <button onClick={() => handleCategoryClick(cat.slug)} className="flex flex-col items-center gap-2 hover:opacity-80 transition cursor-pointer whitespace-nowrap group min-w-[72px] flex-shrink-0">
-      <div className={`w-14 h-14 sm:w-16 sm:h-16 rounded-full flex items-center justify-center transition-transform transform group-hover:scale-105 ${visual.bg} shadow-sm border border-black/5 overflow-hidden p-1.5`}>
+    <button
+      onClick={() => handleCategoryClick(cat.slug)}
+      className="flex flex-col items-center gap-2 hover:opacity-90 transition cursor-pointer whitespace-nowrap group min-w-[76px] sm:min-w-[84px] flex-shrink-0"
+    >
+      <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white border-2 border-gray-100 group-hover:border-[#1B6B80] shadow-sm flex items-center justify-center p-1.5 overflow-hidden transition-all duration-300 group-hover:scale-105 group-hover:shadow-md">
         {!imgError && visual.img ? (
           <img
             src={visual.img}
             alt={cat.name}
-            className="w-full h-full object-contain mix-blend-multiply"
+            className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-110"
             onError={() => setImgError(true)}
           />
         ) : (
-          visual.icon
+          <div className="w-full h-full flex items-center justify-center text-gray-400">
+            {visual.icon || <FiGrid size={24} />}
+          </div>
         )}
       </div>
-      <span className="text-[10px] sm:text-xs font-bold text-gray-800 text-center leading-tight truncate w-full px-1">{cat.name}</span>
+      <span className="text-[11px] sm:text-xs font-semibold text-gray-800 text-center leading-tight truncate w-full px-1 group-hover:text-[#1B6B80] transition-colors">
+        {cat.name}
+      </span>
     </button>
   );
 };
 
-// Mapping ya Categories PNGs na Icons Mbadala ikitumia majina mapya ya picha na .PNG (Herufi Kubwa)
+// Mapping ya Categories PNGs na Icons Mbadala
 const getCategoryVisual = (catName: string) => {
   const lower = catName.toLowerCase();
 
-  if (lower.includes('laptop') || lower.includes('computer') || lower.includes('stand') || lower.includes('printer') || lower.includes('scanner') || lower.includes('accessori') || lower.includes('other')) return { img: '/digital.PNG', icon: <FiMonitor size={26} className="text-blue-500" />, bg: 'bg-blue-50' };
+  const found = STATIC_CATEGORIES.find(sc => lower.includes(sc.slug) || sc.name.toLowerCase().includes(lower) || lower.includes(sc.name.toLowerCase()));
+  if (found) return { img: found.img, icon: found.icon };
 
-  if (lower.includes('audio') || lower.includes('speaker')) return { img: '/electronics.PNG', icon: <FiHeadphones size={26} className="text-purple-500" />, bg: 'bg-purple-50' };
+  if (lower.includes('laptop') || lower.includes('computer') || lower.includes('printer') || lower.includes('scanner') || lower.includes('accessori')) return { img: '/digital.PNG', icon: <FiMonitor size={26} className="text-blue-500" /> };
+  if (lower.includes('audio') || lower.includes('speaker') || lower.includes('gaming') || lower.includes('console')) return { img: '/electronics.PNG', icon: <FiHeadphones size={26} className="text-purple-500" /> };
+  if (lower.includes('tablet') || lower.includes('phone')) return { img: '/mobile.PNG', icon: <FiSmartphone size={26} className="text-indigo-500" /> };
+  if (lower.includes('cloth') || lower.includes('shoe') || lower.includes('beaut')) return { img: '/fashion.PNG', icon: <FiShoppingBag size={26} className="text-pink-500" /> };
+  if (lower.includes('living') || lower.includes('kitchen') || lower.includes('furniture')) return { img: '/home.PNG', icon: <FiHome size={26} className="text-yellow-500" /> };
+  if (lower.includes('machine') || lower.includes('tool')) return { img: '/industrial.PNG', icon: <FiTool size={26} className="text-gray-700" /> };
+  if (lower.includes('property')) return { img: '/realestate.PNG', icon: <FiHome size={26} className="text-teal-500" /> };
+  if (lower.includes('book')) return { img: '/education.PNG', icon: <FiMonitor size={26} className="text-indigo-600" /> };
+  if (lower.includes('service')) return { img: '/jobs.PNG', icon: <FiBriefcase size={26} className="text-cyan-500" /> };
+  if (lower.includes('toy') || lower.includes('kid') || lower.includes('child')) return { img: '/baby.PNG', icon: <FiSmile size={26} className="text-pink-400" /> };
+  if (lower.includes('outdoor') || lower.includes('fitness')) return { img: '/sports.PNG', icon: <FiSmile size={26} className="text-green-500" /> };
+  if (lower.includes('farm') || lower.includes('garden')) return { img: '/agriculture.PNG', icon: <FiGlobe size={26} className="text-green-600" /> };
+  if (lower.includes('beverage') || lower.includes('drink') || lower.includes('grocery')) return { img: '/food.PNG', icon: <FiCoffee size={26} className="text-orange-500" /> };
 
-  if (lower.includes('gaming') || lower.includes('console')) return { img: '/electronics.PNG', icon: <FiTarget size={26} className="text-red-500" />, bg: 'bg-red-50' };
-
-  if (lower.includes('mobile') || lower.includes('tablet') || lower.includes('phone')) return { img: '/mobile.PNG', icon: <FiSmartphone size={26} className="text-indigo-500" />, bg: 'bg-indigo-50' };
-
-  if (lower.includes('fashion') || lower.includes('beaut') || lower.includes('cloth') || lower.includes('shoe')) return { img: '/fashion.PNG', icon: <FiShoppingBag size={26} className="text-pink-500" />, bg: 'bg-pink-50' };
-
-  if (lower.includes('home') || lower.includes('living') || lower.includes('kitchen')) return { img: '/home.PNG', icon: <FiHome size={26} className="text-yellow-500" />, bg: 'bg-yellow-50' };
-
-  if (lower.includes('vehicle') || lower.includes('mashinery') || lower.includes('machinery')) return { img: '/vehicle.PNG', icon: <FiTruck size={26} className="text-gray-600" />, bg: 'bg-gray-100' };
-
-  if (lower.includes('food') || lower.includes('beverage')) return { img: '/food.jpg', icon: <FiCoffee size={26} className="text-orange-500" />, bg: 'bg-orange-50' };
-
-  if (lower.includes('sport') || lower.includes('outdoor')) return { img: '/sports.PNG', icon: <FiSmile size={26} className="text-green-500" />, bg: 'bg-green-50' };
-
-  if (lower.includes('health') || lower.includes('wellnes')) return { img: '/health.PNG', icon: <FiHeart size={26} className="text-red-400" />, bg: 'bg-blue-50' };
-
-  if (lower.includes('industr')) return { img: '/industrial.jpg', icon: <FiTool size={26} className="text-gray-700" />, bg: 'bg-gray-100' };
-
-  if (lower.includes('construction') || lower.includes('hardware')) return { img: '/construction.PNG', icon: <FiTool size={26} className="text-gray-700" />, bg: 'bg-yellow-50' };
-
-  if (lower.includes('agricultur') || lower.includes('livestock')) return { img: '/agriculture.jpg', icon: <FiGlobe size={26} className="text-green-600" />, bg: 'bg-green-100' };
-
-  if (lower.includes('baby') || lower.includes('toy')) return { img: '/baby.PNG', icon: <FiSmile size={26} className="text-pink-400" />, bg: 'bg-pink-50' };
-
-  if (lower.includes('education') || lower.includes('book')) return { img: '/education.PNG', icon: <FiMonitor size={26} className="text-indigo-600" />, bg: 'bg-indigo-50' };
-
-  if (lower.includes('job') || lower.includes('service')) return { img: '/jobs.PNG', icon: <FiBriefcase size={26} className="text-cyan-500" />, bg: 'bg-cyan-50' };
-
-  if (lower.includes('real estate') || lower.includes('property')) return { img: '/realestate.PNG', icon: <FiHome size={26} className="text-teal-500" />, bg: 'bg-teal-50' };
-
-  return { img: null, icon: <FiGrid size={26} className="text-gray-400" />, bg: 'bg-gray-50' };
+  return { img: null, icon: <FiGrid size={26} className="text-gray-400" /> };
 };
 
 export default function HomePage() {
@@ -573,18 +583,18 @@ export default function HomePage() {
         {/* MAIN CONTENT AREA */}
         <main className="flex-1 min-w-0 relative">
 
-          {/* DESKTOP CATEGORIES RIBBON */}
-          <div className="hidden lg:flex items-center bg-white rounded-2xl border border-gray-100 px-6 py-5 shadow-sm mb-6 overflow-hidden relative">
-            <div className="flex items-center gap-6 w-full overflow-x-auto hide-scrollbar flex-nowrap">
-              {dbCategories.map((cat, idx) => (
+          {/* DESKTOP CATEGORIES RIBBON - FULL CIRCULAR IMAGES */}
+          <div className="hidden lg:flex items-center bg-white rounded-2xl border border-gray-100 px-6 py-4 shadow-sm mb-6 overflow-hidden relative">
+            <div className="flex items-center gap-6 sm:gap-7 w-full overflow-x-auto hide-scrollbar flex-nowrap py-1">
+              {STATIC_CATEGORIES.map((cat, idx) => (
                 <CategoryItem key={idx} cat={cat} handleCategoryClick={handleCategoryClick} />
               ))}
             </div>
           </div>
 
-          {/* MOBILE CATEGORIES RIBBON */}
-          <div className="lg:hidden flex gap-4 px-4 py-6 bg-white mb-4 shadow-sm border-b border-gray-100 overflow-x-auto hide-scrollbar flex-nowrap">
-            {dbCategories.map((cat, idx) => (
+          {/* MOBILE CATEGORIES RIBBON - FULL CIRCULAR IMAGES */}
+          <div className="lg:hidden flex gap-4 px-4 py-4 bg-white mb-4 shadow-sm border-b border-gray-100 overflow-x-auto hide-scrollbar flex-nowrap">
+            {STATIC_CATEGORIES.map((cat, idx) => (
               <CategoryItem key={idx} cat={cat} handleCategoryClick={handleCategoryClick} />
             ))}
           </div>

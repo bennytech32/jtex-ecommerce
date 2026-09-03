@@ -8,7 +8,8 @@ import {
   FiTruck, FiShield, FiLock, FiMail, FiUser, FiPhone, FiTrash2, FiChevronRight,
   FiSmartphone, FiArrowLeft, FiMoreHorizontal, FiSliders, FiList, FiGrid,
   FiCamera, FiMic, FiMaximize, FiUploadCloud, FiChevronDown, FiZap, FiMessageCircle,
-  FiHome, FiTag, FiPackage, FiHeadphones, FiHeart, FiBox, FiMonitor
+  FiHome, FiTag, FiPackage, FiHeadphones, FiHeart, FiBox, FiMonitor,
+  FiCoffee, FiSmile, FiTool, FiShoppingBag, FiBriefcase
 } from 'react-icons/fi';
 
 import Footer from '../components/common/Footer';
@@ -26,17 +27,43 @@ const TANZANIA_REGIONS = [
   "Simiyu", "Singida", "Songwe", "Tabora", "Tanga", "Zanzibar"
 ];
 
-// FUNCTION KUPATA ICONS KAMA ZA HOME PAGE
+// Static categories zote - zinaonyeshwa kwenye ribbons na grids
+const STATIC_CATEGORIES = [
+  { name: 'Food', slug: 'food', img: '/food.PNG', icon: <FiCoffee size={24} className="text-orange-500" />, bg: 'from-orange-400 to-red-400' },
+  { name: 'Sports', slug: 'sports', img: '/sports.PNG', icon: <FiSmile size={24} className="text-green-500" />, bg: 'from-green-400 to-emerald-500' },
+  { name: 'Health', slug: 'health', img: '/health.PNG', icon: <FiHeart size={24} className="text-red-400" />, bg: 'from-pink-400 to-rose-500' },
+  { name: 'Industrial', slug: 'industrial', img: '/industrial.PNG', icon: <FiTool size={24} className="text-gray-700" />, bg: 'from-gray-500 to-gray-700' },
+  { name: 'Agriculture', slug: 'agriculture', img: '/agriculture.PNG', icon: <FiGlobe size={24} className="text-green-600" />, bg: 'from-green-500 to-lime-600' },
+  { name: 'Construction', slug: 'construction', img: '/construction.PNG', icon: <FiTool size={24} className="text-yellow-600" />, bg: 'from-yellow-400 to-amber-500' },
+  { name: 'Baby', slug: 'baby', img: '/baby.PNG', icon: <FiSmile size={24} className="text-pink-400" />, bg: 'from-pink-300 to-purple-400' },
+  { name: 'Education', slug: 'education', img: '/education.PNG', icon: <FiMonitor size={24} className="text-indigo-600" />, bg: 'from-indigo-400 to-blue-500' },
+  { name: 'Jobs', slug: 'jobs', img: '/jobs.PNG', icon: <FiBriefcase size={24} className="text-cyan-500" />, bg: 'from-cyan-400 to-sky-500' },
+  { name: 'Real Estate', slug: 'realestate', img: '/realestate.PNG', icon: <FiHome size={24} className="text-teal-500" />, bg: 'from-teal-400 to-cyan-600' },
+  { name: 'Vehicle', slug: 'vehicle', img: '/vehicle.PNG', icon: <FiTruck size={24} className="text-gray-600" />, bg: 'from-slate-400 to-gray-600' },
+  { name: 'Home', slug: 'home', img: '/home.PNG', icon: <FiHome size={24} className="text-yellow-500" />, bg: 'from-yellow-300 to-orange-400' },
+  { name: 'Fashion', slug: 'fashion', img: '/fashion.PNG', icon: <FiShoppingBag size={24} className="text-pink-500" />, bg: 'from-pink-500 to-rose-400' },
+  { name: 'Digital', slug: 'digital', img: '/digital.PNG', icon: <FiMonitor size={24} className="text-blue-500" />, bg: 'from-blue-400 to-indigo-500' },
+  { name: 'Mobile', slug: 'mobile', img: '/mobile.PNG', icon: <FiSmartphone size={24} className="text-indigo-500" />, bg: 'from-violet-400 to-indigo-600' },
+  { name: 'Electronics', slug: 'electronics', img: '/electronics.PNG', icon: <FiHeadphones size={24} className="text-purple-500" />, bg: 'from-purple-400 to-violet-600' },
+];
+
+// FUNCTION KUPATA PICHA NA ICONS KWA CATEGORY
 const getCategoryVisual = (catName: string) => {
   const lower = catName.toLowerCase();
-  if (lower.includes('electronic') || lower.includes('elektroniki')) return { icon: '🎧', bg: 'bg-yellow-50' };
-  if (lower.includes('computer') || lower.includes('laptop')) return { icon: '💻', bg: 'bg-blue-50' };
-  if (lower.includes('phone') || lower.includes('mobile') || lower.includes('simu')) return { icon: '📱', bg: 'bg-gray-100' };
-  if (lower.includes('fashion') || lower.includes('cloth') || lower.includes('nguo')) return { icon: '👗', bg: 'bg-red-50' };
-  if (lower.includes('home') || lower.includes('kitchen')) return { icon: '🛋️', bg: 'bg-teal-50' };
-  if (lower.includes('beaut') || lower.includes('urembo')) return { icon: '💄', bg: 'bg-pink-50' };
-  if (lower.includes('shoe') || lower.includes('viatu')) return { icon: '👟', bg: 'bg-orange-50' };
-  return { icon: '🛍️', bg: 'bg-purple-50' };
+  const found = STATIC_CATEGORIES.find(sc => lower.includes(sc.slug) || sc.name.toLowerCase().includes(lower) || lower.includes(sc.name.toLowerCase()));
+  if (found) return { img: found.img, icon: found.icon, bg: `bg-gradient-to-br ${found.bg}` };
+
+  // Fallback mappings
+  if (lower.includes('laptop') || lower.includes('computer') || lower.includes('printer')) return { img: '/digital.PNG', icon: <FiMonitor size={24} className="text-blue-500" />, bg: 'bg-blue-50' };
+  if (lower.includes('audio') || lower.includes('speaker') || lower.includes('gaming')) return { img: '/electronics.PNG', icon: <FiHeadphones size={24} className="text-purple-500" />, bg: 'bg-purple-50' };
+  if (lower.includes('tablet') || lower.includes('phone')) return { img: '/mobile.PNG', icon: <FiSmartphone size={24} className="text-indigo-500" />, bg: 'bg-indigo-50' };
+  if (lower.includes('cloth') || lower.includes('shoe') || lower.includes('beaut')) return { img: '/fashion.PNG', icon: <FiShoppingBag size={24} className="text-pink-500" />, bg: 'bg-pink-50' };
+  if (lower.includes('living') || lower.includes('kitchen')) return { img: '/home.PNG', icon: <FiHome size={24} className="text-yellow-500" />, bg: 'bg-yellow-50' };
+  if (lower.includes('property')) return { img: '/realestate.PNG', icon: <FiHome size={24} className="text-teal-500" />, bg: 'bg-teal-50' };
+  if (lower.includes('book')) return { img: '/education.PNG', icon: <FiMonitor size={24} className="text-indigo-600" />, bg: 'bg-indigo-50' };
+  if (lower.includes('service')) return { img: '/jobs.PNG', icon: <FiBriefcase size={24} className="text-cyan-500" />, bg: 'bg-cyan-50' };
+
+  return { img: null, icon: <FiGrid size={24} className="text-gray-400" />, bg: 'bg-gray-50' };
 };
 
 export default function CategoryPage({ params }: { params?: { slug?: string } }) {
@@ -458,36 +485,94 @@ export default function CategoryPage({ params }: { params?: { slug?: string } })
             </div>
           </div>
 
-          {/* ICONS MPYA KAMA ZA HOMEPAGE - PAMOJA NA SOFT NAVIGATION YAKE */}
-          <div className="flex overflow-x-auto hide-scrollbar gap-4 lg:gap-6 bg-white rounded-2xl border border-gray-100 px-4 py-5 shadow-sm mb-8">
-            <div onClick={() => {
-              setActiveSlug('');
-              window.history.pushState({}, '', '/categories');
-            }}
-              className="flex flex-col items-center gap-2 hover:opacity-80 transition cursor-pointer whitespace-nowrap group min-w-[70px]">
-              <div className={`w-14 h-14 sm:w-16 sm:h-16 rounded-full flex items-center justify-center transition-transform transform group-hover:scale-105 ${activeSlug === '' || activeSlug === 'all' ? 'bg-[#E8A922]/20 border-2 border-[#E8A922]' : 'bg-gray-100 shadow-sm border border-black/5'}`}>
-                <span className="text-2xl sm:text-3xl drop-shadow-sm">🛒</span>
+          {/* CATEGORY RIBBON - FULL CIRCULAR IMAGES KAMA KWENYE HOMEPAGE */}
+          <div className="flex overflow-x-auto hide-scrollbar gap-4 sm:gap-6 bg-white rounded-2xl border border-gray-100 px-6 py-4 shadow-sm mb-8">
+            {/* All Categories button */}
+            <button
+              onClick={() => {
+                setActiveSlug('');
+                window.history.pushState({}, '', '/categories');
+              }}
+              className="flex flex-col items-center gap-2 hover:opacity-90 transition cursor-pointer whitespace-nowrap group min-w-[76px] sm:min-w-[84px] flex-shrink-0"
+            >
+              <div className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full overflow-hidden flex items-center justify-center transition-all transform group-hover:scale-105 group-hover:shadow-md ${
+                activeSlug === '' || activeSlug === 'all'
+                  ? 'border-2 border-[#1B6B80] ring-2 ring-[#1B6B80]/20 shadow-md scale-105'
+                  : 'border-2 border-gray-100 shadow-sm'
+              } bg-gradient-to-br from-[#1B6B80] to-[#145363]`}>
+                <FiGrid size={28} className="text-white" />
               </div>
-              <span className="text-[10px] sm:text-xs font-bold text-gray-800 text-center">All Categories</span>
-            </div>
+              <span className={`text-[11px] sm:text-xs font-semibold text-center leading-tight ${
+                activeSlug === '' || activeSlug === 'all' ? 'text-[#1B6B80]' : 'text-gray-700'
+              }`}>All Categories</span>
+            </button>
 
-            {allCategories.map((cat, idx) => {
-              const visual = getCategoryVisual(cat.name);
+            {/* Show STATIC_CATEGORIES with crisp full circular images */}
+            {STATIC_CATEGORIES.map((cat, idx) => {
               const isActive = activeSlug === cat.slug;
               return (
-                <div key={idx}
+                <button
+                  key={`static-${idx}`}
                   onClick={() => {
                     setActiveSlug(cat.slug);
                     window.history.pushState({}, '', `/categories?category=${cat.slug}`);
                   }}
-                  className="flex flex-col items-center gap-2 hover:opacity-80 transition cursor-pointer whitespace-nowrap group min-w-[70px]">
-                  <div className={`w-14 h-14 sm:w-16 sm:h-16 rounded-full flex items-center justify-center transition-transform transform group-hover:scale-105 ${visual.bg} shadow-sm ${isActive ? 'border-2 border-[#E8A922] scale-105 shadow-md' : 'border border-black/5'}`}>
-                    <span className="text-2xl sm:text-3xl drop-shadow-sm">{visual.icon}</span>
+                  className="flex flex-col items-center gap-2 hover:opacity-90 transition cursor-pointer whitespace-nowrap group min-w-[76px] sm:min-w-[84px] flex-shrink-0"
+                >
+                  <div className={`relative w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white overflow-hidden flex items-center justify-center p-1.5 transition-all transform group-hover:scale-105 group-hover:shadow-md ${
+                    isActive
+                      ? 'border-2 border-[#1B6B80] ring-2 ring-[#1B6B80]/20 shadow-md scale-105'
+                      : 'border-2 border-gray-100 shadow-sm group-hover:border-[#1B6B80]'
+                  }`}>
+                    <img
+                      src={cat.img}
+                      alt={cat.name}
+                      className="w-full h-full object-contain transition-transform group-hover:scale-110"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none';
+                      }}
+                    />
                   </div>
-                  <span className="text-[10px] sm:text-xs font-bold text-gray-800 text-center leading-tight">{cat.name}</span>
-                </div>
-              )
+                  <span className={`text-[11px] sm:text-xs font-semibold text-center leading-tight truncate w-full px-1 ${
+                    isActive ? 'text-[#1B6B80] font-bold' : 'text-gray-700 group-hover:text-[#1B6B80]'
+                  }`}>{cat.name}</span>
+                </button>
+              );
             })}
+
+            {/* DB categories zisizo kwenye STATIC_CATEGORIES */}
+            {allCategories
+              .filter(cat => !STATIC_CATEGORIES.some(sc => sc.slug === cat.slug || cat.slug.includes(sc.slug)))
+              .map((cat, idx) => {
+                const visual = getCategoryVisual(cat.name);
+                const isActive = activeSlug === cat.slug;
+                return (
+                  <button
+                    key={`db-${idx}`}
+                    onClick={() => {
+                      setActiveSlug(cat.slug);
+                      window.history.pushState({}, '', `/categories?category=${cat.slug}`);
+                    }}
+                    className="flex flex-col items-center gap-2 hover:opacity-90 transition cursor-pointer whitespace-nowrap group min-w-[76px] sm:min-w-[84px] flex-shrink-0"
+                  >
+                    <div className={`relative w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white overflow-hidden flex items-center justify-center p-1.5 transition-all transform group-hover:scale-105 group-hover:shadow-md ${
+                      isActive
+                        ? 'border-2 border-[#1B6B80] ring-2 ring-[#1B6B80]/20 shadow-md scale-105'
+                        : 'border-2 border-gray-100 shadow-sm group-hover:border-[#1B6B80]'
+                    }`}>
+                      {visual.img ? (
+                        <img src={visual.img} alt={cat.name} className="w-full h-full object-contain transition-transform group-hover:scale-110"
+                          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                      ) : null}
+                      <div className="flex items-center justify-center">{visual.icon}</div>
+                    </div>
+                    <span className={`text-[11px] sm:text-xs font-semibold text-center leading-tight truncate w-full px-1 ${
+                      isActive ? 'text-[#1B6B80] font-bold' : 'text-gray-700 group-hover:text-[#1B6B80]'
+                    }`}>{cat.name}</span>
+                  </button>
+                );
+              })
+            }
           </div>
 
           <div className="flex flex-col lg:flex-row gap-6">
