@@ -7,6 +7,37 @@ import {
   FiPackage, FiImage, FiDollarSign, FiList, FiSearch
 } from 'react-icons/fi';
 
+const DEFAULT_MAIN_CATEGORIES = [
+  "Electronics", "Mobile & Tablets", "Home Appliances", "Home & Living", "Fashion & Beauty",
+  "Video Games", "Sports & Outdoor", "Baby, Kids & Toys", "Health & Wellness", "Education & Books",
+  "Food & Beverages", "Vehicles & Machinery", "Real Estate", "Construction & Hardware",
+  "Agriculture & Livestock", "Mining & Minerals", "Industrial & Business Supplies",
+  "Digital Products & Services", "Jobs & Services", "Travel & Tourism"
+];
+
+// DEFAULT SUBCATEGORIES: Hizi zitatokea moja kwa moja kulingana na Main Category
+const DEFAULT_SUBCATEGORIES: Record<string, string[]> = {
+  "Home & Living": [
+    "Furniture", "Bedroom", "Living Room", "Dining", "Home Decor",
+    "Lighting", "Kitchen & Dining", "Bathroom", "Storage",
+    "Bedding", "Garden", "Household", "Other Living"
+  ],
+  "Electronics": [
+    "Televisions", "Home Audio & Theater", "Cameras & Photos",
+    "Laptops", "Desktops & Monitors", "PC Accessories",
+    "Printers & Scanners", "Networking & Routers", "Other Electronics"
+  ],
+  "Mobile & Tablets": [
+    "Smartphones", "Tablets", "Smartwatches", "Earbuds & Headphones",
+    "Cases & Covers", "Chargers & Cables", "Power Banks"
+  ],
+  "Fashion & Beauty": [
+    "Men's Clothing", "Women's Clothing", "Shoes & Sneakers",
+    "Bags & Backpacks", "Watches & Jewelry", "Skincare & Makeup", "Fragrances"
+  ]
+  // Unaweza kuongeza nyingine nyingi hapa kadiri unavyohitaji
+};
+
 export default function AdminProducts() {
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState('');
@@ -17,16 +48,22 @@ export default function AdminProducts() {
   const [dbCategories, setDbCategories] = useState<any[]>([]);
   const [dbSpecTemplates, setDbSpecTemplates] = useState<any[]>([]);
 
-  // --- Management States ---
+  // --- Category Management States ---
   const [showManager, setShowManager] = useState(false);
+  const [isMainCat, setIsMainCat] = useState(true);
+  const [selectedParentForNew, setSelectedParentForNew] = useState('');
   const [newCatName, setNewCatName] = useState('');
+
+  // Spec Template Management
   const [newSpecTitle, setNewSpecTitle] = useState('');
   const [newSpecFields, setNewSpecFields] = useState<string>('');
 
   // --- Form States (Add Product) ---
   const [sku, setSku] = useState('');
   const [name, setName] = useState('');
-  const [selectedCategoryId, setSelectedCategoryId] = useState('');
+  const [selectedMainCategory, setSelectedMainCategory] = useState('');
+  const [selectedSubCategory, setSelectedSubCategory] = useState('');
+
   const [brand, setBrand] = useState('');
   const [modelName, setModelName] = useState('');
   const [badge, setBadge] = useState('');
@@ -57,7 +94,7 @@ export default function AdminProducts() {
   const [shippingOrigin, setShippingOrigin] = useState<'Dubai' | 'China'>('Dubai');
   const [freightType, setFreightType] = useState<'Air' | 'Sea'>('Air');
 
-  // Wholesale States (Fully Manual 3 Tiers - Support Ranges)
+  // Wholesale States
   const [isWholesale, setIsWholesale] = useState(false);
   const [wsTier1Qty, setWsTier1Qty] = useState('');
   const [wsTier1Price, setWsTier1Price] = useState('');
@@ -68,7 +105,6 @@ export default function AdminProducts() {
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://jtex-ecommerce-production.up.railway.app';
 
-  // Shipping Config
   const shippingConfig = {
     Dubai: { days: "5–10 business days", icon: "🇦🇪" },
     China: { days: "10–30 business days", icon: "🇨🇳" },
@@ -76,17 +112,29 @@ export default function AdminProducts() {
     Sea: { desc: "Longer transit time.", icon: <FiAnchor className="text-blue-800" /> }
   };
 
+  // Derive Main Categories (Defaults + DB Custom Mains)
+  const mainCats = Array.from(new Set([
+    ...DEFAULT_MAIN_CATEGORIES,
+    ...dbCategories.filter(c => !c.parent).map(c => c.name)
+  ])).sort();
+
+  // Get Subcategories: Inachanganya Default Subcategories (kutoka kwenye code) na zile mpya za kwenye Database
+  const getSubCats = (main: string) => {
+    const dbSubs = dbCategories.filter(c => c.parent === main).map(c => c.name);
+    const defaultSubs = DEFAULT_SUBCATEGORIES[main] || [];
+    return Array.from(new Set([...defaultSubs, ...dbSubs])).sort();
+  };
+
   // Auto-generate SKU
   useEffect(() => {
-    if (name && selectedCategoryId) {
-      const catObj = dbCategories.find(c => c.id === selectedCategoryId || c.name === selectedCategoryId);
-      const catName = catObj ? catObj.name : 'PROD';
+    if (name && selectedMainCategory) {
+      const catName = selectedSubCategory || selectedMainCategory;
       const prefix = catName.substring(0, 3).toUpperCase();
       const namePart = name.substring(0, 3).toUpperCase();
       const randomId = Math.floor(1000 + Math.random() * 9000);
       setSku(`${prefix}-${namePart}-${randomId}`);
     }
-  }, [name, selectedCategoryId, dbCategories]);
+  }, [name, selectedMainCategory, selectedSubCategory]);
 
   // --- API Fetches ---
   const fetchInitialData = async () => {
@@ -101,7 +149,6 @@ export default function AdminProducts() {
       setDbCategories(fetchedCats);
 
       if (specRes.ok) setDbSpecTemplates(await specRes.json());
-
     } catch (err) {
       console.error('Fetch Error:', err);
     }
@@ -126,26 +173,26 @@ export default function AdminProducts() {
       setTemplateSearchQuery(dbTemplate.title);
     }
     else {
-      if (cat.includes('laptop') || cat.includes('computer')) {
+      if (cat.includes('laptop') || cat.includes('computer') || cat.includes('desktop')) {
         autoFields = ['Processor', 'RAM', 'Storage', 'Graphics', 'Display Size', 'Operating System'];
       }
-      else if (cat.includes('phone') || cat.includes('tablet')) {
+      else if (cat.includes('phone') || cat.includes('tablet') || cat.includes('mobile')) {
         autoFields = ['Display', 'Processor', 'RAM', 'Storage', 'Main Camera', 'Battery Capacity'];
       }
-      else if (cat.includes('cloth') || cat.includes('wear') || cat.includes('shoe') || cat.includes('fashion') || cat.includes('apparel')) {
+      else if (cat.includes('cloth') || cat.includes('fashion') || cat.includes('shoe')) {
         autoFields = ['Size', 'Material / Fabric', 'Gender', 'Care Instructions', 'Fit Type'];
       }
-      else if (cat.includes('furniture') || cat.includes('chair') || cat.includes('table') || cat.includes('sofa')) {
+      else if (cat.includes('home') || cat.includes('furniture') || cat.includes('living') || cat.includes('bedroom')) {
         autoFields = ['Dimensions (L x W x H)', 'Material', 'Weight Capacity', 'Color/Finish'];
       }
-      else if (cat.includes('server')) {
-        autoFields = ['Server Type', 'Processor', 'Memory', 'Storage Controller', 'Power Supply'];
-      }
-      else if (cat.includes('tv') || cat.includes('monitor')) {
+      else if (cat.includes('tv') || cat.includes('monitor') || cat.includes('television') || cat.includes('electronic')) {
         autoFields = ['Screen Size', 'Resolution', 'Panel Type', 'Refresh Rate', 'Smart Features'];
       }
-      else if (cat.includes('printer')) {
-        autoFields = ['Print Technology', 'Print Speed', 'Resolution', 'Connectivity'];
+      else if (cat.includes('vehicle') || cat.includes('machinery')) {
+        autoFields = ['Make/Brand', 'Year', 'Engine Capacity', 'Fuel Type', 'Mileage'];
+      }
+      else if (cat.includes('real estate')) {
+        autoFields = ['Property Type', 'Bedrooms', 'Bathrooms', 'Square Footage', 'Location'];
       }
       setTemplateSearchQuery('AI Auto-Generated / Custom');
     }
@@ -162,17 +209,15 @@ export default function AdminProducts() {
   };
 
   useEffect(() => {
-    if (selectedCategoryId) {
-      const catObj = dbCategories.find(c => c.id === selectedCategoryId || c.name === selectedCategoryId);
-      if (catObj) {
-        generateSmartSpecs(catObj.name);
-      }
+    const activeCat = selectedSubCategory || selectedMainCategory;
+    if (activeCat) {
+      generateSmartSpecs(activeCat);
     } else {
       setSpecData({});
       setSelectedTemplateId('');
       setTemplateSearchQuery('');
     }
-  }, [selectedCategoryId, dbCategories, dbSpecTemplates]);
+  }, [selectedMainCategory, selectedSubCategory, dbSpecTemplates]);
 
   // Handle Manual Template Override
   const applySpecTemplate = (templateId: string, templateTitle: string) => {
@@ -180,8 +225,8 @@ export default function AdminProducts() {
     setTemplateSearchQuery(templateTitle);
 
     if (!templateId) {
-      const catObj = dbCategories.find(c => c.id === selectedCategoryId);
-      if (catObj) generateSmartSpecs(catObj.name);
+      const activeCat = selectedSubCategory || selectedMainCategory;
+      if (activeCat) generateSmartSpecs(activeCat);
       return;
     }
 
@@ -198,30 +243,45 @@ export default function AdminProducts() {
   // --- Management Logic ---
   const handleSaveCategory = async () => {
     if (!newCatName.trim()) return;
+    if (!isMainCat && !selectedParentForNew) {
+      setError("Please select a Main Category for this Subcategory");
+      window.scrollTo(0, 0);
+      return;
+    }
     setError('');
     setMessage('');
 
-    const exists = dbCategories.find(c => c.name.toLowerCase() === newCatName.trim().toLowerCase());
+    const exists = dbCategories.find(c => c.name.toLowerCase() === newCatName.trim().toLowerCase() && c.parent === (isMainCat ? null : selectedParentForNew));
     if (exists) {
-      setError(`Category '${newCatName}' already exists!`);
+      setError(`Category '${newCatName}' already exists in this level!`);
       window.scrollTo(0, 0);
       return;
     }
 
     setIsLoading(true);
     try {
+      const payload = {
+        name: newCatName.trim(),
+        parent: isMainCat ? null : selectedParentForNew
+      };
+
       const res = await fetch(`${API_URL}/api/categories`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: newCatName.trim() })
+        body: JSON.stringify(payload)
       });
+
       if (res.ok) {
         const savedCat = await res.json();
         const catToAdd = savedCat.category || savedCat.data || savedCat;
-        const finalCat = { id: catToAdd.id || catToAdd._id || Date.now().toString(), name: catToAdd.name || newCatName.trim() };
+        const finalCat = {
+          id: catToAdd.id || catToAdd._id || Date.now().toString(),
+          name: catToAdd.name || newCatName.trim(),
+          parent: catToAdd.parent || payload.parent
+        };
         setDbCategories(prev => [...prev, finalCat]);
         setNewCatName('');
-        setMessage('Category saved perfectly!');
+        setMessage(isMainCat ? 'Main Category saved!' : 'Subcategory saved!');
       }
     } catch (err) { }
     setIsLoading(false);
@@ -350,20 +410,31 @@ export default function AdminProducts() {
     e.preventDefault();
     setIsLoading(true); setMessage(''); setError('');
 
-    let finalCategory = selectedCategoryId;
-    const catObj = dbCategories.find(c => c.id === selectedCategoryId || c.name === selectedCategoryId);
-    if (catObj) finalCategory = catObj.name;
-
-    if (!finalCategory) { setError('Please select a category.'); setIsLoading(false); window.scrollTo(0, 0); return; }
+    if (!selectedMainCategory) { setError('Please select a Main Category.'); setIsLoading(false); window.scrollTo(0, 0); return; }
 
     const finalSpecs = { ...specData };
-    if (colors.trim() !== '') finalSpecs['Color'] = colors.trim();
+
+    // 1. SAFISHA (CLEAN UP): Ondoa field yoyote ya Specifications ambayo iko wazi (Empty)
+    Object.keys(finalSpecs).forEach(key => {
+      if (!finalSpecs[key] || finalSpecs[key].toString().trim() === '') {
+        delete finalSpecs[key]; // Ikiachwa wazi, inaondolewa isionekane kwa mteja Frontend
+      }
+    });
+
+    // 2. Ongeza taarifa za msingi kama hazipo wazi
+    finalSpecs['Main Category'] = selectedMainCategory;
+    if (selectedSubCategory) finalSpecs['Subcategory'] = selectedSubCategory;
+    if (brand.trim()) finalSpecs['Brand'] = brand.trim();
+    if (modelName.trim()) finalSpecs['Model'] = modelName.trim(); // Model itaonekana TENA tu kama umeijaza
+    if (colors.trim()) finalSpecs['Color'] = colors.trim();
+
+    // Wholesale
     if (isWholesale) {
       finalSpecs['isWholesale'] = 'Yes';
       if (wsTier1Qty && wsTier1Price) {
         finalSpecs['wholesaleTier1Qty'] = wsTier1Qty;
         finalSpecs['wholesaleTier1Price'] = wsTier1Price;
-        finalSpecs['wholesaleMinOrder'] = wsTier1Qty; // Fallback backward compatibility
+        finalSpecs['wholesaleMinOrder'] = wsTier1Qty;
       }
       if (wsTier2Qty && wsTier2Price) {
         finalSpecs['wholesaleTier2Qty'] = wsTier2Qty;
@@ -376,7 +447,9 @@ export default function AdminProducts() {
     }
 
     customSpecs.forEach(spec => {
-      if (spec.key.trim() !== '') finalSpecs[spec.key.trim()] = spec.value;
+      if (spec.key.trim() !== '' && spec.value.trim() !== '') {
+        finalSpecs[spec.key.trim()] = spec.value;
+      }
     });
 
     const preOrderInfo = isPreOrder ? {
@@ -386,9 +459,15 @@ export default function AdminProducts() {
     const formData = new FormData();
     formData.append('sku', sku);
     formData.append('name', name);
-    formData.append('category', finalCategory);
+    formData.append('category', selectedMainCategory);
+    if (selectedSubCategory) {
+      formData.append('subCategory', selectedSubCategory);
+    }
     formData.append('brand', brand);
+
+    // Bado tunatuma model kwenye formData incase inahitajika kwa mambo mengine ya database, ila kwenye Specs imesafishwa
     formData.append('model', modelName);
+
     formData.append('badge', badge);
     formData.append('condition', condition);
     formData.append('buyingPrice', buyingPrice);
@@ -408,7 +487,7 @@ export default function AdminProducts() {
       if (res.ok) {
         setMessage('Product added successfully to live store!');
         setSku(''); setName(''); setBrand(''); setModelName(''); setBadge(''); setCondition('Brand New'); setColors(''); setBuyingPrice(''); setPrice(''); setStockQuantity('');
-        setSelectedCategoryId(''); setSpecData({}); setCustomSpecs([]); setSelectedTemplateId(''); setTemplateSearchQuery('');
+        setSelectedMainCategory(''); setSelectedSubCategory(''); setSpecData({}); setCustomSpecs([]); setSelectedTemplateId(''); setTemplateSearchQuery('');
         setImageFiles([]); setImagePreviews([]);
         setIsPreOrder(false); setIsWholesale(false);
         setWsTier1Qty(''); setWsTier1Price(''); setWsTier2Qty(''); setWsTier2Price(''); setWsTier3Qty(''); setWsTier3Price('');
@@ -429,7 +508,7 @@ export default function AdminProducts() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-black text-gray-900 tracking-tight">Add New Product</h1>
-          <p className="text-xs text-gray-500 mt-1">Smart form with AI-powered categories and specs.</p>
+          <p className="text-xs text-gray-500 mt-1">Smart form with Main & Subcategories system.</p>
         </div>
         <button onClick={() => setShowManager(!showManager)} className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold transition shadow-sm border ${showManager ? 'bg-white border-gray-200 text-gray-800' : 'bg-[#0A101D] text-white border-transparent'}`}>
           <FiLayers /> {showManager ? 'Close Manager' : 'Manage Categories & Specs'}
@@ -442,11 +521,32 @@ export default function AdminProducts() {
       {/* MANAGER COMPONENT */}
       {showManager && (
         <div className="mb-8 grid grid-cols-1 md:grid-cols-2 gap-6 bg-gray-50 p-6 rounded-3xl border border-gray-200 shadow-inner animate-fade-in">
+
+          {/* CATEGORY MANAGER */}
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 space-y-4">
-            <h3 className="font-black text-sm flex items-center gap-2 text-gray-800"><FiPlus className="text-emerald-500" /> Add Category</h3>
-            <input type="text" value={newCatName} onChange={e => setNewCatName(e.target.value)} placeholder="e.g. Solar Panels" className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#F2A900]" />
-            <button onClick={handleSaveCategory} disabled={isLoading || !newCatName} className="bg-emerald-600 hover:bg-emerald-700 text-white w-full py-2.5 rounded-xl text-xs font-bold disabled:bg-gray-300 transition">Save Category</button>
+            <h3 className="font-black text-sm flex items-center gap-2 text-gray-800"><FiPlus className="text-emerald-500" /> Manage Categories</h3>
+
+            <div className="flex gap-4 mb-2">
+              <label className="text-xs font-bold flex items-center gap-1.5 cursor-pointer">
+                <input type="radio" name="catType" checked={isMainCat} onChange={() => setIsMainCat(true)} className="accent-emerald-600 w-4 h-4" /> Main Category
+              </label>
+              <label className="text-xs font-bold flex items-center gap-1.5 cursor-pointer">
+                <input type="radio" name="catType" checked={!isMainCat} onChange={() => setIsMainCat(false)} className="accent-emerald-600 w-4 h-4" /> Subcategory
+              </label>
+            </div>
+
+            {!isMainCat && (
+              <select value={selectedParentForNew} onChange={e => setSelectedParentForNew(e.target.value)} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#F2A900] font-semibold text-gray-700">
+                <option value="">-- Select Parent Category --</option>
+                {mainCats.map(c => <option key={`parent-${c}`} value={c}>{c}</option>)}
+              </select>
+            )}
+
+            <input type="text" value={newCatName} onChange={e => setNewCatName(e.target.value)} placeholder={isMainCat ? "e.g. Solar Panels" : "e.g. Inverters"} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#F2A900] font-semibold text-gray-800" />
+            <button onClick={handleSaveCategory} disabled={isLoading || !newCatName || (!isMainCat && !selectedParentForNew)} className="bg-emerald-600 hover:bg-emerald-700 text-white w-full py-2.5 rounded-xl text-xs font-bold disabled:bg-gray-300 transition">Save Category</button>
           </div>
+
+          {/* SPEC TEMPLATE MANAGER */}
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 space-y-4">
             <h3 className="font-black text-sm flex items-center gap-2 text-gray-800"><FiSettings className="text-blue-500" /> Create Spec Template</h3>
             <input type="text" value={newSpecTitle} onChange={e => setNewSpecTitle(e.target.value)} placeholder="Title (e.g. Shirts)" className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#F2A900]" />
@@ -495,32 +595,41 @@ export default function AdminProducts() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div>
-                  <label className="block text-[11px] font-black text-gray-400 uppercase tracking-wider mb-1.5 flex items-center gap-2">Category <span className="text-[9px] text-[#F2A900] bg-yellow-50 px-2 py-0.5 rounded-full capitalize">AI Powered</span></label>
-                  <select required value={selectedCategoryId} onChange={(e) => setSelectedCategoryId(e.target.value)} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none text-sm font-bold text-gray-800 focus:border-[#F2A900] transition cursor-pointer">
-                    <option value="">-- Select Category --</option>
-                    {dbCategories.map(cat => (
-                      <option key={cat.id} value={cat.id}>{cat.name}</option>
+                  <label className="block text-[11px] font-black text-gray-400 uppercase tracking-wider mb-1.5 flex items-center gap-2">Main Category <span className="text-red-500">*</span></label>
+                  <select required value={selectedMainCategory} onChange={(e) => { setSelectedMainCategory(e.target.value); setSelectedSubCategory(''); }} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none text-sm font-bold text-gray-800 focus:border-[#F2A900] transition cursor-pointer">
+                    <option value="">-- Select Main Category --</option>
+                    {mainCats.map(cat => (
+                      <option key={`main-${cat}`} value={cat}>{cat}</option>
                     ))}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-[11px] font-black text-gray-400 uppercase tracking-wider mb-1.5">Brand <span className="text-gray-300 font-normal">(Optional)</span></label>
-                  <input type="text" value={brand} onChange={e => setBrand(e.target.value)} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none text-sm font-semibold text-gray-800 focus:border-[#F2A900] transition" placeholder="e.g. Nike, Apple..." />
+                  <label className="block text-[11px] font-black text-gray-400 uppercase tracking-wider mb-1.5 flex items-center gap-2">Subcategory <span className="text-[9px] text-[#F2A900] bg-yellow-50 px-2 py-0.5 rounded-full capitalize">Optional</span></label>
+                  <select value={selectedSubCategory} onChange={(e) => setSelectedSubCategory(e.target.value)} disabled={!selectedMainCategory || getSubCats(selectedMainCategory).length === 0} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none text-sm font-bold text-gray-800 focus:border-[#F2A900] transition cursor-pointer disabled:opacity-50">
+                    <option value="">-- Select Subcategory --</option>
+                    {getSubCats(selectedMainCategory).map(catName => (
+                      <option key={`sub-${catName}`} value={catName}>{catName}</option>
+                    ))}
+                  </select>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div>
-                  <label className="block text-[11px] font-black text-gray-400 uppercase tracking-wider mb-1.5 flex items-center gap-1">Model <span className="text-blue-500 font-medium capitalize ml-1 bg-blue-50 px-2 py-0.5 rounded-md">Optional</span></label>
-                  <input type="text" value={modelName} onChange={e => setModelName(e.target.value)} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none text-sm font-semibold text-gray-800 focus:border-[#F2A900] transition" placeholder="e.g. A2849 (Leave blank for clothes)" />
+                  <label className="block text-[11px] font-black text-gray-400 uppercase tracking-wider mb-1.5">Brand <span className="text-gray-300 font-normal">(Optional)</span></label>
+                  <input type="text" value={brand} onChange={e => setBrand(e.target.value)} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none text-sm font-semibold text-gray-800 focus:border-[#F2A900] transition" placeholder="e.g. Nike, Apple..." />
                 </div>
+                <div>
+                  <label className="block text-[11px] font-black text-gray-400 uppercase tracking-wider mb-1.5 flex items-center gap-1">Model <span className="text-blue-500 font-medium capitalize ml-1 bg-blue-50 px-2 py-0.5 rounded-md">Optional</span></label>
+                  <input type="text" value={modelName} onChange={e => setModelName(e.target.value)} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none text-sm font-semibold text-gray-800 focus:border-[#F2A900] transition" placeholder="e.g. A2849 (Ikiachwa wazi haitaonekana kwa mteja)" />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div>
                   <label className="block text-[11px] font-black text-gray-400 uppercase tracking-wider mb-1.5">Available Colors</label>
                   <input type="text" value={colors} onChange={e => setColors(e.target.value)} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none text-sm font-bold text-gray-800 focus:border-[#F2A900] transition" placeholder="e.g. Red, Blue, Black" />
                 </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div>
                   <label className="block text-[11px] font-black text-gray-400 uppercase tracking-wider mb-1.5">Condition</label>
                   <select value={condition} onChange={e => setCondition(e.target.value)} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none text-sm font-semibold cursor-pointer focus:border-[#F2A900]">
@@ -529,7 +638,10 @@ export default function AdminProducts() {
                     <option value="Used">Used</option>
                   </select>
                 </div>
-                <div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <div className="sm:col-span-2">
                   <label className="block text-[11px] font-black text-gray-400 uppercase tracking-wider mb-1.5">Marketing Badge</label>
                   <select value={badge} onChange={e => setBadge(e.target.value)} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none text-sm font-semibold cursor-pointer focus:border-[#F2A900]">
                     <option value="">None (Standard)</option>
@@ -539,6 +651,7 @@ export default function AdminProducts() {
                   </select>
                 </div>
               </div>
+
             </div>
           </div>
         </div>
@@ -566,7 +679,7 @@ export default function AdminProducts() {
             </div>
           </div>
 
-          {/* Wholesale Section (Fully Manual 3 Tiers - Support Ranges) */}
+          {/* Wholesale Section */}
           <div className="mt-6 border border-gray-200 rounded-2xl overflow-hidden">
             <div className="bg-gray-50 px-5 py-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -581,7 +694,6 @@ export default function AdminProducts() {
 
             {isWholesale && (
               <div className="bg-white p-5 grid grid-cols-1 md:grid-cols-3 gap-5 border-t border-gray-200 animate-fade-in">
-
                 {/* Tier 1 */}
                 <div className="space-y-3 bg-gray-50 p-4 rounded-xl border border-gray-100">
                   <h4 className="text-[10px] font-black text-emerald-700 uppercase tracking-wider border-b border-emerald-100 pb-2">Tier 1 (Min Order)</h4>
@@ -620,7 +732,6 @@ export default function AdminProducts() {
                     <input type="number" value={wsTier3Price} onChange={e => setWsTier3Price(e.target.value)} className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 outline-none text-sm font-bold text-gray-800 focus:border-emerald-400" placeholder="e.g. 230000" />
                   </div>
                 </div>
-
               </div>
             )}
           </div>
@@ -664,7 +775,7 @@ export default function AdminProducts() {
           <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-6 border-b border-gray-100 pb-4">
             <div>
               <h2 className="text-base font-black text-gray-900 flex items-center gap-2"><FiList className="text-purple-500" /> Smart Specifications</h2>
-              <p className="text-[11px] font-medium text-gray-500 mt-1">Fields are automatically generated based on the chosen category.</p>
+              <p className="text-[11px] font-medium text-gray-500 mt-1">Fields are automatically generated based on the chosen category. (Empty fields will be hidden from users)</p>
             </div>
 
             {/* Smart Combo Box for Template Selection */}
@@ -727,7 +838,7 @@ export default function AdminProducts() {
                     value={specData[field] || ''}
                     onChange={e => setSpecData({ ...specData, [field]: e.target.value })}
                     className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2.5 outline-none text-sm font-semibold focus:border-purple-400 shadow-sm"
-                    placeholder={`Enter ${field.toLowerCase()}`}
+                    placeholder={`Enter ${field.toLowerCase()} (Leave blank to hide)`}
                   />
                 </div>
               ))}

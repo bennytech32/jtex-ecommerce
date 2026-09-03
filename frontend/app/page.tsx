@@ -44,28 +44,43 @@ const CategoryItem = ({ cat, handleCategoryClick }: { cat: any, handleCategoryCl
   );
 };
 
-// Mapping ya Categories PNGs na Icons Mbadala kama picha zikigoma
+// Mapping ya Categories PNGs na Icons Mbadala ikitumia majina mapya ya picha na .PNG (Herufi Kubwa)
 const getCategoryVisual = (catName: string) => {
   const lower = catName.toLowerCase();
 
-  if (lower.includes('laptop') || lower.includes('computer')) return { img: '/Digital Product & Services.png', icon: <FiMonitor size={26} className="text-blue-500" />, bg: 'bg-blue-50' };
-  if (lower.includes('audio') || lower.includes('speaker')) return { img: '/electronics.png', icon: <FiHeadphones size={26} className="text-purple-500" />, bg: 'bg-purple-50' };
-  if (lower.includes('gaming') || lower.includes('console')) return { img: '/electronics.png', icon: <FiTarget size={26} className="text-red-500" />, bg: 'bg-red-50' };
-  if (lower.includes('printer') || lower.includes('scanner')) return { img: '/Digital Product & Services.png', icon: <FiMonitor size={26} className="text-blue-500" />, bg: 'bg-blue-50' };
-  if (lower.includes('mobile') || lower.includes('tablet') || lower.includes('phone')) return { img: '/mobile & tablet.png', icon: <FiSmartphone size={26} className="text-indigo-500" />, bg: 'bg-indigo-50' };
-  if (lower.includes('fashion') || lower.includes('beaut') || lower.includes('cloth') || lower.includes('shoe')) return { img: '/Fashion & Beauty.png', icon: <FiShoppingBag size={26} className="text-pink-500" />, bg: 'bg-pink-50' };
-  if (lower.includes('home') || lower.includes('living') || lower.includes('kitchen')) return { img: '/Home & Living.png', icon: <FiHome size={26} className="text-yellow-500" />, bg: 'bg-yellow-50' };
-  if (lower.includes('vehicle') || lower.includes('mashinery') || lower.includes('machinery')) return { img: '/vehicle and Mashinery.png', icon: <FiTruck size={26} className="text-gray-600" />, bg: 'bg-gray-100' };
-  if (lower.includes('food') || lower.includes('beverage')) return { img: '/food and breverage.jpg', icon: <FiCoffee size={26} className="text-orange-500" />, bg: 'bg-orange-50' };
-  if (lower.includes('sport') || lower.includes('outdoor')) return { img: '/sports and outdoor.PNG', icon: <FiSmile size={26} className="text-green-500" />, bg: 'bg-green-50' };
-  if (lower.includes('health') || lower.includes('wellnes')) return { img: '/health and wellnes.PNG', icon: <FiHeart size={26} className="text-red-400" />, bg: 'bg-blue-50' };
-  if (lower.includes('industr') || lower.includes('hardware') || lower.includes('construction')) return { img: '/indrustical.jpg', icon: <FiTool size={26} className="text-gray-700" />, bg: 'bg-gray-100' };
-  if (lower.includes('agricultur') || lower.includes('livestock')) return { img: '/agriculture and livestocks.jpg', icon: <FiGlobe size={26} className="text-green-600" />, bg: 'bg-green-100' };
-  if (lower.includes('baby') || lower.includes('toy')) return { img: '/baby and toys.PNG', icon: <FiSmile size={26} className="text-pink-400" />, bg: 'bg-pink-50' };
-  if (lower.includes('education') || lower.includes('book')) return { img: '/educations & books.PNG', icon: <FiMonitor size={26} className="text-indigo-600" />, bg: 'bg-indigo-50' };
-  if (lower.includes('job') || lower.includes('service')) return { img: '/jobs and services.PNG', icon: <FiBriefcase size={26} className="text-cyan-500" />, bg: 'bg-cyan-50' };
-  if (lower.includes('real estate') || lower.includes('property')) return { img: '/Real Estaste.PNG', icon: <FiHome size={26} className="text-teal-500" />, bg: 'bg-teal-50' };
-  if (lower.includes('stand') || lower.includes('accessori') || lower.includes('other')) return { img: '/Digital Product & Services.png', icon: <FiPackage size={26} className="text-gray-500" />, bg: 'bg-gray-50' };
+  if (lower.includes('laptop') || lower.includes('computer') || lower.includes('stand') || lower.includes('printer') || lower.includes('scanner') || lower.includes('accessori') || lower.includes('other')) return { img: '/digital.PNG', icon: <FiMonitor size={26} className="text-blue-500" />, bg: 'bg-blue-50' };
+
+  if (lower.includes('audio') || lower.includes('speaker')) return { img: '/electronics.PNG', icon: <FiHeadphones size={26} className="text-purple-500" />, bg: 'bg-purple-50' };
+
+  if (lower.includes('gaming') || lower.includes('console')) return { img: '/electronics.PNG', icon: <FiTarget size={26} className="text-red-500" />, bg: 'bg-red-50' };
+
+  if (lower.includes('mobile') || lower.includes('tablet') || lower.includes('phone')) return { img: '/mobile.PNG', icon: <FiSmartphone size={26} className="text-indigo-500" />, bg: 'bg-indigo-50' };
+
+  if (lower.includes('fashion') || lower.includes('beaut') || lower.includes('cloth') || lower.includes('shoe')) return { img: '/fashion.PNG', icon: <FiShoppingBag size={26} className="text-pink-500" />, bg: 'bg-pink-50' };
+
+  if (lower.includes('home') || lower.includes('living') || lower.includes('kitchen')) return { img: '/home.PNG', icon: <FiHome size={26} className="text-yellow-500" />, bg: 'bg-yellow-50' };
+
+  if (lower.includes('vehicle') || lower.includes('mashinery') || lower.includes('machinery')) return { img: '/vehicle.PNG', icon: <FiTruck size={26} className="text-gray-600" />, bg: 'bg-gray-100' };
+
+  if (lower.includes('food') || lower.includes('beverage')) return { img: '/food.jpg', icon: <FiCoffee size={26} className="text-orange-500" />, bg: 'bg-orange-50' };
+
+  if (lower.includes('sport') || lower.includes('outdoor')) return { img: '/sports.PNG', icon: <FiSmile size={26} className="text-green-500" />, bg: 'bg-green-50' };
+
+  if (lower.includes('health') || lower.includes('wellnes')) return { img: '/health.PNG', icon: <FiHeart size={26} className="text-red-400" />, bg: 'bg-blue-50' };
+
+  if (lower.includes('industr')) return { img: '/industrial.jpg', icon: <FiTool size={26} className="text-gray-700" />, bg: 'bg-gray-100' };
+
+  if (lower.includes('construction') || lower.includes('hardware')) return { img: '/construction.PNG', icon: <FiTool size={26} className="text-gray-700" />, bg: 'bg-yellow-50' };
+
+  if (lower.includes('agricultur') || lower.includes('livestock')) return { img: '/agriculture.jpg', icon: <FiGlobe size={26} className="text-green-600" />, bg: 'bg-green-100' };
+
+  if (lower.includes('baby') || lower.includes('toy')) return { img: '/baby.PNG', icon: <FiSmile size={26} className="text-pink-400" />, bg: 'bg-pink-50' };
+
+  if (lower.includes('education') || lower.includes('book')) return { img: '/education.PNG', icon: <FiMonitor size={26} className="text-indigo-600" />, bg: 'bg-indigo-50' };
+
+  if (lower.includes('job') || lower.includes('service')) return { img: '/jobs.PNG', icon: <FiBriefcase size={26} className="text-cyan-500" />, bg: 'bg-cyan-50' };
+
+  if (lower.includes('real estate') || lower.includes('property')) return { img: '/realestate.PNG', icon: <FiHome size={26} className="text-teal-500" />, bg: 'bg-teal-50' };
 
   return { img: null, icon: <FiGrid size={26} className="text-gray-400" />, bg: 'bg-gray-50' };
 };
