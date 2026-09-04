@@ -3,11 +3,31 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { FiSearch, FiEdit2, FiTrash2, FiX, FiCheckCircle, FiAlertTriangle, FiTruck, FiAnchor, FiTag, FiCpu, FiFilter, FiImage, FiSettings, FiPlus } from 'react-icons/fi';
 
+// MFUMO MPYA WA CATEGORIES NA SUBCATEGORIES KULINGANA NA HOMEPAGE
+const CATEGORY_STRUCTURE: Record<string, string[]> = {
+  "Food": ["Beverages", "Snacks", "Groceries", "Fresh Produce", "Canned Goods", "Other"],
+  "Sports": ["Fitness Equipment", "Outdoor Gear", "Sportswear", "Footwear", "Other"],
+  "Health": ["Skincare", "Haircare", "Personal Care", "Supplements", "Medical Supplies", "Other"],
+  "Industrial": ["Power Tools", "Hand Tools", "Machinery", "Safety Equipment", "Other"],
+  "Agriculture": ["Seeds", "Fertilizers", "Farming Tools", "Pesticides", "Other"],
+  "Construction": ["Building Materials", "Plumbing", "Electrical", "Paint", "Other"],
+  "Baby": ["Toys", "Clothing", "Diapers", "Baby Gear", "Other"],
+  "Education": ["Books", "Stationery", "Office Supplies", "Furniture", "Other"],
+  "Jobs": ["Consulting", "Repair Services", "Freelance", "Other"],
+  "Real Estate": ["Residential", "Commercial", "Land", "Other"],
+  "Vehicles": ["Cars", "Motorcycles", "Spare Parts", "Accessories", "Other"],
+  "Home": ["Living Room", "Bedroom", "Kitchenware", "Decor", "Other"],
+  "Fashion": ["Men's Clothing", "Women's Clothing", "Shoes", "Bags", "Accessories", "Other"],
+  "Digital": ["Laptops", "Computers", "Printers", "Software", "Networking", "Other"],
+  "Mobile": ["Smartphones", "Tablets", "Accessories", "Smartwatches", "Other"],
+  "Electronics": ["TVs", "Audio & Speakers", "Gaming", "Home Appliances", "Other"]
+};
+
 export default function AdminInventory() {
   const [products, setProducts] = useState<any[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<any[]>([]);
   const [dbCategories, setDbCategories] = useState<any[]>([]);
-  
+
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
@@ -17,7 +37,7 @@ export default function AdminInventory() {
   // --- Edit States ---
   const [editingProduct, setEditingProduct] = useState<any | null>(null);
   const [editSpecData, setEditSpecData] = useState<any>({});
-  const [editCustomSpecs, setEditCustomSpecs] = useState<{key: string, value: string}[]>([]); 
+  const [editCustomSpecs, setEditCustomSpecs] = useState<{ key: string, value: string }[]>([]);
   const [editImageFiles, setEditImageFiles] = useState<File[]>([]);
   const [editImagePreviews, setEditImagePreviews] = useState<string[]>([]);
   const editFileInputRef = useRef<HTMLInputElement>(null);
@@ -25,27 +45,18 @@ export default function AdminInventory() {
   const [editIsPreOrder, setEditIsPreOrder] = useState(false);
   const [editShippingOrigin, setEditShippingOrigin] = useState<'Dubai' | 'China'>('Dubai');
   const [editFreightType, setEditFreightType] = useState<'Air' | 'Sea'>('Air');
-  const [editCustomCategory, setEditCustomCategory] = useState('');
+
+  // HIZI NDIO STATE MPYA KWA AJILI YA MFUMO MPYA
+  const [editMainCategory, setEditMainCategory] = useState('');
+  const [editSubCategory, setEditSubCategory] = useState('');
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://jtex-ecommerce-production.up.railway.app';
-
-  const STANDARD_CATEGORIES = [
-    "Laptops", "Desktop Computers", "All-in-One PCs", "Mini PCs", "Workstations", 
-    "Servers", "Monitors", "Printers", "Scanners", "Projectors", 
-    "TVs", "Smart TVs", "Digital Signage Displays", "Mobile Phones", "Smartphones", 
-    "Tablets", "E-Readers", "Smartwatches", "Fitness Trackers", 
-    "Accessories", "Gaming Consoles", "VR Headsets", "Home & Kitchen", "Beauty", "Other"
-  ];
-
-  const ACCESSORY_TYPES = [
-    "Phone / Tablet", "Computer / Laptop", "Gaming", "Audio / Studio", "Automotive", "Other"
-  ];
 
   const shippingConfig = {
     Dubai: { days: "5–10 business days", icon: "🇦🇪" },
     China: { days: "10–30 business days", icon: "🇨🇳" },
-    Air: { desc: "Fastest shipping option.", icon: <FiTruck className="text-sky-600"/> },
-    Sea: { desc: "Longer transit time.", icon: <FiAnchor className="text-blue-800"/> }
+    Air: { desc: "Fastest shipping option.", icon: <FiTruck className="text-sky-600" /> },
+    Sea: { desc: "Longer transit time.", icon: <FiAnchor className="text-blue-800" /> }
   };
 
   const getImagesArray = (imgData: string) => {
@@ -53,7 +64,7 @@ export default function AdminInventory() {
     try {
       const parsed = JSON.parse(imgData);
       return Array.isArray(parsed) ? parsed : [imgData];
-    } catch(e) { return [imgData]; }
+    } catch (e) { return [imgData]; }
   };
 
   const fetchInitialData = async () => {
@@ -69,12 +80,12 @@ export default function AdminInventory() {
         setProducts(pData);
         setFilteredProducts(pData);
       }
-      
+
       if (catRes.ok) {
         const cData = await catRes.json();
-        setDbCategories(cData.length > 0 ? cData : STANDARD_CATEGORIES.map((c, i) => ({id: i.toString(), name: c})));
+        setDbCategories(cData.length > 0 ? cData : Object.keys(CATEGORY_STRUCTURE).map((c, i) => ({ id: i.toString(), name: c })));
       } else {
-        setDbCategories(STANDARD_CATEGORIES.map((c, i) => ({id: i.toString(), name: c})));
+        setDbCategories(Object.keys(CATEGORY_STRUCTURE).map((c, i) => ({ id: i.toString(), name: c })));
       }
     } catch (err) {
       setError('Imeshindwa kupakia data.');
@@ -107,83 +118,78 @@ export default function AdminInventory() {
       const res = await fetch(`${API_URL}/api/products/${id}`, { method: 'DELETE' });
       if (res.ok) {
         setMessage('Bidhaa imefutwa kikamilifu!');
-        fetchInitialData(); 
+        fetchInitialData();
       } else { setError('Imeshindwa kufuta bidhaa.'); }
     } catch (err: any) { setError(`Tatizo la mtandao: ${err.message}`); }
   };
 
   // ==========================================
-  // EDIT LOGIC
+  // EDIT LOGIC KWA MFUMO MPYA WA CATEGORIES
   // ==========================================
-  const getStandardFields = (cat: string, accType?: string) => {
-    let fields: string[] = [];
-    const normalizedCat = cat ? cat.toLowerCase() : '';
+  const getStandardFields = (mainCat: string, subCat: string) => {
+    let fields = ['Color', 'Material', 'Weight']; // Default general fields
 
-    if (normalizedCat === 'accessories') {
-       const type = accType?.toLowerCase() || '';
-       if (type.includes('phone') || type.includes('tablet')) fields = ['Connection Type', 'Cable Length / Capacity', 'Fast Charging Support', 'Color', 'Material'];
-       else if (type.includes('computer') || type.includes('laptop')) fields = ['Interface (USB/Type-C)', 'DPI/Sensitivity', 'Cable Length', 'Ergonomics', 'Color'];
-       else if (type.includes('gaming')) fields = ['Compatibility', 'Connection Type', 'Feedback/Vibration', 'RGB Lighting', 'Color'];
-       else if (type.includes('audio') || type.includes('studio')) fields = ['Connection Type', 'Frequency Response', 'Microphone Type', 'Cable Length', 'Color'];
-       else if (type.includes('automotive')) fields = ['Voltage/Power Output', 'Mounting Type', 'Connectivity (e.g. 4G/GSM)', 'Cable Length', 'Material'];
-       else fields = ['Connection Type', 'Compatibility', 'Color', 'Material', 'Special Features'];
-    } 
-    else if (normalizedCat.includes('server')) fields = ['Server Type', 'Processor', 'Processor Speed', 'Memory', 'Storage', 'RAID Controller', 'Network', 'Operating System', 'Ports', 'Color'];
-    else if (normalizedCat.includes('mini pc') || normalizedCat.includes('desktop') || normalizedCat.includes('all-in-one') || normalizedCat.includes('workstation')) fields = ['Desktop Type', 'Processor', 'Processor Speed', 'RAM', 'Storage', 'Graphics', 'Resolution', 'Connectivity', 'Ports', 'Color'];
-    else if (normalizedCat.includes('laptop')) fields = ['Processor', 'Processor Speed', 'RAM', 'Storage', 'Graphics', 'Display Size', 'Resolution', 'Operating System', 'Connectivity', 'Ports', 'Battery', 'Color'];
-    else if (normalizedCat.includes('monitor')) fields = ['Screen Size', 'Display Type', 'Resolution', 'Refresh Rate', 'Response Time', 'Brightness', 'Connectivity', 'Ports', 'Features', 'Color'];
-    else if (normalizedCat.includes('digital signage')) fields = ['Display Type', 'Screen Size', 'Resolution', 'Brightness', 'Refresh Rate', 'Operating System', 'Connectivity', 'Features', 'Color'];
-    else if (normalizedCat.includes('tv') || normalizedCat.includes('smart tv')) fields = ['Display Technology', 'Screen Size', 'Resolution', 'Refresh Rate', 'HDR', 'Audio', 'Connectivity', 'Features', 'Operating System', 'Color'];
-    else if (normalizedCat.includes('projector')) fields = ['Display Technology', 'Resolution', 'Brightness', 'Contrast Ratio', 'Lamp Life', 'Projection Size', 'Connectivity', 'Features', 'Color'];
-    else if (normalizedCat.includes('printer')) fields = ['Printer Type', 'Functions', 'Print Technology', 'Print Speed', 'Print Resolution', 'Paper Size', 'Paper Capacity', 'Connectivity', 'Features', 'Color'];
-    else if (normalizedCat.includes('scanner')) fields = ['Scanner Type', 'Scan Speed', 'Scan Resolution', 'Document Feeder', 'Display', 'Connectivity', 'Features', 'Color'];
-    else if (normalizedCat.includes('phone') || normalizedCat.includes('tablet') || normalizedCat.includes('e-reader')) fields = ['Network', 'SIM', 'Display', 'Resolution', 'Processor', 'Memory', 'Storage', 'Expandable Storage', 'Battery', 'Connectivity', 'Features', 'Color'];
-    else if (normalizedCat.includes('smartwatch') || normalizedCat.includes('fitness')) fields = ['Screen Size', 'Battery Life', 'Water Resistance', 'OS Compatibility', 'Connectivity', 'Features', 'Color'];
-    else if (normalizedCat.includes('console') || normalizedCat.includes('vr')) fields = ['Storage', 'Resolution Output', 'Included Controllers', 'Connectivity', 'Features', 'Color'];
-    else if (normalizedCat.includes('home') || normalizedCat.includes('kitchen')) fields = ['Material', 'Power (Watts)', 'Color', 'Dimensions', 'Features'];
-    else if (normalizedCat !== 'other') fields = ['Feature 1', 'Feature 2', 'Color', 'Weight'];
-    
+    const m = mainCat.toLowerCase();
+    const s = subCat.toLowerCase();
+
+    if (m === 'mobile') fields = ['Network', 'Display Size', 'Resolution', 'Processor', 'RAM', 'Storage', 'Battery Capacity', 'Camera', 'OS', 'Color'];
+    else if (m === 'digital' && s.includes('laptop')) fields = ['Processor', 'RAM', 'Storage', 'Display Size', 'Graphics', 'OS', 'Battery Life', 'Color'];
+    else if (m === 'digital' && (s.includes('computer') || s.includes('printer'))) fields = ['Type', 'Processor/Specs', 'Connectivity', 'Ports', 'Color'];
+    else if (m === 'electronics' && s.includes('tv')) fields = ['Screen Size', 'Display Technology', 'Resolution', 'Refresh Rate', 'Smart Features', 'Ports'];
+    else if (m === 'electronics' && s.includes('audio')) fields = ['Output Power (Watts)', 'Connectivity', 'Battery Life', 'Water Resistance', 'Color'];
+    else if (m === 'fashion') fields = ['Size', 'Material', 'Gender', 'Color', 'Style'];
+    else if (m === 'vehicles') fields = ['Make', 'Model', 'Year', 'Mileage', 'Fuel Type', 'Transmission', 'Engine Capacity', 'Color'];
+    else if (m === 'real estate') fields = ['Property Type', 'Bedrooms', 'Bathrooms', 'Area (sqm/sqft)', 'Location', 'Furnished Status'];
+    else if (m === 'home' || m === 'construction') fields = ['Material', 'Dimensions', 'Color', 'Style', 'Weight'];
+
     return fields;
   };
 
   const openEditModal = (product: any) => {
-    let baseCategory = product.category;
-    let accType = '';
-    
-    if (baseCategory && baseCategory.startsWith('Accessories - ')) {
-       baseCategory = 'Accessories';
-       accType = product.category.replace('Accessories - ', '');
-    } else if (!dbCategories.find(c => c.name === baseCategory) && !STANDARD_CATEGORIES.includes(baseCategory)) {
-       baseCategory = 'Other';
-       setEditCustomCategory(product.category);
-    } else {
-       setEditCustomCategory('');
-    }
-
-    setEditingProduct({ ...product, category: baseCategory, accessoryType: accType });
+    setEditingProduct(product);
     setEditImageFiles([]);
-    
+
     const existingImages = getImagesArray(product.imageUrl).map((img: string) => img.startsWith('http') ? img : `${API_URL}${img}`);
     setEditImagePreviews(existingImages);
-    
+
+    let parsedSpecs: any = {};
     if (product.specifications) {
-      try { 
-        const parsed = JSON.parse(product.specifications); 
-        const knownFields = getStandardFields(baseCategory, accType);
-        const stSpecs: any = {};
-        const cuSpecs: {key: string, value: string}[] = [];
-
-        Object.keys(parsed).forEach(key => {
-           if (knownFields.includes(key)) stSpecs[key] = parsed[key];
-           else cuSpecs.push({ key, value: parsed[key] });
-        });
-
-        setEditSpecData(stSpecs);
-        setEditCustomSpecs(cuSpecs);
-      } catch (e) { setEditSpecData({}); setEditCustomSpecs([]); }
-    } else {
-      setEditSpecData({}); setEditCustomSpecs([]);
+      try { parsedSpecs = JSON.parse(product.specifications); } catch (e) { }
     }
+
+    // CHECK KAMA BIDHAA YA ZAMANI INA MAIN CAT/SUBCAT KWENYE SPECS, KAMA HAKUNA JARIBU KUGESS KUTOKA KWENYE 'category'
+    let mCat = parsedSpecs["Main Category"] || '';
+    let sCat = parsedSpecs["Subcategory"] || '';
+
+    if (!mCat && product.category) {
+      if (Object.keys(CATEGORY_STRUCTURE).includes(product.category)) {
+        mCat = product.category;
+      } else {
+        // Fallback kwa bidhaa za zamani (Mfano category ilikua "Laptops", tunaiweka kwenye "Digital" -> "Laptops")
+        const lowerCat = product.category.toLowerCase();
+        if (lowerCat.includes('laptop') || lowerCat.includes('computer') || lowerCat.includes('printer')) { mCat = 'Digital'; sCat = product.category; }
+        else if (lowerCat.includes('phone') || lowerCat.includes('tablet')) { mCat = 'Mobile'; sCat = product.category; }
+        else if (lowerCat.includes('tv') || lowerCat.includes('audio')) { mCat = 'Electronics'; sCat = product.category; }
+      }
+    }
+
+    setEditMainCategory(mCat);
+    setEditSubCategory(sCat);
+
+    const knownFields = getStandardFields(mCat, sCat);
+    const stSpecs: any = {};
+    const cuSpecs: { key: string, value: string }[] = [];
+
+    // Tenganisha standard specs na custom specs, ondoa Main Category na Subcategory kwenye fields za kawaida maana tumezishika juu
+    Object.keys(parsedSpecs).forEach(key => {
+      if (key === 'Main Category' || key === 'Subcategory') return;
+
+      if (knownFields.includes(key)) stSpecs[key] = parsedSpecs[key];
+      else cuSpecs.push({ key, value: parsedSpecs[key] });
+    });
+
+    setEditSpecData(stSpecs);
+    setEditCustomSpecs(cuSpecs);
 
     if (product.preOrderInfo) {
       try {
@@ -216,18 +222,35 @@ export default function AdminInventory() {
     setEditImagePreviews(prev => prev.filter((_, index) => index !== indexToRemove));
   };
 
+  // Ubadilishaji wa Subcategory fields dynamically pindi Admin anapobadilisha Main Category/Subcategory
+  useEffect(() => {
+    if (editingProduct && editMainCategory) {
+      const newKnownFields = getStandardFields(editMainCategory, editSubCategory);
+      const currentSpecs = { ...editSpecData };
+      const updatedSpecs: any = {};
+
+      newKnownFields.forEach(field => {
+        updatedSpecs[field] = currentSpecs[field] || '';
+      });
+      setEditSpecData(updatedSpecs);
+    }
+  }, [editMainCategory, editSubCategory]);
+
   const handleUpdateProduct = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true); setMessage(''); setError('');
 
-    let finalCategory = editingProduct.category;
-    if (editingProduct.category === 'Accessories' && editingProduct.accessoryType) {
-      finalCategory = `Accessories - ${editingProduct.accessoryType}`;
-    } else if (editingProduct.category === 'Other' && editCustomCategory.trim() !== '') {
-      finalCategory = editCustomCategory.trim();
+    if (!editMainCategory || !editSubCategory) {
+      setError("Tafadhali chagua Main Category na Subcategory.");
+      return;
     }
 
-    const finalSpecs = { ...editSpecData };
+    setIsLoading(true); setMessage(''); setError('');
+
+    const finalSpecs: any = { ...editSpecData };
+    // ONGEZA HIZI ILI ZISOMEKE KWENYE FILTERS KULE Mbele
+    finalSpecs['Main Category'] = editMainCategory;
+    finalSpecs['Subcategory'] = editSubCategory;
+
     editCustomSpecs.forEach(spec => {
       if (spec.key.trim() !== '') finalSpecs[spec.key.trim()] = spec.value;
     });
@@ -240,19 +263,19 @@ export default function AdminInventory() {
     } : { isPreOrder: false };
 
     const formData = new FormData();
-    formData.append('sku', editingProduct.sku); 
+    formData.append('sku', editingProduct.sku);
     formData.append('name', editingProduct.name);
-    formData.append('category', finalCategory); 
+    formData.append('category', editMainCategory); // Category kuu inabaki kua Main Category
     formData.append('brand', editingProduct.brand);
-    formData.append('model', editingProduct.model || ''); 
-    formData.append('badge', editingProduct.badge || ''); 
+    formData.append('model', editingProduct.model || '');
+    formData.append('badge', editingProduct.badge || '');
     formData.append('condition', editingProduct.condition || 'Brand New');
-    formData.append('buyingPrice', editingProduct.buyingPrice); 
+    formData.append('buyingPrice', editingProduct.buyingPrice);
     formData.append('price', editingProduct.price);
-    formData.append('stockQuantity', editIsPreOrder ? '999' : editingProduct.stockQuantity); 
+    formData.append('stockQuantity', editIsPreOrder ? '999' : editingProduct.stockQuantity);
     formData.append('specifications', JSON.stringify(finalSpecs));
     formData.append('preOrderInfo', JSON.stringify(preOrderInfo));
-    
+
     editImageFiles.forEach((file) => formData.append('images', file));
 
     try {
@@ -265,7 +288,8 @@ export default function AdminInventory() {
         const rawText = await res.text();
         setError(`Imeshindwa: ${rawText}`);
       }
-    } catch (err: any) { setError(`Tatizo la mtandao: ${err.message}`);
+    } catch (err: any) {
+      setError(`Tatizo la mtandao: ${err.message}`);
     } finally { setIsLoading(false); }
   };
 
@@ -284,22 +308,22 @@ export default function AdminInventory() {
       {/* FILTER & SEARCH BAR */}
       <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 mb-6 flex flex-col md:flex-row gap-4 items-center justify-between">
         <div className="flex items-center gap-2 w-full md:w-auto">
-           <div className="bg-gray-100 p-2.5 rounded-xl text-gray-500"><FiFilter size={18}/></div>
-           <select 
-             value={filterCategory} 
-             onChange={(e) => setFilterCategory(e.target.value)} 
-             className="bg-gray-50 border border-gray-200 text-gray-800 text-sm rounded-xl px-4 py-2.5 outline-none focus:border-[#F2A900] font-semibold w-full md:w-48 transition"
-           >
-             <option value="All">All Categories</option>
-             {dbCategories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
-           </select>
+          <div className="bg-gray-100 p-2.5 rounded-xl text-gray-500"><FiFilter size={18} /></div>
+          <select
+            value={filterCategory}
+            onChange={(e) => setFilterCategory(e.target.value)}
+            className="bg-gray-50 border border-gray-200 text-gray-800 text-sm rounded-xl px-4 py-2.5 outline-none focus:border-[#F2A900] font-semibold w-full md:w-48 transition"
+          >
+            <option value="All">All Categories</option>
+            {Object.keys(CATEGORY_STRUCTURE).map(c => <option key={c} value={c}>{c}</option>)}
+          </select>
         </div>
-        
+
         <div className="relative w-full md:w-96">
-          <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18}/>
-          <input 
-            type="text" 
-            placeholder="Search by Name, SKU, or Brand..." 
+          <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+          <input
+            type="text"
+            placeholder="Search by Name, SKU, or Brand..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-11 pr-4 py-2.5 text-sm outline-none focus:border-[#F2A900] transition"
@@ -330,14 +354,21 @@ export default function AdminInventory() {
                   const displayImage = getImagesArray(p.imageUrl)[0];
                   const imgUrl = displayImage ? (displayImage.startsWith('http') ? displayImage : `${API_URL}${displayImage}`) : null;
                   let preInfo: any = null;
-                  try { if(p.preOrderInfo) preInfo = JSON.parse(p.preOrderInfo); } catch(e){}
+                  try { if (p.preOrderInfo) preInfo = JSON.parse(p.preOrderInfo); } catch (e) { }
+
+                  // Check if subcategory exists in specs for display
+                  let subDisplay = '';
+                  try {
+                    const sp = JSON.parse(p.specifications || '{}');
+                    subDisplay = sp['Subcategory'] || '';
+                  } catch (e) { }
 
                   return (
                     <tr key={p.id} className="hover:bg-gray-50/80 transition group">
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-4">
                           <div className="w-12 h-12 rounded-xl border border-gray-200 bg-white flex items-center justify-center p-1.5 overflow-hidden flex-shrink-0">
-                             {imgUrl ? <img src={imgUrl} className="w-full h-full object-contain mix-blend-multiply" alt=""/> : <span className="text-xl">📦</span>}
+                            {imgUrl ? <img src={imgUrl} className="w-full h-full object-contain mix-blend-multiply" alt="" /> : <span className="text-xl">📦</span>}
                           </div>
                           <div>
                             <p className="font-bold text-gray-900 leading-tight mb-1 line-clamp-1">{p.name}</p>
@@ -346,7 +377,7 @@ export default function AdminInventory() {
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <p className="text-xs font-bold text-[#0A101D] mb-1">{p.category}</p>
+                        <p className="text-xs font-bold text-[#0A101D] mb-1">{p.category} {subDisplay ? `> ${subDisplay}` : ''}</p>
                         <p className="text-[10px] font-semibold text-gray-500 uppercase">{p.brand || 'N/A'} {p.model ? `• ${p.model}` : ''}</p>
                       </td>
                       <td className="px-6 py-4 font-black text-[#0A101D] whitespace-nowrap">
@@ -354,15 +385,15 @@ export default function AdminInventory() {
                       </td>
                       <td className="px-6 py-4">
                         {preInfo && preInfo.isPreOrder ? (
-                           <div className="inline-flex flex-col gap-1">
-                              <span className="bg-blue-50 text-blue-700 border border-blue-200 px-2 py-1 rounded text-[10px] uppercase font-bold flex items-center gap-1.5 w-max">
-                                 <FiTruck/> Pre-Order
-                              </span>
-                              <span className="text-[9px] font-semibold text-gray-500">{shippingConfig[preInfo.origin as 'Dubai'|'China'].icon} {preInfo.origin}</span>
-                           </div>
+                          <div className="inline-flex flex-col gap-1">
+                            <span className="bg-blue-50 text-blue-700 border border-blue-200 px-2 py-1 rounded text-[10px] uppercase font-bold flex items-center gap-1.5 w-max">
+                              <FiTruck /> Pre-Order
+                            </span>
+                            <span className="text-[9px] font-semibold text-gray-500">{shippingConfig[preInfo.origin as 'Dubai' | 'China'].icon} {preInfo.origin}</span>
+                          </div>
                         ) : (
                           <span className={`inline-flex px-2 py-1 rounded text-[10px] uppercase font-bold border ${p.stockQuantity > 5 ? 'bg-green-50 text-green-700 border-green-200' : p.stockQuantity > 0 ? 'bg-yellow-50 text-yellow-700 border-yellow-200' : 'bg-red-50 text-red-700 border-red-200'}`}>
-                              {p.stockQuantity} Pcs In Stock
+                            {p.stockQuantity} Pcs In Stock
                           </span>
                         )}
                       </td>
@@ -386,23 +417,23 @@ export default function AdminInventory() {
       </div>
 
       {/* ========================================================= */}
-      {/* EDIT MODAL - FULLY FUNCTIONAL */}
+      {/* EDIT MODAL - FULLY FUNCTIONAL W/ NEW CATEGORIES */}
       {/* ========================================================= */}
       {editingProduct && (
         <div className="fixed inset-0 bg-[#0A101D]/80 z-50 flex items-center justify-center p-4 backdrop-blur-sm overflow-y-auto">
           <div className="bg-white w-full max-w-3xl rounded-3xl shadow-2xl relative my-auto">
-            
+
             <div className="sticky top-0 bg-white/90 backdrop-blur-md border-b border-gray-100 p-5 lg:px-8 flex justify-between items-center z-10 rounded-t-3xl">
               <h2 className="text-xl font-black text-[#0A101D] flex items-center gap-2"><FiEdit2 className="text-[#F2A900]" /> Edit Product</h2>
               <button onClick={() => setEditingProduct(null)} className="w-8 h-8 bg-gray-100 hover:bg-red-100 hover:text-red-600 rounded-full flex items-center justify-center transition"><FiX size={18} /></button>
             </div>
-            
+
             <div className="p-5 lg:p-8 max-h-[75vh] overflow-y-auto custom-scrollbar">
               <form id="editForm" onSubmit={handleUpdateProduct} className="space-y-6">
-                
+
                 {/* Images */}
                 <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
-                  <label className="block text-xs font-bold text-gray-800 uppercase mb-3 flex items-center gap-2"><FiImage className="text-[#F2A900]"/> Product Images</label>
+                  <label className="block text-xs font-bold text-gray-800 uppercase mb-3 flex items-center gap-2"><FiImage className="text-[#F2A900]" /> Product Images</label>
                   {editImagePreviews.length > 0 && (
                     <div className="flex flex-wrap gap-3 mb-4">
                       {editImagePreviews.map((preview, index) => (
@@ -420,45 +451,40 @@ export default function AdminInventory() {
                 </div>
 
                 {/* Name & Basics */}
-                <div><label className="block text-[11px] font-bold text-gray-500 uppercase mb-1">Product Name</label><input type="text" required value={editingProduct.name} onChange={e => setEditingProduct({...editingProduct, name: e.target.value})} className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:border-[#F2A900] outline-none font-semibold text-gray-900" /></div>
-                
+                <div><label className="block text-[11px] font-bold text-gray-500 uppercase mb-1">Product Name</label><input type="text" required value={editingProduct.name} onChange={e => setEditingProduct({ ...editingProduct, name: e.target.value })} className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:border-[#F2A900] outline-none font-semibold text-gray-900" /></div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-4">
+                    {/* NEW CATEGORY SYSTEM */}
                     <div>
-                      <label className="block text-[11px] font-bold text-gray-500 uppercase mb-1">Category</label>
-                      <select value={editingProduct.category} onChange={(e) => setEditingProduct({...editingProduct, category: e.target.value})} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 outline-none text-sm font-bold text-gray-800 focus:border-[#F2A900]">
-                        {dbCategories.map(cat => (<option key={cat.id} value={cat.name}>{cat.name}</option>))}
-                        {!dbCategories.find(c => c.name === editingProduct.category) && (<option value={editingProduct.category}>{editingProduct.category} (Legacy)</option>)}
+                      <label className="block text-[11px] font-bold text-gray-500 uppercase mb-1">Main Category</label>
+                      <select required value={editMainCategory} onChange={(e) => { setEditMainCategory(e.target.value); setEditSubCategory(''); }} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 outline-none text-sm font-bold text-gray-800 focus:border-[#F2A900]">
+                        <option value="">Select Main Category</option>
+                        {Object.keys(CATEGORY_STRUCTURE).map(cat => (<option key={cat} value={cat}>{cat}</option>))}
                       </select>
                     </div>
-                    
-                    {editingProduct.category === 'Accessories' && (
-                      <div className="animate-fade-in">
-                        <label className="block text-[11px] font-bold text-blue-600 uppercase mb-1">Accessory For?</label>
-                        <select required value={editingProduct.accessoryType || ''} onChange={(e) => setEditingProduct({...editingProduct, accessoryType: e.target.value})} className="w-full bg-blue-50 border border-blue-200 rounded-xl px-4 py-2.5 outline-none text-sm font-bold text-blue-900 focus:border-blue-400">
-                          <option value="">Select Option</option>
-                          {ACCESSORY_TYPES.map(acc => (<option key={acc} value={acc}>{acc}</option>))}
-                        </select>
-                      </div>
-                    )}
 
-                    {editingProduct.category === 'Other' && (
-                      <div className="animate-fade-in">
-                        <label className="block text-[11px] font-bold text-purple-600 uppercase mb-1">Custom Category Name</label>
-                        <input type="text" required value={editCustomCategory} onChange={e => setEditCustomCategory(e.target.value)} className="w-full bg-purple-50 border border-purple-200 rounded-xl px-4 py-2.5 outline-none text-sm font-bold text-purple-900 focus:border-purple-500" />
-                      </div>
-                    )}
+                    <div className="animate-fade-in">
+                      <label className="block text-[11px] font-bold text-blue-600 uppercase mb-1">Subcategory</label>
+                      <select required value={editSubCategory} onChange={(e) => setEditSubCategory(e.target.value)} className="w-full bg-blue-50 border border-blue-200 rounded-xl px-4 py-2.5 outline-none text-sm font-bold text-blue-900 focus:border-blue-400" disabled={!editMainCategory}>
+                        <option value="">Select Subcategory</option>
+                        {editMainCategory && CATEGORY_STRUCTURE[editMainCategory]?.map(sub => (<option key={sub} value={sub}>{sub}</option>))}
+                        {editMainCategory && !CATEGORY_STRUCTURE[editMainCategory]?.includes(editSubCategory) && editSubCategory && (
+                          <option value={editSubCategory}>{editSubCategory} (Legacy)</option>
+                        )}
+                      </select>
+                    </div>
                   </div>
-                  
+
                   <div className="space-y-4">
-                     <div className="grid grid-cols-2 gap-3">
-                        <div><label className="block text-[11px] font-bold text-gray-500 uppercase mb-1">Brand</label><input type="text" value={editingProduct.brand} onChange={e => setEditingProduct({...editingProduct, brand: e.target.value})} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none font-semibold text-gray-800" /></div>
-                        <div><label className="block text-[11px] font-bold text-blue-600 uppercase mb-1 flex items-center gap-1"><FiCpu/> Model</label><input type="text" value={editingProduct.model || ''} onChange={e => setEditingProduct({...editingProduct, model: e.target.value})} className="w-full bg-gray-50 border border-blue-200 focus:border-blue-400 rounded-xl px-3 py-2.5 text-sm outline-none font-semibold text-gray-800" /></div>
-                     </div>
-                     <div className="grid grid-cols-2 gap-3">
-                        <div><label className="block text-[11px] font-bold text-gray-500 uppercase mb-1">SKU</label><input type="text" value={editingProduct.sku} onChange={e => setEditingProduct({...editingProduct, sku: e.target.value})} className="w-full bg-gray-100 border border-gray-200 rounded-xl px-3 py-2.5 text-sm font-mono text-gray-500" /></div>
-                        <div><label className="block text-[11px] font-bold text-gray-500 uppercase mb-1">Stock</label><input type="number" disabled={editIsPreOrder} value={editingProduct.stockQuantity} onChange={e => setEditingProduct({...editingProduct, stockQuantity: e.target.value})} className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2.5 text-sm font-bold text-[#0A101D] disabled:bg-gray-100" /></div>
-                     </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div><label className="block text-[11px] font-bold text-gray-500 uppercase mb-1">Brand</label><input type="text" value={editingProduct.brand} onChange={e => setEditingProduct({ ...editingProduct, brand: e.target.value })} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none font-semibold text-gray-800" /></div>
+                      <div><label className="block text-[11px] font-bold text-blue-600 uppercase mb-1 flex items-center gap-1"><FiCpu /> Model</label><input type="text" value={editingProduct.model || ''} onChange={e => setEditingProduct({ ...editingProduct, model: e.target.value })} className="w-full bg-gray-50 border border-blue-200 focus:border-blue-400 rounded-xl px-3 py-2.5 text-sm outline-none font-semibold text-gray-800" /></div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div><label className="block text-[11px] font-bold text-gray-500 uppercase mb-1">SKU</label><input type="text" value={editingProduct.sku} onChange={e => setEditingProduct({ ...editingProduct, sku: e.target.value })} className="w-full bg-gray-100 border border-gray-200 rounded-xl px-3 py-2.5 text-sm font-mono text-gray-500" /></div>
+                      <div><label className="block text-[11px] font-bold text-gray-500 uppercase mb-1">Stock</label><input type="number" disabled={editIsPreOrder} value={editingProduct.stockQuantity} onChange={e => setEditingProduct({ ...editingProduct, stockQuantity: e.target.value })} className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2.5 text-sm font-bold text-[#0A101D] disabled:bg-gray-100" /></div>
+                    </div>
                   </div>
                 </div>
 
@@ -466,12 +492,12 @@ export default function AdminInventory() {
                 <div className="border border-gray-200 rounded-2xl overflow-hidden">
                   <div className="bg-gray-50 p-4 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className={`p-2 rounded-lg ${editIsPreOrder ? 'bg-blue-100 text-blue-600' : 'bg-gray-200 text-gray-500'}`}><FiTruck size={20}/></div>
+                      <div className={`p-2 rounded-lg ${editIsPreOrder ? 'bg-blue-100 text-blue-600' : 'bg-gray-200 text-gray-500'}`}><FiTruck size={20} /></div>
                       <div><label className="block text-sm font-bold text-gray-900">Available for Pre-Order</label><p className="text-[10px] font-medium text-gray-500 mt-0.5">Activate for out-of-stock items.</p></div>
                     </div>
-                    <input type="checkbox" checked={editIsPreOrder} onChange={e => setEditIsPreOrder(e.target.checked)} className="w-6 h-6 accent-blue-600 cursor-pointer"/>
+                    <input type="checkbox" checked={editIsPreOrder} onChange={e => setEditIsPreOrder(e.target.checked)} className="w-6 h-6 accent-blue-600 cursor-pointer" />
                   </div>
-                  
+
                   {editIsPreOrder && (
                     <div className="bg-white p-5 border-t border-gray-200 grid grid-cols-1 md:grid-cols-2 gap-5 animate-fade-in">
                       <div>
@@ -493,17 +519,17 @@ export default function AdminInventory() {
                 {/* Specs Section */}
                 <div>
                   <h3 className="text-lg font-black text-gray-900 border-b border-gray-100 pb-2 mb-4">Specifications & Details</h3>
-                  
+
                   <div className="grid grid-cols-2 gap-4 mb-5">
                     <div>
-                      <label className="block text-[11px] font-bold text-gray-500 uppercase mb-1 flex items-center gap-1"><FiTag className="text-[#F2A900]"/> Badge</label>
-                      <select value={editingProduct.badge || ''} onChange={e => setEditingProduct({...editingProduct, badge: e.target.value})} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 outline-none text-sm font-bold text-gray-800">
+                      <label className="block text-[11px] font-bold text-gray-500 uppercase mb-1 flex items-center gap-1"><FiTag className="text-[#F2A900]" /> Badge</label>
+                      <select value={editingProduct.badge || ''} onChange={e => setEditingProduct({ ...editingProduct, badge: e.target.value })} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 outline-none text-sm font-bold text-gray-800">
                         <option value="">None</option><option value="Hot">🔥 Hot</option><option value="Sale">🏷️ Sale</option><option value="New">✨ New Arrival</option><option value="Pre-Order">📦 Pre-Order</option>
                       </select>
                     </div>
                     <div>
                       <label className="block text-[11px] font-bold text-gray-500 uppercase mb-1">Condition</label>
-                      <select value={editingProduct.condition || 'Brand New'} onChange={e => setEditingProduct({...editingProduct, condition: e.target.value})} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 outline-none text-sm font-bold text-gray-800">
+                      <select value={editingProduct.condition || 'Brand New'} onChange={e => setEditingProduct({ ...editingProduct, condition: e.target.value })} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 outline-none text-sm font-bold text-gray-800">
                         <option value="Brand New">Brand New</option><option value="Refurbished">Refurbished</option><option value="Used">Used</option>
                       </select>
                     </div>
@@ -512,12 +538,12 @@ export default function AdminInventory() {
                   {/* Standard Specs */}
                   {Object.keys(editSpecData).length > 0 && (
                     <div className="bg-gray-50/80 p-5 rounded-2xl border border-gray-200 mb-4">
-                      <h4 className="text-[11px] font-bold text-gray-600 uppercase mb-3 flex items-center gap-2"><FiSettings/> Standard Template Specs</h4>
+                      <h4 className="text-[11px] font-bold text-gray-600 uppercase mb-3 flex items-center gap-2"><FiSettings /> Dynamic Specs (Based on Category)</h4>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {Object.keys(editSpecData).map(field => (
                           <div key={field}>
                             <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">{field}</label>
-                            <input type="text" value={editSpecData[field] || ''} onChange={e => setEditSpecData({...editSpecData, [field]: e.target.value})} className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 outline-none text-sm font-medium focus:border-[#F2A900]" />
+                            <input type="text" value={editSpecData[field] || ''} onChange={e => setEditSpecData({ ...editSpecData, [field]: e.target.value })} className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 outline-none text-sm font-medium focus:border-[#F2A900]" />
                           </div>
                         ))}
                       </div>
@@ -528,15 +554,15 @@ export default function AdminInventory() {
                   <div className="p-5 border border-dashed border-gray-300 rounded-2xl bg-gray-50/30">
                     <div className="flex justify-between items-center mb-4">
                       <h3 className="text-xs font-bold text-gray-700">Custom Fields</h3>
-                      <button type="button" onClick={() => setEditCustomSpecs([...editCustomSpecs, {key:'', value:''}])} className="text-[11px] font-bold text-[#0A101D] bg-gray-200 px-3 py-1.5 rounded-lg hover:bg-[#F2A900] hover:text-black transition flex items-center gap-1"><FiPlus/> Add Field</button>
+                      <button type="button" onClick={() => setEditCustomSpecs([...editCustomSpecs, { key: '', value: '' }])} className="text-[11px] font-bold text-[#0A101D] bg-gray-200 px-3 py-1.5 rounded-lg hover:bg-[#F2A900] hover:text-black transition flex items-center gap-1"><FiPlus /> Add Field</button>
                     </div>
                     {editCustomSpecs.length === 0 && <p className="text-xs text-gray-400 italic">No extra custom fields.</p>}
                     <div className="space-y-3">
                       {editCustomSpecs.map((spec, index) => (
                         <div key={index} className="flex flex-col sm:flex-row items-center gap-3">
-                          <input type="text" placeholder="Field Name" value={spec.key} onChange={e => {const u=[...editCustomSpecs]; u[index].key=e.target.value; setEditCustomSpecs(u)}} className="w-full sm:w-1/3 bg-white border border-gray-200 rounded-lg px-3 py-2 outline-none text-sm focus:border-[#F2A900] font-bold" />
-                          <input type="text" placeholder="Value" value={spec.value} onChange={e => {const u=[...editCustomSpecs]; u[index].value=e.target.value; setEditCustomSpecs(u)}} className="w-full sm:flex-1 bg-white border border-gray-200 rounded-lg px-3 py-2 outline-none text-sm focus:border-[#F2A900]" />
-                          <button type="button" onClick={() => setEditCustomSpecs(editCustomSpecs.filter((_,i)=>i!==index))} className="text-red-500 bg-red-50 p-2.5 rounded-lg hover:bg-red-100 transition"><FiTrash2 size={16}/></button>
+                          <input type="text" placeholder="Field Name" value={spec.key} onChange={e => { const u = [...editCustomSpecs]; u[index].key = e.target.value; setEditCustomSpecs(u) }} className="w-full sm:w-1/3 bg-white border border-gray-200 rounded-lg px-3 py-2 outline-none text-sm focus:border-[#F2A900] font-bold" />
+                          <input type="text" placeholder="Value" value={spec.value} onChange={e => { const u = [...editCustomSpecs]; u[index].value = e.target.value; setEditCustomSpecs(u) }} className="w-full sm:flex-1 bg-white border border-gray-200 rounded-lg px-3 py-2 outline-none text-sm focus:border-[#F2A900]" />
+                          <button type="button" onClick={() => setEditCustomSpecs(editCustomSpecs.filter((_, i) => i !== index))} className="text-red-500 bg-red-50 p-2.5 rounded-lg hover:bg-red-100 transition"><FiTrash2 size={16} /></button>
                         </div>
                       ))}
                     </div>
@@ -547,11 +573,11 @@ export default function AdminInventory() {
                 <div className="grid grid-cols-2 gap-5 pt-2">
                   <div>
                     <label className="block text-[11px] font-bold text-gray-500 uppercase mb-1">Buying Price</label>
-                    <input type="number" value={editingProduct.buyingPrice} onChange={e => setEditingProduct({...editingProduct, buyingPrice: e.target.value})} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none text-sm font-black text-gray-600" />
+                    <input type="number" value={editingProduct.buyingPrice} onChange={e => setEditingProduct({ ...editingProduct, buyingPrice: e.target.value })} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none text-sm font-black text-gray-600" />
                   </div>
                   <div>
                     <label className="block text-[11px] font-bold text-green-600 uppercase mb-1">Selling Price (Public)</label>
-                    <input type="number" required value={editingProduct.price} onChange={e => setEditingProduct({...editingProduct, price: e.target.value})} className="w-full bg-green-50 border border-green-200 rounded-xl px-4 py-3 outline-none text-sm font-black text-[#0A101D] focus:border-green-500" />
+                    <input type="number" required value={editingProduct.price} onChange={e => setEditingProduct({ ...editingProduct, price: e.target.value })} className="w-full bg-green-50 border border-green-200 rounded-xl px-4 py-3 outline-none text-sm font-black text-[#0A101D] focus:border-green-500" />
                   </div>
                 </div>
 
@@ -567,7 +593,7 @@ export default function AdminInventory() {
           </div>
         </div>
       )}
-      
+
       <style>{`
         .custom-scrollbar::-webkit-scrollbar { width: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 10px; }
