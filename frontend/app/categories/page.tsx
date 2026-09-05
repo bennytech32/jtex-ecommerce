@@ -14,7 +14,6 @@ import {
 
 import Footer from '../components/common/Footer';
 
-// HELPER KWA KUTENGENEZA SLUG SAFI
 const generateSlug = (name: string) => {
   if (!name) return '';
   return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
@@ -27,7 +26,6 @@ const TANZANIA_REGIONS = [
   "Simiyu", "Singida", "Songwe", "Tabora", "Tanga", "Zanzibar"
 ];
 
-// Static categories zote - zinaonyeshwa kwenye ribbons na grids
 const STATIC_CATEGORIES = [
   { name: 'Food', slug: 'food', img: '/food.PNG', icon: <FiCoffee size={24} className="text-orange-500" />, bg: 'from-orange-400 to-red-400' },
   { name: 'Sports', slug: 'sports', img: '/sports.PNG', icon: <FiSmile size={24} className="text-green-500" />, bg: 'from-green-400 to-emerald-500' },
@@ -47,13 +45,11 @@ const STATIC_CATEGORIES = [
   { name: 'Electronics', slug: 'electronics', img: '/electronics.PNG', icon: <FiHeadphones size={24} className="text-purple-500" />, bg: 'from-purple-400 to-violet-600' },
 ];
 
-// FUNCTION KUPATA PICHA NA ICONS KWA CATEGORY
 const getCategoryVisual = (catName: string) => {
   const lower = catName.toLowerCase();
   const found = STATIC_CATEGORIES.find(sc => lower.includes(sc.slug) || sc.name.toLowerCase().includes(lower) || lower.includes(sc.name.toLowerCase()));
   if (found) return { img: found.img, icon: found.icon, bg: `bg-gradient-to-br ${found.bg}` };
 
-  // Fallback mappings
   if (lower.includes('laptop') || lower.includes('computer') || lower.includes('printer')) return { img: '/digital.PNG', icon: <FiMonitor size={24} className="text-blue-500" />, bg: 'bg-blue-50' };
   if (lower.includes('audio') || lower.includes('speaker') || lower.includes('gaming')) return { img: '/electronics.PNG', icon: <FiHeadphones size={24} className="text-purple-500" />, bg: 'bg-purple-50' };
   if (lower.includes('tablet') || lower.includes('phone')) return { img: '/mobile.PNG', icon: <FiSmartphone size={24} className="text-indigo-500" />, bg: 'bg-indigo-50' };
@@ -70,7 +66,6 @@ export default function CategoryPage({ params }: { params?: { slug?: string } })
   const router = useRouter();
   const { cart, addToCart } = useCart();
 
-  // SOFT NAVIGATION STATE: Inazuia Page Not Found Error
   const [activeSlug, setActiveSlug] = useState(params?.slug || '');
 
   const categoryNameStr = activeSlug
@@ -88,7 +83,6 @@ export default function CategoryPage({ params }: { params?: { slug?: string } })
   const [userCountry, setUserCountry] = useState('...');
   const [countryCode, setCountryCode] = useState('tz');
 
-  // === SEARCH STATE ===
   const [searchQuery, setSearchQuery] = useState('');
   const [showDesktopSuggestions, setShowDesktopSuggestions] = useState(false);
   const [showMobileSuggestions, setShowMobileSuggestions] = useState(false);
@@ -131,7 +125,6 @@ export default function CategoryPage({ params }: { params?: { slug?: string } })
   };
 
   useEffect(() => {
-    // Check URL parameters for soft navigation landing
     if (typeof window !== 'undefined') {
       const urlParams = new URLSearchParams(window.location.search);
       const cat = urlParams.get('category');
@@ -197,7 +190,6 @@ export default function CategoryPage({ params }: { params?: { slug?: string } })
     fetchData();
   }, []);
 
-  // Soft Filtering - Inafanya kazi kila activeSlug inapobadilika
   useEffect(() => {
     let filtered = allProductsData;
     if (activeSlug && activeSlug !== 'all') {
@@ -206,7 +198,6 @@ export default function CategoryPage({ params }: { params?: { slug?: string } })
     setProducts(filtered);
   }, [activeSlug, allProductsData]);
 
-  // Deep Filtering (Search, Price, Brand, Sort)
   useEffect(() => {
     let result = products;
     if (searchQuery) result = result.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()));
@@ -249,9 +240,9 @@ export default function CategoryPage({ params }: { params?: { slug?: string } })
     if (viewMode === 'list') {
       return (
         <div onClick={() => router.push(`/product/${generateSlug(product.name)}`)} className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm flex gap-4 group hover:border-[#E8A922] transition cursor-pointer">
-          <div className="relative w-32 h-32 bg-gray-50/50 rounded-xl flex items-center justify-center flex-shrink-0 p-2 overflow-hidden border border-gray-50">
+          <div className="relative w-32 h-32 bg-gray-50 rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden border border-gray-50">
             <span className="absolute top-2 left-2 bg-[#E8A922] text-white text-[10px] font-black px-1.5 py-0.5 rounded z-20">-{visualDiscount}%</span>
-            {displayImage ? <img src={getImageUrl(displayImage)} alt={product.name} className="absolute inset-0 w-full h-full object-contain mix-blend-multiply p-2 group-hover:scale-105 transition-transform" /> : <span className="text-4xl">📦</span>}
+            {displayImage ? <img src={getImageUrl(displayImage)} alt={product.name} className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform" /> : <span className="text-4xl">📦</span>}
           </div>
           <div className="flex-1 flex flex-col justify-center">
             <h4 className="font-bold text-sm text-gray-800 mb-1 leading-snug line-clamp-2 group-hover:text-[#1B6B80] transition">{product.name}</h4>
@@ -268,11 +259,16 @@ export default function CategoryPage({ params }: { params?: { slug?: string } })
       );
     }
     return (
-      <div onClick={() => router.push(`/product/${generateSlug(product.name)}`)} className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm flex flex-col h-full group hover:border-[#E8A922] transition cursor-pointer">
-        <div className="relative w-full pt-[100%] bg-gray-50/50 rounded-xl mb-4 overflow-hidden border border-gray-50 flex-shrink-0">
-          <span className="absolute top-2 left-2 bg-[#E8A922] text-white text-[10px] font-black px-1.5 py-0.5 rounded z-20">-{visualDiscount}%</span>
+      <div onClick={() => router.push(`/product/${generateSlug(product.name)}`)} className="bg-white border border-gray-200 rounded-2xl p-3 lg:p-4 flex flex-col h-full group hover:border-[#E8A922]/50 hover:shadow-xl transition-all duration-300 cursor-pointer relative">
+        <div className="relative w-full pt-[100%] bg-gray-50 mb-3 rounded-xl overflow-hidden flex-shrink-0">
+          <span className="absolute top-2 left-2 bg-[#E8A922] text-white text-[10px] font-black px-2 py-1 rounded z-20">-{visualDiscount}%</span>
           <button onClick={(e) => toggleWishlist(e, product.id)} className="absolute top-2 right-2 text-gray-400 hover:text-red-500 lg:hidden z-20"><FiHeart className={isWishlisted ? "fill-red-500 text-red-500" : ""} /></button>
-          {displayImage ? <img src={getImageUrl(displayImage)} alt={product.name} className="absolute inset-0 w-full h-full object-contain mix-blend-multiply p-4 group-hover:scale-105 transition-transform duration-300" /> : <div className="absolute inset-0 flex items-center justify-center text-5xl">📦</div>}
+
+          {displayImage ? (
+            <img src={getImageUrl(displayImage)} alt={product.name} className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+          ) : (
+            <div className="absolute inset-0 flex items-center justify-center text-5xl">📦</div>
+          )}
         </div>
         <div className="flex flex-col flex-grow">
           <h4 className="font-bold text-xs lg:text-sm text-gray-800 mb-2 line-clamp-2 leading-snug group-hover:text-[#1B6B80] transition">{product.name}</h4>
@@ -280,9 +276,11 @@ export default function CategoryPage({ params }: { params?: { slug?: string } })
             <span className="font-black text-sm lg:text-base text-[#1B6B80]">TZS {product.price.toLocaleString()}</span>
             <span className="text-[10px] text-gray-400 line-through">TZS {oldPrice.toLocaleString()}</span>
           </div>
-          <div className="flex items-center justify-between mt-1 border-t border-gray-100 pt-3">
-            <div className="flex items-center text-[#E8A922] text-[10px] font-bold"><span className="flex items-center tracking-tighter">★★★★★</span> <span className="text-gray-400 ml-1 font-medium hidden sm:inline-block">({Math.floor(Math.random() * 100) + 10})</span></div>
-            <button onClick={(e) => { e.stopPropagation(); addToCart(product); }} className="w-8 h-8 bg-gray-50 border border-gray-200 rounded-lg flex items-center justify-center text-gray-600 hover:bg-[#E8A922] hover:text-white transition">
+          <div className="flex items-center justify-between mt-2">
+            <div className="flex items-center text-[#E8A922] text-[10px] font-bold">
+              <span className="flex items-center tracking-tighter">★★★★★</span> <span className="text-gray-400 ml-1 font-medium hidden sm:inline-block">({Math.floor(Math.random() * 100) + 10})</span>
+            </div>
+            <button onClick={(e) => { e.stopPropagation(); addToCart(product); }} className="w-8 h-8 bg-gray-50 rounded-lg flex items-center justify-center text-gray-600 hover:bg-[#E8A922] hover:text-white transition">
               <FiShoppingCart size={14} />
             </button>
           </div>
@@ -294,7 +292,6 @@ export default function CategoryPage({ params }: { params?: { slug?: string } })
   return (
     <div className="min-h-screen bg-[#F8FAFC] font-sans text-gray-900">
 
-      {/* 1. DESKTOP HEADER - RANGI MPYA ZA HOMEPAGE */}
       <header className="hidden lg:block bg-[#1B6B80] text-white border-b border-[#145363] sticky top-0 z-50">
         <div className="max-w-[1600px] mx-auto px-6 h-24 flex items-center justify-between gap-6">
           <div className="flex items-center gap-8 flex-shrink-0">
@@ -322,7 +319,7 @@ export default function CategoryPage({ params }: { params?: { slug?: string } })
                 onFocus={() => setShowDesktopSuggestions(true)}
                 onBlur={() => setTimeout(() => setShowDesktopSuggestions(false), 200)}
                 placeholder="Search products, brands..."
-                className="flex-1 h-full px-4 text-sm text-gray-900 outline-none w-full"
+                className="flex-1 h-full px-4 text-[16px] text-gray-900 outline-none w-full"
               />
               <div className="flex items-center gap-3 px-3 text-gray-400">
                 <FiCamera className="cursor-pointer hover:text-gray-600" />
@@ -345,7 +342,7 @@ export default function CategoryPage({ params }: { params?: { slug?: string } })
                       >
                         <div className="w-12 h-12 bg-gray-50 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0 border border-gray-100 p-1">
                           {getImagesArray(prod.imageUrl)[0] ? (
-                            <img src={getImageUrl(getImagesArray(prod.imageUrl)[0])} className="w-full h-full object-contain mix-blend-multiply" alt="" />
+                            <img src={getImageUrl(getImagesArray(prod.imageUrl)[0])} className="w-full h-full object-cover mix-blend-multiply" alt="" />
                           ) : <FiPackage className="text-gray-400" />}
                         </div>
                         <div className="flex flex-col flex-1 min-w-0">
@@ -386,7 +383,6 @@ export default function CategoryPage({ params }: { params?: { slug?: string } })
         </div>
       </header>
 
-      {/* 2. MOBILE HEADER - RANGI MPYA */}
       <header className="lg:hidden bg-[#1B6B80] text-white pt-4 pb-3 sticky top-0 z-50 border-b border-[#145363]">
         <div className="px-4 flex items-center justify-between mb-3">
           <div className="flex items-center gap-1.5 cursor-pointer">
@@ -418,7 +414,7 @@ export default function CategoryPage({ params }: { params?: { slug?: string } })
               onFocus={() => setShowMobileSuggestions(true)}
               onBlur={() => setTimeout(() => setShowMobileSuggestions(false), 200)}
               placeholder="Search products..."
-              className="flex-1 h-full px-3 text-sm xs:text-base text-gray-900 outline-none bg-transparent placeholder-gray-400 w-full min-w-0"
+              className="flex-1 h-full px-3 text-[16px] text-gray-900 outline-none bg-transparent placeholder-gray-400 w-full min-w-0"
             />
             <div className="flex items-center gap-1.5 px-2 text-gray-400 bg-white">
               <FiMic size={16} className="cursor-pointer hover:text-gray-600 hidden xs:block" />
@@ -441,7 +437,7 @@ export default function CategoryPage({ params }: { params?: { slug?: string } })
                     >
                       <div className="w-10 h-10 bg-gray-50 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0 border border-gray-100 p-1">
                         {getImagesArray(prod.imageUrl)[0] ? (
-                          <img src={getImageUrl(getImagesArray(prod.imageUrl)[0])} className="w-full h-full object-contain mix-blend-multiply" alt="" />
+                          <img src={getImageUrl(getImagesArray(prod.imageUrl)[0])} className="w-full h-full object-cover mix-blend-multiply" alt="" />
                         ) : <FiPackage className="text-gray-400" />}
                       </div>
                       <div className="flex flex-col flex-1 min-w-0">
@@ -461,10 +457,7 @@ export default function CategoryPage({ params }: { params?: { slug?: string } })
         </div>
       </header>
 
-      {/* 3. MAIN CONTENT (FULL WIDTH LAYOUT) */}
       <main className="max-w-[1600px] mx-auto px-4 lg:px-6 py-6 flex gap-6 pb-20 md:pb-6">
-
-        {/* Tumefuta sidebar kubwa iliyokuwepo hapa ili Products zipate nafasi kubwa */}
 
         <div className="flex-1 min-w-0">
 
@@ -485,9 +478,7 @@ export default function CategoryPage({ params }: { params?: { slug?: string } })
             </div>
           </div>
 
-          {/* CATEGORY RIBBON - FULL CIRCULAR IMAGES KAMA KWENYE HOMEPAGE */}
           <div className="flex overflow-x-auto hide-scrollbar gap-4 sm:gap-6 bg-white rounded-2xl border border-gray-100 px-6 py-4 shadow-sm mb-8">
-            {/* All Categories button */}
             <button
               onClick={() => {
                 setActiveSlug('');
@@ -495,19 +486,16 @@ export default function CategoryPage({ params }: { params?: { slug?: string } })
               }}
               className="flex flex-col items-center gap-2 hover:opacity-90 transition cursor-pointer whitespace-nowrap group min-w-[76px] sm:min-w-[84px] flex-shrink-0"
             >
-              <div className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full overflow-hidden flex items-center justify-center transition-all transform group-hover:scale-105 group-hover:shadow-md ${
-                activeSlug === '' || activeSlug === 'all'
+              <div className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full overflow-hidden flex items-center justify-center transition-all transform group-hover:scale-105 group-hover:shadow-md ${activeSlug === '' || activeSlug === 'all'
                   ? 'border-2 border-[#1B6B80] ring-2 ring-[#1B6B80]/20 shadow-md scale-105'
                   : 'border-2 border-gray-100 shadow-sm'
-              } bg-gradient-to-br from-[#1B6B80] to-[#145363]`}>
+                } bg-gradient-to-br from-[#1B6B80] to-[#145363]`}>
                 <FiGrid size={28} className="text-white" />
               </div>
-              <span className={`text-[11px] sm:text-xs font-semibold text-center leading-tight ${
-                activeSlug === '' || activeSlug === 'all' ? 'text-[#1B6B80]' : 'text-gray-700'
-              }`}>All Categories</span>
+              <span className={`text-[11px] sm:text-xs font-semibold text-center leading-tight ${activeSlug === '' || activeSlug === 'all' ? 'text-[#1B6B80]' : 'text-gray-700'
+                }`}>All Categories</span>
             </button>
 
-            {/* Show STATIC_CATEGORIES with crisp full circular images */}
             {STATIC_CATEGORIES.map((cat, idx) => {
               const isActive = activeSlug === cat.slug;
               return (
@@ -519,11 +507,10 @@ export default function CategoryPage({ params }: { params?: { slug?: string } })
                   }}
                   className="flex flex-col items-center gap-2 hover:opacity-90 transition cursor-pointer whitespace-nowrap group min-w-[76px] sm:min-w-[84px] flex-shrink-0"
                 >
-                  <div className={`relative w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white overflow-hidden flex items-center justify-center p-1.5 transition-all transform group-hover:scale-105 group-hover:shadow-md ${
-                    isActive
+                  <div className={`relative w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white overflow-hidden flex items-center justify-center p-1.5 transition-all transform group-hover:scale-105 group-hover:shadow-md ${isActive
                       ? 'border-2 border-[#1B6B80] ring-2 ring-[#1B6B80]/20 shadow-md scale-105'
                       : 'border-2 border-gray-100 shadow-sm group-hover:border-[#1B6B80]'
-                  }`}>
+                    }`}>
                     <img
                       src={cat.img}
                       alt={cat.name}
@@ -533,14 +520,12 @@ export default function CategoryPage({ params }: { params?: { slug?: string } })
                       }}
                     />
                   </div>
-                  <span className={`text-[11px] sm:text-xs font-semibold text-center leading-tight truncate w-full px-1 ${
-                    isActive ? 'text-[#1B6B80] font-bold' : 'text-gray-700 group-hover:text-[#1B6B80]'
-                  }`}>{cat.name}</span>
+                  <span className={`text-[11px] sm:text-xs font-semibold text-center leading-tight truncate w-full px-1 ${isActive ? 'text-[#1B6B80] font-bold' : 'text-gray-700 group-hover:text-[#1B6B80]'
+                    }`}>{cat.name}</span>
                 </button>
               );
             })}
 
-            {/* DB categories zisizo kwenye STATIC_CATEGORIES */}
             {allCategories
               .filter(cat => !STATIC_CATEGORIES.some(sc => sc.slug === cat.slug || cat.slug.includes(sc.slug)))
               .map((cat, idx) => {
@@ -555,20 +540,18 @@ export default function CategoryPage({ params }: { params?: { slug?: string } })
                     }}
                     className="flex flex-col items-center gap-2 hover:opacity-90 transition cursor-pointer whitespace-nowrap group min-w-[76px] sm:min-w-[84px] flex-shrink-0"
                   >
-                    <div className={`relative w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white overflow-hidden flex items-center justify-center p-1.5 transition-all transform group-hover:scale-105 group-hover:shadow-md ${
-                      isActive
+                    <div className={`relative w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white overflow-hidden flex items-center justify-center p-1.5 transition-all transform group-hover:scale-105 group-hover:shadow-md ${isActive
                         ? 'border-2 border-[#1B6B80] ring-2 ring-[#1B6B80]/20 shadow-md scale-105'
                         : 'border-2 border-gray-100 shadow-sm group-hover:border-[#1B6B80]'
-                    }`}>
+                      }`}>
                       {visual.img ? (
                         <img src={visual.img} alt={cat.name} className="w-full h-full object-contain transition-transform group-hover:scale-110"
                           onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
                       ) : null}
                       <div className="flex items-center justify-center">{visual.icon}</div>
                     </div>
-                    <span className={`text-[11px] sm:text-xs font-semibold text-center leading-tight truncate w-full px-1 ${
-                      isActive ? 'text-[#1B6B80] font-bold' : 'text-gray-700 group-hover:text-[#1B6B80]'
-                    }`}>{cat.name}</span>
+                    <span className={`text-[11px] sm:text-xs font-semibold text-center leading-tight truncate w-full px-1 ${isActive ? 'text-[#1B6B80] font-bold' : 'text-gray-700 group-hover:text-[#1B6B80]'
+                      }`}>{cat.name}</span>
                   </button>
                 );
               })
@@ -577,7 +560,6 @@ export default function CategoryPage({ params }: { params?: { slug?: string } })
 
           <div className="flex flex-col lg:flex-row gap-6">
 
-            {/* FILTERS SIDEBAR IMESOGEA HAPA KUSHOTO (INACHUKUA NAFASI KADRI TU INAYOHITAJIKA) */}
             <div className="hidden lg:block w-[260px] flex-shrink-0">
               <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm sticky top-32">
                 <h3 className="font-black text-gray-900 flex items-center gap-2 mb-4 border-b border-gray-100 pb-4"><FiFilter /> Filters</h3>
@@ -605,7 +587,6 @@ export default function CategoryPage({ params }: { params?: { slug?: string } })
               </div>
             </div>
 
-            {/* PRODUCT GRID - SASA INAJAZA SCREEN YOTE VIZURI KWA KUWA NAFASI IMESEA */}
             <div className="flex-1 w-full">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2 border border-gray-200 bg-white rounded-lg px-3 py-1.5">
@@ -626,7 +607,6 @@ export default function CategoryPage({ params }: { params?: { slug?: string } })
               {isLoading ? (
                 <div className="flex justify-center py-20"><div className="w-10 h-10 border-4 border-[#E8A922] border-t-transparent rounded-full animate-spin"></div></div>
               ) : filteredProducts.length > 0 ? (
-                // HAPA NDIPO COLUMNS ZIMEONGEZWA KWA KUWA TUNA NAFASI KUBWA!
                 <div className={`grid gap-3 sm:gap-4 w-full ${viewMode === 'grid' ? 'grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5' : 'grid-cols-1 lg:grid-cols-2'}`}>
                   {filteredProducts.map((product: any) => <ProductCard key={product.id} product={product} />)}
                 </div>
@@ -647,7 +627,6 @@ export default function CategoryPage({ params }: { params?: { slug?: string } })
         <Footer />
       </div>
 
-      {/* MOBILE BOTTOM NAV - RANGI MPYA */}
       <div className="lg:hidden fixed bottom-0 left-0 w-full bg-white border-t border-gray-100 flex justify-around items-center h-[60px] px-2 z-40 shadow-[0_-10px_20px_rgba(0,0,0,0.03)] pb-safe">
         <button onClick={() => router.push('/')} className="flex flex-col items-center gap-1 text-gray-400 hover:text-gray-900"><FiHome size={20} /><span className="text-[9px] font-bold">Home</span></button>
         <button onClick={() => router.push('/categories')} className="flex flex-col items-center gap-1 text-[#E8A922]"><FiGrid size={20} className="fill-current" /><span className="text-[9px] font-black">Categories</span></button>
