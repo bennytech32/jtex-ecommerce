@@ -47,6 +47,13 @@ const STATIC_CATEGORIES = [
 
 const getCategoryVisual = (catName: string) => {
   const lower = catName.toLowerCase();
+
+  // MERGE 'home living' na 'furniture' zipewe muonekano wa 'home'
+  if (lower.includes('home living') || lower.includes('furniture')) {
+    const homeCat = STATIC_CATEGORIES.find(sc => sc.slug === 'home');
+    if (homeCat) return { img: homeCat.img, icon: homeCat.icon, bg: `bg-gradient-to-br ${homeCat.bg}` };
+  }
+
   const found = STATIC_CATEGORIES.find(sc => lower.includes(sc.slug) || sc.name.toLowerCase().includes(lower) || lower.includes(sc.name.toLowerCase()));
   if (found) return { img: found.img, icon: found.icon, bg: `bg-gradient-to-br ${found.bg}` };
 
@@ -169,6 +176,12 @@ export default function CategoryPage({ params }: { params?: { slug?: string } })
           data.forEach((p: any) => {
             if (p.category) {
               const slug = generateSlug(p.category);
+
+              // TUNAONDOA 'home living' NA 'furniture' ZISITENGENEZE CATEGORY MPYA, ZITAHESABIWA KAMA 'home'
+              if (slug === 'home-living' || slug === 'furniture') {
+                return;
+              }
+
               let display = p.category;
               if (display.toLowerCase().includes('computer')) display = 'Computers';
               if (display.toLowerCase().includes('phone')) display = 'Phones';
@@ -190,13 +203,24 @@ export default function CategoryPage({ params }: { params?: { slug?: string } })
     fetchData();
   }, []);
 
+  // --- SEHEMU ILIYOREKEBISHWA KWA AJILI YA HOME MERGING ---
   useEffect(() => {
     let filtered = allProductsData;
     if (activeSlug && activeSlug !== 'all') {
-      filtered = allProductsData.filter((p: any) => generateSlug(p.category) === activeSlug);
+      filtered = allProductsData.filter((p: any) => {
+        const prodSlug = generateSlug(p.category);
+
+        // Kama activeSlug ni 'home', leta bidhaa zote za 'home', 'home-living', na 'furniture'
+        if (activeSlug === 'home') {
+          return prodSlug === 'home' || prodSlug === 'home-living' || prodSlug === 'furniture';
+        }
+
+        return prodSlug === activeSlug;
+      });
     }
     setProducts(filtered);
   }, [activeSlug, allProductsData]);
+  // ---------------------------------------------------------
 
   useEffect(() => {
     let result = products;
@@ -487,8 +511,8 @@ export default function CategoryPage({ params }: { params?: { slug?: string } })
               className="flex flex-col items-center gap-2 hover:opacity-90 transition cursor-pointer whitespace-nowrap group min-w-[76px] sm:min-w-[84px] flex-shrink-0"
             >
               <div className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full overflow-hidden flex items-center justify-center transition-all transform group-hover:scale-105 group-hover:shadow-md ${activeSlug === '' || activeSlug === 'all'
-                  ? 'border-2 border-[#1B6B80] ring-2 ring-[#1B6B80]/20 shadow-md scale-105'
-                  : 'border-2 border-gray-100 shadow-sm'
+                ? 'border-2 border-[#1B6B80] ring-2 ring-[#1B6B80]/20 shadow-md scale-105'
+                : 'border-2 border-gray-100 shadow-sm'
                 } bg-gradient-to-br from-[#1B6B80] to-[#145363]`}>
                 <FiGrid size={28} className="text-white" />
               </div>
@@ -508,8 +532,8 @@ export default function CategoryPage({ params }: { params?: { slug?: string } })
                   className="flex flex-col items-center gap-2 hover:opacity-90 transition cursor-pointer whitespace-nowrap group min-w-[76px] sm:min-w-[84px] flex-shrink-0"
                 >
                   <div className={`relative w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white overflow-hidden flex items-center justify-center p-1.5 transition-all transform group-hover:scale-105 group-hover:shadow-md ${isActive
-                      ? 'border-2 border-[#1B6B80] ring-2 ring-[#1B6B80]/20 shadow-md scale-105'
-                      : 'border-2 border-gray-100 shadow-sm group-hover:border-[#1B6B80]'
+                    ? 'border-2 border-[#1B6B80] ring-2 ring-[#1B6B80]/20 shadow-md scale-105'
+                    : 'border-2 border-gray-100 shadow-sm group-hover:border-[#1B6B80]'
                     }`}>
                     <img
                       src={cat.img}
@@ -541,8 +565,8 @@ export default function CategoryPage({ params }: { params?: { slug?: string } })
                     className="flex flex-col items-center gap-2 hover:opacity-90 transition cursor-pointer whitespace-nowrap group min-w-[76px] sm:min-w-[84px] flex-shrink-0"
                   >
                     <div className={`relative w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white overflow-hidden flex items-center justify-center p-1.5 transition-all transform group-hover:scale-105 group-hover:shadow-md ${isActive
-                        ? 'border-2 border-[#1B6B80] ring-2 ring-[#1B6B80]/20 shadow-md scale-105'
-                        : 'border-2 border-gray-100 shadow-sm group-hover:border-[#1B6B80]'
+                      ? 'border-2 border-[#1B6B80] ring-2 ring-[#1B6B80]/20 shadow-md scale-105'
+                      : 'border-2 border-gray-100 shadow-sm group-hover:border-[#1B6B80]'
                       }`}>
                       {visual.img ? (
                         <img src={visual.img} alt={cat.name} className="w-full h-full object-contain transition-transform group-hover:scale-110"

@@ -1,7 +1,11 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { FiSearch, FiEdit2, FiTrash2, FiX, FiCheckCircle, FiAlertTriangle, FiTruck, FiAnchor, FiTag, FiCpu, FiFilter, FiImage, FiSettings, FiPlus } from 'react-icons/fi';
+import {
+  FiSearch, FiEdit2, FiTrash2, FiX, FiCheckCircle, FiAlertTriangle,
+  FiTruck, FiAnchor, FiTag, FiCpu, FiFilter, FiImage, FiSettings,
+  FiPlus, FiChevronLeft, FiChevronRight
+} from 'react-icons/fi';
 
 // MFUMO MPYA WA CATEGORIES NA SUBCATEGORIES KULINGANA NA HOMEPAGE
 const CATEGORY_STRUCTURE: Record<string, string[]> = {
@@ -23,6 +27,15 @@ const CATEGORY_STRUCTURE: Record<string, string[]> = {
   "Electronics": ["TVs", "Audio & Speakers", "Gaming", "Home Appliances", "Other"]
 };
 
+// Type definition kwa ajili ya picha kwenye Edit Modal
+type EditImage = {
+  id: string;
+  type: 'existing' | 'new';
+  url: string;
+  originalPath?: string;
+  file?: File;
+};
+
 export default function AdminInventory() {
   const [products, setProducts] = useState<any[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<any[]>([]);
@@ -38,15 +51,16 @@ export default function AdminInventory() {
   const [editingProduct, setEditingProduct] = useState<any | null>(null);
   const [editSpecData, setEditSpecData] = useState<any>({});
   const [editCustomSpecs, setEditCustomSpecs] = useState<{ key: string, value: string }[]>([]);
-  const [editImageFiles, setEditImageFiles] = useState<File[]>([]);
-  const [editImagePreviews, setEditImagePreviews] = useState<string[]>([]);
+
+  // State mpya inayobeba picha zote (za zamani na mpya) na kuruhusu kuzipanga
+  const [editImages, setEditImages] = useState<EditImage[]>([]);
   const editFileInputRef = useRef<HTMLInputElement>(null);
 
   const [editIsPreOrder, setEditIsPreOrder] = useState(false);
   const [editShippingOrigin, setEditShippingOrigin] = useState<'Dubai' | 'China'>('Dubai');
   const [editFreightType, setEditFreightType] = useState<'Air' | 'Sea'>('Air');
 
-  // HIZI NDIO STATE MPYA KWA AJILI YA MFUMO MPYA
+  // HIZI NDIO STATE KWA AJILI YA MFUMO MPYA WA CATEGORIES
   const [editMainCategory, setEditMainCategory] = useState('');
   const [editSubCategory, setEditSubCategory] = useState('');
 
@@ -147,29 +161,57 @@ export default function AdminInventory() {
 
   const openEditModal = (product: any) => {
     setEditingProduct(product);
-    setEditImageFiles([]);
 
-    const existingImages = getImagesArray(product.imageUrl).map((img: string) => img.startsWith('http') ? img : `${API_URL}${img}`);
-    setEditImagePreviews(existingImages);
+    // KUPAKIA PICHA ZILIZOPO KWENYE STATE MPYA
+    const existingImages = getImagesArray(product.imageUrl);
+    const loadedImages: EditImage[] = existingImages.map((img: string) => ({
+      id: Math.random().toString(36).substring(7),
+      type: 'existing',
+      url: img.startsWith('http') ? img : `${API_URL}${img}`,
+      originalPath: img
+    }));
+    setEditImages(loadedImages);
 
     let parsedSpecs: any = {};
     if (product.specifications) {
       try { parsedSpecs = JSON.parse(product.specifications); } catch (e) { }
     }
 
-    // CHECK KAMA BIDHAA YA ZAMANI INA MAIN CAT/SUBCAT KWENYE SPECS, KAMA HAKUNA JARIBU KUGESS KUTOKA KWENYE 'category'
+    // AUTO-GUESSER: Tafuta Category/Subcategory kama bidhaa ni ya zamani
     let mCat = parsedSpecs["Main Category"] || '';
     let sCat = parsedSpecs["Subcategory"] || '';
 
     if (!mCat && product.category) {
+      let foundM = '';
+      let foundS = '';
+
+      // 1. Check direct match
       if (Object.keys(CATEGORY_STRUCTURE).includes(product.category)) {
-        mCat = product.category;
+        foundM = product.category;
       } else {
-        // Fallback kwa bidhaa za zamani (Mfano category ilikua "Laptops", tunaiweka kwenye "Digital" -> "Laptops")
+        // 2. Loop kutafuta subcategory iliyojificha
+        for (const [main, subs] of Object.entries(CATEGORY_STRUCTURE)) {
+          if (subs.includes(product.category) || subs.map(s => s.toLowerCase()).includes(product.category.toLowerCase())) {
+            foundM = main;
+            foundS = product.category;
+            break;
+          }
+        }
+      }
+
+      if (foundM) {
+        mCat = foundM;
+        sCat = foundS;
+      } else {
+        // 3. Fallback guessing
         const lowerCat = product.category.toLowerCase();
-        if (lowerCat.includes('laptop') || lowerCat.includes('computer') || lowerCat.includes('printer')) { mCat = 'Digital'; sCat = product.category; }
-        else if (lowerCat.includes('phone') || lowerCat.includes('tablet')) { mCat = 'Mobile'; sCat = product.category; }
-        else if (lowerCat.includes('tv') || lowerCat.includes('audio')) { mCat = 'Electronics'; sCat = product.category; }
+        if (lowerCat.includes('laptop') || lowerCat.includes('computer')) { mCat = 'Digital'; sCat = 'Laptops'; }
+        else if (lowerCat.includes('phone') || lowerCat.includes('tablet')) { mCat = 'Mobile'; sCat = 'Smartphones'; }
+        else if (lowerCat.includes('tv')) { mCat = 'Electronics'; sCat = 'TVs'; }
+        else if (lowerCat.includes('audio')) { mCat = 'Electronics'; sCat = 'Audio & Speakers'; }
+        else if (lowerCat.includes('shoe')) { mCat = 'Fashion'; sCat = 'Shoes'; }
+        else if (lowerCat.includes('cloth')) { mCat = 'Fashion'; sCat = "Men's Clothing"; }
+        else { mCat = 'Other'; sCat = ''; } // Default
       }
     }
 
@@ -180,10 +222,8 @@ export default function AdminInventory() {
     const stSpecs: any = {};
     const cuSpecs: { key: string, value: string }[] = [];
 
-    // Tenganisha standard specs na custom specs, ondoa Main Category na Subcategory kwenye fields za kawaida maana tumezishika juu
     Object.keys(parsedSpecs).forEach(key => {
       if (key === 'Main Category' || key === 'Subcategory') return;
-
       if (knownFields.includes(key)) stSpecs[key] = parsedSpecs[key];
       else cuSpecs.push({ key, value: parsedSpecs[key] });
     });
@@ -203,26 +243,43 @@ export default function AdminInventory() {
     } else { setEditIsPreOrder(false); }
   };
 
+  // KUPANGA PICHA (MOVE LEFT / MOVE RIGHT)
+  const moveImage = (index: number, direction: 'left' | 'right') => {
+    const newImages = [...editImages];
+    if (direction === 'left' && index > 0) {
+      [newImages[index - 1], newImages[index]] = [newImages[index], newImages[index - 1]];
+    } else if (direction === 'right' && index < newImages.length - 1) {
+      [newImages[index], newImages[index + 1]] = [newImages[index + 1], newImages[index]];
+    }
+    setEditImages(newImages);
+  };
+
   const handleEditImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files) {
       let filesArray = Array.from(files);
-      const spaceLeft = 5 - editImagePreviews.length;
+      const spaceLeft = 5 - editImages.length;
       if (filesArray.length > spaceLeft) {
         alert(`Mwisho ni picha 5. Unaweza kuongeza ${spaceLeft} tu.`);
         filesArray = filesArray.slice(0, spaceLeft);
       }
-      const newPreviews = filesArray.map(file => URL.createObjectURL(file));
-      setEditImageFiles(prev => [...prev, ...filesArray]);
-      setEditImagePreviews(prev => [...prev, ...newPreviews]);
+
+      const newImageObjects: EditImage[] = filesArray.map(file => ({
+        id: Math.random().toString(36).substring(7),
+        type: 'new',
+        url: URL.createObjectURL(file),
+        file: file
+      }));
+
+      setEditImages(prev => [...prev, ...newImageObjects]);
     }
   };
 
   const removeEditImage = (indexToRemove: number) => {
-    setEditImagePreviews(prev => prev.filter((_, index) => index !== indexToRemove));
+    setEditImages(prev => prev.filter((_, index) => index !== indexToRemove));
   };
 
-  // Ubadilishaji wa Subcategory fields dynamically pindi Admin anapobadilisha Main Category/Subcategory
+  // Ubadilishaji wa Subcategory fields dynamically pindi Admin anapobadilisha Main Category
   useEffect(() => {
     if (editingProduct && editMainCategory) {
       const newKnownFields = getStandardFields(editMainCategory, editSubCategory);
@@ -247,7 +304,6 @@ export default function AdminInventory() {
     setIsLoading(true); setMessage(''); setError('');
 
     const finalSpecs: any = { ...editSpecData };
-    // ONGEZA HIZI ILI ZISOMEKE KWENYE FILTERS KULE Mbele
     finalSpecs['Main Category'] = editMainCategory;
     finalSpecs['Subcategory'] = editSubCategory;
 
@@ -265,7 +321,7 @@ export default function AdminInventory() {
     const formData = new FormData();
     formData.append('sku', editingProduct.sku);
     formData.append('name', editingProduct.name);
-    formData.append('category', editMainCategory); // Category kuu inabaki kua Main Category
+    formData.append('category', editMainCategory);
     formData.append('brand', editingProduct.brand);
     formData.append('model', editingProduct.model || '');
     formData.append('badge', editingProduct.badge || '');
@@ -276,7 +332,30 @@ export default function AdminInventory() {
     formData.append('specifications', JSON.stringify(finalSpecs));
     formData.append('preOrderInfo', JSON.stringify(preOrderInfo));
 
-    editImageFiles.forEach((file) => formData.append('images', file));
+    // APPEND IMAGES
+    let newFileCounter = 0;
+    const orderMap = editImages.map(img => {
+      if (img.type === 'existing') {
+        return img.originalPath;
+      } else {
+        const mappedName = `NEW_FILE_${newFileCounter}`;
+        newFileCounter++;
+        return mappedName;
+      }
+    });
+
+    // Picha Mpya zinatumwa kwenye file stream
+    editImages.forEach((img) => {
+      if (img.type === 'new' && img.file) {
+        formData.append('images', img.file);
+      }
+    });
+
+    // Tunatuma data za mpangilio mpya wa picha (Zamani na Mpya)
+    const existingPaths = editImages.filter(img => img.type === 'existing').map(img => img.originalPath);
+    formData.append('existingImages', JSON.stringify(existingPaths));
+    formData.append('imageOrder', JSON.stringify(orderMap));
+    // Hii itasaidia backend kujua jinsi gani picha zimepangwa endapo itatengenezwa kusoma data hizi.
 
     try {
       const res = await fetch(`${API_URL}/api/products/${editingProduct.id}`, { method: 'PUT', body: formData });
@@ -356,7 +435,6 @@ export default function AdminInventory() {
                   let preInfo: any = null;
                   try { if (p.preOrderInfo) preInfo = JSON.parse(p.preOrderInfo); } catch (e) { }
 
-                  // Check if subcategory exists in specs for display
                   let subDisplay = '';
                   try {
                     const sp = JSON.parse(p.specifications || '{}');
@@ -431,23 +509,32 @@ export default function AdminInventory() {
             <div className="p-5 lg:p-8 max-h-[75vh] overflow-y-auto custom-scrollbar">
               <form id="editForm" onSubmit={handleUpdateProduct} className="space-y-6">
 
-                {/* Images */}
+                {/* IMAGES & REORDERING */}
                 <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
                   <label className="block text-xs font-bold text-gray-800 uppercase mb-3 flex items-center gap-2"><FiImage className="text-[#F2A900]" /> Product Images</label>
-                  {editImagePreviews.length > 0 && (
+                  {editImages.length > 0 && (
                     <div className="flex flex-wrap gap-3 mb-4">
-                      {editImagePreviews.map((preview, index) => (
-                        <div key={index} className="relative group w-20 h-20 bg-white rounded-xl border border-gray-200 p-1">
-                          <img src={preview} className="w-full h-full object-contain" />
-                          <button type="button" onClick={() => removeEditImage(index)} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"><FiX className="text-xs" /></button>
+                      {editImages.map((img, index) => (
+                        <div key={img.id} className="relative group w-24 h-24 bg-white rounded-xl border border-gray-200 p-1 flex flex-col">
+                          <img src={img.url} className="w-full h-full object-contain mb-1" />
+
+                          {/* Close Button */}
+                          <button type="button" onClick={() => removeEditImage(index)} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity z-10 shadow-sm"><FiX size={12} /></button>
+
+                          {/* Reorder Arrows */}
+                          <div className="absolute bottom-1 left-1 right-1 flex justify-between opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button type="button" onClick={() => moveImage(index, 'left')} disabled={index === 0} className="bg-black/60 hover:bg-black text-white rounded p-1 disabled:opacity-30 disabled:cursor-not-allowed transition"><FiChevronLeft size={14} /></button>
+                            <span className="text-[10px] font-black bg-white/80 px-1.5 rounded-sm">{index + 1}</span>
+                            <button type="button" onClick={() => moveImage(index, 'right')} disabled={index === editImages.length - 1} className="bg-black/60 hover:bg-black text-white rounded p-1 disabled:opacity-30 disabled:cursor-not-allowed transition"><FiChevronRight size={14} /></button>
+                          </div>
                         </div>
                       ))}
                     </div>
                   )}
-                  {editImagePreviews.length < 5 && (
-                    <input type="file" accept="image/*" multiple onChange={(e) => handleEditImageChange(e)} ref={editFileInputRef} className="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-[#F2A900]/10 file:text-[#0F172A] cursor-pointer" />
+                  {editImages.length < 5 && (
+                    <input type="file" accept="image/*" multiple onChange={handleEditImageChange} ref={editFileInputRef} className="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-[#F2A900]/10 file:text-[#0F172A] cursor-pointer" />
                   )}
-                  <p className="text-[10px] text-gray-400 mt-2 italic">Kumbuka: Ukiongeza picha mpya, zitafuta zile za zamani mtandaoni.</p>
+                  <p className="text-[10px] text-gray-400 mt-2 italic">Tumia mishale kusogeza picha (Ile namba 1 ndio itaonekana nje). Mwisho ni picha 5.</p>
                 </div>
 
                 {/* Name & Basics */}
