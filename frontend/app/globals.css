@@ -6,3 +6,12 @@
   --color-jtex-dark: #0F172A;
   --color-jtex-gray: #F3F4F6;
 }
+
+/* iOS zooms focused controls below 16px, which can shift the entire page. */
+@media (max-width: 767px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}

@@ -2,6 +2,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { CartProvider } from "./context/CartContext"; // Tumesahihisha njia hapa (Nukta moja)
 import Script from "next/script"; // Import ya Next.js Script kwa ajili ya Meta Pixel
+import type { Viewport } from "next";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -28,6 +29,12 @@ export const metadata = {
     icon: '/logo.png',
     apple: '/logo.png',
   },
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
 };
 
 export default function RootLayout({
