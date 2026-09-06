@@ -287,7 +287,7 @@ export default function AdminDashboard() {
 
   if (isLoading) {
     return (
-      <div className="w-full h-full flex flex-col items-center justify-center bg-[#F8FAFC]">
+      <div className="w-full h-full flex flex-col items-center justify-center bg-[#F8FAFC] min-h-screen">
         <div className="w-12 h-12 border-4 border-[#F2A900] border-t-transparent rounded-full animate-spin mb-4"></div>
         <p className="text-gray-500 font-bold animate-pulse">Loading Admin System...</p>
       </div>
@@ -295,7 +295,7 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="w-full h-full font-sans">
+    <div className="w-full h-full font-sans pb-20">
 
       {/* HEADER */}
       <header className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
@@ -314,29 +314,29 @@ export default function AdminDashboard() {
       </header>
 
       {/* ADMIN TABS NAVIGATION */}
-      <div className="flex overflow-x-auto gap-2 mb-8 bg-white p-2 rounded-2xl shadow-sm border border-gray-100 hide-scrollbar">
+      <div className="flex overflow-x-auto gap-2 mb-8 bg-white p-2 rounded-2xl shadow-sm border border-gray-100 hide-scrollbar scroll-smooth">
         <button
           onClick={() => setActiveTab('overview')}
-          className={`flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm transition-all whitespace-nowrap ${activeTab === 'overview' ? 'bg-[#0F172A] text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
+          className={`flex items-center gap-2 px-5 py-3 rounded-xl font-bold text-sm transition-all whitespace-nowrap ${activeTab === 'overview' ? 'bg-[#0F172A] text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
         >
           <FiTrendingUp /> {t.tabOverview}
         </button>
         <button
           onClick={() => setActiveTab('products')}
-          className={`flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm transition-all whitespace-nowrap ${activeTab === 'products' ? 'bg-amber-500 text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
+          className={`flex items-center gap-2 px-5 py-3 rounded-xl font-bold text-sm transition-all whitespace-nowrap ${activeTab === 'products' ? 'bg-amber-500 text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
         >
           <FiBox /> {t.tabProducts}
         </button>
         <button
           onClick={() => setActiveTab('orders')}
-          className={`flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm transition-all whitespace-nowrap ${activeTab === 'orders' ? 'bg-blue-600 text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
+          className={`flex items-center gap-2 px-5 py-3 rounded-xl font-bold text-sm transition-all whitespace-nowrap ${activeTab === 'orders' ? 'bg-blue-600 text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
         >
           <FiTruck /> {t.tabOrders}
           {calculatedStats.pending > 0 && <span className="bg-red-500 text-white text-[10px] px-2 py-0.5 rounded-full">{calculatedStats.pending}</span>}
         </button>
         <button
           onClick={() => setActiveTab('crm')}
-          className={`flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm transition-all whitespace-nowrap ${activeTab === 'crm' ? 'bg-purple-600 text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
+          className={`flex items-center gap-2 px-5 py-3 rounded-xl font-bold text-sm transition-all whitespace-nowrap ${activeTab === 'crm' ? 'bg-purple-600 text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
         >
           <FiUsers /> {t.tabCrm}
         </button>
@@ -353,7 +353,7 @@ export default function AdminDashboard() {
                 <div className="w-12 h-12 bg-white/10 rounded-full flex items-center justify-center text-2xl"><FiMonitor /></div>
                 <div className="text-left"><p className="font-black text-lg">{t.openPos}</p><p className="text-[10px] text-gray-300">Point of Sale System</p></div>
               </button>
-              <button onClick={() => setActiveTab('products')} className="flex items-center gap-4 bg-white border border-gray-200 p-4 rounded-2xl text-[#0F172A] hover:border-amber-500 hover:shadow-md transition">
+              <button onClick={() => router.push('/admin/products')} className="flex items-center gap-4 bg-white border border-gray-200 p-4 rounded-2xl text-[#0F172A] hover:border-amber-500 hover:shadow-md transition">
                 <div className="w-12 h-12 bg-yellow-50 text-amber-500 rounded-full flex items-center justify-center text-2xl"><FiPlusCircle /></div>
                 <div className="text-left"><p className="font-bold text-sm">{t.addProduct}</p><p className="text-[10px] text-gray-500">Update Inventory</p></div>
               </button>
@@ -365,34 +365,34 @@ export default function AdminDashboard() {
           </div>
 
           {/* STATS CARDS */}
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6 mb-8">
-            <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
-              <div className="w-12 h-12 rounded-full bg-green-50 flex items-center justify-center text-green-600 text-xl"><FiTrendingUp /></div>
+          <div className="grid grid-cols-2 md:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-6 mb-8">
+            <div className="bg-white p-4 sm:p-5 rounded-2xl border border-gray-100 shadow-sm flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-green-50 flex items-center justify-center text-green-600 text-lg sm:text-xl"><FiTrendingUp /></div>
               <div>
-                <p className="text-xs font-bold text-gray-500 uppercase">{t.totalRevenue}</p>
-                <p className="text-xl sm:text-2xl font-black text-gray-900">TZS {calculatedStats.revenue.toLocaleString()}</p>
+                <p className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase">{t.totalRevenue}</p>
+                <p className="text-lg sm:text-2xl font-black text-gray-900">TZS {calculatedStats.revenue.toLocaleString()}</p>
               </div>
             </div>
-            <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4 relative overflow-hidden">
-              <div className="w-12 h-12 rounded-full bg-red-50 flex items-center justify-center text-red-600 text-xl"><FiAlertCircle /></div>
+            <div className="bg-white p-4 sm:p-5 rounded-2xl border border-gray-100 shadow-sm flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 relative overflow-hidden">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-red-50 flex items-center justify-center text-red-600 text-lg sm:text-xl"><FiAlertCircle /></div>
               <div className="z-10">
-                <p className="text-xs font-bold text-red-400 uppercase">{t.pendingOrders}</p>
-                <p className="text-xl sm:text-2xl font-black text-red-600">{calculatedStats.pending}</p>
+                <p className="text-[10px] sm:text-xs font-bold text-red-400 uppercase">{t.pendingOrders}</p>
+                <p className="text-lg sm:text-2xl font-black text-red-600">{calculatedStats.pending}</p>
               </div>
-              {calculatedStats.pending > 0 && <div className="absolute right-0 top-0 w-2 h-full bg-red-500 animate-pulse"></div>}
+              {calculatedStats.pending > 0 && <div className="absolute right-0 top-0 w-1.5 sm:w-2 h-full bg-red-500 animate-pulse"></div>}
             </div>
-            <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
-              <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 text-xl"><FiDollarSign /></div>
+            <div className="bg-white p-4 sm:p-5 rounded-2xl border border-gray-100 shadow-sm flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 text-lg sm:text-xl"><FiDollarSign /></div>
               <div>
-                <p className="text-xs font-bold text-gray-500 uppercase">{t.inventoryValue}</p>
-                <p className="text-lg font-black text-gray-900">TZS {stats.inventoryValue.toLocaleString()}</p>
+                <p className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase">{t.inventoryValue}</p>
+                <p className="text-base sm:text-lg font-black text-gray-900">TZS {stats.inventoryValue.toLocaleString()}</p>
               </div>
             </div>
-            <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
-              <div className="w-12 h-12 rounded-full bg-purple-50 flex items-center justify-center text-purple-600 text-xl"><FiUsers /></div>
+            <div className="bg-white p-4 sm:p-5 rounded-2xl border border-gray-100 shadow-sm flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-purple-50 flex items-center justify-center text-purple-600 text-lg sm:text-xl"><FiUsers /></div>
               <div>
-                <p className="text-xs font-bold text-gray-500 uppercase">{t.totalUsers}</p>
-                <p className="text-xl sm:text-2xl font-black text-gray-900">{stats.totalUsers}</p>
+                <p className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase">{t.totalUsers}</p>
+                <p className="text-lg sm:text-2xl font-black text-gray-900">{stats.totalUsers}</p>
               </div>
             </div>
           </div>
@@ -401,12 +401,12 @@ export default function AdminDashboard() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
             <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
               <h3 className="text-sm font-black text-gray-900 mb-6 uppercase tracking-wider">{t.salesTrend}</h3>
-              <div className="h-72">
+              <div className="h-60 sm:h-72">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={salesData}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
                     <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#6B7280', fontSize: 12 }} dy={10} />
-                    <YAxis axisLine={false} tickLine={false} tick={{ fill: '#6B7280', fontSize: 12 }} dx={-10} tickFormatter={(value) => `${value / 1000000}M`} />
+                    <YAxis width={40} axisLine={false} tickLine={false} tick={{ fill: '#6B7280', fontSize: 10 }} dx={-10} tickFormatter={(value) => `${value / 1000000}M`} />
                     <Tooltip cursor={{ stroke: '#F3F4F6', strokeWidth: 2 }} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} formatter={(value: any) => [`TZS ${value.toLocaleString()}`, t.sales]} />
                     <Line type="monotone" dataKey="mauzo" stroke="#F2A900" strokeWidth={4} dot={{ r: 4, fill: '#0F172A', strokeWidth: 2 }} activeDot={{ r: 6, fill: '#F2A900' }} />
                   </LineChart>
@@ -415,12 +415,12 @@ export default function AdminDashboard() {
             </div>
             <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
               <h3 className="text-sm font-black text-gray-900 mb-6 uppercase tracking-wider">{t.revenueCompare}</h3>
-              <div className="h-72">
+              <div className="h-60 sm:h-72">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={salesData}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
                     <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#6B7280', fontSize: 12 }} dy={10} />
-                    <YAxis axisLine={false} tickLine={false} tick={{ fill: '#6B7280', fontSize: 12 }} dx={-10} tickFormatter={(value) => `${value / 1000000}M`} />
+                    <YAxis width={40} axisLine={false} tickLine={false} tick={{ fill: '#6B7280', fontSize: 10 }} dx={-10} tickFormatter={(value) => `${value / 1000000}M`} />
                     <Tooltip cursor={{ fill: '#F9FAFB' }} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} formatter={(value: any) => [`TZS ${value.toLocaleString()}`, t.revenue]} />
                     <Bar dataKey="mauzo" fill="#0F172A" radius={[6, 6, 0, 0]} />
                   </BarChart>
@@ -434,17 +434,19 @@ export default function AdminDashboard() {
       {/* TAB 2: PRODUCTS & INVENTORY */}
       {activeTab === 'products' && (
         <div className="bg-white rounded-2xl shadow-sm overflow-hidden animate-fade-in border border-gray-100 min-h-[500px]">
-          <div className="p-6 border-b border-gray-100 bg-amber-50/10 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div className="p-4 sm:p-6 border-b border-gray-100 bg-amber-50/10 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
-              <h3 className="text-xl font-black text-gray-900 flex items-center gap-2"><FiBox className="text-amber-500" /> {t.tabProducts}</h3>
-              <p className="text-sm text-gray-500 mt-1">{t.productsDesc}</p>
+              <h3 className="text-lg sm:text-xl font-black text-gray-900 flex items-center gap-2"><FiBox className="text-amber-500" /> {t.tabProducts}</h3>
+              <p className="text-xs sm:text-sm text-gray-500 mt-1">{t.productsDesc}</p>
             </div>
-            <button onClick={() => router.push('/admin/products')} className="bg-[#0F172A] text-white font-bold px-4 py-2.5 rounded-xl flex items-center gap-2 text-sm hover:bg-gray-800 transition shadow-sm">
+            {/* Desktop Add Button */}
+            <button onClick={() => router.push('/admin/products')} className="hidden sm:flex bg-[#0F172A] text-white font-bold px-4 py-2.5 rounded-xl items-center gap-2 text-sm hover:bg-gray-800 transition shadow-sm">
               <FiPlusCircle /> {t.addProduct}
             </button>
           </div>
 
-          <div className="overflow-x-auto">
+          {/* DESKTOP TABLE VIEW */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-left text-sm">
               <thead className="bg-gray-50 text-gray-500 font-bold uppercase text-[10px] tracking-wider border-b border-gray-100">
                 <tr>
@@ -491,18 +493,48 @@ export default function AdminDashboard() {
               </tbody>
             </table>
           </div>
+
+          {/* MOBILE CARDS VIEW */}
+          <div className="block md:hidden p-4 space-y-4 bg-gray-50/50">
+            {realProducts.length === 0 ? (
+              <div className="py-12 text-center text-gray-400 font-medium">{t.noProducts}</div>
+            ) : (
+              realProducts.map((product) => (
+                <div key={product.id} className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex gap-3">
+                  <div className="w-12 h-12 rounded-lg bg-gray-50 border border-gray-100 flex items-center justify-center text-2xl flex-shrink-0">
+                    {product.imageEmoji || '📦'}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-bold text-gray-900 text-sm line-clamp-1">{product.name}</h4>
+                    <p className="text-[10px] text-gray-500 font-mono mt-0.5">{product.sku || `SKU-${product.id.slice(-4).toUpperCase()}`}</p>
+
+                    <div className="flex justify-between items-end mt-2 pt-2 border-t border-gray-50">
+                      <div>
+                        <span className="block text-[9px] text-gray-400 uppercase font-bold mb-0.5">{t.prodPrice}</span>
+                        <span className="font-black text-[#0F172A] text-sm">TZS {product.price.toLocaleString()}</span>
+                      </div>
+                      <span className={`px-2 py-1 rounded text-[10px] font-black ${(product.stock || product.stockQuantity || 0) <= 5 ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'}`}>
+                        {product.stock || product.stockQuantity || 0} In Stock
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
         </div>
       )}
 
       {/* TAB 3: ORDER MANAGEMENT */}
       {activeTab === 'orders' && (
         <div className="bg-white rounded-2xl shadow-sm overflow-hidden animate-fade-in border border-gray-100 min-h-[500px]">
-          <div className="p-6 border-b border-gray-100 bg-blue-50/10">
-            <h3 className="text-xl font-black text-gray-900 flex items-center gap-2"><FiTruck className="text-blue-600" /> {t.tabOrders}</h3>
-            <p className="text-sm text-gray-500 mt-1">{t.subOverviewDesc}</p>
+          <div className="p-4 sm:p-6 border-b border-gray-100 bg-blue-50/10">
+            <h3 className="text-lg sm:text-xl font-black text-gray-900 flex items-center gap-2"><FiTruck className="text-blue-600" /> {t.tabOrders}</h3>
+            <p className="text-xs sm:text-sm text-gray-500 mt-1">{t.subOverviewDesc}</p>
           </div>
 
-          <div className="overflow-x-auto">
+          {/* DESKTOP TABLE VIEW */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-left text-sm">
               <thead className="bg-gray-50 text-gray-500 font-bold uppercase text-[10px] tracking-wider border-b border-gray-100">
                 <tr>
@@ -558,18 +590,70 @@ export default function AdminDashboard() {
               </tbody>
             </table>
           </div>
+
+          {/* MOBILE CARDS VIEW */}
+          <div className="block md:hidden p-4 space-y-4 bg-gray-50/50">
+            {allOrders.length === 0 ? (
+              <div className="py-12 text-center text-gray-400 font-medium">{t.noOrders}</div>
+            ) : (
+              allOrders.map((order) => {
+                const debtAmount = order.totalAmount - (order.upfrontPayment || 0);
+                return (
+                  <div key={order.id} className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                    <div className="flex justify-between items-start mb-3">
+                      <div>
+                        <p className="font-mono font-black text-gray-900 text-sm">#{order.id.slice(-6).toUpperCase()}</p>
+                        <p className="text-gray-400 text-[10px] mt-0.5">{new Date(order.createdAt).toLocaleString()}</p>
+                      </div>
+                      <select
+                        value={order.status}
+                        onChange={(e) => handleUpdateStatus(order.id, e.target.value)}
+                        className={`px-2 py-1.5 rounded-md text-[10px] font-black uppercase tracking-wider outline-none cursor-pointer border transition ${order.status === 'DELIVERED' ? 'bg-green-50 text-green-700 border-green-200' :
+                          order.status === 'SHIPPED' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                            order.status === 'CANCELLED' ? 'bg-red-50 text-red-700 border-red-200' :
+                              'bg-yellow-50 text-yellow-700 border-yellow-200'
+                          }`}
+                      >
+                        <option value="PENDING">PENDING</option>
+                        <option value="SHIPPED">SHIPPED</option>
+                        <option value="DELIVERED">DELIVERED</option>
+                        <option value="CANCELLED">CANCELLED</option>
+                      </select>
+                    </div>
+
+                    <div className="mb-3 bg-gray-50 rounded-lg p-3 border border-gray-100">
+                      <p className="font-bold text-gray-900 text-sm flex items-center gap-2"><FiUsers className="text-gray-400" /> {order.user?.name || t.unknownCustomer}</p>
+                      <p className="text-gray-500 text-[11px] mt-1 line-clamp-2">{order.address}</p>
+                    </div>
+
+                    <div className="flex justify-between items-end pt-3 border-t border-gray-100">
+                      <div className="space-y-1">
+                        {order.upfrontPayment > 0 && <p className="text-[10px] font-bold text-green-600">Paid: TZS {order.upfrontPayment.toLocaleString()}</p>}
+                        {debtAmount > 0 && <p className="text-[10px] font-bold text-red-500">Debt: TZS {debtAmount.toLocaleString()}</p>}
+                      </div>
+                      <div className="text-right">
+                        <span className="block text-[9px] text-gray-400 uppercase font-bold mb-0.5">Total Amount</span>
+                        <p className="text-sm font-black text-gray-900">TZS {order.totalAmount.toLocaleString()}</p>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })
+            )}
+          </div>
         </div>
       )}
 
       {/* TAB 4: CRM & DEBTS */}
       {activeTab === 'crm' && (
         <div className="bg-white rounded-2xl shadow-sm overflow-hidden animate-fade-in border border-gray-100 min-h-[500px]">
-          <div className="p-6 border-b border-gray-100 bg-purple-50/10">
-            <h3 className="text-xl font-black text-gray-900 flex items-center gap-2"><FiUsers className="text-purple-600" /> {t.tabCrm}</h3>
-            <p className="text-sm text-gray-500 mt-1">{t.subCrmDesc}</p>
+          <div className="p-4 sm:p-6 border-b border-gray-100 bg-purple-50/10">
+            <h3 className="text-lg sm:text-xl font-black text-gray-900 flex items-center gap-2"><FiUsers className="text-purple-600" /> {t.tabCrm}</h3>
+            <p className="text-xs sm:text-sm text-gray-500 mt-1">{t.subCrmDesc}</p>
           </div>
 
-          <div className="overflow-x-auto">
+          {/* DESKTOP TABLE VIEW */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-left text-sm">
               <thead className="bg-gray-50 text-gray-500 font-bold uppercase text-[10px] tracking-wider border-b border-gray-100">
                 <tr>
@@ -620,8 +704,61 @@ export default function AdminDashboard() {
               </tbody>
             </table>
           </div>
+
+          {/* MOBILE CARDS VIEW */}
+          <div className="block md:hidden p-4 space-y-4 bg-gray-50/50">
+            {allUsers.length === 0 ? (
+              <div className="py-12 text-center text-gray-400 font-medium">{t.noCustomers}</div>
+            ) : (
+              allUsers.map((u) => (
+                <div key={u.id} className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col gap-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-[#0F172A] text-white flex items-center justify-center font-black text-sm shadow-sm flex-shrink-0">
+                        {u.name.charAt(0).toUpperCase()}
+                      </div>
+                      <div>
+                        <p className="font-bold text-gray-900 text-sm">{u.name}</p>
+                        <span className="bg-yellow-50 text-[#F2A900] font-black px-2 py-0.5 rounded text-[10px] border border-yellow-200 mt-1 inline-block">
+                          {u.loyaltyPoints || 0} PTS
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-gray-50 p-3 rounded-lg border border-gray-100 text-[11px] space-y-1.5">
+                    <p className="font-medium text-gray-700 flex items-center gap-2"><FiPhone className="text-gray-400" /> {u.phone || 'N/A'}</p>
+                    <p className="text-gray-500">{u.email}</p>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-2">
+                    <span className="text-[10px] font-bold text-gray-400 uppercase">Outstanding Debt</span>
+                    {u.debtAmount > 0 ? (
+                      <div className="flex items-center gap-3">
+                        <span className="font-black text-red-600 text-sm">TZS {u.debtAmount.toLocaleString()}</span>
+                        <button onClick={() => alert(t.alertDebtFeature)} className="text-[9px] font-bold bg-green-50 text-green-700 border border-green-200 px-2.5 py-1 rounded hover:bg-green-600 hover:text-white transition">
+                          Clear
+                        </button>
+                      </div>
+                    ) : (
+                      <span className="font-black text-gray-400 text-sm">0 TZS</span>
+                    )}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
         </div>
       )}
+
+      {/* MOBILE FLOATING ACTION BUTTON (FAB) FOR UPLOADING PRODUCTS */}
+      <button
+        onClick={() => router.push('/admin/products')}
+        className="md:hidden fixed bottom-6 right-4 w-14 h-14 bg-amber-500 text-white rounded-full shadow-[0_8px_30px_rgba(245,158,11,0.4)] flex items-center justify-center text-2xl hover:scale-105 active:scale-95 transition-transform z-50 border-2 border-white"
+        aria-label="Add New Product"
+      >
+        <FiPlusCircle />
+      </button>
 
     </div>
   );

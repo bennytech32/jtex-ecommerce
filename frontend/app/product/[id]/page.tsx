@@ -317,7 +317,8 @@ export default function ProductDetail() {
                 onFocus={() => setShowDesktopSuggestions(true)}
                 onBlur={() => setTimeout(() => setShowDesktopSuggestions(false), 200)}
                 placeholder="Search products..."
-                className="flex-1 h-full px-4 text-sm text-gray-900 outline-none w-full"
+                // FIXED: text-[16px] inazuia auto-zoom kwenye iOS Safari
+                className="flex-1 h-full px-4 text-[16px] text-gray-900 outline-none w-full"
               />
               <button type="submit" className="h-full px-6 bg-[#E8A922] text-white hover:bg-[#D4981C] transition">
                 <FiSearch size={18} />
@@ -394,7 +395,8 @@ export default function ProductDetail() {
               onFocus={() => setShowMobileSuggestions(true)}
               onBlur={() => setTimeout(() => setShowMobileSuggestions(false), 200)}
               placeholder="Search products..."
-              className="flex-1 h-full px-3 text-sm text-gray-900 outline-none w-full min-w-0"
+              // FIXED: text-[16px] inazuia auto-zoom kwenye iOS Safari
+              className="flex-1 h-full px-3 text-[16px] text-gray-900 outline-none w-full min-w-0"
             />
             <button type="submit" className="h-full px-4 bg-[#E8A922] text-white flex-shrink-0"><FiSearch size={16} /></button>
           </form>
@@ -469,8 +471,9 @@ export default function ProductDetail() {
               <div ref={sliderRef} onScroll={handleScroll} className="w-full h-full flex overflow-x-auto snap-x snap-mandatory hide-scrollbar smooth-scroll scroll-smooth bg-white">
                 {images.length > 0 ? (
                   images.map((imgStr, idx) => (
-                    <div key={idx} className="w-full h-full flex-shrink-0 snap-center flex items-center justify-center relative">
-                      <img src={imgStr} className="w-full h-full object-contain mix-blend-multiply" />
+                    // FIXED: min-w-full and padding inazuia image kuvuta nje ya box kwenye Safari
+                    <div key={idx} className="min-w-full w-full h-full flex-shrink-0 snap-center flex items-center justify-center relative p-2 lg:p-4">
+                      <img src={imgStr} className="max-w-full max-h-full w-full h-full object-contain mix-blend-multiply" />
                     </div>
                   ))
                 ) : (
